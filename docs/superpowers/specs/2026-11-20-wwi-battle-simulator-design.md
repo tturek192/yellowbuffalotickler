@@ -40,9 +40,16 @@ https://claude.ai/artifact/CviEMDWHGhNyGwzKCZ1nZP
    what-if runs many times with different random seeds. The answer comes back
    as a distribution, for example "the Germans held Hill 145 in 35% of 200
    runs", not as one result.
-4. **Battalion-level detail.** A battalion is the smallest unit the engine
-   moves and fights with. Brigades, divisions and corps are the chain of
-   command above them.
+4. **Battalions to command, companies to fight.** The user places and
+   commands battalions. Inside the engine:
+   - attacking battalions move and fight as company-sized waves;
+   - defenders sit as company garrisons in specific stretches of trench
+     and strongpoints.
+
+   Brigades, divisions and corps are the chain of command above them. This
+   was chosen by the owner after the Vimy research showed that the deciding
+   events (an un-shelled 100-yard trench, a single machine-gun post, a
+   dugout) are smaller than a battalion.
 5. **Visually appealing.** The map is styled like a period trench map, with
    readable unit markers and a time-lapse that turns a multi-day battle into
    minutes. The engine and data are built so a 3D view of the terrain can be
@@ -402,6 +409,118 @@ but Germans ×2"), so the original data stays untouched.
     target is the documented range, with each source cited and the time
     window and area stated.
   - A run passes if the simulated median falls inside that range.
+
+### 13. What the first Vimy research changed (owner-approved)
+
+The owner's research brief on Vimy, covering doctrine, order of battle,
+artillery, terrain and outcomes, sharpened the model. The engine must
+include the following.
+
+1. **Company-level resolution.** See Goal 4.
+   - About 80 German company garrisons are placed by trench segment and
+     strongpoint. Each has a paper strength and an actual strength (about
+     150 men against 264 on paper).
+   - Canadian battalions break down into their assault waves, mopping-up
+     parties and supporting companies.
+2. **The gap between the infantry and the barrage is the central
+   variable.**
+   - Each attacking company tracks how far it is behind the barrage.
+   - While it stays close, defenders in dugouts stay suppressed.
+   - If it falls behind, defenders come up and machine guns are manned
+     again.
+   - The barrage pace (100 yards in 3–5 minutes) and the pauses at each
+     objective line come from the fire plan.
+3. **Bombardment results are tracked trench by trench.**
+   - The compressed bombardment calculation (section 12) produces, for each
+     stretch of trench, how much of the wire was cut, damage to dugouts,
+     damage to the trench, and the garrison's losses.
+   - Any stretch can be marked "missed" or "spared". The 87th Battalion's
+     front is the historical case.
+4. **Dugouts and mopping up.**
+   - Captured trench leaves behind dugout points that must be cleared.
+   - If they are not cleared, they can attack later waves from behind.
+5. **German reserves off the map, with march times.**
+   - Reserve and Eingreif divisions start a set distance behind the front
+     (24 km historically).
+   - Getting to the battle takes an order delay plus marching time.
+   - Historical targets:
+     - local counterattacks within 1–3 hours;
+     - the divisional counterattack ordered at about noon and launched at
+       18:00;
+     - the 111th Division at the third line on the evening of 9 April;
+     - the 4th Guards Division on 11 April.
+   - Reserve distance is a key what-if: 5 km, as German doctrine called for.
+   - Counterattacks uphill onto the crest are penalized.
+6. **German batteries recover over time.**
+   - At Zero most German battery positions are suppressed (historically
+     about 83% of them).
+   - They recover over the following hours.
+   - Their defensive fire is weak but never zero.
+7. **Communications by channel.**
+   - Channels: buried cable, surface line, runners, visual signals,
+     pigeons, power buzzers, wireless, aircraft contact patrols.
+   - Each channel has its own delay and failure rate.
+   - Historically, reports from the front reached corps 40–120 minutes
+     after the event.
+   - Artillery liaison officers and emergency "LL" calls make calls for fire
+     faster where buried cable exists.
+8. **Officer losses.**
+   - Leaders within each company and battalion can be lost.
+   - Units trained under SS 143 keep going under NCOs with a smaller
+     penalty than units trained the 1916 way.
+9. **Flank forces off the map.**
+   - I Corps and XVII Corps artillery fire along the German lines, and the
+     24th Division attacks the Pimple on 12 April.
+   - They are modelled as scheduled off-map fire and attacks, not as
+     simulated units.
+10. **Air control affects observation.**
+    - Air superiority sets how well artillery can observe its fire. Air
+      observers adjusted about 75% of counter-battery shoots.
+    - It is a scenario setting, not a simulated air war.
+11. **Smaller mechanics:**
+    - tanks bogging down;
+    - the indirect machine-gun barrage, a moving zone ahead of the infantry;
+    - gas shells killing draught horses, so guns can't be withdrawn and are
+      overrun;
+    - ammunition left for repelling counterattacks after the assault.
+12. **Mostly a timetable for the attacker on 9 April.**
+    - Corps fixes the clock, and companies manoeuvre only within each
+      phase.
+    - Engine decision-making is needed mainly for:
+      - German reserves and counterattacks;
+      - Canadian units once the plan breaks down (4th Division, 9–10
+        April);
+      - follow-up operations.
+    - The Pimple attack (10th Brigade) was a planned phase that was
+      rescheduled. Its plan is scenario data, and the engine decides when
+      it goes in.
+13. **More detailed validation targets.**
+    - The time each objective line fell, by division. For example, the
+      Black Line about Zero plus 45–55 minutes, the Blue Line about 11:00,
+      the Brown Line about 14:00.
+    - Battalion losses where known. For example, the 87th and 102nd each
+      lost over 300 men on 9 April.
+    - German division losses: 79th Reserve Division 3,473 and 1st Bavarian
+      Reserve Division 3,133, for 1–11 April.
+    - Prisoners: 3,404 to about 4,000.
+    - Guns captured: 54 or 63.
+    - Because the German division figures include the bombardment
+      period, the compressed bombardment calculation must also produce
+      casualties, so like is compared with like.
+14. **Treating the research brief.**
+    - Its suggested terrain multipliers and battalion effective strengths
+      are starting values for tuning, not historical record.
+    - Before a figure is used as a historical value to test against, it is
+      checked against primary or scholarly sources: Nicholson, the war
+      diaries, Sheldon and Cave, Godefroy.
+    - Known conflicts are kept as cited ranges:
+      - the northern German division (16th or 14th Bavarian);
+      - reserve distance ("two-hour march" or 24 km);
+      - the length of the Goodman subway;
+      - the 1st Division's depth of advance;
+      - the length of the halt on the Blue Line;
+      - counter-battery claims;
+      - the time of the 85th Battalion's attack.
 
 ## Left to the builder
 
