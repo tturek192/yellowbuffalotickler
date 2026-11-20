@@ -651,7 +651,7 @@ reserves:
     side: central
     distanceKm: { value: 9.8, estimate: "straight line from Bois-Bernard to the centre of the regiment's sector on the first position; BOH p. 317 n.3: the 262nd's and 263rd's third battalions in rest billets 'at Bois Bernard and Neuvireuil' (which village held which is assumed from their positions; villages from ign-bdtopo-habitation); BOH p. 317: 'five or six miles'" }
     entryPoint: { lonLat: [2.886227, 50.378602] }
-    orderedAt: { value: 1917-04-09T11:00, source: "boh-1917-1", page: "354", note: "the 79th Reserve Division's order for an immediate counter-attack on Hill 135; BOH's times are taken as British time" }
+    orderedAt: { value: 1917-04-09T11:00, estimate: "the time it was ordered forward is not given; taken as the 79th Reserve Division's 11 a.m. order for an immediate counter-attack on Hill 135 (BOH p. 354), for which this battalion was named; BOH's times are taken as British time" }
     note: "resting battalion; taken to be the battalion 'of the 262nd Reserve Regiment, in the sector concerned' named for the 79th Reserve Division's counter-attack (BOH p. 354)"
   - formationId: rir263-iii
     side: central
@@ -677,8 +677,7 @@ reserves:
     side: central
     distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
     entryPoint: { lonLat: [2.871152, 50.414734] }
-    orderedAt: { value: 1917-04-09T18:00, source: "boh-1917-1", page: "355", note: "'At 6 p.m. the I./14th Bavarian was ordered to re-establish the line on the northern slope of Hill 145'; Nicholson p. 260 the same" }
-    note: "resting battalion (BOH p. 355); halted behind the Bois de l'Hirondelle, then failed to retake the northern slope of Hill 145 that night (p. 355; Nicholson p. 260); entry due east of the regiment's sector"
+    note: "resting battalion (BOH p. 355); ordered up on 9 April by Group Souchez, time not given, and halted behind the Bois de l'Hirondelle, in position by late afternoon (p. 355), so no orderedAt. Its 6 p.m. order to re-establish the line on the northern slope of Hill 145 (p. 355; Nicholson p. 260) was a counter-attack order, given after it had moved up; entry due east of the regiment's sector"
   - formationId: brir21-i
     side: central
     distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
@@ -688,13 +687,13 @@ reserves:
     side: central
     distanceKm: { value: 6.3, estimate: "BOH p. 354: the two battalions 'moved up from east of Lens'; straight line from Lens (ign-bdtopo-habitation) to La Chaudiere, where the northern counter-attack force arrived after dark (p. 355); a lower bound, as their start east of Lens is not given" }
     entryPoint: { lonLat: [2.817241, 50.416880] }
-    orderedAt: { value: 1917-04-09T11:00, source: "boh-1917-1", page: "354", note: "the 79th Reserve Division's counter-attack order, for which these battalions were available; when they were set moving is not given" }
+    orderedAt: { value: 1917-04-09T11:00, estimate: "the time they were set moving is not given; taken as the 79th Reserve Division's 11 a.m. counter-attack order (BOH p. 354), the order they moved up for. They were 'placed at the disposal' of the division (p. 354) at a time not stated, possibly earlier" }
     note: "attached to the 79th Reserve Division on 9 April (BOH p. 354, 'from the 56th'); its regiment per wikipedia-vimy-oob ('118th Reserve', citing Sheldon p. 308) and aef-251-divisions p. 352 (the 118th Infantry Regiment went to the 56th Division); oob-german.md, Conflicts"
   - formationId: rir34-iii
     side: central
     distanceKm: { value: 6.3, estimate: "BOH p. 354: the two battalions 'moved up from east of Lens'; straight line from Lens (ign-bdtopo-habitation) to La Chaudiere, where the northern counter-attack force arrived after dark (p. 355); a lower bound, as their start east of Lens is not given" }
     entryPoint: { lonLat: [2.817241, 50.416880] }
-    orderedAt: { value: 1917-04-09T11:00, source: "boh-1917-1", page: "354", note: "the 79th Reserve Division's counter-attack order, for which these battalions were available; when they were set moving is not given" }
+    orderedAt: { value: 1917-04-09T11:00, estimate: "the time they were set moving is not given; taken as the 79th Reserve Division's 11 a.m. counter-attack order (BOH p. 354), the order they moved up for. They were 'placed at the disposal' of the division (p. 354) at a time not stated, possibly earlier" }
     note: "attached to the 79th Reserve Division on 9 April (BOH p. 354, from the 80th Reserve Division); its regiment per wikipedia-vimy-oob ('34th Bavarian Reserve', citing Sheldon p. 291) and aef-251-divisions p. 541 (the 80th Reserve Division's '34 Res.'); oob-german.md, Conflicts"
   - formationId: rir225-i
     side: central

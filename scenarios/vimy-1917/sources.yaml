@@ -77,7 +77,7 @@ sources:
     year: 1920
     url: https://archive.org/details/historiesoftwohu00unit
     tier: primary
-    note: "compiled in 1919 from Allied wartime intelligence (prisoners, documents), cited by Nicholson p. 246 n.45; each division's composition in 1917 and its movements; Allied intelligence, not German records. Local OCR text via scripts/fetch-sources.sh; the composition tables are garbled in the OCR"
+    note: "compiled in 1919 from Allied wartime intelligence (prisoners, documents), cited by Nicholson p. 247 n.45; each division's composition in 1917 and its movements; Allied intelligence, not German records. Local OCR text via scripts/fetch-sources.sh; the composition tables are garbled in the OCR"
   ign-bdtopo-habitation:
     title: BD TOPO V3 settlement areas (zone_d_habitation), Géoplateforme WFS
     author: IGN (Institut national de l'information géographique et forestière)

@@ -23,7 +23,7 @@ those German works, and the American Expeditionary Forces' division histories.
 |---|---|---|
 | `boh-1917-1` | official | The spine. Falls, *Military Operations, France and Belgium, 1917*, vol. I (1940): Group Vimy and its divisions (p. 197); the Canadian Corps' intelligence on the German garrison (p. 317 and notes); the regiments' fronts and the 9 April counter-attacks, from German sources (pp. 352-356); the fate of the 1st Bavarian Reserve Division (pp. 276-277); the 4th Guard Division (p. 345 n.3); German losses (p. 341 n.1). Its notes on the German side cite "Die Osterschlacht" and the histories of the 261st and 262nd Reserve and the Bavarian 1st, 2nd Reserve, 11th, 14th and 21st Regiments (p. 352 n.2). |
 | `nicholson-1962` | official | The three divisions and their sectors (p. 246); "only five regiments", company strength, the regiments' battalion arrangement and the reserve divisions' distance (p. 247); the 263rd at Les Tilleuls and the tunnel (p. 254); the 3rd Bavarian Reserve Regiment's staff (p. 257); the Lille battalions (p. 258 n.); the Hangstellung and the 16th Bavarian Division's planned attack (p. 259); Falkenhausen and the reserves (pp. 260, 267-268); the 5th Guard Grenadiers (p. 262). |
-| `aef-251-divisions` | primary | *Histories of Two Hundred and Fifty-One Divisions of the German Army* (AEF G-2, 1920; cited by Nicholson p. 246 n.45): the 79th Reserve (p. 538), 1st Bavarian Reserve (p. 43) and 16th Bavarian (p. 273) Divisions; the 16th Bavarian's three regiments in 1917 (p. 273); the 17th (p. 277), 4th Guard (p. 89), 80th Reserve (p. 541), 49th Reserve (p. 486) and 25th (p. 352) Divisions. Compiled from Allied intelligence, not German records. |
+| `aef-251-divisions` | primary | *Histories of Two Hundred and Fifty-One Divisions of the German Army* (AEF G-2, 1920; cited by Nicholson p. 247 n.45): the 79th Reserve (p. 538), 1st Bavarian Reserve (p. 43) and 16th Bavarian (p. 273) Divisions; the 16th Bavarian's three regiments in 1917 (p. 273); the 17th (p. 277), 4th Guard (p. 89), 80th Reserve (p. 541), 49th Reserve (p. 486) and 25th (p. 352) Divisions. Compiled from Allied intelligence, not German records. |
 | `vimy-brief-2026` | secondary | The paper strength of a company, 264, as quoted in the design spec (s. 13). |
 | `ign-bdtopo-habitation` | secondary | Village positions for the reserves: Bois-Bernard, Neuvireuil, Lens, Liévin, Méricourt, Douai, Lille (the mean of each modern built-up outline's vertices). |
 | `wikipedia-vimy-oob` | tertiary | A lead for the whole structure; the identity of the two battalions attached to the 79th Reserve Division (citing Sheldon pp. 291, 308) and the 14th Bavarian's battalion roles (citing Sheldon p. 316); Gruppe Souchez as the VIII Reserve Corps (citing Godefroy pp. 228-229); the 79th Reserve Division's commander's rank. Sheldon and Godefroy were not read. |
@@ -78,7 +78,10 @@ Fusiliers"); that 1-4 belong to the I Battalion and so on is the usual scheme, t
 
 **Working choice: the 16th Bavarian Infantry Division**, in Gruppe Souchez. The evidence:
 
-- Nicholson p. 246: "the 16th Bavarian Infantry Division opposite Souchez" (citing the AEF histories, n.45);
+- Nicholson p. 246: "the 16th Bavarian Infantry Division opposite Souchez", note 44, which cites "G.O.H., XII, Appx. 8
+  (map)", the Reichsarchiv's own map of the dispositions, so the working choice rests on the German official history's map
+  as Nicholson read it (the map itself was not seen). Nicholson's note 45, on p. 247, cites the AEF histories for the
+  divisions' records;
 - `aef-251-divisions` p. 273: on 12 February 1917 the 16th Bavarian "replaced the 6th Bavarian Reserve Division south of
   Lens, opposite Souchez" and was forced back off the ridge on 9 April;
 - BOH p. 317 n.2: the five regiments facing the Canadian Corps were the 3rd Bavarian Reserve, 261st, 262nd and 263rd
@@ -248,22 +251,23 @@ battalions under their regiments, the attached battalions under their divisions,
 Army). `distanceKm` is the straight line from where the reserve lay on the morning of 9 April to the sector it went to
 (the centre of the regiment's zone on the first position; for a division, the middle of the mapped sector it relieved).
 `entryPoint` is where that line crosses the edge of the frame's extent; where the start is unknown, the reserve is taken
-to lie due east (along +x) of its sector and enters at the east edge (x 7700). `orderedAt` is given only where a source
-gives a time. Arrival times belong to `historical.reserveArrivals` (Task 10); the ones found are listed under "For Task
+to lie due east (along +x) of its sector and enters at the east edge (x 7700). `orderedAt` is the time a reserve was ordered forward. No source
+gives one outright: three reserves carry an estimate taken from the counter-attack order they moved up for (below), the
+rest have none. Arrival times belong to `historical.reserveArrivals` (Task 10); the ones found are listed under "For Task
 10" below.
 
 | Reserve | From | distanceKm | entryPoint (local x, y) | orderedAt | Sources |
 |---|---|---|---|---|---|
 | `rir261-iii` | billet not found | 8.9 (est.) | 7700, −142 | — | BOH p. 317 ("five or six miles in rear"); Nicholson p. 247 |
-| `rir262-iii` | Bois-Bernard (x 9498, y −2377) | 9.8 (est.) | 7700, −2155 | 11:00 (the 79th RD's counter-attack order) | BOH p. 317 n.3 (billets), p. 354; `ign-bdtopo-habitation` |
+| `rir262-iii` | Bois-Bernard (x 9498, y −2377) | 9.8 (est.) | 7700, −2155 | 11:00 (est.: the 79th RD's counter-attack order) | BOH p. 317 n.3 (billets), p. 354; `ign-bdtopo-habitation` |
 | `rir263-iii` | Neuvireuil (x 8645, y −5524) | 9.5 (est.) | 7240, −5000 | — | BOH p. 317 n.3; `ign-bdtopo-habitation` |
 | `brir3-iii` | billet not found | 8.9 (est.) | 7700, −3243 | — | BOH p. 317 |
 | `brir1-iii` | billet not found | 8.9 (est.) | 7700, −4276 | — | BOH p. 317 |
 | `bir11-iii` | billet not found | 8.9 (est.) | 7700, 892 | — | BOH pp. 317, 355 |
-| `bir14-i` | billet not found | 8.9 (est.) | 7700, 1980 | 18:00 (to retake the north slope of Hill 145) | BOH pp. 317, 355; Nicholson p. 260 |
+| `bir14-i` | billet not found | 8.9 (est.) | 7700, 1980 | — (ordered up by Group Souchez, time not given; its 6 p.m. order was a counter-attack) | BOH pp. 317, 355; Nicholson p. 260 |
 | `brir21-i` | billet not found | 8.9 (est.) | 7700, 1980 | — | BOH pp. 317, 355 |
-| `ir118-i` | "east of Lens" (Lens x 5108, y 4970) | 6.3 (est., a lower bound) | 4065, 3200 | 11:00 | BOH pp. 354-355; `wikipedia-vimy-oob`; `aef-251-divisions` p. 352 |
-| `rir34-iii` | "east of Lens" | 6.3 (est., a lower bound) | 4065, 3200 | 11:00 | BOH pp. 354-355; `wikipedia-vimy-oob`; `aef-251-divisions` p. 541 |
+| `ir118-i` | "east of Lens" (Lens x 5108, y 4970) | 6.3 (est., a lower bound) | 4065, 3200 | 11:00 (est.) | BOH pp. 354-355; `wikipedia-vimy-oob`; `aef-251-divisions` p. 352 |
+| `rir34-iii` | "east of Lens" | 6.3 (est., a lower bound) | 4065, 3200 | 11:00 (est.) | BOH pp. 354-355; `wikipedia-vimy-oob`; `aef-251-divisions` p. 541 |
 | `rir225-i` | the Lille area (Lille x 25948, y 22166) | 36.7 (est.) | 6191, 3200 | — | BOH pp. 338 n.1, 354; `aef-251-divisions` p. 486 |
 | `bir6-iii` | the Lille area | 36.7 (est.) | 6191, 3200 | — | BOH p. 354 |
 | `bir21-iii` | the Lille area ("in line west of Lille") | 36.7 (est.) | 6191, 3200 | — | BOH pp. 277, 354 |
@@ -276,8 +280,11 @@ gives a time. Arrival times belong to `historical.reserveArrivals` (Task 10); th
 (Bois-Bernard and Neuvireuil, p. 317 n.3); which held which is assumed from their positions (Bois-Bernard is north of
 Neuvireuil, as RIR 262's zone is north of RIR 263's). Their straight lines, 9.8 and 9.5 km, are a little over BOH's six
 miles (9.7 km). The others take 8.9 km (5.5 miles). The 16th Bavarian Division's resting battalions are given the same
-distance; BOH p. 355 has them assembling "between Lievin and Mericourt, in front of the Avion Switch" on 9 April, inside
-the map's north-east, but not where they came from. I./BRIR 21's entry point is taken from BIR 14's sector, the nearest
+distance; BOH p. 355 has them assembling "between Lievin and Mericourt, in front of the Avion Switch" on 9 April "by order
+of the corps further north, Group Souchez", inside the map's north-east, but not where they came from or when they were
+ordered. I./14 Bavarian then "halted some two miles in rear, behind the Bois de l'Hirondelle"; its 6 p.m. order "to
+re-establish the line on the northern slope of Hill 145" (p. 355) came after it had moved up, so it is a counter-attack
+order, not its `orderedAt`, which is left out. I./BRIR 21's entry point is taken from BIR 14's sector, the nearest
 mapped one.
 
 **The battalions attached on 9 April** (BOH p. 354: "Two battalions were placed at the disposal of the 79th Reserve
@@ -285,7 +292,7 @@ Division, and three at that of the 1st Bavarian Reserve"):
 
 - to the 79th Reserve Division, two battalions "from the 56th and 80th Reserve Divisions respectively, which moved up
   from east of Lens" (p. 354), with one of the 262nd's, for the counter-attack the 79th Reserve Division ordered at 11
-  a.m. for 3 p.m.; "it was after nightfall before the troops were in position" (p. 354), at La Chaudière (p. 355). BOH
+  a.m. for 3 p.m. (taken as their `orderedAt`, an estimate: when they were set moving is not given); "it was after nightfall before the troops were in position" (p. 354), at La Chaudière (p. 355). BOH
   does not name them. `wikipedia-vimy-oob` (citing Sheldon pp. 308, 291) has I./118th Reserve (56th Division) and
   III./34th Bavarian Reserve (80th Division). Entered as **I./IR 118** and **III./RIR 34**: the 56th Division's regiment
   was the 118th *Infantry* Regiment (`aef-251-divisions` p. 352), and the 80th Reserve Division's was the *Prussian* 34th
@@ -367,7 +374,7 @@ Quotes are at most 25 words. "est." marks a value entered as an `estimate`.
 | Value | Source | Page | Quote | Tier |
 |---|---|---|---|---|
 | Sixth Army, Falkenhausen | `nicholson-1962` | 246 | "the front from north of Cambrai to north of Lille was the responsibility of General von Falkenhausen's Sixth Army" | official |
-| The three divisions and their sectors | `nicholson-1962` | 246 | "the 1st Bavarian Reserve Division, holding Thelus and Bailleul, the 79th Reserve Division, responsible for the Vimy sector, and the 16th Bavarian Infantry Division opposite Souchez" | official |
+| The three divisions and their sectors (n.44: G.O.H. XII, Appx. 8, map) | `nicholson-1962` | 246 | "the 1st Bavarian Reserve Division, holding Thelus and Bailleul, the 79th Reserve Division, responsible for the Vimy sector, and the 16th Bavarian Infantry Division opposite Souchez" | official |
 | Group Vimy | `boh-1917-1` | 197 | "These two, together with 79th Reserve Division, formed the Vimy Group, under the headquarters of the I. Bavarian Reserve Corps (General Ritter von Fasbender)" | official |
 | Group Souchez | `boh-1917-1` | 355 | "by order of the corps further north, Group Souchez, six battalions had assembled between Lievin and Mericourt" | official |
 | Gruppe Souchez = VIII Reserve Corps | `wikipedia-vimy-oob` | German side, citing Godefroy pp. 228-229 | "Gruppe Souchez, under the VIII Reserve Corps commander, General Georg Karl Wichura" | tertiary |
@@ -418,7 +425,7 @@ Quotes are at most 25 words. "est." marks a value entered as an `estimate`.
 | Resting battalions 5-6 miles back | `boh-1917-1` | 317 | "the five reserve battalions resting in villages five or six miles in rear, provided a reinforcement of 3,000 men" | official |
 | Two hours' march | `nicholson-1962` | 247 | "the third battalions were billeted in rear villages about two hours' march from the battlefield" | official |
 | 262's and 263's billets | `boh-1917-1` | 317 n.3 | "each of which had two battalions on the ridge and the third in rest billets at Bois Bernard and Neuvireuil" | official |
-| The 79th RD's counter-attack, 11 a.m. | `boh-1917-1` | 354 | "At 11 a.m. on the 9th the commander of the 79th Reserve Division issued orders for an immediate counter-attack to recapture Hill 135" | official |
+| The 79th RD's counter-attack, 11 a.m. (`orderedAt` est. for three reserves) | `boh-1917-1` | 354 | "At 11 a.m. on the 9th the commander of the 79th Reserve Division issued orders for an immediate counter-attack to recapture Hill 135" | official |
 | Its battalions | `boh-1917-1` | 354 | "one of the 262nd Reserve Regiment, in the sector concerned, and two from the 56th and 80th Reserve Divisions respectively, which moved up from east of Lens" | official |
 | Their names | `wikipedia-vimy-oob` | 79th Reserve Division, citing Sheldon pp. 291, 308 | "118th Reserve Infantry Regiment ... 34th Bavarian Reserve Infantry Regiment ... Battle reinforcement, sent on 9 April" | tertiary |
 | The 56th Division's IR 118 | `aef-251-divisions` | 352 | "In March it ceded the 118th Infantry Regiment to the 56th Division, a new formation" | primary |
@@ -427,7 +434,8 @@ Quotes are at most 25 words. "est." marks a value entered as an `estimate`.
 | The same | `nicholson-1962` | 258 n. | "troops of three reserve battalions rushed in from Lille to reinforce the 1st Bavarian Reserve Division" | official |
 | RIR 225 in the 49th RD | `aef-251-divisions` | 486 | "In January, 1917, the 49th Reserve Division rejoined the 225th Reserve Infantry Regiment" | primary |
 | III./21 Bavarian of the 5th Bav Div | `boh-1917-1` | 277 | "This belonged to the 5th Bavarian Division, in line west of Lille" | official |
-| I./14 ordered at 6 p.m. | `boh-1917-1` | 355 | "At 6 p.m. the I./14th Bavarian was ordered to re-establish the line on the northern slope of Hill 145" | official |
+| I./14 ordered up by Group Souchez (no `orderedAt`) | `boh-1917-1` | 355 | "by order of the corps further north, Group Souchez, six battalions had assembled between Lievin and Mericourt" | official |
+| I./14's counter-attack at 6 p.m. (in the note, not `orderedAt`) | `boh-1917-1` | 355 | "At 6 p.m. the I./14th Bavarian was ordered to re-establish the line on the northern slope of Hill 145" | official |
 | The same | `nicholson-1962` | 260 | "At 6:00 p.m. a reserve battalion of the 16th Bavarian Infantry Division was ordered to regain the northern slope of Hill 145" | official |
 | Five reserve divisions | `boh-1917-1` | 199 | "Crown Prince Rupprecht put five reserve divisions at the disposal of the Sixth Army" | official |
 | 15-20 miles at dawn | `boh-1917-1` | 354 | "At dawn on the 9th April, when they were still fifteen to twenty miles from the battlefield, their orders remained unchanged" | official |
@@ -446,7 +454,8 @@ The leaders' names, ranks and ratings, with their quotes, are in `leaders.yaml` 
 
 ## Conflicts
 
-- **The northern division: 16th or 14th Bavarian.** See above. Entered: the 16th (Nicholson p. 246; BOH pp. 317 n.2, 353;
+- **The northern division: 16th or 14th Bavarian.** See above. Entered: the 16th (Nicholson p. 246 and its n.44, the
+  Reichsarchiv map; BOH pp. 317 n.2, 353;
   `aef-251-divisions` p. 273). The 14th Bavarian Division was at the Scarpe (BOH pp. 276, 353).
 - **How many regiments faced the Canadians.** Nicholson p. 247 and BOH p. 317 (the Corps' intelligence) say five; BOH p.
   353 (from German sources) adds "part of the centre" regiment of the 1st Bavarian Reserve Division (BRIR 1). Entered:
@@ -479,14 +488,24 @@ The leaders' names, ranks and ratings, with their quotes, are in `leaders.yaml` 
 - **The divisions in line after the withdrawal.** BOH p. 356: 4th Guard, 111th and 17th Divisions from Méricourt to
   Gavrelle by 12 April; Nicholson p. 262 n.: "the 16th Bavarian Infantry Division with two battalions from the 4th
   Infantry Division in the line, the 111th Infantry Division and the 17th". "4th Infantry" is probably the 4th Guard.
-- **The 75th Regiment's division.** BOH p. 277 has "the 75th Regiment of the 18th Division" relieving BRIR 1 on 9 April;
-  p. 356 has "the 89th Grenadier and 75th Regiments (17th Division)". Not entered (Task 10 may need it).
+- **The 75th Regiment's division.** BOH pp. 276-277: BRIR 2, forced back to the outskirts of Bailleul on the morning of
+  10 April, "was relieved that night by the 75th Regiment of the 18th Division"; BRIR 1's remnant was relieved on the
+  evening of the 10th by "the 89th Grenadiers, 17th Division". BOH p. 356 has "the 89th Grenadier and 75th Regiments (17th
+  Division)" entering the 1st Bavarian Reserve Division's line. So BOH gives the 75th to the 18th Division on p. 277 and
+  to the 17th on p. 356. Not entered (Task 10 may need it).
 - **Fasbender's withdrawal.** German Wikipedia credits Fasbender with proposing the withdrawal from the ridge; BOH p. 355
   credits Rupprecht, "after consultation with ... Colonel von Lossberg". Noted in his adaptiveness rating.
 - **Bacmeister's rank.** `wikipedia-vimy-oob`: Lieutenant-General; German Wikipedia's list: General der Infanterie (the
   rank at the end of his command, presumably). Entered: Lieutenant-General.
 
 ## Open questions for the historian
+
+- **The northern division: the 16th or the 14th Bavarian Division?** Entered: the 16th Bavarian Infantry Division in
+  Gruppe Souchez (Nicholson p. 246, citing the Reichsarchiv map, G.O.H. XII, Appx. 8, in n.44; BOH pp. 317 n.2, 353, 355;
+  `aef-251-divisions` p. 273). The owner's brief has the 14th Bavarian, which BOH puts at the other end of Group Vimy,
+  north of the Scarpe (pp. 276, 353); the brief's source for it was not seen. Does any primary source put the 14th
+  Bavarian Division opposite Souchez or the Pimple on 9 April, or is the "14th" the 14th Bavarian *Infantry Regiment* of
+  the 16th Bavarian Division? Appendix 8 of *Der Weltkrieg* vol. 12 would settle it.
 
 - **The German official history and monograph.** Reichsarchiv, *Der Weltkrieg 1914 bis 1918*, vol. 12, and *Die
   Osterschlacht bei Arras 1917* (Schlachten des Weltkrieges vol. 28) are not on archive.org (searched 2026-11-20: only
