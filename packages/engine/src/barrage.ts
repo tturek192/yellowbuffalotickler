@@ -1,0 +1,103 @@
+import type { Point, Scenario } from '@wwi/scenario';
+import { lineXAt } from './geometry';
+import type { SimEvent } from './types';
+
+type Sector = Scenario['sectors'][number];
+type Lines = Map<string, Point[]>;
+
+export type BarrageState = {
+  sectorId: string;
+  legIndex: number;
+  phase: 'lifting' | 'pausing' | 'done';
+  phaseStartMin: number;
+};
+
+export function initBarrage(sector: Sector): BarrageState {
+  return { sectorId: sector.id, legIndex: 0, phase: 'lifting', phaseStartMin: 0 };
+}
+
+function linePoints(lines: Lines, id: string): Point[] {
+  const pts = lines.get(id);
+  if (!pts) throw new Error(`Unknown line "${id}"`);
+  return pts;
+}
+
+function legGeometry(sector: Sector, lines: Lines, legIndex: number) {
+  const leg = sector.legs[legIndex];
+  if (!leg) throw new RangeError(`Sector ${sector.id} has no leg ${legIndex}`);
+  const fromId = legIndex === 0 ? sector.startLineId : sector.legs[legIndex - 1]!.toLineId;
+  const from = linePoints(lines, fromId);
+  const to = linePoints(lines, leg.toLineId);
+  const yMid = (sector.yMin + sector.yMax) / 2;
+  const liftM = leg.liftM.value;
+  const liftMin = leg.liftMin.value;
+  const depthM = lineXAt(to, yMid) - lineXAt(from, yMid);
+  const legMin = Math.ceil(depthM / liftM) * liftMin;
+  return { leg, from, to, toId: leg.toLineId, depthM, legMin, liftM, liftMin };
+}
+
+export function advanceBarrage(
+  b: BarrageState,
+  sector: Sector,
+  lines: Lines,
+  minute: number,
+): { state: BarrageState; events: SimEvent[] } {
+  const events: SimEvent[] = [];
+  let state = b;
+  for (;;) {
+    if (state.phase === 'done') break;
+    const g = legGeometry(sector, lines, state.legIndex);
+    if (state.phase === 'lifting') {
+      const end = state.phaseStartMin + g.legMin;
+      if (minute < end) break;
+      events.push({
+        minute: end,
+        kind: 'barrage-pause',
+        sectorId: sector.id,
+        lineId: g.toId,
+        text: 'Barrage pauses beyond objective line',
+        causes: [],
+      });
+      state = { ...state, phase: 'pausing', phaseStartMin: end };
+    } else {
+      const end = state.phaseStartMin + g.leg.pauseMin.value;
+      if (minute < end) break;
+      if (state.legIndex + 1 >= sector.legs.length) {
+        events.push({
+          minute: end,
+          kind: 'barrage-done',
+          sectorId: sector.id,
+          lineId: g.toId,
+          text: 'Barrage ends',
+          causes: [],
+        });
+        state = { ...state, phase: 'done', phaseStartMin: end };
+      } else {
+        events.push({
+          minute: end,
+          kind: 'barrage-resume',
+          sectorId: sector.id,
+          lineId: sector.legs[state.legIndex + 1]!.toLineId,
+          text: 'Barrage resumes and lifts to the next line',
+          causes: [],
+        });
+        state = { ...state, legIndex: state.legIndex + 1, phase: 'lifting', phaseStartMin: end };
+      }
+    }
+  }
+  return { state, events };
+}
+
+export function barrageXAt(b: BarrageState, sector: Sector, lines: Lines, minute: number, y: number): number {
+  const g = legGeometry(sector, lines, b.legIndex);
+  const standOff = sector.standOffM.value;
+  const toX = lineXAt(g.to, y) + standOff;
+  if (b.phase !== 'lifting') return toX;
+  const standFrom = b.legIndex === 0 ? 0 : standOff;
+  const fromX = lineXAt(g.from, y) + standFrom;
+  const t =
+    g.depthM <= 0
+      ? 1
+      : Math.min(1, Math.max(0, (Math.floor((minute - b.phaseStartMin) / g.liftMin) * g.liftM) / g.depthM));
+  return fromX + (toX - fromX) * t;
+}
