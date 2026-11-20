@@ -61,11 +61,11 @@ extract 295 sketch-39-battles-of-scarpe # p. 264
 # --- Unit histories on archive.org (Task 8): the OCR text of each book --------------------------------------
 # archive.org's download links redirect to storage hosts outside the allowed list, so the text is read from the
 # item's "stream" page, which wraps it in <pre>…</pre>.
-archive_text() { # archive_text <archive.org identifier> <output name>
-  local out="$OUT/$2.txt"
+archive_text() { # archive_text <archive.org identifier> <output name> [<text file name, without _djvu.txt>]
+  local out="$OUT/$2.txt" base="${3:-$1}"
   if [ ! -s "$out" ]; then
     echo "fetch-sources: downloading $1 (archive.org full text)"
-    curl -fsS -o "$out.html" "https://archive.org/stream/$1/$1_djvu.txt"
+    curl -fsS -o "$out.html" "https://archive.org/stream/$1/${base}_djvu.txt"
     python3 -I -c 'import html, re, sys
 page = open(sys.argv[1], encoding="utf-8", errors="replace").read()
 m = re.search(r"<pre[^>]*>(.*?)</pre>", page, re.S)
@@ -79,14 +79,20 @@ archive_text fifthdivisioning00huss hussey-inman-1921      # The Fifth Division 
 archive_text 72seaforthhigh00mcevuoft mcevoy-finlay-1920   # History of the 72nd Battalion
 archive_text eightyfifthinfra00hayeuoft hayes-1920         # The Eighty-Fifth in France and Flanders
 archive_text tenthbattalion00holluoft holland-1918         # The Story of the Tenth Canadian Battalion
+# Task 9: the British official history (Falls, 1917 vol. I) and the AEF's German division histories
+archive_text in.ernet.dli.2015.210683 boh-1917-1 2015.210683.Military-Operations
+archive_text historiesoftwohu00unit aef-251-divisions-1920
 
 # --- English Wikipedia, the exact revisions cited (Task 8) -------------------------------------------------
 WIKI="$OUT/wikipedia"
 mkdir -p "$WIKI"
-wiki_rev() { # wiki_rev <revision id>; en.wikipedia.org rate-limits, so wait between requests
-  if [ ! -s "$WIKI/$1.wiki" ]; then
-    curl -fsS -A "wwi-sim-research/0.1" -o "$WIKI/$1.wiki.part" "https://en.wikipedia.org/w/index.php?oldid=$1&action=raw"
-    mv "$WIKI/$1.wiki.part" "$WIKI/$1.wiki"
+wiki_rev() { # wiki_rev <revision id> [<language>]; Wikipedia rate-limits, so wait between requests
+  local lang="${2:-en}" dir="$WIKI"
+  [ "$lang" = en ] || dir="$OUT/wikipedia-$lang"
+  mkdir -p "$dir"
+  if [ ! -s "$dir/$1.wiki" ]; then
+    curl -fsS -A "wwi-sim-research/0.1" -o "$dir/$1.wiki.part" "https://$lang.wikipedia.org/w/index.php?oldid=$1&action=raw"
+    mv "$dir/$1.wiki.part" "$dir/$1.wiki"
     sleep 2
   fi
 }
@@ -98,6 +104,25 @@ for rev in 1283223092 \
   1308898073 1335680448 1386298168; do
   wiki_rev "$rev"
 done
+# Task 9: Tournai (coordinates) on English Wikipedia; the German divisions and commanders on German Wikipedia
+# (16. Bay. ID, 1. Bay. RD, 79. RD, Wichura, Fasbender, Falkenhausen).
+wiki_rev 1384058402
+for rev in 184527473 261023829 238811839 246262387 262475847 257541434; do
+  wiki_rev "$rev" de
+done
+
+# --- IGN BD TOPO settlement areas (Task 9): the villages that place the German reserves --------------------
+# A village's position is the mean of its outline's vertices (docs/research/vimy/oob-german.md, Reserves).
+VILLAGES="$OUT/bdtopo/zone_d_habitation-villages.json"
+if [ ! -s "$VILLAGES" ]; then
+  mkdir -p "$OUT/bdtopo"
+  curl -fsS -G -o "$VILLAGES.part" "https://data.geopf.fr/wfs/ows" \
+    --data-urlencode "service=WFS" --data-urlencode "version=2.0.0" --data-urlencode "request=GetFeature" \
+    --data-urlencode "typeNames=BDTOPO_V3:zone_d_habitation" --data-urlencode "outputFormat=application/json" \
+    --data-urlencode "srsName=EPSG:4326" --data-urlencode "propertyName=toponyme,nature,geometrie" \
+    --data-urlencode "CQL_FILTER=toponyme IN ('Bois-Bernard','Neuvireuil','Lens','Douai','Lille','Liévin','Méricourt') AND BBOX(geometrie,2.7,50.3,3.2,50.7,'EPSG:4326')"
+  mv "$VILLAGES.part" "$VILLAGES"
+fi
 
 size=$(wc -c <"$NICHOLSON_TXT")
 if [ "$size" -le 1000000 ]; then

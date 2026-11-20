@@ -64,3 +64,31 @@ sources:
     title: English Wikipedia articles on CEF infantry battalions (lists of commanding officers with dates)
     tier: tertiary
     note: "each citation's page names the article and the revision read (fetched 2026-11-20); the lists mostly cite Meek, Over the Top! (1971), which was not itself read"
+  boh-1917-1:
+    title: "Military Operations, France and Belgium, 1917: The German Retreat to the Hindenburg Line and the Battles of Arras"
+    author: Cyril Falls
+    year: 1940
+    url: https://archive.org/details/in.ernet.dli.2015.210683
+    tier: official
+    note: "the British official history (Task 9); ch. XI-XIII, Vimy Ridge (about pp. 300-356), with Notes on the German side drawn from 'Die Osterschlacht bei Arras' and German regimental histories (p. 352 n.2); local OCR text via scripts/fetch-sources.sh; the printed page numbers are cited, some of which the OCR misreads (388 for 338)"
+  aef-251-divisions:
+    title: "Histories of Two Hundred and Fifty-One Divisions of the German Army which Participated in the War (1914-1918)"
+    author: Intelligence Section of the General Staff, American Expeditionary Forces
+    year: 1920
+    url: https://archive.org/details/historiesoftwohu00unit
+    tier: primary
+    note: "compiled in 1919 from Allied wartime intelligence (prisoners, documents), cited by Nicholson p. 246 n.45; each division's composition in 1917 and its movements; Allied intelligence, not German records. Local OCR text via scripts/fetch-sources.sh; the composition tables are garbled in the OCR"
+  ign-bdtopo-habitation:
+    title: BD TOPO V3 settlement areas (zone_d_habitation), Géoplateforme WFS
+    author: IGN (Institut national de l'information géographique et forestière)
+    url: https://data.geopf.fr/wfs/ows
+    tier: secondary
+    note: "modern built-up areas (fetched 2026-11-20); a village's position is the mean of its outline's vertices, good to a few hundred metres for the 1917 village (Task 9 reserve distances)"
+  wikipedia-de-german-army:
+    title: German Wikipedia articles on the German divisions and commanders at Vimy
+    tier: tertiary
+    note: "each citation's page names the article and the revision read (fetched 2026-11-20); commanders' names, ranks and dates, mostly citing Wegner, Stellenbesetzung der Deutschen Heere (1990), which was not read"
+  wikipedia-en-places:
+    title: English Wikipedia articles on places outside France (coordinates)
+    tier: tertiary
+    note: "each citation's page names the article and the revision read (fetched 2026-11-20); used for Tournai, which IGN's French data does not cover"

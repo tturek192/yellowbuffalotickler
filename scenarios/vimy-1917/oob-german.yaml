@@ -1,2 +1,728 @@
-# German order of battle and garrisons (filled by a later task). An empty stub until then.
-forces: []
+# German order of battle, 9 April 1917, down to company (Task 9): the Sixth Army's two Gruppen opposite the Canadian
+# Corps, their three front-line divisions, every front-line company as a garrison on a mapped trench, and the off-map
+# reserves. Research notes, sources and every estimate's reasoning: docs/research/vimy/oob-german.md. Leaders are in
+# leaders.yaml.
+#
+# Conventions (oob-german.md, "Garrisons"):
+# - Regimental zones are bands of y on the German first position, south to north: the 79th Reserve Division's three
+#   regiments split its front (D49 Neuville-Thelus road, y -2726, to half the 4th Canadian Division's sector, y 375)
+#   equally (1,034 m each); the other regiments take the same width, BIR 14 running on to the end of the mapped trench.
+# - Each regiment: a front battalion on the first position, a support battalion on the nearest mapped trench or
+#   strongpoint behind it, a resting battalion off the map. Which battalion had which role is a convention (I front,
+#   II support, III resting) except where a source names it (comments below).
+# - Companies are numbered through the regiment (1-4 in I, 5-8 in II, 9-12 in III); start is lon/lat (the frame
+#   projects it) and lies on the feature named by trenchFeatureId. Garrison companies hold for the whole run.
+forces:
+  - side: central
+    doctrine: de-1917
+    formations:
+      - id: sixth-army
+        name: "Sixth Army (6. Armee)"
+        kind: army
+        leaderId: falkenhausen
+        # Nicholson p. 246: "General von Falkenhausen's Sixth Army, with 20 divisions forward"
+        children:
+          - id: gruppe-vimy
+            name: "Gruppe Vimy (I Bavarian Reserve Corps)"
+            kind: group
+            leaderId: fasbender
+            # BOH p. 197: the 79th Reserve, 1st Bavarian Reserve and 14th Bavarian Divisions "formed the Vimy Group"; the
+            # 14th Bavarian held north of the Scarpe, off the map (pp. 276, 353), and is not entered
+            children:
+              - id: 79rd
+                name: "79th Reserve Division"
+                kind: division
+                leaderId: bacmeister
+                # BOH p. 353: its three regiments held "from the cross-roads on Hill 145 to the Thelus-Neuville road"
+                children:
+                  - id: rir261
+                    name: "Reserve Infantry Regiment 261 (RIR 261)"
+                    kind: regiment
+                    # north: faced the right half of the 4th Canadian Division (BOH p. 353; oob-german.md)
+                    # zone on the first position: y -659 to 375
+                    children:
+                      - id: rir261-i
+                        name: "I./RIR 261"
+                        kind: battalion
+                        # front battalion ("one battalion formed the garrison of the first and second trenches", BOH p. 317): four companies at the quarter points of the zone on the first position
+                        companies:
+                          - id: rir261-1
+                            name: "1./RIR 261"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.770163, 50.373850] }
+                          - id: rir261-2
+                            name: "2./RIR 261"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.767485, 50.375809] }
+                          - id: rir261-3
+                            name: "3./RIR 261"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.765507, 50.377889] }
+                          - id: rir261-4
+                            name: "4./RIR 261"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.762727, 50.379831] }
+                      - id: rir261-ii
+                        name: "II./RIR 261"
+                        kind: battalion
+                        # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
+                        companies:
+                          - id: rir261-5
+                            name: "5./RIR 261"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.771799, 50.372933] }
+                          - id: rir261-6
+                            name: "6./RIR 261"
+                            role: garrison
+                            trenchFeatureId: hill-145
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.774211, 50.379247] }
+                          - id: rir261-7
+                            name: "7./RIR 261"
+                            role: garrison
+                            trenchFeatureId: hill-145
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.774065, 50.379597] }
+                          - id: rir261-8
+                            name: "8./RIR 261"
+                            role: garrison
+                            trenchFeatureId: hill-145
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.773919, 50.379947] }
+                      - id: rir261-iii
+                        name: "III./RIR 261"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                  - id: rir262
+                    name: "Reserve Infantry Regiment 262 (RIR 262)"
+                    kind: regiment
+                    # "the whole of the 262nd" faced the 3rd Canadian Division (BOH p. 317 n.3); held the Bois de la Folie (p. 355)
+                    # zone on the first position: y -1692 to -659
+                    children:
+                      - id: rir262-i
+                        name: "I./RIR 262"
+                        kind: battalion
+                        # front battalion ("one battalion formed the garrison of the first and second trenches", BOH p. 317): four companies at the quarter points of the zone on the first position
+                        companies:
+                          - id: rir262-1
+                            name: "1./RIR 262"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.776167, 50.365202] }
+                          - id: rir262-2
+                            name: "2./RIR 262"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.775470, 50.367502] }
+                          - id: rir262-3
+                            name: "3./RIR 262"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.774341, 50.369728] }
+                          - id: rir262-4
+                            name: "4./RIR 262"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.772908, 50.371902] }
+                      - id: rir262-ii
+                        name: "II./RIR 262"
+                        kind: battalion
+                        # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
+                        companies:
+                          - id: rir262-5
+                            name: "5./RIR 262"
+                            role: garrison
+                            trenchFeatureId: la-folie-farm
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.785139, 50.368144] }
+                          - id: rir262-6
+                            name: "6./RIR 262"
+                            role: garrison
+                            trenchFeatureId: la-folie-farm
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.784993, 50.368494] }
+                          - id: rir262-7
+                            name: "7./RIR 262"
+                            role: garrison
+                            trenchFeatureId: la-folie-farm
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.784847, 50.368844] }
+                          - id: rir262-8
+                            name: "8./RIR 262"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.773186, 50.371724] }
+                      - id: rir262-iii
+                        name: "III./RIR 262"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                  - id: rir263
+                    name: "Reserve Infantry Regiment 263 (RIR 263)"
+                    kind: regiment
+                    # south: "in front of Thelus" (BOH p. 314 n.1); its left faced the 3rd Canadian Division (p. 317 n.3)
+                    # zone on the first position: y -2726 to -1692
+                    children:
+                      - id: rir263-i
+                        name: "I./RIR 263"
+                        kind: battalion
+                        # front battalion ("one battalion formed the garrison of the first and second trenches", BOH p. 317): four companies at the quarter points of the zone on the first position
+                        # front battalion: BOH p. 325 n.1 (I./263rd Reserve headquarters at the Schwaben Tunnel); relieved into the line 1-2 a.m. on 9 April (p. 314 n.1)
+                        companies:
+                          - id: rir263-1
+                            name: "1./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.780194, 50.356214] }
+                          - id: rir263-2
+                            name: "2./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.779693, 50.358548] }
+                          - id: rir263-3
+                            name: "3./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.777482, 50.360588] }
+                          - id: rir263-4
+                            name: "4./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.776831, 50.362896] }
+                      - id: rir263-ii
+                        name: "II./RIR 263"
+                        kind: battalion
+                        # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
+                        companies:
+                          - id: rir263-5
+                            name: "5./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.780162, 50.357423] }
+                          - id: rir263-6
+                            name: "6./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.780140, 50.358273] }
+                          - id: rir263-7
+                            name: "7./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.779858, 50.358446] }
+                          - id: rir263-8
+                            name: "8./RIR 263"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.776700, 50.363583] }
+                      - id: rir263-iii
+                        name: "III./RIR 263"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                  - id: ir118-i
+                    name: "I./IR 118 (56th Division)"
+                    kind: battalion
+                    # attached 9 April: one of "two battalions ... placed at the disposal of the 79th Reserve Division" (BOH p. 354); off the map, in reserves
+                  - id: rir34-iii
+                    name: "III./RIR 34 (80th Reserve Division)"
+                    kind: battalion
+                    # attached 9 April: the other of the two (BOH p. 354); identity and title disputed (oob-german.md, Conflicts); off the map, in reserves
+              - id: 1brd
+                name: "1st Bavarian Reserve Division"
+                kind: division
+                leaderId: pechmann
+                # BOH p. 276: "in line from east of Roclincourt to the Neuville St. Vaast-Thelus road"; its right regiment and
+                # part of the centre faced the 1st Canadian Division (p. 353). BRIR 2, on the left, faced the British 51st
+                # Division south of the map (p. 276) and is not entered.
+                children:
+                  - id: brir3
+                    name: "Bavarian Reserve Infantry Regiment 3 (BRIR 3)"
+                    kind: regiment
+                    # right regiment: faced the 1st Canadian Division (BOH p. 353); its commander and staff were taken in the Bois de la Ville (p. 337)
+                    # zone on the first position: y -3760 to -2726
+                    children:
+                      - id: brir3-i
+                        name: "I./BRIR 3"
+                        kind: battalion
+                        # front battalion ("one battalion formed the garrison of the first and second trenches", BOH p. 317): four companies at the quarter points of the zone on the first position
+                        companies:
+                          - id: brir3-1
+                            name: "1./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.778237, 50.346196] }
+                          - id: brir3-2
+                            name: "2./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.778912, 50.348733] }
+                          - id: brir3-3
+                            name: "3./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.779315, 50.351222] }
+                          - id: brir3-4
+                            name: "4./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.781129, 50.353955] }
+                      - id: brir3-ii
+                        name: "II./BRIR 3"
+                        kind: battalion
+                        # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
+                        companies:
+                          - id: brir3-5
+                            name: "5./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: zwolfer-graben
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.786454, 50.347368] }
+                          - id: brir3-6
+                            name: "6./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: zwolfer-graben
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.787041, 50.350050] }
+                          - id: brir3-7
+                            name: "7./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: zwolfer-graben
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.786779, 50.352218] }
+                          - id: brir3-8
+                            name: "8./BRIR 3"
+                            role: garrison
+                            trenchFeatureId: zwischen-stellung
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.791480, 50.354895] }
+                      - id: brir3-iii
+                        name: "III./BRIR 3"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                  - id: brir1
+                    name: "Bavarian Reserve Infantry Regiment 1 (BRIR 1)"
+                    kind: regiment
+                    # centre regiment: part of it faced the 1st Canadian Division (BOH p. 353); its zone runs on south of the Canadian sector
+                    # zone on the first position: y -4793 to -3760
+                    children:
+                      - id: brir1-i
+                        name: "I./BRIR 1"
+                        kind: battalion
+                        # front battalion ("one battalion formed the garrison of the first and second trenches", BOH p. 317): four companies at the quarter points of the zone on the first position
+                        companies:
+                          - id: brir1-1
+                            name: "1./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.780465, 50.337500] }
+                          - id: brir1-2
+                            name: "2./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.778886, 50.339047] }
+                          - id: brir1-3
+                            name: "3./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.776860, 50.341119] }
+                          - id: brir1-4
+                            name: "4./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.778031, 50.343741] }
+                      - id: brir1-ii
+                        name: "II./BRIR 1"
+                        kind: battalion
+                        # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
+                        companies:
+                          - id: brir1-5
+                            name: "5./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: zwolfer-graben
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.786614, 50.339505] }
+                          - id: brir1-6
+                            name: "6./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: zwolfer-graben
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.786030, 50.340221] }
+                          - id: brir1-7
+                            name: "7./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: zwolfer-graben
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.785005, 50.342475] }
+                          - id: brir1-8
+                            name: "8./BRIR 1"
+                            role: garrison
+                            trenchFeatureId: zwolfer-graben
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.785599, 50.345016] }
+                      - id: brir1-iii
+                        name: "III./BRIR 1"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                  - id: rir225-i
+                    name: "I./RIR 225 (49th Reserve Division)"
+                    kind: battalion
+                    # attached 9 April from the Lille area (BOH p. 354); off the map, in reserves
+                  - id: bir6-iii
+                    name: "III./BIR 6"
+                    kind: battalion
+                    # attached 9 April from the Lille area (BOH p. 354, "III./6th Bavarian"; the OCR is uncertain); off the map, in reserves
+                  - id: bir21-iii
+                    name: "III./BIR 21 (5th Bavarian Division)"
+                    kind: battalion
+                    # attached 9 April from the Lille area (BOH pp. 277, 354); off the map, in reserves
+          - id: gruppe-souchez
+            name: "Gruppe Souchez (VIII Reserve Corps)"
+            kind: group
+            leaderId: wichura
+            # BOH p. 355: "the corps further north, Group Souchez"; VIII Reserve Corps per wikipedia-vimy-oob (citing Godefroy
+            # pp. 228-229) and wikipedia-de-german-army (Wichura). Its 80th Reserve and 56th Divisions, north of the Bois en
+            # Hache (BOH p. 356), are off the map and not entered.
+            children:
+              - id: 16bd
+                name: "16th Bavarian Infantry Division"
+                kind: division
+                leaderId: moehl
+                # Nicholson p. 246: "the 16th Bavarian Infantry Division opposite Souchez"; the northern division is disputed
+                # (16th or 14th Bavarian; oob-german.md, Conflicts). Regiments: aef-251-divisions p. 273.
+                children:
+                  - id: bir11
+                    name: "Bavarian Infantry Regiment 11 (BIR 11)"
+                    kind: regiment
+                    # left regiment of the division: "part of the left regiment of the 16th Bavarian faced the remainder of the 4th Canadian Division" (BOH p. 353)
+                    # zone on the first position: y 375 to 1409
+                    children:
+                      - id: bir11-i
+                        name: "I./BIR 11"
+                        kind: battalion
+                        # front battalion ("one battalion formed the garrison of the first and second trenches", BOH p. 317): four companies at the quarter points of the zone on the first position
+                        companies:
+                          - id: bir11-1
+                            name: "1./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.760592, 50.381884] }
+                          - id: bir11-2
+                            name: "2./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.759140, 50.384054] }
+                          - id: bir11-3
+                            name: "3./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.760014, 50.386625] }
+                          - id: bir11-4
+                            name: "4./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.759147, 50.388896] }
+                      - id: bir11-ii
+                        name: "II./BIR 11"
+                        kind: battalion
+                        # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
+                        companies:
+                          - id: bir11-5
+                            name: "5./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.761191, 50.380899] }
+                          - id: bir11-6
+                            name: "6./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.759937, 50.386002] }
+                          - id: bir11-7
+                            name: "7./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.760151, 50.387725] }
+                          - id: bir11-8
+                            name: "8./BIR 11"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.760043, 50.387851] }
+                      - id: bir11-iii
+                        name: "III./BIR 11"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                        # resting battalion: BOH p. 355 ("the III./11th Bavarian")
+                  - id: bir14
+                    name: "Bavarian Infantry Regiment 14 (BIR 14)"
+                    kind: regiment
+                    # held the line from Hill 145 to the Souchez valley with BIR 11 on 10 April (BOH p. 345 n.3); its zone, the Pimple sector, is an estimate
+                    # zone on the first position: y 1409 to 2552
+                    children:
+                      - id: bir14-i
+                        name: "I./BIR 14"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                        # resting battalion: BOH p. 355 ("the I./14th Bavarian")
+                      - id: bir14-ii
+                        name: "II./BIR 14"
+                        kind: battalion
+                        # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
+                        # support battalion: wikipedia-vimy-oob (citing Sheldon p. 316: "2nd Battalion kept in reserve")
+                        companies:
+                          - id: bir14-5
+                            name: "5./BIR 14"
+                            role: garrison
+                            trenchFeatureId: the-pimple
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.758160, 50.393250] }
+                          - id: bir14-6
+                            name: "6./BIR 14"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.758316, 50.395423] }
+                          - id: bir14-7
+                            name: "7./BIR 14"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.758089, 50.396968] }
+                          - id: bir14-8
+                            name: "8./BIR 14"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.757325, 50.398553] }
+                      - id: bir14-iii
+                        name: "III./BIR 14"
+                        kind: battalion
+                        # front battalion ("one battalion formed the garrison of the first and second trenches", BOH p. 317): four companies at the quarter points of the zone on the first position
+                        companies:
+                          - id: bir14-9
+                            name: "9./BIR 14"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.757857, 50.391223] }
+                          - id: bir14-10
+                            name: "10./BIR 14"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.757985, 50.393922] }
+                          - id: bir14-11
+                            name: "11./BIR 14"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.758190, 50.396634] }
+                          - id: bir14-12
+                            name: "12./BIR 14"
+                            role: garrison
+                            trenchFeatureId: ger-first-position
+                            strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
+                            paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
+                            start: { lonLat: [2.756155, 50.398961] }
+                  - id: brir21
+                    name: "Bavarian Reserve Infantry Regiment 21 (BRIR 21)"
+                    kind: regiment
+                    # held the line north of the Souchez (estimate, oob-german.md); only its resting battalion is entered
+                    children:
+                      - id: brir21-i
+                        name: "I./BRIR 21"
+                        kind: battalion
+                        # resting battalion ("billeted in rear villages about two hours' march", Nicholson p. 247): off the map, in `reserves` below; no companies
+                        # resting battalion: BOH p. 355 ("I./21st Bavarian Reserve"); the regiment's other two battalions held the line north of the Souchez, off the map, and are not entered
+          # Sixth Army reserve: off the map, in reserves below. No companies: their arrival is Plan 3's.
+          - id: 4gd
+            name: "4th Guard Division"
+            kind: division
+            # BOH p. 356: its 5th Guard Grenadier Regiment entered the 16th Bavarian Division's line early on 10 April
+          - id: 111id
+            name: "111th Division"
+            kind: division
+            # BOH p. 356: its 73rd and 164th Regiments entered the 79th Reserve Division's line; "not a counter-attack division"
+          - id: 17id
+            name: "17th Division"
+            kind: division
+            # BOH p. 356: its 89th Grenadier and 75th Regiments entered the 1st Bavarian Reserve Division's line
+
+# Off-map reserves (oob-german.md, "Reserves"). distanceKm is the straight line from where the reserve lay on the
+# morning of 9 April to the sector it was sent to; entryPoint is where that line crosses the edge of the frame's extent
+# (or, where the start is unknown, the edge due east of the sector). Arrival times are historical.reserveArrivals (Task 10).
+reserves:
+  - formationId: rir261-iii
+    side: central
+    distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
+    entryPoint: { lonLat: [2.878889, 50.396189] }
+    note: "resting battalion (I front, II support, III resting is a convention here); entry due east of the regiment's sector"
+  - formationId: rir262-iii
+    side: central
+    distanceKm: { value: 9.8, estimate: "straight line from Bois-Bernard to the centre of the regiment's sector on the first position; BOH p. 317 n.3: the 262nd's and 263rd's third battalions in rest billets 'at Bois Bernard and Neuvireuil' (which village held which is assumed from their positions; villages from ign-bdtopo-habitation); BOH p. 317: 'five or six miles'" }
+    entryPoint: { lonLat: [2.886227, 50.378602] }
+    orderedAt: { value: 1917-04-09T11:00, source: "boh-1917-1", page: "354", note: "the 79th Reserve Division's order for an immediate counter-attack on Hill 135; BOH's times are taken as British time" }
+    note: "resting battalion; taken to be the battalion 'of the 262nd Reserve Regiment, in the sector concerned' named for the 79th Reserve Division's counter-attack (BOH p. 354)"
+  - formationId: rir263-iii
+    side: central
+    distanceKm: { value: 9.5, estimate: "straight line from Neuvireuil to the centre of the regiment's sector on the first position; BOH p. 317 n.3 (billets at Bois Bernard and Neuvireuil; which village held which is assumed); villages from ign-bdtopo-habitation" }
+    entryPoint: { lonLat: [2.890341, 50.352660] }
+    note: "resting battalion (III is a convention here); entry where the line from Neuvireuil crosses the frame's southern edge"
+  - formationId: brir3-iii
+    side: central
+    distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
+    entryPoint: { lonLat: [2.890195, 50.369092] }
+    note: "resting battalion (III is a convention here); entry due east of the regiment's sector"
+  - formationId: brir1-iii
+    side: central
+    distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
+    entryPoint: { lonLat: [2.893963, 50.360060] }
+    note: "resting battalion (III is a convention here); entry due east of the regiment's sector"
+  - formationId: bir11-iii
+    side: central
+    distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
+    entryPoint: { lonLat: [2.875120, 50.405222] }
+    note: "resting battalion (BOH p. 355); assembled between Lievin and Mericourt in front of the Avion Switch and then reinforced the southern end of Givenchy (p. 355); entry due east of the regiment's sector"
+  - formationId: bir14-i
+    side: central
+    distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
+    entryPoint: { lonLat: [2.871152, 50.414734] }
+    orderedAt: { value: 1917-04-09T18:00, source: "boh-1917-1", page: "355", note: "'At 6 p.m. the I./14th Bavarian was ordered to re-establish the line on the northern slope of Hill 145'; Nicholson p. 260 the same" }
+    note: "resting battalion (BOH p. 355); halted behind the Bois de l'Hirondelle, then failed to retake the northern slope of Hill 145 that night (p. 355; Nicholson p. 260); entry due east of the regiment's sector"
+  - formationId: brir21-i
+    side: central
+    distanceKm: { value: 8.9, estimate: "BOH p. 317: the five regiments' resting battalions were 'in villages five or six miles in rear' (8.0-9.7 km; 5.5 miles taken); Nicholson p. 247: 'about two hours' march'; this battalion's billet not found" }
+    entryPoint: { lonLat: [2.871152, 50.414734] }
+    note: "resting battalion (BOH p. 355); halted behind the Bois de l'Hirondelle (p. 355); entry due east of the Pimple sector, the nearest mapped one"
+  - formationId: ir118-i
+    side: central
+    distanceKm: { value: 6.3, estimate: "BOH p. 354: the two battalions 'moved up from east of Lens'; straight line from Lens (ign-bdtopo-habitation) to La Chaudiere, where the northern counter-attack force arrived after dark (p. 355); a lower bound, as their start east of Lens is not given" }
+    entryPoint: { lonLat: [2.817241, 50.416880] }
+    orderedAt: { value: 1917-04-09T11:00, source: "boh-1917-1", page: "354", note: "the 79th Reserve Division's counter-attack order, for which these battalions were available; when they were set moving is not given" }
+    note: "attached to the 79th Reserve Division on 9 April (BOH p. 354, 'from the 56th'); its regiment per wikipedia-vimy-oob ('118th Reserve', citing Sheldon p. 308) and aef-251-divisions p. 352 (the 118th Infantry Regiment went to the 56th Division); oob-german.md, Conflicts"
+  - formationId: rir34-iii
+    side: central
+    distanceKm: { value: 6.3, estimate: "BOH p. 354: the two battalions 'moved up from east of Lens'; straight line from Lens (ign-bdtopo-habitation) to La Chaudiere, where the northern counter-attack force arrived after dark (p. 355); a lower bound, as their start east of Lens is not given" }
+    entryPoint: { lonLat: [2.817241, 50.416880] }
+    orderedAt: { value: 1917-04-09T11:00, source: "boh-1917-1", page: "354", note: "the 79th Reserve Division's counter-attack order, for which these battalions were available; when they were set moving is not given" }
+    note: "attached to the 79th Reserve Division on 9 April (BOH p. 354, from the 80th Reserve Division); its regiment per wikipedia-vimy-oob ('34th Bavarian Reserve', citing Sheldon p. 291) and aef-251-divisions p. 541 (the 80th Reserve Division's '34 Res.'); oob-german.md, Conflicts"
+  - formationId: rir225-i
+    side: central
+    distanceKm: { value: 36.7, estimate: "BOH p. 354: moved 'by train and lorry from the Lille area'; straight line from Lille (ign-bdtopo-habitation) to the centre of BRIR 3's sector" }
+    entryPoint: { lonLat: [2.846172, 50.421858] }
+    note: "attached to the 1st Bavarian Reserve Division on 9 April (BOH p. 354); newly arrived at Arleux, ordered to 'recapture' Willerval after the cavalry patrols (p. 338 n.1); a battalion of the 49th Reserve Division, then near Lille (aef-251-divisions p. 486)"
+  - formationId: bir6-iii
+    side: central
+    distanceKm: { value: 36.7, estimate: "BOH p. 354: moved 'by train and lorry from the Lille area'; straight line from Lille (ign-bdtopo-habitation) to the centre of BRIR 3's sector" }
+    entryPoint: { lonLat: [2.846172, 50.421858] }
+    note: "attached to the 1st Bavarian Reserve Division on 9 April (BOH p. 354; 'III./6th Bavarian' as the OCR reads)"
+  - formationId: bir21-iii
+    side: central
+    distanceKm: { value: 36.7, estimate: "BOH p. 354: moved 'by train and lorry from the Lille area'; straight line from Lille (ign-bdtopo-habitation) to the centre of BRIR 3's sector" }
+    entryPoint: { lonLat: [2.846172, 50.421858] }
+    note: "attached to the 1st Bavarian Reserve Division on 9 April (BOH p. 354); of the 5th Bavarian Division 'in line west of Lille', it appeared on BRIR 1's right after dusk (p. 277)"
+  - formationId: 4gd
+    side: central
+    distanceKm: { value: 50.7, range: [16.1, 50.7], sources: [{ source: "nicholson-1962", page: "247", note: "the five reserve divisions 'from ten to twenty-five miles behind the front'" }, { source: "boh-1917-1", page: "354", note: "the five counter-attack divisions 'still fifteen to twenty miles from the battlefield' at dawn on 9 April" }, { source: "boh-1917-1", page: "345 n.3", note: "the 4th Guard Division arrived 'from Tournai'; straight line from Tournai (wikipedia-en-places) to the 16th Bavarian Division's sector" }, { source: "aef-251-divisions", page: "89", note: "three weeks' rest near Tournai, then 'sent by stages to the south of Lens'" }], note: "the general distances of the reserve divisions against this division's own place at Tournai; the working value is Tournai" }
+    entryPoint: { lonLat: [2.856784, 50.423684] }
+    note: "Sixth Army counter-attack division; its 5th Guard Grenadier Regiment entered the 16th Bavarian Division's line early on 10 April (BOH p. 356)"
+  - formationId: 17id
+    side: central
+    distanceKm: { value: 22.9, estimate: "straight line from Douai (ign-bdtopo-habitation) to the 1st Bavarian Reserve Division's sector; aef-251-divisions p. 277: it rested 'southwest of Douai'; BOH p. 317: 'at least two divisions in Sixth Army reserve near Douai, twelve to fifteen miles away' (19.3-24.1 km)" }
+    entryPoint: { lonLat: [2.894250, 50.359374] }
+    note: "Sixth Army counter-attack division (BOH p. 277); its 89th Grenadier and 75th Regiments entered the 1st Bavarian Reserve Division's line (p. 356)"
+  - formationId: 111id
+    side: central
+    distanceKm: { value: 24, estimate: "no source read places it on 9 April; BOH p. 356 n.1: it 'happened to be passing through the area on its way north'; 24 km (15 miles) is the near end of BOH p. 354's 'fifteen to twenty miles' for the reserve divisions" }
+    entryPoint: { lonLat: [2.882658, 50.387157] }
+    note: "not a counter-attack division (BOH p. 356 n.1); its 73rd and 164th Regiments entered the 79th Reserve Division's line (p. 356); entry due east of RIR 262's sector, an estimate"

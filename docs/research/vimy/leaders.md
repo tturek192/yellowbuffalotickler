@@ -1,7 +1,7 @@
 # Vimy research: the allied leaders and their drafted ratings
 
 This note covers the allied entries in `scenarios/vimy-1917/leaders.yaml` (Task 8; Task 9 adds the German leaders to the
-same file) and the `leaderId` of every allied formation in `scenarios/vimy-1917/oob-canadian.yaml`. What each rating
+same file, with their notes in `oob-german.md`, "Leaders") and the `leaderId` of every allied formation in `scenarios/vimy-1917/oob-canadian.yaml`. What each rating
 means is in `leader-rubric.md`.
 
 **The ratings are the owner's to change.** Every rating below is an `estimate` drafted by the builder, with its

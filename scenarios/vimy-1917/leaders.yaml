@@ -289,3 +289,65 @@ leaders:
   - id: co-85bn
     name: { value: "A. H. Borden", source: "hayes-1920", page: "45", note: "'the Commanding Officer Lieut-Col. A. H. Borden'" }
     rank: { value: "Lieutenant-Colonel", source: "hayes-1920", page: "45" }
+  # --- German leaders (Task 9; docs/research/vimy/oob-german.md, "Leaders"). Army, Gruppe and division commanders carry
+  # drafted ratings, the owner's to change, on the same rubric (leader-rubric.md). Times in the justifications are BOH's.
+  # Sixth Army
+  - id: falkenhausen
+    name: { value: "Ludwig von Falkenhausen", source: "wikipedia-de-german-army", page: "Ludwig von Falkenhausen, rev. 257541434", note: "BOH 1917 I p. 198: 'Colonel-General Freiherr von Falkenhausen'; Nicholson p. 246: 'General von Falkenhausen's Sixth Army'" }
+    rank: { value: "Colonel-General (Generaloberst)", source: "boh-1917-1", page: "198" }
+    ratings:
+      planning: { value: 1, estimate: "Nicholson p. 267: blamed 'for having misjudged the strength and the frontage of the expected attack'; p. 268 and BOH p. 354: held the counter-attack divisions 15-20 miles back although Ludendorff and Rupprecht urged them closer; BOH p. 353: the defence-in-depth programme 'hardly got beyond the paper stage'. Nicholson p. 268 adds that the Army was 'criticized beyond its just deserts'" }
+      orderSpeed: { value: 2, estimate: "Nicholson p. 268: 'in no hurry to commit these divisions, two of which, held near Douai, might have reached Vimy Ridge by rail in the first four hours'; BOH p. 354: at dawn on 9 April their orders 'remained unchanged, with the exception of those of a few battalions'" }
+      adaptiveness: { value: 2, estimate: "Nicholson p. 260: 'not realizing the extent of the Canadian Corps' success', still treated the reserve divisions 'primarily as a relief'; BOH p. 354: met the attack on the Somme pattern, sending resting and Army-reserve battalions to block the flanks of a break-through" }
+      riskTolerance: { value: 3, estimate: "BOH p. 241: kept the counter-attack divisions 12-24 hours' march back 'so as to avoid the risk of their being shelled'; but BOH p. 355: on 10 April decided to counter-attack through Farbus and was overruled by Rupprecht. The two pull against each other, so the midpoint" }
+      moraleEffect: { value: 3, estimate: "no conduct of his own bearing on the troops' morale found in the sources read; the rubric midpoint until the owner rates it" }
+  # Gruppe Vimy (I Bavarian Reserve Corps)
+  - id: fasbender
+    name: { value: "Karl Ritter von Fasbender", source: "wikipedia-de-german-army", page: "Karl von Fasbender, rev. 262475847", note: "BOH 1917 I p. 197: 'the I. Bavarian Reserve Corps (General Ritter von Fasbender)'" }
+    rank: { value: "General of Infantry (General der Infanterie)", source: "wikipedia-de-german-army", page: "Karl von Fasbender, rev. 262475847", note: "BOH p. 197 has only 'General'" }
+    ratings:
+      planning: { value: 2, estimate: "BOH p. 353: the I Bavarian Reserve Corps' regiments were warned on 1 March of a great assault, and the 79th Reserve Division brought in on 27 February; but the reconstruction for a deep, mobile defence 'hardly got beyond the paper stage' and the batteries were 'still grouped in lines'" }
+      orderSpeed: { value: 3, estimate: "no conduct of the corps commander on 9 April found in the sources read (the counter-attack orders of the day came from the Army and the 79th Reserve Division, BOH p. 354); the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 4, estimate: "wikipedia-de-german-army (Karl von Fasbender, rev. 262475847; 1. Kgl. Bay. Reserve-Division, rev. 261023829): after the ridge was lost he asked for the corps to be drawn back some 3-5 km, out of view of the ridge, and was decorated for that 'Antrag'. Tertiary only; BOH p. 355 credits the withdrawal order to Rupprecht and Lossberg" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # Gruppe Souchez (VIII Reserve Corps)
+  - id: wichura
+    name: { value: "Georg Wichura", source: "wikipedia-de-german-army", page: "Georg Wichura, rev. 246262387", note: "'Carl Georg Wichura'; leading the VIII Reserve Corps from 7 September 1916. Not named in BOH or Nicholson" }
+    rank: { value: "General of Infantry (General der Infanterie)", source: "wikipedia-de-german-army", page: "Georg Wichura, rev. 246262387", note: "promoted 22 March 1917" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      orderSpeed: { value: 4, estimate: "BOH p. 355: 'by order of the corps further north, Group Souchez, six battalions had assembled between Lievin and Mericourt' and were in position by late afternoon on 9 April" }
+      adaptiveness: { value: 4, estimate: "BOH p. 355: with those six battalions and the artillery round Lens, 'the Avion Switch and the southern flank of the 16th Bavarian Division might be considered secure' by the evening of 9 April" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 79th Reserve Division
+  - id: bacmeister
+    name: { value: "Ernst von Bacmeister", source: "wikipedia-de-german-army", page: "79. Reserve-Division (Deutsches Kaiserreich), rev. 238811839, Kommandeure", note: "in command 7 August 1916 - 9 March 1918 (citing Wegner p. 184, not read). Not named in BOH or Nicholson" }
+    rank: { value: "Lieutenant-General (Generalleutnant)", source: "wikipedia-vimy-oob", note: "'Lieutenant-General Ernst August Marx von Bacmeister'; the de.wikipedia list gives General der Infanterie, probably a later rank" }
+    ratings:
+      planning: { value: 3, estimate: "BOH p. 314 n.1: the 263rd relieved its front battalion between 1 and 2 a.m. on 9 April 'without casualties', the routine kept up under bombardment; nothing beyond the routine found; the rubric midpoint" }
+      orderSpeed: { value: 2, estimate: "BOH p. 354: ordered 'an immediate counter-attack' on Hill 135 at 11 a.m., five and a half hours after zero, for 3 p.m.; 'it was after nightfall before the troops were in position', and the 262nd's commander, 'unaware of the arrangements', used them to fill gaps (p. 355)" }
+      adaptiveness: { value: 3, estimate: "BOH p. 354: answered the loss of Hill 135 with the counter-attack the doctrine prescribed, using the battalions given him; no change beyond that found" }
+      riskTolerance: { value: 4, estimate: "BOH p. 354: an immediate counter-attack with three battalions, one his own and two strange to the sector, uphill against the captured ridge, its hour 'optimistically fixed'" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 1st Bavarian Reserve Division
+  - id: pechmann
+    name: { value: "Friedrich von Pechmann", source: "wikipedia-de-german-army", page: "1. Königlich Bayerische Reserve-Division, rev. 261023829", note: "'Am 19. Februar 1917 wurde Generalmajor Friedrich von Pechmann zum Divisionskommandeur ernannt'. Not named in BOH or Nicholson" }
+    rank: { value: "Major-General (Generalmajor)", source: "wikipedia-de-german-army", page: "1. Königlich Bayerische Reserve-Division, rev. 261023829" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct of the divisional commander at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      orderSpeed: { value: 3, estimate: "no conduct found: BOH p. 354-355 records the three battalions from Lille set to counter-attack through the Bois de la Ville, but not who ordered it or when; the rubric midpoint" }
+      adaptiveness: { value: 3, estimate: "BOH p. 355: the counter-attack battalions 'achieved no more than the closing of gaps in the defence', whose decision is not recorded; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 16th Bavarian Infantry Division
+  - id: moehl
+    name: { value: "Arnold Ritter von Möhl", source: "wikipedia-de-german-army", page: "16. Königlich Bayerische Infanterie-Division, rev. 184527473, Kommandeure", note: "in command 14 January 1917 - 21 December 1918 (citing Wegner p. 669, not read). Not named in BOH or Nicholson" }
+    rank: { value: "Major-General (Generalmajor)", source: "wikipedia-de-german-army", page: "16. Königlich Bayerische Infanterie-Division, rev. 184527473, Kommandeure" }
+    ratings:
+      planning: { value: 3, estimate: "Nicholson p. 259 and BOH p. 311 n.2: the division had planned a gas-shell attack to take part of the 4th Canadian Division's front line, postponed by the wind; an offensive plan, not a provision for the defence, so the midpoint" }
+      orderSpeed: { value: 2, estimate: "Nicholson p. 260 and BOH p. 355: the reserve battalion (I./14th Bavarian) was ordered at 6 p.m. to 're-establish the line on the northern slope of Hill 145' and did not reach the Pimple till midnight. Who gave the order is not stated; taken as the division's" }
+      adaptiveness: { value: 3, estimate: "BOH p. 355: the III./11th Bavarian reinforced the southern end of Givenchy, the obvious adjustment to the open flank; the rubric midpoint" }
+      riskTolerance: { value: 4, estimate: "Nicholson p. 259: planned an attack to gain 'complete command of Zouave Valley' although the British preparations could be seen from the ridge (BOH p. 311); p. 260: a night counter-attack across the gully above Givenchy" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
