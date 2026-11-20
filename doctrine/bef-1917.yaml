@@ -1,0 +1,18 @@
+id: bef-1917
+title: BEF 1917 infantry doctrine (draft)
+sources:
+  vimy-brief-2026:
+    title: Owner's Vimy research brief
+    year: 2026
+followDistanceM:
+  value: 70
+  estimate: SS 135/SS 143 practice of keeping close to the barrage; to source in Plan 2
+maxAdvanceMPerMin:
+  value: 50
+  estimate: ~3 km/h over cratered ground; calibrated in Plan 4
+startJitterMin:
+  value: 2
+  estimate: engine-test jitter; to calibrate in Plan 4
+speedJitterFrac:
+  value: 0.1
+  estimate: engine-test jitter; to calibrate in Plan 4

@@ -1,0 +1,343 @@
+id: vimy-1917-1cdn-3bde
+title: "Vimy Ridge 9 April 1917: 1st Canadian Division sector (draft)"
+status: draft
+sources:
+  vimy-brief-2026:
+    title: Owner's Vimy research brief (compiles Nicholson, Campbell, the RCA fire-plan essay and others)
+    year: 2026
+  artillery-notes-4:
+    title: Artillery Notes No. 4, as quoted in the brief
+zeroHour:
+  value: 1917-04-09T05:30
+  source: vimy-brief-2026
+timeLimitMinutes: 1440
+geometrySource:
+  value: Schematic straight-line trench and objective lines
+  estimate: Schematic straight-line approximation for engine testing; replaced by georeferenced trench maps in Plan 2
+lines:
+  - id: cdn-front
+    name: Canadian front line
+    kind: trench
+    side: allied
+    points:
+      - - 0
+        - 0
+      - - 0
+        - 1200
+  - id: ger-front
+    name: German front line
+    kind: trench
+    side: central
+    points:
+      - - 150
+        - 0
+      - - 150
+        - 1200
+  - id: black
+    name: Black Line
+    kind: objective
+    color: "#1a1a1a"
+    points:
+      - - 1150
+        - 0
+      - - 1150
+        - 1200
+  - id: red
+    name: Red Line
+    kind: objective
+    color: "#b3261e"
+    points:
+      - - 1800
+        - 0
+      - - 1800
+        - 1200
+  - id: blue
+    name: Blue Line
+    kind: objective
+    color: "#2c5fa8"
+    points:
+      - - 2800
+        - 0
+      - - 2800
+        - 1200
+  - id: brown
+    name: Brown Line
+    kind: objective
+    color: "#7a4b23"
+    points:
+      - - 3600
+        - 0
+      - - 3600
+        - 1200
+sectors:
+  - id: 1cdn-3bde
+    name: 1st Canadian Division / 3rd Brigade sector
+    yMin: 0
+    yMax: 1200
+    startLineId: ger-front
+    legs:
+      - toLineId: black
+        liftM:
+          value: 91
+          source: artillery-notes-4
+          note: 100 yards
+        liftMin:
+          value: 3
+          source: artillery-notes-4
+        pauseMin:
+          value: 40
+          source: vimy-brief-2026
+      - toLineId: red
+        liftM:
+          value: 91
+          source: artillery-notes-4
+          note: 100 yards
+        liftMin:
+          value: 3
+          source: artillery-notes-4
+        pauseMin:
+          value: 150
+          source: vimy-brief-2026
+      - toLineId: blue
+        liftM:
+          value: 91
+          source: artillery-notes-4
+          note: 100 yards
+        liftMin:
+          value: 5
+          source: vimy-brief-2026
+          note: Vimy barrage map averages ~5 min per lift
+        pauseMin:
+          value: 96
+          source: vimy-brief-2026
+      - toLineId: brown
+        liftM:
+          value: 91
+          source: artillery-notes-4
+          note: 100 yards
+        liftMin:
+          value: 5
+          source: vimy-brief-2026
+          note: Vimy barrage map averages ~5 min per lift
+        pauseMin:
+          value: 0
+          source: vimy-brief-2026
+    standOffM:
+      value: 180
+      estimate: ~200 yd protective barrage beyond objective; to verify against Corps Artillery Instruction No. 1
+forces:
+  - side: allied
+    doctrine: bef-1917
+    formations:
+      - id: 1cdn-div
+        name: 1st Canadian Division
+        kind: division
+        leader: Maj-Gen Arthur Currie
+        children:
+          - id: 3bde
+            name: 3rd Brigade
+            kind: brigade
+            leader: Brig-Gen Tuxford
+            children:
+              - id: 16bn
+                name: 16th Battalion
+                kind: battalion
+                companies:
+                  - id: 16bn-a
+                    name: A Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 237.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: black
+                    startAfterMin: &a1
+                      value: 0
+                      estimate: advance with the first wave at Zero
+                    role: assault
+                  - id: 16bn-b
+                    name: B Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 312.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: black
+                    startAfterMin: *a1
+                    role: assault
+                  - id: 16bn-c
+                    name: C Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 387.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: red
+                    startAfterMin: *a1
+                    role: assault
+                  - id: 16bn-d
+                    name: D Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 462.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: red
+                    startAfterMin: *a1
+                    role: assault
+              - id: 14bn
+                name: 14th Battalion
+                kind: battalion
+                companies:
+                  - id: 14bn-a
+                    name: A Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 737.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: black
+                    startAfterMin: &a2
+                      value: 0
+                      estimate: advance with the first wave at Zero
+                    role: assault
+                  - id: 14bn-b
+                    name: B Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 812.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: black
+                    startAfterMin: *a2
+                    role: assault
+                  - id: 14bn-c
+                    name: C Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 887.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: red
+                    startAfterMin: *a2
+                    role: assault
+                  - id: 14bn-d
+                    name: D Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - 0
+                      - 962.5
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: red
+                    startAfterMin: *a2
+                    role: assault
+          - id: 1bde
+            name: 1st Brigade
+            kind: brigade
+            leader: Brig-Gen Griesbach
+            children:
+              - id: 1bn
+                name: 1st Battalion
+                kind: battalion
+                companies:
+                  - id: 1bn-a
+                    name: A Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - -400
+                      - 150
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: blue
+                    startAfterMin: &a3
+                      value: 245
+                      source: vimy-brief-2026
+                      note: "1st Bn war diary: advance resumed 09:35"
+                    role: assault
+                  - id: 1bn-b
+                    name: B Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - -400
+                      - 450
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: blue
+                    startAfterMin: *a3
+                    role: assault
+                  - id: 1bn-c
+                    name: C Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - -400
+                      - 750
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: brown
+                    startAfterMin: *a3
+                    role: assault
+                  - id: 1bn-d
+                    name: D Company
+                    strength:
+                      value: 150
+                      estimate: "brief: battalion effectives ~600–800 (researcher's estimate) ÷ 4; replaced in Plan 2"
+                    start:
+                      - -400
+                      - 1050
+                    sectorId: 1cdn-3bde
+                    objectiveLineId: brown
+                    startAfterMin: *a3
+                    role: assault
+historical:
+  objectives:
+    - lineId: black
+      sectorId: 1cdn-3bde
+      earliest:
+        value: 1917-04-09T06:15
+        source: vimy-brief-2026
+      latest:
+        value: 1917-04-09T06:25
+        source: vimy-brief-2026
+    - lineId: red
+      sectorId: 1cdn-3bde
+      earliest:
+        value: 1917-04-09T07:00
+        source: vimy-brief-2026
+      latest:
+        value: 1917-04-09T07:30
+        source: vimy-brief-2026
+    - lineId: blue
+      sectorId: 1cdn-3bde
+      earliest:
+        value: 1917-04-09T11:00
+        source: vimy-brief-2026
+      latest:
+        value: 1917-04-09T11:00
+        source: vimy-brief-2026
+    - lineId: brown
+      sectorId: 1cdn-3bde
+      earliest:
+        value: 1917-04-09T14:00
+        source: vimy-brief-2026
+      latest:
+        value: 1917-04-09T14:00
+        source: vimy-brief-2026
