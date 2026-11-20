@@ -8,10 +8,10 @@ test('plays, scrubs and jumps from the event log', async ({ page }) => {
   await expect(page.getByText('Draft — unverified data')).toBeVisible();
   const clock = page.getByTestId('battle-clock');
   await expect(clock).toHaveText('Mon 9 Apr · 05:30');
-  await page.getByRole('button', { name: '1 s = 1 h' }).click();
-  await page.getByRole('button', { name: 'Play' }).click();
+  await page.getByRole('button', { name: '1 s = 1 h', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(clock).not.toHaveText('Mon 9 Apr · 05:30', { timeout: 3000 });
-  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await page.getByRole('listitem').filter({ hasText: 'Black Line taken' }).click();
   await expect(clock).toHaveText(/Mon 9 Apr · 06:\d\d/);
   await page.getByLabel('Battle time').fill('0');
@@ -29,23 +29,23 @@ test('stops at the end and restarts from zero', async ({ page }) => {
   const clock = page.getByTestId('battle-clock');
   const end = await page.getByLabel('Battle time').getAttribute('max');
   await page.getByLabel('Battle time').fill(String(Number(end) - 1));
-  await page.getByRole('button', { name: '1 s = 1 h' }).click();
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible({ timeout: 3000 });
+  await page.getByRole('button', { name: '1 s = 1 h', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible({ timeout: 3000 });
   await expect(page.getByLabel('Battle time')).toHaveValue(String(end));
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
-  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(clock).toHaveText(/Mon 9 Apr · 0[5-6]:\d\d/);
 });
 
 test('steps between events with Back and Forward', async ({ page }) => {
   await page.goto('/?run=sample');
   const clock = page.getByTestId('battle-clock');
-  await page.getByRole('button', { name: 'Next event' }).click();
+  await page.getByRole('button', { name: 'Next event', exact: true }).click();
   await expect(clock).toHaveText('Mon 9 Apr · 06:00');
-  await page.getByRole('button', { name: 'Next event' }).click();
+  await page.getByRole('button', { name: 'Next event', exact: true }).click();
   await expect(clock).toHaveText('Mon 9 Apr · 06:02');
-  await page.getByRole('button', { name: 'Previous event' }).click();
+  await page.getByRole('button', { name: 'Previous event', exact: true }).click();
   await expect(clock).toHaveText('Mon 9 Apr · 06:00');
 });

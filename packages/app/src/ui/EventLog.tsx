@@ -32,13 +32,9 @@ export const EventLog = memo(function EventLog({ events, current, timeOf, onSeek
         <ul ref={listRef} className="log">
           {events.map((e, i) => (
             <li key={i} className={`log-item kind-${e.kind} ${i === current ? 'is-current' : i > current ? 'is-future' : ''}`}>
-              {/* Named by its time only, so free event text (e.g. "Barrage pauses…") never collides with the
-                  transport buttons' names; the text is attached as the description. */}
-              <button type="button" aria-label={`Go to ${timeOf(e.minute)}`} aria-describedby={`event-${i}`} onClick={() => onSeek(e.minute)}>
-                <span className="log-time">{timeOf(e.minute)}</span>
-                <span className="log-text" id={`event-${i}`}>
-                  {e.text}
-                </span>
+              <button type="button" onClick={() => onSeek(e.minute)}>
+                <span className="log-time">{timeOf(e.minute)}</span>{' '}
+                <span className="log-text">{e.text}</span>
               </button>
             </li>
           ))}
