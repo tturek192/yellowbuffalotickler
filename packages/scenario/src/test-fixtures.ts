@@ -12,6 +12,7 @@ export function minimalScenario(): Scenario {
     zeroHour: { value: '1916-07-01T07:30', estimate: 'test fixture' },
     timeLimitMinutes: 600,
     geometrySource: { value: 'fixture geometry', estimate: 'synthetic test geometry' },
+    features: [],
     lines: [
       { id: 'gfront', name: 'German front line', kind: 'trench', side: 'central', points: [[150, 0], [150, 400]] },
       { id: 'black', name: 'Black Line', kind: 'objective', color: '#1a1a1a', points: [[1150, 0], [1150, 400]] },

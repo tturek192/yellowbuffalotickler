@@ -4,6 +4,8 @@ import { parse, YAMLParseError } from 'yaml';
 import type { Scenario, Doctrine } from './schema';
 import { parseScenarioData, parseDoctrine, ScenarioError } from './load';
 import { mergeScenarioParts } from './include';
+import { FrameSchema } from './frame';
+import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
 
 export function loadScenario(
   path: string,
@@ -47,6 +49,32 @@ export function loadScenario(
   }
   const { merged, problems: mergeProblems } = mergeScenarioParts(parts);
   problems.push(...mergeProblems);
+  const mergedMap = merged && typeof merged === 'object' && !Array.isArray(merged) ? (merged as Record<string, unknown>) : null;
+  const geo = mergedMap?.geo;
+  if (geo !== undefined) {
+    if (!Array.isArray(geo) || geo.some((f) => typeof f !== 'string')) {
+      problems.push('geo: expected a list of file paths');
+    } else if (geo.length) {
+      const fr = FrameSchema.safeParse(mergedMap!.frame);
+      if (!fr.success) {
+        problems.push('geo: a valid frame is required to read GeoJSON files');
+      } else {
+        for (const f of geo as string[]) {
+          let fc: unknown;
+          try {
+            fc = JSON.parse(readFileSync(resolve(dirname(path), f), 'utf8'));
+          } catch (e) {
+            problems.push(e instanceof SyntaxError ? `geo: invalid JSON in ${f}: ${e.message}` : `geo: cannot read ${f}`);
+            continue;
+          }
+          const r = geoToScenarioParts(fc as GeoJsonFeatureCollection, fr.data, f);
+          problems.push(...r.problems);
+          mergedMap!.lines = [...(Array.isArray(mergedMap!.lines) ? mergedMap!.lines : []), ...r.lines];
+          mergedMap!.features = [...(Array.isArray(mergedMap!.features) ? mergedMap!.features : []), ...r.features];
+        }
+      }
+    }
+  }
   const structural = problems.length > 0; // a broken include would only cascade into noise
   const raw = merged as { forces?: { doctrine?: unknown }[] } | null;
   const ids = [

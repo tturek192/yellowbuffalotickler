@@ -35,6 +35,11 @@ export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
   };
   s.lines.forEach((l, i) => dup(`lines[${i}].id`, l.id));
   s.sectors.forEach((x, i) => dup(`sectors[${i}].id`, x.id));
+  const featureIds = new Set<string>();
+  s.features.forEach((f, i) => {
+    if (featureIds.has(f.id)) problems.push(`features[${i}].id: duplicate id "${f.id}"`);
+    featureIds.add(f.id);
+  });
 
   const walkFormations = (fs: Formation[], base: string) =>
     fs.forEach((f, i) => {

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { sourced, sourcedOrDisputed, PointSchema } from './sourced';
 import { TIERS } from './sources';
 import { LocalDateTimeSchema } from './local-time';
+import { FrameSchema } from './frame';
 
 const Side = z.enum(['allied', 'central']);
 
@@ -22,6 +23,36 @@ const LinePoints = z
   .refine((pts) => pts.every((p, i) => i === 0 || p[1] > pts[i - 1]![1]), {
     message: 'points must have strictly ascending y (south to north)',
   });
+
+export const FEATURE_KINDS = [
+  'trench', 'communication-trench', 'wire', 'crater', 'subway', 'tunnel',
+  'wood', 'village', 'road', 'railway', 'strongpoint', 'battery',
+] as const;
+
+const FeatureSchema = z.object({
+  id: z.string(),
+  kind: z.enum(FEATURE_KINDS),
+  side: Side.optional(),
+  name: z.string().optional(),
+  geometry: z.discriminatedUnion('type', [
+    z.object({ type: z.literal('Point'), coordinates: PointSchema, radiusM: z.number().positive().optional() }),
+    z.object({ type: z.literal('LineString'), coordinates: z.array(PointSchema).min(2) }),
+    z.object({ type: z.literal('Polygon'), coordinates: z.array(PointSchema).min(3) }),
+  ]),
+  cite: sourced(z.string()),
+});
+export type Feature = z.infer<typeof FeatureSchema>;
+export type FeatureKind = (typeof FEATURE_KINDS)[number];
+
+const LineSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  kind: z.enum(['trench', 'objective']),
+  side: Side.optional(),
+  color: z.string().optional(),
+  points: LinePoints,
+});
+export type Line = z.infer<typeof LineSchema>;
 
 const Company = z.object({
   id: z.string(),
@@ -62,16 +93,11 @@ export const ScenarioSchema = z.object({
   zeroHour: sourced(LocalDateTimeSchema),
   timeLimitMinutes: z.number(),
   geometrySource: sourced(z.string()),
-  lines: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      kind: z.enum(['trench', 'objective']),
-      side: Side.optional(),
-      color: z.string().optional(),
-      points: LinePoints,
-    }),
-  ),
+  frame: FrameSchema.optional(),
+  /** GeoJSON files (relative to the scenario file) read by the node loader. */
+  geo: z.array(z.string()).optional(),
+  lines: z.array(LineSchema),
+  features: z.array(FeatureSchema).default([]),
   sectors: z.array(
     z.object({
       id: z.string(),
