@@ -40,11 +40,17 @@ const show = (x: unknown): string => (typeof x === 'string' ? x : typeof x === '
 /** Keys that only structure the tree; they add nothing to a row's label. */
 const STRUCTURAL = new Set(['forces', 'formations', 'children', 'companies', 'ratings', 'sectors', 'legs']);
 
+/** A target window as `from–to`, so two windows with the same start can be told apart. */
+const windowOf = (el: Raw): string | undefined =>
+  isObj(el.window) && typeof el.window.from === 'string'
+    ? `${el.window.from}${typeof el.window.to === 'string' ? `–${el.window.to}` : ''}`
+    : undefined;
+
 /** A readable name for an array element, from whichever identifying fields it has. */
 function nameOf(el: unknown, i: number): string {
   if (!isObj(el)) return `#${i + 1}`;
   if (typeof el.name === 'string') return el.name;
-  const window = isObj(el.window) && typeof el.window.from === 'string' ? el.window.from : undefined;
+  const window = windowOf(el);
   const parts = [el.id, el.lineId, el.sectorId, el.toLineId, el.at, el.bySide, el.side, el.formationId, window].filter(
     (p): p is string => typeof p === 'string',
   );
@@ -98,7 +104,8 @@ function collect(node: unknown, path: string, names: string[], reg: Registry, ou
     node.forEach((el, i) => collect(el, `${path}[${i}]`, skipName ? names : [...names, nameOf(el, i)], reg, out));
   } else if (isObj(node)) {
     for (const [k, val] of Object.entries(node)) {
-      collect(val, `${path}.${k}`, STRUCTURAL.has(k) ? names : [...names, k], reg, out, k === 'forces');
+      const key = isObj(val) && windowOf(val) ? `${k} ${windowOf(val)}` : k;
+      collect(val, `${path}.${k}`, STRUCTURAL.has(k) ? names : [...names, key], reg, out, k === 'forces');
     }
   }
 }

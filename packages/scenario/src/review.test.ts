@@ -35,4 +35,20 @@ describe('buildReview', () => {
     expect(row.value).toMatch(/18:00.*22:00/);
     expect(row.cite).toMatch(/test-src.*gossip/);
   });
+
+  it('shows the whole window of casualty, prisoner and gun targets, so same-start rows differ', () => {
+    const s = fixtureWithMixedValues();
+    const w = (to: string) => ({ from: '1916-07-01T07:30', to });
+    s.historical.casualties = [
+      { side: 'allied', window: w('1916-07-02T23:59'), total: { value: 100, source: 'test-src' } },
+      { side: 'allied', window: w('1916-07-06T23:59'), total: { value: 200, source: 'test-src' } },
+    ];
+    s.historical.prisonersTaken = [{ bySide: 'allied', window: w('1916-07-02T23:59'), count: { value: 50, source: 'test-src' } }];
+    s.historical.gunsCaptured = { window: w('1916-07-03T23:59'), field: { value: 5, source: 'test-src' } };
+    const labels = buildReview(s).sections[0]!.rows.map((r) => r.label);
+    expect(labels).toContain('casualties / allied 1916-07-01T07:30–1916-07-02T23:59 / total');
+    expect(labels).toContain('casualties / allied 1916-07-01T07:30–1916-07-06T23:59 / total');
+    expect(labels).toContain('prisonersTaken / allied 1916-07-01T07:30–1916-07-02T23:59 / count');
+    expect(labels).toContain('gunsCaptured 1916-07-01T07:30–1916-07-03T23:59 / field');
+  });
 });
