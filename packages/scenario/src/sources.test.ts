@@ -46,6 +46,21 @@ describe('source tiers', () => {
   });
 });
 
+describe('disputed historical values through parseScenario', () => {
+  it('rejects a disputed value citing a tertiary source', () => {
+    const s = minimalScenario();
+    s.sources['wiki'] = { title: 'Wikipedia', tier: 'tertiary' };
+    s.sources['nich'] = { title: 'Nicholson', tier: 'official' };
+    s.historical.objectives[0].latest = {
+      value: '1916-07-01T12:00',
+      range: ['1916-07-01T11:00', '1916-07-01T13:00'],
+      sources: [{ source: 'nich' }, { source: 'wiki' }],
+      note: 'differ',
+    };
+    expect(() => parseScenario(toYaml(s), ['bef-1917'])).toThrow(/historical\.objectives\[0\]\.latest\.sources\[1\].*tertiary/);
+  });
+});
+
 describe('disputed values', () => {
   const D = disputed(z.number());
   it('holds a range containing the working value and at least 2 sources', () => {

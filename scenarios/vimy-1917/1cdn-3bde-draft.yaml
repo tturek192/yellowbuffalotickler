@@ -315,31 +315,31 @@ historical:
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T06:15
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 06:15; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T06:25
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 06:25; to be replaced by a primary, official or scholarly citation in Task 10
     - lineId: red
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T07:00
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 07:00; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T07:30
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 07:30; to be replaced by a primary, official or scholarly citation in Task 10
     - lineId: blue
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T11:00
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 11:00; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T11:00
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 11:00; to be replaced by a primary, official or scholarly citation in Task 10
     - lineId: brown
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T14:00
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 14:00; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T14:00
-        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
+        estimate: Owner's brief gives 14:00; to be replaced by a primary, official or scholarly citation in Task 10

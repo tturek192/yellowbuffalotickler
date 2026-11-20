@@ -31,7 +31,12 @@ export function loadScenario(
     } else {
       include.forEach((f: string, i) => {
         try {
-          parts.push({ file: f, data: parse(readFileSync(resolve(dirname(path), f), 'utf8')) });
+          const data = parse(readFileSync(resolve(dirname(path), f), 'utf8'));
+          if (data && typeof data === 'object' && 'include' in data) {
+            problems.push(`include[${i}]: ${f} must not contain its own include`);
+            return;
+          }
+          parts.push({ file: f, data });
         } catch (e) {
           problems.push(
             e instanceof YAMLParseError ? `include[${i}]: invalid YAML in ${f}: ${e.message}` : `include[${i}]: cannot read ${f}`,
@@ -42,6 +47,7 @@ export function loadScenario(
   }
   const { merged, problems: mergeProblems } = mergeScenarioParts(parts);
   problems.push(...mergeProblems);
+  const structural = problems.length > 0; // a broken include would only cascade into noise
   const raw = merged as { forces?: { doctrine?: unknown }[] } | null;
   const ids = [
     ...new Set(
@@ -65,7 +71,6 @@ export function loadScenario(
       problems.push(...e.problems.map((m) => `doctrine ${id}: ${m}`));
     }
   }
-  const structural = problems.length > 0; // a broken include would only cascade into noise
   let scenario: Scenario | undefined;
   try {
     if (structural) throw new ScenarioError([]);

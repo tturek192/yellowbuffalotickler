@@ -20,6 +20,7 @@ export function mergeScenarioParts(
       if (!(k in target)) {
         if (isMap(val) && !atomic) {
           target[k] = {};
+          owner.set(here, file);
           mergeInto(target[k] as Record<string, unknown>, val, here, file);
         } else {
           target[k] = Array.isArray(val) ? [...val] : val;

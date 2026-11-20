@@ -38,12 +38,30 @@ describe('mergeScenarioParts', () => {
     ]);
     expect(problems).toEqual(['sources.a: defined in scenario.yaml and fireplan.yaml']);
   });
-  it('allows a scalar in only one part', () => {
+  it('reports a scalar defined in two parts', () => {
     const { problems } = mergeScenarioParts([
       { file: 'a.yaml', data: { id: 'x' } },
       { file: 'b.yaml', data: { id: 'y' } },
     ]);
     expect(problems).toEqual(['id: defined in a.yaml and b.yaml']);
+  });
+});
+
+describe('mergeScenarioParts (more)', () => {
+  it('allows a scalar in only one part', () => {
+    const { merged, problems } = mergeScenarioParts([
+      { file: 'a.yaml', data: { id: 'x' } },
+      { file: 'b.yaml', data: { title: 'T' } },
+    ]);
+    expect(problems).toEqual([]);
+    expect(merged).toEqual({ id: 'x', title: 'T' });
+  });
+  it('names both files when a map meets an array', () => {
+    const { problems } = mergeScenarioParts([
+      { file: 'a.yaml', data: { lines: { a: 1 } } },
+      { file: 'b.yaml', data: { lines: [1] } },
+    ]);
+    expect(problems).toEqual(['lines: defined in a.yaml and b.yaml']);
   });
 });
 
@@ -70,5 +88,32 @@ describe('loadScenario includes', () => {
   it('reports a key defined in two files', () => {
     const { path, doctrineDir } = tmpScenario(['more.yaml'], { 'more.yaml': { sources } }, s);
     expect(() => loadScenario(path, doctrineDir)).toThrow(/sources\.test-src: defined in scenario\.yaml and more\.yaml/);
+  });
+  it('reports invalid YAML inside an include file', () => {
+    const { path, doctrineDir } = tmpScenario(['bad.yaml'], {}, s);
+    writeFileSync(join(path, '..', 'bad.yaml'), 'a: [1,');
+    expect(() => loadScenario(path, doctrineDir)).toThrow(/include\[0\]: invalid YAML in bad\.yaml/);
+  });
+  it('rejects a non-list include', () => {
+    const { path, doctrineDir } = tmpScenario([], {}, { ...s, include: 'sources.yaml' });
+    expect(() => loadScenario(path, doctrineDir)).toThrow(/include: expected a list/);
+  });
+  it('rejects an include nested inside an included file', () => {
+    const { path, doctrineDir } = tmpScenario(['inner.yaml'], { 'inner.yaml': { include: ['x.yaml'] } }, s);
+    expect(() => loadScenario(path, doctrineDir)).toThrow(/include\[0\]: inner\.yaml must not contain its own include/);
+  });
+  it('still reports scenario problems when a doctrine file is missing', () => {
+    const bad: any = structuredClone(s);
+    bad.sectors[0].legs[0].liftM = { value: 91, source: 'nope' };
+    bad.forces[0].doctrine = 'ghost';
+    const { path, doctrineDir } = tmpScenario([], {}, bad);
+    let msg = '';
+    try {
+      loadScenario(path, doctrineDir);
+    } catch (e) {
+      msg = (e as Error).message;
+    }
+    expect(msg).toMatch(/doctrine ghost: cannot read/);
+    expect(msg).toMatch(/liftM\.source: unknown source "nope"/);
   });
 });
