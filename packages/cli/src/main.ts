@@ -1,11 +1,11 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runBatch, runScenario } from '@wwi/engine';
 import { buildReview, ScenarioError, v } from '@wwi/scenario';
 import { loadScenario } from '@wwi/scenario/node';
 import { formatBatch } from './format';
-import { extractOpenQuestions, reviewToMarkdown } from './review-md';
+import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-md';
 
 const USAGE = `usage:
   sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>]
@@ -67,9 +67,11 @@ function main(argv: string[]): void {
   if (command === 'review') {
     const questions = values.notes
       ? readdirSync(values.notes)
-          .filter((f) => f.endsWith('.md') && f !== basename(out))
+          .filter((f) => f.endsWith('.md'))
           .sort()
-          .flatMap((f) => extractOpenQuestions(readFileSync(join(values.notes!, f), 'utf8'), f))
+          .map((f) => [f, readFileSync(join(values.notes!, f), 'utf8')] as const)
+          .filter(([, text]) => !text.includes(REVIEW_MARKER)) // a generated review is not a research note
+          .flatMap(([f, text]) => extractOpenQuestions(text, f))
       : [];
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, reviewToMarkdown(buildReview(scenario, doctrines), questions));
