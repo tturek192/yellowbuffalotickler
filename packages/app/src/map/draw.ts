@@ -1,6 +1,8 @@
 import type { RunRecord } from '@wwi/engine';
 import type { Frame } from '../playback';
 import { BARRAGE_DEPTH_M, worldToScreen, type Point, type View } from './projection';
+import { declutter, type Screen } from './declutter';
+import { liftClear, type Box } from './labels';
 
 export const MAP_COLORS = {
   paper: '#efe6cf',
@@ -13,10 +15,11 @@ export const MAP_COLORS = {
 const LABEL_FONT = '"EB Garamond", Garamond, "Iowan Old Style", Georgia, serif';
 const MARKER_FONT = '"Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif';
 
-type Screen = [number, number];
 
 /** Vertical room one company marker needs: 16 px box, 2 px gap, 3 px strength bar, 3 px air. */
 const MARKER_PITCH = 24;
+/** Furthest a marker may be nudged from its true position; beyond this, markers overlap rather than mislead. */
+const MARKER_MAX_SHIFT = Math.min(13, MARKER_PITCH / 2);
 type Line = RunRecord['geometry']['lines'][number];
 
 /** '16bn-a' → '16A'; otherwise the first three characters, upper-cased. */
@@ -65,36 +68,14 @@ export function niceScaleLength(scale: number, targetPx: number): number {
   return best;
 }
 
-/**
- * Push markers that would overlap (closer than `width` across and `pitch` down) apart vertically,
- * symmetrically, so stacked companies stay legible. x is never changed.
- */
-export function declutter(points: Screen[], width: number, pitch: number, iterations = 60): Screen[] {
-  const out = points.map(([x, y]): Screen => [x, y]);
-  for (let it = 0; it < iterations; it++) {
-    let moved = false;
-    for (let i = 0; i < out.length; i++) {
-      for (let j = i + 1; j < out.length; j++) {
-        const a = out[i]!;
-        const b = out[j]!;
-        if (Math.abs(a[0] - b[0]) >= width) continue;
-        const dy = b[1] - a[1];
-        const overlap = pitch - Math.abs(dy);
-        if (overlap <= 1e-9) continue;
-        const dir = dy < 0 ? -1 : 1;
-        a[1] -= (dir * overlap) / 2;
-        b[1] += (dir * overlap) / 2;
-        moved = true;
-      }
-    }
-    if (!moved) break;
-  }
-  return out;
-}
-
 function tracePath(ctx: CanvasRenderingContext2D, pts: Screen[]): void {
   ctx.beginPath();
   pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+}
+
+/** Line labels shrink a little on narrow sheets so neighbours fit side by side. */
+function labelSize(ctx: CanvasRenderingContext2D, size: number): number {
+  return cssSize(ctx).w < 600 ? size - 3 : size;
 }
 
 function cssSize(ctx: CanvasRenderingContext2D): { w: number; h: number } {
@@ -105,21 +86,43 @@ function cssSize(ctx: CanvasRenderingContext2D): { w: number; h: number } {
 
 /**
  * Label a line just above its northern (topmost) end. `align` says which way the text runs from the
- * line; a label that would run off the sheet is pulled back inside and lifted a row clear of its neighbour.
+ * line. A label that would run off the sheet is pulled back inside, and one that would collide with a
+ * label already drawn (recorded in `placed`) is lifted a row at a time, up to three rows.
  */
-function labelAtNorthEnd(ctx: CanvasRenderingContext2D, pts: Screen[], text: string, color: string, size: number, align: CanvasTextAlign): void {
+function labelAtNorthEnd(
+  ctx: CanvasRenderingContext2D,
+  placed: Box[],
+  pts: Screen[],
+  text: string,
+  color: string,
+  size: number,
+  align: CanvasTextAlign,
+): void {
   if (pts.length === 0) return;
   const { w } = cssSize(ctx);
   const top = pts.reduce((a, b) => (b[1] < a[1] ? b : a));
   ctx.save();
   ctx.font = `italic ${size}px ${LABEL_FONT}`;
   const width = ctx.measureText(text).width;
-  let x0 = align === 'right' ? top[0] - 4 - width : align === 'left' ? top[0] + 4 : top[0] - width / 2;
-  let y = top[1] - 7;
+  const want = align === 'right' ? top[0] - 4 - width : align === 'left' ? top[0] + 4 : top[0] - width / 2;
   const margin = 16;
-  const clamped = Math.min(Math.max(x0, margin), w - margin - width);
-  if (clamped !== x0 && align !== 'center') y -= size + 2;
-  x0 = clamped;
+  const x0 = Math.min(Math.max(want, margin), w - margin - width);
+  const baseline = top[1] - 7;
+  const box = liftClear({ x0: x0 - 2, x1: x0 + width + 2, y0: baseline - size, y1: baseline + 3 }, placed, size + 3, 4);
+  placed.push(box);
+  const y = box.y1 - 3;
+  if (y < baseline) {
+    // Lifted clear of a neighbour: a hairline leads back down to the line it names.
+    const lx = Math.min(Math.max(top[0], box.x0 + 4), box.x1 - 4);
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(lx, y + 3);
+    ctx.lineTo(top[0], top[1] - 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.lineJoin = 'round';
@@ -188,7 +191,7 @@ function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord): voi
   ctx.strokeRect(10, 10, w - 20, h - 20);
 }
 
-function drawTrench(ctx: CanvasRenderingContext2D, view: View, line: Line): void {
+function drawTrench(ctx: CanvasRenderingContext2D, view: View, line: Line, labels: Box[]): void {
   const color = line.side === 'central' ? MAP_COLORS.central : line.side === 'allied' ? MAP_COLORS.allied : MAP_COLORS.ink;
   const pts = line.points.map((p) => worldToScreen(view, p));
   ctx.save();
@@ -206,10 +209,10 @@ function drawTrench(ctx: CanvasRenderingContext2D, view: View, line: Line): void
   tracePath(ctx, crenellatedPath(pts, 4, 2.5));
   ctx.stroke();
   ctx.restore();
-  labelAtNorthEnd(ctx, pts, line.name, color, 14, line.side === 'central' ? 'left' : line.side === 'allied' ? 'right' : 'center');
+  labelAtNorthEnd(ctx, labels, pts, line.name, color, labelSize(ctx, 14), line.side === 'central' ? 'left' : line.side === 'allied' ? 'right' : 'center');
 }
 
-function drawObjective(ctx: CanvasRenderingContext2D, view: View, line: Line): void {
+function drawObjective(ctx: CanvasRenderingContext2D, view: View, line: Line, labels: Box[]): void {
   const color = line.color ?? MAP_COLORS.ink;
   const pts = line.points.map((p) => worldToScreen(view, p));
   ctx.save();
@@ -219,7 +222,7 @@ function drawObjective(ctx: CanvasRenderingContext2D, view: View, line: Line): v
   tracePath(ctx, pts);
   ctx.stroke();
   ctx.restore();
-  labelAtNorthEnd(ctx, pts, line.name, color, 16, 'center');
+  labelAtNorthEnd(ctx, labels, pts, line.name, color, labelSize(ctx, 16), 'center');
 }
 
 function drawBarrage(ctx: CanvasRenderingContext2D, view: View, points: Point[]): void {
@@ -265,7 +268,7 @@ function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, 
   const initial = new Map((r.snapshots[0]?.companies ?? []).map((c) => [c.id, c.strength]));
   const W = 26;
   const H = 16;
-  const placed = declutter(frame.companies.map((c) => worldToScreen(view, [c.x, c.y])), W + 2, MARKER_PITCH);
+  const placed = declutter(frame.companies.map((c) => worldToScreen(view, [c.x, c.y])), W + 2, MARKER_PITCH, MARKER_MAX_SHIFT);
   const order = frame.companies.map((c, i) => ({ c, at: placed[i]! })).sort((a, b) => a.at[1] - b.at[1]);
   for (const { c, at } of order) {
     const [sx, sy] = at;
@@ -360,8 +363,9 @@ function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
  */
 export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame): void {
   drawPaper(ctx, view, r);
-  for (const l of r.geometry.lines) if (l.kind === 'trench') drawTrench(ctx, view, l);
-  for (const l of r.geometry.lines) if (l.kind === 'objective') drawObjective(ctx, view, l);
+  const labels: Box[] = [];
+  for (const l of r.geometry.lines) if (l.kind === 'trench') drawTrench(ctx, view, l, labels);
+  for (const l of r.geometry.lines) if (l.kind === 'objective') drawObjective(ctx, view, l, labels);
   for (const b of frame.barrages) drawBarrage(ctx, view, b.points);
   drawCompanies(ctx, view, r, frame);
   drawFurniture(ctx, view);

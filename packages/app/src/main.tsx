@@ -2,17 +2,10 @@ import { StrictMode, useEffect, useState, type ChangeEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { RunRecord } from '@wwi/engine';
 import { Playback } from './ui/Playback';
+import { parseRunRecord } from './ui/runRecord';
 import './styles.css';
 
 type State = { kind: 'empty' } | { kind: 'loading'; name: string } | { kind: 'error'; message: string } | { kind: 'ready'; record: RunRecord };
-
-function asRunRecord(data: unknown): RunRecord {
-  const r = data as Partial<RunRecord> | null;
-  if (!r || typeof r !== 'object' || !Array.isArray(r.snapshots) || r.snapshots.length === 0 || typeof r.endMinute !== 'number' || !r.geometry || !Array.isArray(r.events)) {
-    throw new Error('This file is not a run record (expected snapshots, events, geometry and endMinute).');
-  }
-  return r as RunRecord;
-}
 
 function App() {
   const [state, setState] = useState<State>(() => {
@@ -33,7 +26,7 @@ function App() {
         if (!res.ok) throw new Error(`Could not load /runs/${name}.json (HTTP ${res.status}).`);
         return res.json();
       })
-      .then((data) => live && setState({ kind: 'ready', record: asRunRecord(data) }))
+      .then((data) => live && setState({ kind: 'ready', record: parseRunRecord(data) }))
       .catch((err: unknown) => live && setState({ kind: 'error', message: err instanceof Error ? err.message : String(err) }));
     return () => {
       live = false;
@@ -45,7 +38,7 @@ function App() {
     e.currentTarget.value = '';
     if (!file) return;
     try {
-      setState({ kind: 'ready', record: asRunRecord(JSON.parse(await file.text())) });
+      setState({ kind: 'ready', record: parseRunRecord(JSON.parse(await file.text())) });
     } catch (err) {
       setState({ kind: 'error', message: `${file.name}: ${err instanceof Error ? err.message : String(err)}` });
     }

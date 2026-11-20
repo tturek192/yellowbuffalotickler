@@ -49,3 +49,12 @@ test('steps between events with Back and Forward', async ({ page }) => {
   await page.getByRole('button', { name: 'Previous event', exact: true }).click();
   await expect(clock).toHaveText('Mon 9 Apr · 06:00');
 });
+
+test('fits a phone-width screen', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/?run=sample');
+  await page.getByLabel('Battle time').fill('100');
+  await expect(page.getByTestId('battle-clock')).toHaveText('Mon 9 Apr · 07:10');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  await page.screenshot({ path: out('playback-narrow.png'), fullPage: true });
+});

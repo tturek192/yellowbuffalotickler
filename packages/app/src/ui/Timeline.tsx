@@ -23,7 +23,7 @@ export function Timeline({ minute, endMinute, markers, valueText, startLabel, en
           return (
             <div
               key={`${m.minute}-${m.label}`}
-              className={`marker marker-${m.kind} marker-${align} ${i % 2 ? 'marker-high' : 'marker-low'} ${m.minute <= minute ? 'marker-past' : ''}`}
+              className={`marker marker-${m.kind} marker-${align} marker-row-${i % 3} ${m.minute <= minute ? 'marker-past' : ''}`}
               style={{ left: `${p}%` }}
             >
               <span className="marker-label">{m.label}</span>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { elapsedLabel, nextEventMinute, prevEventMinute } from './steps';
+import { capQuietAdvance, elapsedLabel, nextEventMinute, prevEventMinute, QUIET_WINDOW_MIN } from './steps';
 
 const minutes = [0, 32, 32, 92, 316];
 
@@ -22,5 +22,13 @@ describe('labels', () => {
   it('describes time after zero hour', () => {
     expect(elapsedLabel(0)).toBe('0 h 0 min after zero hour');
     expect(elapsedLabel(92.9)).toBe('1 h 32 min after zero hour');
+  });
+});
+
+describe('quiet-period skipping never jumps an event', () => {
+  it('stops a quiet advance where the next event’s quiet window begins', () => {
+    expect(capQuietAdvance(100, 400, minutes)).toBe(316 - QUIET_WINDOW_MIN);
+    expect(capQuietAdvance(100, 250, minutes)).toBe(250);
+    expect(capQuietAdvance(330, 444, minutes)).toBe(444);
   });
 });

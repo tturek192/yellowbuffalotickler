@@ -218,6 +218,7 @@ code {
 }
 
 .map-panel {
+  container-type: inline-size;
   flex: 999 1 640px;
   min-width: 0;
   display: flex;
@@ -381,14 +382,17 @@ code {
   border-left: 1px solid rgba(169, 165, 143, 0.6);
 }
 
-.marker-high {
+.marker-row-1 {
   height: 32px;
 }
 
 .marker-label {
   position: absolute;
+  z-index: 1;
   bottom: 100%;
   margin-bottom: 1px;
+  padding: 0 3px;
+  background: var(--panel);
   white-space: nowrap;
   font-family: var(--font-head);
   font-weight: 500;
@@ -399,11 +403,11 @@ code {
 }
 
 .marker-start .marker-label {
-  transform: translateX(-1px);
+  transform: translateX(-4px);
 }
 
 .marker-end .marker-label {
-  transform: translateX(calc(-100% + 1px));
+  transform: translateX(calc(-100% + 4px));
 }
 
 .marker-line-taken {
@@ -737,8 +741,14 @@ code {
   font-style: italic;
 }
 
-.log-item.is-future {
-  opacity: 0.55;
+/* Future entries are dimmed by colour, not opacity, so they keep ≥ 4.5:1 contrast on the panel. */
+.log-item.is-future .log-time,
+.log-item.is-future .log-text {
+  color: #97937d; /* 5.1:1 on #20241e */
+}
+
+.log-item.is-future.kind-line-taken .log-text {
+  color: #a8925a; /* 5.2:1 */
 }
 
 .log-item.is-current button {
@@ -763,6 +773,59 @@ code {
 .notice-error {
   border-color: #6b2a22;
   color: #f0b4a8;
+}
+
+/* ---------- Phone-width map panel ---------- */
+
+@container (max-width: 559.98px) {
+  .map-frame {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .map-canvas {
+    position: relative;
+    inset: auto;
+    height: 320px;
+  }
+  /* The key moves under the sheet instead of covering it. */
+  .map-key {
+    position: static;
+    max-width: none;
+    justify-content: flex-start;
+    gap: 4px 12px;
+    padding: 8px 12px;
+    border: none;
+    border-top: 1px solid rgba(59, 51, 38, 0.35);
+  }
+  .timeline {
+    padding-top: 62px;
+  }
+  .timeline-markers {
+    height: 68px;
+  }
+  .marker-row-2 {
+    height: 50px;
+  }
+  .controls {
+    padding: 6px 12px 14px;
+  }
+  .transport {
+    gap: 12px 18px;
+  }
+  .speeds {
+    flex-wrap: wrap;
+  }
+  .segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .segmented button:nth-child(3) {
+    border-left: none;
+  }
+  .segmented button:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

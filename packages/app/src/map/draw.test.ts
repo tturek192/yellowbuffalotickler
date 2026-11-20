@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { crenellatedPath, declutter, niceScaleLength, shortId } from './draw';
+import { crenellatedPath, niceScaleLength, shortId } from './draw';
 
 describe('map drawing helpers', () => {
   it('shortens company ids for markers', () => {
@@ -22,15 +22,5 @@ describe('map drawing helpers', () => {
     expect(niceScaleLength(0.2, 120)).toBe(500);
     expect(niceScaleLength(1, 120)).toBe(100);
     expect(niceScaleLength(0.05, 120)).toBe(2000);
-  });
-
-  it('spreads overlapping markers apart vertically around their centre, leaving others alone', () => {
-    expect(declutter([[0, 0], [0, 0]], 26, 22)).toEqual([[0, -11], [0, 11]]);
-    const chain = declutter([[0, 0], [5, 15], [0, 30]], 26, 22, 200);
-    expect(chain[1]![1] - chain[0]![1]).toBeGreaterThanOrEqual(21.99);
-    expect(chain[2]![1] - chain[1]![1]).toBeGreaterThanOrEqual(21.99);
-    expect((chain[0]![1] + chain[1]![1] + chain[2]![1]) / 3).toBeCloseTo(15);
-    expect(chain.map((p) => p[0])).toEqual([0, 5, 0]);
-    expect(declutter([[0, 0], [40, 5]], 26, 22)).toEqual([[0, 0], [40, 5]]);
   });
 });

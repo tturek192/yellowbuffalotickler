@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RunRecord } from '@wwi/engine';
-import { advancePlayhead, formatClock, isQuiet, seek, SPEEDS, timelineMarkers } from '../playback';
+import { advancePlayhead, formatClock, isQuiet, QUIET_SPEEDUP, seek, SPEEDS, timelineMarkers } from '../playback';
 import { MapCanvas } from './MapCanvas';
 import { Timeline } from './Timeline';
 import { EventLog } from './EventLog';
-import { elapsedLabel, nextEventMinute, prevEventMinute } from './steps';
+import { capQuietAdvance, elapsedLabel, nextEventMinute, prevEventMinute, QUIET_WINDOW_MIN } from './steps';
 import { MAP_COLORS } from '../map/draw';
 
 const SPEED_LABELS: Record<(typeof SPEEDS)[number], string> = {
@@ -63,6 +63,9 @@ export function Playback({ record }: { record: RunRecord }) {
     [end],
   );
 
+  const events = useMemo(() => [...record.events].sort((a, b) => a.minute - b.minute), [record]);
+  const eventMinutes = useMemo(() => events.map((e) => e.minute), [events]);
+
   // A new record starts paused at zero hour.
   useEffect(() => {
     setPlaying(false);
@@ -77,14 +80,17 @@ export function Playback({ record }: { record: RunRecord }) {
     let raf = 0;
     let last = performance.now();
     const tick = (now: number): void => {
-      const dt = Math.min((now - last) / 1000, MAX_FRAME_SEC);
+      // rAF timestamps can precede the performance.now() taken when the loop started.
+      const dt = Math.max(0, Math.min((now - last) / 1000, MAX_FRAME_SEC));
       last = now;
-      const quiet = skipQuiet && isQuiet(record, minuteRef.current);
-      const next = advancePlayhead(minuteRef.current, dt, speed, quiet, end);
-      minuteRef.current = next.minute;
-      setMinute(next.minute);
+      const from = minuteRef.current;
+      const quiet = skipQuiet && isQuiet(record, from, QUIET_WINDOW_MIN);
+      const advanced = advancePlayhead(from, dt, speed, quiet, end);
+      const reached = quiet ? capQuietAdvance(from, advanced.minute, eventMinutes) : advanced.minute;
+      minuteRef.current = reached;
+      setMinute(reached);
       setQuietNow(quiet);
-      if (next.ended) {
+      if (reached >= end) {
         setPlaying(false);
         return;
       }
@@ -92,7 +98,7 @@ export function Playback({ record }: { record: RunRecord }) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, speed, skipQuiet, record, end]);
+  }, [playing, speed, skipQuiet, record, end, eventMinutes]);
 
   const togglePlay = (): void => {
     if (playing) {
@@ -103,8 +109,6 @@ export function Playback({ record }: { record: RunRecord }) {
     setPlaying(true);
   };
 
-  const events = useMemo(() => [...record.events].sort((a, b) => a.minute - b.minute), [record]);
-  const eventMinutes = useMemo(() => events.map((e) => e.minute), [events]);
   const markers = useMemo(() => timelineMarkers(record), [record]);
   const timeOf = useCallback((m: number) => formatClock(record.zeroHour, m).split(' · ')[1] ?? '', [record]);
 
@@ -136,7 +140,7 @@ export function Playback({ record }: { record: RunRecord }) {
               </div>
               <div className="elapsed">
                 {elapsed}
-                {quietNow && <span className="quiet-chip">Quiet · ×10</span>}
+                {quietNow && <span className="quiet-chip">Quiet · ×{QUIET_SPEEDUP}</span>}
               </div>
             </div>
             <MapKey />
