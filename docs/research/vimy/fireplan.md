@@ -99,13 +99,13 @@ on it (the engine spreads a sector's barrage over its y-range).
 
 ## The artillery park
 
-Park total: 1372 (source: nicholson-1962 pp. 248, 253; boh-1917-1 pp. 306-307, 319; rca-ww1-history — the Canadian Corps' 983 guns and mortars and its 150 barrage machine guns, the I Corps' 234 pieces and the First Army's 5)
+Park total: 1372 (source: a sum of sourced parts; no source prints this figure — nicholson-1962 p. 253's 983 guns and mortars of the Canadian Corps, whose make-up here includes the 76-mortar remainder, an estimate, and its 150 barrage machine guns, plus boh-1917-1 pp. 306-307's 234 I Corps pieces and 5 First Army pieces, taken to be outside the 983)
 
 | id | Weapon | Role | Count | How | Source |
 |---|---|---|---|---|---|
 | cdn-18pdr-creeping | 18-pdr | creeping | 320 (280-320) | disputed | BOH p. 319 n.1 (two-thirds of 480); Nicholson p. 253 (one gun to 25 yards × 7,000 yards) |
 | cdn-18pdr-standing | 18-pdr | standing | 112 | estimate | 480 − 320 − 48 (BOH p. 319 n.1: the other third, less the silent forward batteries) |
-| cdn-18pdr-forward | 18-pdr | creeping | 48 | estimate | nine batteries (BOH p. 307) × 5.3 guns (480 guns over 90 batteries, taking three 18-pdr batteries to each of the 30 brigades) |
+| cdn-18pdr-forward | 18-pdr | creeping | 48 | estimate | nine batteries (BOH p. 307) × 5.3 guns (480 guns over 90 batteries, taking three 18-pdr batteries to each of the 30 brigades); with 6-gun batteries it would be 54, and 106 standing |
 | cdn-45in-how | 4.5-in howitzer | standing | 138 | sourced | BOH p. 307; Nicholson p. 248 |
 | cdn-13pdr | 13-pdr | standing | 20 | sourced (role estimate) | `rca-ww1-history` |
 | cdn-60pdr | 60-pdr | counter-battery | 54 | sourced (role estimate) | BOH p. 306 n.1; `rca-ww1-history` (nine batteries) |

@@ -24,7 +24,7 @@ historical:
     - lineId: black-4cdn
       sectorId: barrage-4cdn
       earliest: { value: 1917-04-09T18:45, source: boh-1917-1, page: "341", note: "the 102nd Battalion held its half from the first rush, but the 87th's front fell to bombers at 1 p.m. and to two companies of the 85th, who 'started off across No Man's Land at 6.45 p.m.' (historical.md)" }
-      latest: { value: 1917-04-10T04:15, source: boh-1917-1, page: "342", note: "'At 4.15 a.m. on the 10th patrols ... towards the German third trench beyond the summit ... found it empty'; it was occupied by the 85th and 75th, completing the first system (p. 304)" }
+      latest: { value: 1917-04-10T04:15, source: boh-1917-1, page: "342", note: "'At 4.15 a.m. on the 10th patrols ... towards the German third trench beyond the summit ... found it empty'; it was occupied by the 85th and 75th, completing the first system (p. 304) on the Hill 145 front; the 12th Brigade's part of the line may have closed later (historical.md, Open questions)" }
     - lineId: red-1cdn
       sectorId: barrage-1cdn
       earliest: { value: 1917-04-09T07:05, source: boh-1917-1, page: "323", note: "'Shortly after 7 a.m. the division had taken its second objective ... with the exception of 500 yards on the right'; the 1st Battalion took that at 7.40 or after" }
@@ -35,7 +35,7 @@ historical:
       latest: { value: 1917-04-09T08:00, source: nicholson-1962, page: "255", note: "'By eight o'clock the 1st and 2nd Divisions were reported on the Red Line'" }
     - lineId: red-3cdn
       sectorId: barrage-3cdn
-      earliest: { value: 1917-04-09T07:05, source: boh-1917-1, page: "304", note: "the timetable's Zero plus 95 minutes, when the barrage reached the final objective of the 3rd and 4th Divisions; no earlier capture is recorded" }
+      earliest: { value: 1917-04-09T07:05, estimate: "a lower bound from the timetable, not a reported capture time: BOH p. 304 has the barrage reach the 3rd and 4th Divisions' final objectives 'at Zero plus 95 minutes'; the line cannot have fallen before the barrage lifted onto it, and no earlier capture is recorded" }
       latest: { value: 1917-04-09T07:30, source: nicholson-1962, page: "255", note: "'the 3rd Division had reached the crest at 7:30 and occupied the western edge of the Bois de la Folie'; BOH p. 326: 'By 7.30 a.m.'" }
     - lineId: red-4cdn
       sectorId: barrage-4cdn
@@ -49,19 +49,19 @@ historical:
       latest: { value: 1917-04-10T16:00, estimate: "BOH p. 343: 'Within thirty minutes' the Hangstellung was cleared (15:30, or 15:45 on Nicholson's 3:15); the 12th Brigade then moved its right forward and occupied its last objective 'at mid-afternoon' (Nicholson p. 261); 16:00 taken for the whole line" }
     - lineId: blue-1cdn
       sectorId: barrage-1cdn
-      earliest: { value: 1917-04-09T10:50, source: boh-1917-1, page: "304", note: "the timetable: the third objective 'to be concluded at Zero plus 5 hours, 20 minutes'" }
+      earliest: { value: 1917-04-09T10:50, estimate: "a lower bound from the timetable, not a reported capture time: BOH p. 304 has the third objective 'to be concluded at Zero plus 5 hours, 20 minutes'; no source gives an earlier capture" }
       latest: { value: 1917-04-09T11:15, source: boh-1917-1, page: "334", note: "'By 11.15 a.m. the brigade had reached the Roclincourt—Vimy track'; Nicholson p. 256: reported 'shortly after eleven o'clock'" }
     - lineId: blue-2cdn
       sectorId: barrage-2cdn
-      earliest: { value: 1917-04-09T10:50, source: boh-1917-1, page: "304", note: "the timetable's Zero plus 5 hours, 20 minutes" }
+      earliest: { value: 1917-04-09T10:50, estimate: "a lower bound from the timetable, not a reported capture time: Zero plus 5 hours, 20 minutes (BOH p. 304); no source gives an earlier capture" }
       latest: { value: 1917-04-09T11:30, estimate: "Nicholson p. 256: the 1st Division reported the Blue Line 'shortly after eleven o'clock', 'and a little later' the 2nd; BOH gives no time for Thelus and Hill 135 (p. 335); 11:30 taken" }
     - lineId: brown-1cdn
       sectorId: barrage-1cdn
-      earliest: { value: 1917-04-09T13:18, source: nicholson-1962, page: "248", note: "the timetable: the escarpment 'in Canadian hands by 1:18 p.m.'; BOH p. 336: 'soon after 1 p.m.' the leading companies were closed up to the barrage on the first belt of wire" }
+      earliest: { value: 1917-04-09T13:18, estimate: "a lower bound from the timetable, not a reported capture time: the plan had the escarpment 'in Canadian hands by 1:18 p.m.' (Nicholson p. 248; BOH p. 304: Zero plus 7 hours, 48 minutes); BOH p. 336: 'soon after 1 p.m.' the leading companies were still closed up to the barrage on the first belt of wire" }
       latest: { value: 1917-04-09T14:40, source: nicholson-1962, page: "257", note: "'at 2:40, as soon as the capture of the Brown Line seemed assured, General Byng had telephoned the First Army'" }
     - lineId: brown-2cdn
       sectorId: barrage-2cdn
-      earliest: { value: 1917-04-09T13:18, source: nicholson-1962, page: "248", note: "the timetable's 1:18 p.m." }
+      earliest: { value: 1917-04-09T13:18, estimate: "a lower bound from the timetable, not a reported capture time: the plan's 1:18 p.m. (Nicholson p. 248); no source gives an earlier capture" }
       latest: { value: 1917-04-09T14:40, source: nicholson-1962, page: "257", note: "the Brown Line's capture 'seemed assured' at 2:40" }
 
   casualties:
@@ -124,10 +124,10 @@ historical:
     - side: allied
       formationId: 7bde
       window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
-      total: { value: 965, source: boh-1917-1, page: "342 n.1", note: "officers 11 killed, 30 wounded; other ranks 181, 576, 167 missing (the row's order reconstructed from broken OCR; historical.md)" }
-      killed: { value: 192, source: boh-1917-1, page: "342 n.1" }
-      wounded: { value: 606, source: boh-1917-1, page: "342 n.1" }
-      missing: { value: 167, source: boh-1917-1, page: "342 n.1" }
+      total: { value: 965, estimate: "11 + 30 officers and 181 + 576 + 167 other ranks; the builder's reading of broken OCR, not a printed figure: BOH p. 342 n.1's 7th Brigade row comes out as 'Killed 11 181 - . Wounded 30 576 Missing 167', read as officers 11 killed, 30 wounded, none missing and other ranks 181 killed, 576 wounded, 167 missing; the officers-then-other-ranks order is the one that makes the 13th British Brigade's row on p. 339 n.1 add to 381, Nicholson's 'approximately 380' (p. 261), but this row is laid out unlike the others (historical.md, 'Reading BOH's tables')" }
+      killed: { value: 192, estimate: "11 officers + 181 other ranks; the builder's reading of broken OCR, not a printed figure: BOH p. 342 n.1's 7th Brigade row comes out as 'Killed 11 181 - . Wounded 30 576 Missing 167', read as officers 11 killed, 30 wounded, none missing and other ranks 181 killed, 576 wounded, 167 missing; the officers-then-other-ranks order is the one that makes the 13th British Brigade's row on p. 339 n.1 add to 381, Nicholson's 'approximately 380' (p. 261), but this row is laid out unlike the others (historical.md, 'Reading BOH's tables')" }
+      wounded: { value: 606, estimate: "30 officers + 576 other ranks; the builder's reading of broken OCR, not a printed figure: BOH p. 342 n.1's 7th Brigade row comes out as 'Killed 11 181 - . Wounded 30 576 Missing 167', read as officers 11 killed, 30 wounded, none missing and other ranks 181 killed, 576 wounded, 167 missing; the officers-then-other-ranks order is the one that makes the 13th British Brigade's row on p. 339 n.1 add to 381, Nicholson's 'approximately 380' (p. 261), but this row is laid out unlike the others (historical.md, 'Reading BOH's tables')" }
+      missing: { value: 167, estimate: "0 officers + 167 other ranks; the builder's reading of broken OCR, not a printed figure: BOH p. 342 n.1's 7th Brigade row comes out as 'Killed 11 181 - . Wounded 30 576 Missing 167', read as officers 11 killed, 30 wounded, none missing and other ranks 181 killed, 576 wounded, 167 missing; the officers-then-other-ranks order is the one that makes the 13th British Brigade's row on p. 339 n.1 add to 381, Nicholson's 'approximately 380' (p. 261), but this row is laid out unlike the others (historical.md, 'Reading BOH's tables')" }
     - side: allied
       formationId: 12bde
       window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
@@ -244,4 +244,4 @@ historical:
       - { source: nicholson-1962, page: "263", note: "on 12 April, after the Pimple fell 'by six o'clock', 'in another two hours the 46th could report the left flank secure'; the ridge was then all in Canadian hands" }
       - { source: nicholson-1962, page: "265", note: "'With the completion of this limited exploitation the Battle of Vimy Ridge ended', on 14 April" }
       - { source: boh-1917-1, page: "351", note: "the advance of 14 April: 'By evening the nine-mile outpost line' ran from east of Bailleul to the Bois de l'Hirondelle" }
-    note: "the scenario covers 9-12 April, so the working value is the capture of the Pimple and the whole ridge; the official battle runs to 14 April (historical.md)"
+    note: "the scenario covers 9-12 April, so the working value is the capture of the Pimple and the whole ridge; the official battle runs to 14 April (historical.md). The range's 18:00 on 14 April is a chosen hour for BOH's 'By evening' (p. 351), which gives no time; 18:00 is also the hour taken for 'evening' in the 4th Guard Division's arrival"

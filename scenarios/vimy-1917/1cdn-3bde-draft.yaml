@@ -375,9 +375,7 @@ historical:
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T10:50
-        source: boh-1917-1
-        page: "304"
-        note: "the timetable: the third objective 'to be concluded at Zero plus 5 hours, 20 minutes'"
+        estimate: "a lower bound from the timetable, not a reported capture time: BOH p. 304 has the third objective 'to be concluded at Zero plus 5 hours, 20 minutes'"
       latest:
         value: 1917-04-09T11:15
         source: boh-1917-1
@@ -387,9 +385,7 @@ historical:
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T13:18
-        source: nicholson-1962
-        page: "248"
-        note: "the timetable: the eastern escarpment 'in Canadian hands by 1:18 p.m.'"
+        estimate: "a lower bound from the timetable, not a reported capture time: the plan had the escarpment 'in Canadian hands by 1:18 p.m.' (Nicholson p. 248)"
       latest:
         value: 1917-04-09T14:40
         source: nicholson-1962

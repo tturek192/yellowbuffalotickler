@@ -28,7 +28,9 @@ Page numbers are the printed ones. In the BOH OCR text a page's number stands at
 
 A line's window brackets when it fell: `earliest` is the first time the sources allow, `latest` the time by which it is
 reported taken. Where the narrative gives no earlier time the timetable's minute is the earliest, as the barrage did not
-reach a line before then.
+reach a line before then. Those earliest times (red-3cdn, blue-1cdn, blue-2cdn, brown-1cdn, brown-2cdn, and the draft's
+blue and brown) are entered as **estimates**, lower bounds from the timetable, not reported capture times. black-3cdn's
+"in the allotted time" and red-2cdn's "up to time" are reported captures, at the timetable minute, so they stay sourced.
 
 | Line | Earliest | Latest | Sources and reasoning |
 |---|---|---|---|
@@ -76,7 +78,7 @@ flank secure "in another two hours" (Nicholson p. 263).
 | 5th Brigade (`5bde`) | 9 Apr | 755 | 120 | 384 | 251 | BOH p. 339 n.1 |
 | 6th Brigade (`6bde`) | 9-10 Apr | 527 | 90 | 437 | — | BOH p. 339 n.1 (about 133 on the 10th) |
 | 13th British Brigade (`13bde-brit`) | 9 Apr | 381 | 41 | 323 | 17 | BOH p. 339 n.1; Nicholson p. 261 "approximately 380" |
-| 7th Brigade (`7bde`) | 9 Apr | 965 | 192 | 606 | 167 | BOH p. 342 n.1 (row reconstructed) |
+| 7th Brigade (`7bde`) | 9 Apr | 965 | 192 | 606 | 167 | estimate: the builder's reading of BOH p. 342 n.1's broken OCR (below) |
 | 12th Brigade (`12bde`) | 9 Apr | 1,344 | 317 | 891 | 136 | BOH p. 342 n.1 |
 | 2nd Division (`2cdn`) | 9-10 Apr | 2,413 | — | — | — | estimate: the 4th, 5th, 6th and 13th Brigades added |
 | 21st Battalion (`21bn`) | 9 Apr, to the Red Line | 215 | — | — | — | Nicholson p. 255 |
@@ -91,9 +93,12 @@ killed, wounded and missing, "approximately". The OCR prints each row's numbers 
 read as officers (killed, wounded, missing) then other ranks (killed, wounded, missing), the 13th British Brigade's row
 adds to 381, which Nicholson gives as "approximately 380" (p. 261): that confirms the order. Entered totals add officers
 and other ranks. Rows not entered: the 3rd Brigade (only "993" survives for its other ranks), and the 8th and 11th
-Brigades, whose numbers on p. 342 cannot be assigned to rows with confidence. The 7th Brigade's row is read as officers
-11 killed, 30 wounded, none missing, other ranks 181, 576, 167; its order in the OCR differs from the others', so it is
-flagged for checking. BOH p. 346 n.2's table for the 44th, 50th and 46th Battalions on 12 April is unreadable.
+Brigades, whose numbers on p. 342 cannot be assigned to rows with confidence. The 7th Brigade's row comes out of the OCR
+as `Killed 11 181 - . Wounded 30 576 Missing 167`, the column headings interleaved with the numbers, unlike every other
+row. It is read as officers 11 killed, 30 wounded, none missing ("- ."), and other ranks 181 killed, 576 wounded, 167
+missing, the officers-then-other-ranks order that the 13th Brigade's row checks (381 against Nicholson's "approximately
+380"). That reading is the builder's, not a printed figure, so all four values (965, 192, 606, 167) are entered as
+**estimates** whose text gives the token sequence, the reading and the cross-check. BOH p. 346 n.2's table for the 44th, 50th and 46th Battalions on 12 April is unreadable.
 
 The German figures include the bombardment from 1 April and exclude the attached battalions of other divisions; "Nor,
 of course, do they include the casualties of the first stage of the bombardment" (BOH p. 341 n.1). The spec notes that
@@ -139,7 +144,9 @@ it on the 10th).
 
 ## The end of the battle
 
-`endedAt` is disputed: working value 08:00 on 12 April, range to 18:00 on 14 April. The scenario covers 9-12 April, and
+`endedAt` is disputed: working value 08:00 on 12 April, range to 18:00 on 14 April. The 18:00 is a chosen hour for
+BOH's "By evening" (p. 351), which gives no time, and the same hour taken for "evening" in the 4th Guard Division's
+arrival. The scenario covers 9-12 April, and
 the ridge was wholly in Canadian hands when the 46th reported the left flank secure about 8 a.m. on the 12th (Nicholson
 p. 263). The official battle ran to 14 April: "With the completion of this limited exploitation the Battle of Vimy
 Ridge ended" (Nicholson p. 265), the outpost line running east of Bailleul to the Bois de l'Hirondelle "By evening" on
@@ -150,14 +157,15 @@ the 14th (BOH p. 351).
 `1cdn-3bde-draft.yaml` is a schematic of the 1st Division's 3rd Brigade sector with four lines, `black`, `red`, `blue`
 and `brown`. Its eight `historical` values were estimates from the owner's brief, "to be replaced by a primary, official
 or scholarly citation in Task 10". They now cite the same sources as the 1st Division's lines above, and the draft's
-own source list gains `nicholson-1962` and `boh-1917-1`:
+own source list gains `nicholson-1962` and `boh-1917-1`. Six now cite them; the blue and brown earliest times, which are
+the timetable's minutes, stay estimates and say so:
 
 | Line | Was (estimate) | Now | Source |
 |---|---|---|---|
 | black | 06:15-06:25 | 06:05-06:15 | BOH p. 322; Nicholson p. 254 |
 | red | 07:00-07:30 | 07:05-08:00 | BOH p. 323; Nicholson p. 255 |
-| blue | 11:00-11:00 | 10:50-11:15 | BOH pp. 304, 334 |
-| brown | 14:00-14:00 | 13:18-14:40 | Nicholson pp. 248, 257 |
+| blue | 11:00-11:00 | 10:50-11:15 | BOH p. 304 (earliest: timetable lower bound, an estimate); BOH p. 334 |
+| brown | 14:00-14:00 | 13:18-14:40 | Nicholson p. 248 (earliest: timetable lower bound, an estimate); p. 257 |
 
 The 3rd Brigade itself stopped at the Red Line (the 1st Brigade went on to the Blue and Brown); the draft's lines are
 the division's, so the division's times are used.
@@ -176,21 +184,21 @@ the division's, so the division's times are used.
 | red-1cdn earliest 07:05 | `boh-1917-1` | 323 | "Shortly after 7 a.m. the division had taken its second objective, the intermediate line" | official |
 | red-1/2cdn latest 08:00 | `nicholson-1962` | 255 | "By eight o'clock the 1st and 2nd Divisions were reported on the Red Line" | official |
 | red-2cdn earliest 07:05 | `boh-1917-1` | 324 | "Both brigades had reached their objectives up to time" | official |
-| red-3cdn earliest 07:05 | `boh-1917-1` | 304 | "at Zero plus 95 minutes according to the time-table, have reached their final objectives" | official |
+| red-3cdn earliest 07:05 | estimate (timetable lower bound) | BOH p. 304 | "at Zero plus 95 minutes according to the time-table, have reached their final objectives" | estimate |
 | red-3cdn latest 07:30 | `nicholson-1962` | 255 | "the 3rd Division had reached the crest at 7:30 and occupied the western edge of the Bois de la Folie" | official |
 | red-4cdn earliest 15:00 | `boh-1917-1` | 342 | "The barrage ... opened at 3 p.m. on the Hangstellung" | official |
 | red-4cdn earliest 15:15 | `nicholson-1962` | 261 | "By 3:15 next afternoon Brig.-Gen. Hilliam's two uncommitted battalions were in position on Hill 145" | official |
 | red-4cdn latest 16:00 | estimate | BOH p. 343; Nicholson p. 261 | "Within thirty minutes the brilliant action of the two battalions had cleared all the dug-outs" | estimate |
-| blue-1/2cdn earliest 10:50 | `boh-1917-1` | 304 | "was to be concluded at Zero plus 5 hours, 20 minutes" | official |
+| blue-1/2cdn earliest 10:50 | estimate (timetable lower bound) | BOH p. 304 | "was to be concluded at Zero plus 5 hours, 20 minutes" | estimate |
 | blue-1cdn latest 11:15 | `boh-1917-1` | 334 | "By 11.15 a.m. the brigade had reached the Roclincourt—Vimy track" | official |
 | blue-2cdn latest 11:30 | estimate | Nicholson p. 256 | "Capture of the Blue Line was reported by the 1st Division shortly after eleven o'clock, and a little later by the 2nd" | estimate |
-| brown earliest 13:18 | `nicholson-1962` | 248 | "the whole of the eastern escarpment would be in Canadian hands by 1:18 p.m." | official |
+| brown earliest 13:18 | estimate (timetable lower bound) | Nicholson p. 248 | "the whole of the eastern escarpment would be in Canadian hands by 1:18 p.m." | estimate |
 | brown latest 14:40 | `nicholson-1962` | 257 | "at 2:40, as soon as the capture of the Brown Line seemed assured, General Byng had telephoned the First Army" | official |
 | Corps 7,707 / 2,967 | `nicholson-1962` | 261 | "Canadian casualties in the two days' fighting totalled 7707, of which 2967 were fatal" | official |
 | Corps 10,602 / 3,598 | `nicholson-1962` | 265 | "Canadian casualties (for the period 9-14 April) of 10,602 all ranks—3598 of them fatal" | official |
 | Corps 11,297 | `boh-1917-1` | 342 n.1 | "The total casualties of Canadian Corps during the period 7th-14th April 1917 were 11,297" | official |
 | brigade casualties | `boh-1917-1` | 339 n.1 | "The casualties of the 1st and 2nd Canadian Divisions were approximately as follows" | official |
-| brigade casualties | `boh-1917-1` | 342 n.1 | "The casualties of the four brigades of the 3rd and 4th Canadian Divisions which took part in the original attack" | official |
+| 12th Brigade casualties; 7th Brigade (estimate) | `boh-1917-1` | 342 n.1 | "The casualties of the four brigades of the 3rd and 4th Canadian Divisions which took part in the original attack" | official |
 | 6th Brigade window | `boh-1917-1` | 339 n.1 | "The losses of the 6th Canadian Brigade above include about 133 casualties suffered next day" | official |
 | 13th Brigade 381 | `nicholson-1962` | 261 | "To these must be added the 13th British Brigade's losses on Easter Monday—approximately 380" | official |
 | 2cdn 2,413 | estimate | BOH p. 339 n.1 | (sum of four brigades) | estimate |
@@ -210,7 +218,7 @@ the division's, so the division's times are used.
 | 4gd evening 10 Apr | `boh-1917-1` | 345 n.3 | "The 4th Guard Division began to arrive in the battle zone from Tournai ... on the evening of 10th April" | official |
 | endedAt 08:00, 12 Apr | `nicholson-1962` | 263 | "in another two hours the 46th could report the left flank secure" | official |
 | endedAt 14 Apr | `nicholson-1962` | 265 | "With the completion of this limited exploitation the Battle of Vimy Ridge ended" | official |
-| endedAt 14 Apr evening | `boh-1917-1` | 351 | "By evening the nine-mile outpost line of the XIII., Canadian, and I. Corps ran from a point" | official |
+| endedAt 14 Apr evening (18:00 taken for "evening") | `boh-1917-1` | 351 | "By evening the nine-mile outpost line of the XIII., Canadian, and I. Corps ran from a point" | official |
 
 ## Conflicts
 
@@ -235,9 +243,14 @@ the division's, so the division's times are used.
 - **Captured guns, "54 or 63".** The spec's lead gives 63 as an alternative; no source read gives it. Possibly Duguid,
   "Canada on Vimy Ridge" (*Canada Year Book*, 1936), which Nicholson cites (n.67, n.85), or the Canadian Corps Report on
   Operations.
-- **BOH's casualty tables.** The 3rd, 8th and 11th Brigades' rows (pp. 339 n.1, 342 n.1), the 7th Brigade's row order,
-  and the 12 April battalion table (p. 346 n.2) need checking against the printed page or a page image. archive.org's
+- **BOH's casualty tables.** The 3rd, 8th and 11th Brigades' rows (pp. 339 n.1, 342 n.1), the 7th Brigade's row (entered
+  as estimates from the builder's reading of the OCR; a page-image check would make them sourced), and the 12 April
+  battalion table (p. 346 n.2) need checking against the printed page or a page image. archive.org's
   page images are served from storage hosts outside the allowed list.
+- **black-4cdn's latest bound** (04:15 on 10 April) is the 11th Brigade's third trench beyond the summit (BOH p. 342).
+  The 12th Brigade, in the same sector, held only parts of its second and third trenches on the 9th, "improved their
+  positions next morning" and moved up after the Hangstellung fell (Nicholson p. 261; BOH p. 343), so the window may
+  close too early for the sector's northern half.
 - **Division totals.** Only the 2nd Division's can be added up (an estimate); the 1st's lacks the 3rd Brigade, the 3rd's
   the 8th, the 4th's the 11th and the 10th Brigade's 10 and 12 April losses.
 - **Battalion losses.** The spec's lead that the 87th and 102nd "each lost over 300 men on 9 April" is not in either
