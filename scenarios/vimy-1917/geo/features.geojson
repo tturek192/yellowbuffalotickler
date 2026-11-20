@@ -593,7 +593,7 @@
     "name": "Th\u00e9lus Trench",
     "side": "central",
     "source": "nicholson-1962",
-    "page": "Map 7 (facing p. 262); p. 257",
+    "page": "Map 7 (facing p. 262); p. 256",
     "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1120 m \u2014 the thin trench labelled THELUS TR north of the village",
     "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1120 m \u2014 the thin trench labelled THELUS TR north of the village"
    },
@@ -624,23 +624,23 @@
    "properties": {
     "id": "subway-1",
     "kind": "subway",
-    "name": "Subway (unnamed on Map 7)",
+    "name": "Subway, 4cdn sector (unnamed on Map 7)",
     "side": "allied",
     "source": "nicholson-1962",
     "page": "Map 7 (facing p. 262); p. 250",
-    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
-    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them; a short isolated outline that stops about 10 px (85 m) short of the front line on the map",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them; a short isolated outline that stops about 10 px (85 m) short of the front line on the map"
    },
    "geometry": {
     "type": "LineString",
     "coordinates": [
      [
-      2.7563,
-      50.384721
+      2.753657,
+      50.387042
      ],
      [
-      2.760685,
-      50.384777
+      2.755553,
+      50.387066
      ]
     ]
    }
@@ -650,23 +650,23 @@
    "properties": {
     "id": "subway-2",
     "kind": "subway",
-    "name": "Subway (unnamed on Map 7)",
+    "name": "Subway, 4cdn sector (unnamed on Map 7)",
     "side": "allied",
     "source": "nicholson-1962",
     "page": "Map 7 (facing p. 262); p. 250",
-    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
-    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
    },
    "geometry": {
     "type": "LineString",
     "coordinates": [
      [
-      2.754369,
-      50.379088
+      2.755,
+      50.384442
      ],
      [
-      2.763495,
-      50.379206
+      2.757067,
+      50.384918
      ]
     ]
    }
@@ -676,23 +676,27 @@
    "properties": {
     "id": "subway-3",
     "kind": "subway",
-    "name": "Subway (unnamed on Map 7)",
+    "name": "Subway, 4cdn sector (unnamed on Map 7)",
     "side": "allied",
     "source": "nicholson-1962",
     "page": "Map 7 (facing p. 262); p. 250",
-    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
-    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
    },
    "geometry": {
     "type": "LineString",
     "coordinates": [
      [
-      2.750493,
-      50.37672
+      2.752895,
+      50.382546
      ],
      [
-      2.756419,
-      50.376797
+      2.755146,
+      50.382612
+     ],
+     [
+      2.755789,
+      50.383219
      ]
     ]
    }
@@ -702,23 +706,23 @@
    "properties": {
     "id": "subway-4",
     "kind": "subway",
-    "name": "Subway (unnamed on Map 7)",
+    "name": "Subway, 4cdn sector (unnamed on Map 7)",
     "side": "allied",
     "source": "nicholson-1962",
     "page": "Map 7 (facing p. 262); p. 250",
-    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
-    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
    },
    "geometry": {
     "type": "LineString",
     "coordinates": [
      [
-      2.760083,
-      50.369592
+      2.754367,
+      50.379238
      ],
      [
-      2.767429,
-      50.369837
+      2.758751,
+      50.379369
      ]
     ]
    }
@@ -728,31 +732,31 @@
    "properties": {
     "id": "subway-5",
     "kind": "subway",
-    "name": "Subway (unnamed on Map 7)",
+    "name": "Subway, 4cdn sector (unnamed on Map 7)",
     "side": "allied",
     "source": "nicholson-1962",
     "page": "Map 7 (facing p. 262); p. 250",
-    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
-    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
    },
    "geometry": {
     "type": "LineString",
     "coordinates": [
      [
-      2.752508,
-      50.36097
+      2.750616,
+      50.376423
      ],
      [
-      2.758789,
-      50.361052
+      2.757015,
+      50.37658
      ],
      [
-      2.761935,
-      50.364681
+      2.759025,
+      50.376905
      ],
      [
-      2.773785,
-      50.364984
+      2.761038,
+      50.377044
      ]
     ]
    }
@@ -762,23 +766,31 @@
    "properties": {
     "id": "subway-6",
     "kind": "subway",
-    "name": "Subway (unnamed on Map 7)",
+    "name": "Subway, 3cdn sector (unnamed on Map 7)",
     "side": "allied",
     "source": "nicholson-1962",
     "page": "Map 7 (facing p. 262); p. 250",
-    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
-    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
    },
    "geometry": {
     "type": "LineString",
     "coordinates": [
      [
-      2.766879,
-      50.351212
+      2.75966,
+      50.374072
      ],
      [
-      2.772802,
-      50.351513
+      2.761193,
+      50.374616
+     ],
+     [
+      2.76356,
+      50.374871
+     ],
+     [
+      2.764625,
+      50.374997
      ]
     ]
    }
@@ -788,23 +800,197 @@
    "properties": {
     "id": "subway-7",
     "kind": "subway",
-    "name": "Subway (unnamed on Map 7)",
+    "name": "Subway, 3cdn sector (unnamed on Map 7)",
     "side": "allied",
     "source": "nicholson-1962",
     "page": "Map 7 (facing p. 262); p. 250",
-    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
-    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
    },
    "geometry": {
     "type": "LineString",
     "coordinates": [
      [
-      2.77171,
-      50.345294
+      2.761982,
+      50.369467
      ],
      [
-      2.774095,
-      50.344352
+      2.763157,
+      50.370155
+     ],
+     [
+      2.77074,
+      50.370403
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-8",
+    "kind": "subway",
+    "name": "Subway, 3cdn sector (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.759144,
+      50.361131
+     ],
+     [
+      2.762462,
+      50.361174
+     ],
+     [
+      2.76454,
+      50.364864
+     ],
+     [
+      2.772835,
+      50.365047
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-9",
+    "kind": "subway",
+    "name": "Subway, 2cdn sector (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.772341,
+      50.358536
+     ],
+     [
+      2.773888,
+      50.358107
+     ],
+     [
+      2.775075,
+      50.357973
+     ],
+     [
+      2.776249,
+      50.358736
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-10",
+    "kind": "subway",
+    "name": "Subway, 2cdn sector (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.771597,
+      50.352769
+     ],
+     [
+      2.773138,
+      50.352789
+     ],
+     [
+      2.773595,
+      50.353916
+     ],
+     [
+      2.776923,
+      50.353361
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-11",
+    "kind": "subway",
+    "name": "Subway, 1cdn sector (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.770253,
+      50.347592
+     ],
+     [
+      2.772502,
+      50.347771
+     ],
+     [
+      2.774148,
+      50.34869
+     ],
+     [
+      2.775922,
+      50.348937
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-12",
+    "kind": "subway",
+    "name": "Subway, 1cdn sector (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 centreline of the grey double outline of the \"Subways\" legend symbol, read at 7-8x zoom; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.77125,
+      50.344316
+     ],
+     [
+      2.773247,
+      50.345538
+     ],
+     [
+      2.774656,
+      50.346453
+     ],
+     [
+      2.77572,
+      50.346654
      ]
     ]
    }

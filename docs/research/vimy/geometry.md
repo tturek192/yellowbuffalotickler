@@ -153,7 +153,7 @@ between the outermost arrows of the two neighbouring divisions, where they cross
 
 | Sector | yMin | yMax | Frontage | Text |
 |---|---|---|---|---|
-| barrage-1cdn | −4650 | −2980 | 1,670 m | "a frontage of more than a mile" (p. 254) |
+| barrage-1cdn | −4650 | −2980 | 1,670 m | "a frontage of more than a mile" (p. 253) |
 | barrage-2cdn | −2980 | −1770 | 1,210 m | "a 1400-yard front" (p. 254), 1,280 m |
 | barrage-3cdn | −1770 | −570 | 1,200 m | — |
 | barrage-4cdn | −570 | 1320 | 1,890 m | — |
@@ -168,7 +168,7 @@ The leg values in `fireplan.yaml` are the Plan 1 draft's, entered as estimates "
 |---|---|---|
 | trench | ger-first-position (the front trace), zwolfer-graben, zwischen-stellung (south of Les Tilleuls only), ger-second-position (traced as the Brown Line, which "covered the German Second Line", p. 247), ger-third-position | ±60-150 m |
 | communication-trench | turko-graben, thelus-trench | ±100-120 m |
-| subway | subway-1 … subway-7 (unnamed on Map 7) | ±100 m |
+| subway | subway-1 … subway-12 (unnamed on Map 7; below) | ±60 m |
 | wood | Bois de la Folie, Bois de Bonval, Bois du Goulot (Count's Wood), Farbus Wood, Bois de la Ville, Bois de Givenchy, Bois en Hache | ±100 m |
 | village | 14 within the extent, centres of the hatched blocks, with a radius | ±100 m |
 | strongpoint | hill-145, hill-135, the-pimple, la-folie-farm | below |
@@ -176,6 +176,16 @@ The leg values in `fireplan.yaml` are the Plan 1 draft's, entered as estimates "
 **Hills.** Map 7 marks the hills only with labels. Each hill is the highest `ign-rge-alti` cell within 300-450 m of its
 label (the label sits beside the summit): Hill 145 at 149.8 m (40 m from the memorial), Hill 135 at 139.7 m, The Pimple at
 122.2 m (Nicholson: "an independent height of 120 metres", p. 245). The grid is the modern surface.
+
+**Subways (re-traced in fix round 1).** The first digitizing placed seven subways by hand at constant pixel rows, and
+the task review found four of them 200-460 m off their outlines, two ending in no man's land or beyond the German front.
+They were re-traced: each is the centreline of a grey double outline (the legend's "Subways" symbol), read at 7-8× zoom
+on gridded crops, so every vertex is within about 2 px (20 m) of the outline, plus the fit's error. Map 7 draws **12**
+outlines, all ending at or just short of the red Canadian front line (p. 250: "leading to the Canadian front line"):
+five in the 4th Division's sector (p. 259 says six were tunnelled there), three in the 3rd, two in the 2nd and two in the
+1st. After projection every subway's easternmost vertex lies 12-163 m west of `cdn-front` and 211-851 m west of
+`ger-front`. subway-1 is a short isolated outline that stops about 85 m short of the front on the map. Nicholson's
+total is "eleven subways" (p. 250); the map's twelfth may be a branch or a cave entrance, and none is named.
 
 **Mine craters.** Map 7 marks no craters; the green rings near Hill 145 and north of La Folie Farm are, in the map's
 symbology, orchards (p. 256 mentions "the orchards to the north"). No crater was entered (open question).
@@ -190,7 +200,8 @@ Each overlay (`overlays/`) draws the digitized features in magenta over Map 7 wi
 | `map7-gcps.png` | each GCP's modern coordinates land on its map junction | none needed (all within the dot) |
 | `map7-front-lines.png` | both fronts lie on the red and dark-blue lines | the first German trace cut across the Pimple's hatching for 500 m; re-traced with a corridor |
 | `map7-objective-lines.png` | the objective lines lie on their bands | blue-2cdn and brown-2cdn crossed north of Thélus; brown moved up to 130 m east, blue 40 m west |
-| `map7-trenches-subways.png` | trenches and subways on their map lines | the Third Line was first read from row medians of blue pixels and ran up to 170 m inside the dotted line; re-traced from the detected dots |
+| `map7-trenches-subways.png` | trenches and subways on their map lines | the Third Line was first read from row medians of blue pixels and ran up to 170 m inside the dotted line; re-traced from the detected dots. The subways were re-traced in fix round 1 (below) |
+| `map7-subways-detail.png` | each subway on its grey double outline, at 4-5× (thin magenta; green is cdn-front) | added in fix round 1; every subway lies on its outline to within about 2 px (20 m) |
 | `map7-woods-villages-strongpoints.png` | woods, villages, hills | Bois de la Folie outline was up to 170 m north-east of the hatching (redrawn); Écurie's point was 850 m off its block (corrected, then outside the extent) |
 | `map7-vs-ign-contours.png` | the fit against the map's layer tints | none |
 
@@ -213,8 +224,8 @@ Each overlay (`overlays/`) draws the digitized features in magenta over Map 7 wi
 | zwischen-stellung | `nicholson-1962` | p. 246 | "a single-trench Intermediate Line (Zwischen-Stellung) reached southward from the village of Vimy through the western edge of Thelus" | official |
 | ger-third-position | `nicholson-1962` | Map 7; p. 246 | "the Third Line snaked its way southward from Lens over the plain, passing in front of the villages of Mericourt and Oppy" | official |
 | turko-graben | `nicholson-1962` | p. 255 | "the Turko-Graben, which reached northward behind the road" | official |
-| thelus-trench | `nicholson-1962` | p. 257 | "overran Thelus Trench north of the village" | official |
-| subway-1…7 | `nicholson-1962` | Map 7; p. 250 | "eleven subways of a total length of almost four miles, leading to the Canadian front line" | official |
+| thelus-trench | `nicholson-1962` | p. 256 | "overran Thelus Trench north of the village" | official |
+| subway-1…12 | `nicholson-1962` | Map 7; p. 250 | "eleven subways of a total length of almost four miles, leading to the Canadian front line" | official |
 | hill-145, hill-135 | `nicholson-1962` + `ign-rge-alti` | p. 245 | "Hill 135 (measured in metres), immediately north of the village of Thelus, and Hill 145, two miles farther north-west" | estimate |
 | the-pimple | `nicholson-1962` + `ign-rge-alti` | p. 245 | "an independent height of 120 metres at the north end of the Ridge, known as \"The Pimple\"" | estimate |
 | la-folie-farm | `nicholson-1962` | Map 7; p. 246 | "La Folie Farm (midway between Hills 135 and 145)" | official |
@@ -238,11 +249,31 @@ Each overlay (`overlays/`) draws the digitized features in magenta over Map 7 wi
 
 ## Open questions for the historian
 
-- **Subway names.** Map 7 draws seven subway outlines in the Canadian lines without names, and Chapter VIII names none
+- **Subway names.** Map 7 draws twelve subway outlines in the Canadian lines without names, and Chapter VIII names none
   (only Zivy Cave). Goodman, Grange, Lichfield and the others need a trench map or a tunnelling-company history to tie
-  names to outlines.
-- **Mine craters.** Map 7 shows none, and no reachable source with crater coordinates was found in this task. The crater
-  groups in no man's land (from trench maps, or the memorial park's preserved craters) are missing.
+  names to outlines. Nicholson counts eleven subways (p. 250) and six in the 4th Division's sector (p. 259); the map shows
+  twelve and five.
+- **Mine craters.** Map 7 shows none, and no source in this task gives crater coordinates that can be tied to a named
+  crater. The crater groups in no man's land (from trench maps, or the memorial park's preserved craters) are missing.
+  The searches tried (all 2026-11-20, UTC):
+  - Map 7's legend and symbology: no crater symbol; the green rings are orchards (above).
+  - `en.wikipedia.org` search API, query "Vimy crater" (16:54): titles Battle of Vimy Ridge, Canadian National Vimy
+    Memorial, Vimy, German attack on Vimy Ridge, Tunnelling companies of the Royal Engineers, Thélus, 172nd and 176th
+    Tunnelling Company. Not read: the next queries ("Vimy mine crater coordinates", "Broadmarsh crater", "Grange subway
+    Vimy", the same on `de.wikipedia.org`, and a 3 km geosearch around the memorial) were refused with HTTP 429 (rate
+    limit), and retries with backoff over about two minutes were refused too. Articles "Lichfield Crater" and "Zivy
+    Crater" do not exist on en.wikipedia.org (16:58, `prop=coordinates`).
+  - `commons.wikimedia.org` geosearch, files within 2.5 km of the memorial (281 files): no title containing crater,
+    krater, cratère or entonnoir.
+  - IGN BD TOPO V3 WFS (`data.geopf.fr`), bounding box 2.70-2.86° E, 50.33-50.41° N: `detail_orographique` (30 objects:
+    valleys, summits, ridges, a slope, a spoil heap; no crater), `ligne_orographique` (banks, levees, quarries),
+    `zone_d_activite_ou_d_interet` (no crater), `toponymie` (584 names) and `cimetiere` (38).
+  - **One lead.** BD TOPO's `cimetiere` layer has two Commonwealth war cemeteries, both named "Lichfield Crater":
+    `CIMETIER0000000310100058` centred at 2.776652° E, 50.359575° N (frame −358, −2173) and `CIMETIER0000000219989140` at
+    2.778135° E, 50.354721° N (frame −395, −2718). Both lie on the Canadian front line as digitized, in the 2nd Division's
+    sector: the first 27 m east of `cdn-front`, the second 8 m west of it (within the fit's error). But BD TOPO gives both the same name,
+    so which crater each is cannot be settled from the allowed hosts; neither was entered. Should they be entered as
+    unnamed crater features?
 - **The 12th Brigade's objectives** north of the Black and Red bands are estimates (above). Is there a trench map or order
   giving them?
 - **Blue and Brown north of Thélus** are estimates from the text. A barrage map or trench map would fix them.
