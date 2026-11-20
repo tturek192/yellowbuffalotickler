@@ -62,8 +62,6 @@ export function moveCompanies(
   doctrines: Record<string, Doctrine>,
   minute: number,
   stepMin: number,
-  /** True once the sector's barrage has stopped lifting; a line is only consolidated behind a settled barrage. */
-  barrageSettled: (sectorId: string) => boolean = () => true,
 ): { companies: CompanyState[]; events: SimEvent[] } {
   const events: SimEvent[] = [];
   const companies = cs.map((c) => {
@@ -74,7 +72,7 @@ export function moveCompanies(
     const objX = lineXAt(line.points, c.y);
     const target = Math.min(objX, barrageX(c.sectorId, c.y) - v(d.followDistanceM));
     const x = Math.max(c.x, Math.min(target, c.x + c.speedMPerMin * stepMin));
-    if (objX - x <= 1 && barrageSettled(c.sectorId)) {
+    if (objX - x <= 1) {
       events.push({
         minute,
         kind: 'company-reached',

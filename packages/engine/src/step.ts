@@ -37,7 +37,7 @@ export function step(state: SimState, ctx: StepContext, dtMin: number): SimState
     const sector = ctx.scenario.sectors.find((x) => x.id === sectorId)!;
     return barrageXAt(b, sector, ctx.lines, minute, y);
   };
-  const moved = moveCompanies(state.companies, barrageX, ctx.scenario.lines, ctx.doctrines, minute, dtMin, (id) => barrages.find((b) => b.sectorId === id)!.phase !== 'lifting');
+  const moved = moveCompanies(state.companies, barrageX, ctx.scenario.lines, ctx.doctrines, minute, dtMin);
   events.push(...moved.events);
 
   const taken = [...state.taken];

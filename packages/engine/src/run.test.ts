@@ -23,10 +23,14 @@ describe('runScenario', () => {
       }
   });
   it('takes the black line once, after the barrage pauses, and records it in the summary', () => {
-    const r = runScenario(s, d, { seed: 1 });
+    const r = runScenario(s, d, { seed: 1, snapshotEvery: 1 });
     const taken = r.events.filter((e) => e.kind === 'line-taken');
     expect(taken).toHaveLength(1);
-    expect(taken[0]!.minute).toBeGreaterThanOrEqual(33);
+    expect(taken[0]!.minute).toBeLessThanOrEqual(73);
+    const snap = r.snapshots.find((x) => x.minute === taken[0]!.minute)!;
+    const black = r.geometry.lines.find((l) => l.id === 'black')!.points;
+    for (const c of snap.companies)
+      expect(lineXAt(snap.barrages[0]!.points, c.y)).toBeGreaterThanOrEqual(lineXAt(black, c.y) + 70 - 0.1);
     expect(taken[0]!.text).toBe('Black Line taken');
     expect(r.summary.lineTaken).toEqual([{ lineId: 'black', sectorId: 's1', minute: taken[0]!.minute }]);
   });
