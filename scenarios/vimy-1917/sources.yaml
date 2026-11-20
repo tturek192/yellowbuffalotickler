@@ -1,0 +1,23 @@
+# The source registry for the Vimy scenario. Every task adds its sources here, never in its own file.
+# Tiers: primary, official, scholarly, secondary, tertiary (see docs/research/vimy/sources.md).
+sources:
+  nicholson-1962:
+    title: "Canadian Expeditionary Force 1914-1919: Official History of the Canadian Army in the First World War"
+    author: G. W. L. Nicholson
+    year: 1962
+    url: https://publications.gc.ca/collections/collection_2009/forces/DA3-4462E.pdf
+    tier: official
+    note: Chapter VIII, The Battle of Vimy Ridge (pp. 233-268), Map 7 and Sketches 37-39; local copy via scripts/fetch-sources.sh
+  ign-rge-alti:
+    title: RGE ALTI digital elevation model, Géoplateforme altimetry service (resource ign_rge_alti_wld)
+    author: IGN (Institut national de l'information géographique et forestière)
+    url: https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json
+    tier: secondary
+    note: "modern 1 m–5 m elevation resampled to 25 m; post-war terrain, including the memorial park; not 1917 micro-relief"
+  vimy-brief-2026:
+    title: Owner's Vimy research brief (compiles Nicholson, Campbell, the RCA fire-plan essay and others)
+    year: 2026
+    tier: secondary
+  artillery-notes-4:
+    title: Artillery Notes No. 4, as quoted in the brief
+    tier: primary

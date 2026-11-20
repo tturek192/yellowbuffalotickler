@@ -3,9 +3,10 @@
  *
  *   npx tsx scripts/fetch-dem.ts scenarios/vimy-1917/scenario.yaml --cell 25 --out scenarios/vimy-1917/terrain/rge-alti-25m.json
  *
- * Each 200-point request is cached under --cache (default .cache/dem), so an interrupted run resumes
- * where it stopped. The grid is written only once every cell has a value; on no-data cells or a failed
- * request it exits 1 and writes nothing. Behind an HTTPS proxy, run with NODE_USE_ENV_PROXY=1.
+ * Each 200-point request whose values are all valid is cached under --cache (default .cache/dem), so an
+ * interrupted run resumes where it stopped, and a batch with no-data values is fetched again next time.
+ * The grid is written only once every cell has a value; on no-data cells or a failed request it exits 1
+ * and writes nothing. Behind an HTTPS proxy, run with NODE_USE_ENV_PROXY=1.
  */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -50,6 +51,9 @@ export const httpFetcher: Fetcher = async (url) => {
 
 const sleepMs = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
+/** A real elevation: a finite number above the no-data value. */
+const isElevation = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > NO_DATA;
+
 /** The elevations of a well-formed reply for `n` points, or undefined. Values are checked later, cell by cell. */
 function elevationsOf(reply: unknown, n: number): unknown[] | undefined {
   const e = (reply as { elevations?: unknown } | null)?.elevations;
@@ -59,7 +63,8 @@ function elevationsOf(reply: unknown, n: number): unknown[] | undefined {
 function readCache(file: string, n: number): unknown[] | undefined {
   if (!existsSync(file)) return undefined;
   try {
-    return elevationsOf(JSON.parse(readFileSync(file, 'utf8')), n);
+    const e = elevationsOf(JSON.parse(readFileSync(file, 'utf8')), n);
+    return e?.every(isElevation) ? e : undefined; // a batch with holes (from an older run): fetch it again
   } catch {
     return undefined; // a torn or corrupt file: fetch it again
   }
@@ -116,7 +121,8 @@ export async function fetchDem(frame: Frame, cellM: number, fetcher: Fetcher, ca
         const reply = await fetcher(url);
         elevations = elevationsOf(reply, count);
         if (elevations) {
-          writeAtomic(file, JSON.stringify({ elevations }));
+          // Only a complete batch is cached; one with holes is reported below and fetched again next run.
+          if (elevations.every(isElevation)) writeAtomic(file, JSON.stringify({ elevations }));
           break;
         }
         why = `malformed reply (expected ${count} elevations)`;
@@ -145,7 +151,7 @@ export async function fetchDem(frame: Frame, cellM: number, fetcher: Fetcher, ca
   await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, batches)) }, worker));
   if (failure) throw failure;
 
-  const holes = values.flatMap((v, k) => (typeof v !== 'number' || !Number.isFinite(v) || v <= NO_DATA ? [k] : []));
+  const holes = values.flatMap((v, k) => (isElevation(v) ? [] : [k]));
   if (holes.length) {
     const [x, y] = xy(holes[0]!);
     throw new DemError(`${holes.length} cells have no data (first at x=${Math.round(x * 10) / 10}, y=${Math.round(y * 10) / 10})`);
@@ -214,10 +220,15 @@ export async function main(args: string[], deps: MainDeps = {}): Promise<number>
   if (!frame) return error(`fetch-dem: ${scenarioArg}: no valid frame (origin, bearingDeg, extent) in the file or its includes`), 2;
 
   let grid: TerrainGrid;
+  const cacheDir = resolve(cwd, opts.cache ?? '.cache/dem');
   try {
-    grid = await fetchDem(frame, cellM, fetcher, resolve(cwd, opts.cache ?? '.cache/dem'), { ...deps, log });
+    grid = await fetchDem(frame, cellM, fetcher, cacheDir, { ...deps, log });
   } catch (e) {
-    error(`fetch-dem: ${(e as Error).message}`);
+    error(
+      e instanceof DemError
+        ? `fetch-dem: ${e.message}; nothing written. Complete batches stay cached in ${cacheDir}; a re-run fetches only the batches with holes`
+        : `fetch-dem: ${(e as Error).message}`,
+    );
     if (!(e instanceof DemError) && process.env.HTTPS_PROXY && !process.env.NODE_USE_ENV_PROXY) {
       error('fetch-dem: hint: Node ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set');
     }

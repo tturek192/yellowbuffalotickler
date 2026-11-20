@@ -145,6 +145,32 @@ describe('fetchDem', () => {
     expect(back.calls).toBe(2);
   });
 
+  it('never caches a batch with no-data values, so a re-run fetches only that batch again', async () => {
+    const dir = tmp();
+    const frame = { ...smallFrame, extent: { minX: 0, maxX: 2000, minY: 0, maxY: 1000 } }; // 4 batches at 50 m
+    // The 4th point of the 2nd request is no data (requests run one at a time here, in order).
+    await expect(fetchDem(frame, 50, flakyFetcher({ failFirst: 0, noDataAt: [203], frame }), dir, { sleep: noSleep, concurrency: 1 })).rejects.toThrow(DemError);
+    expect(readdirSync(dir).filter((f) => f.endsWith('.json'))).toHaveLength(3);
+    const back = flakyFetcher({ failFirst: 0, noDataAt: [], frame });
+    await fetchDem(frame, 50, back, dir, { sleep: noSleep });
+    expect(back.calls).toBe(1);
+  });
+
+  it('does not trust a cached batch holding no-data or non-numeric values', async () => {
+    const dir = tmp();
+    await fetchDem(smallFrame, 500, flakyFetcher({ failFirst: 0, noDataAt: [] }), dir, { sleep: noSleep });
+    for (const bad of [-99999, null, 'x']) {
+      for (const f of readdirSync(dir)) {
+        const cached = JSON.parse(readFileSync(join(dir, f), 'utf8')) as { elevations: unknown[] };
+        cached.elevations[7] = bad;
+        writeFileSync(join(dir, f), JSON.stringify(cached));
+      }
+      const again = flakyFetcher({ failFirst: 0, noDataAt: [] });
+      await fetchDem(smallFrame, 500, again, dir, { sleep: noSleep });
+      expect(again.calls).toBe(1);
+    }
+  });
+
   it('re-fetches a corrupt cache file instead of trusting it', async () => {
     const dir = tmp();
     await fetchDem(smallFrame, 500, flakyFetcher({ failFirst: 0, noDataAt: [] }), dir, { sleep: noSleep });
@@ -190,6 +216,18 @@ describe('fetch-dem CLI', () => {
       expect(errs.join('\n')).toMatch(/fetch-dem: (1 cells have no data|.*ECONNRESET)/);
       expect(readdirSync(join(dir, 'terrain'))).toEqual([]);
     }
+  });
+
+  it('on no-data cells, names the cache directory that keeps the complete batches', async () => {
+    const dir = scenarioDir();
+    const cache = join(dir, 'my-cache');
+    const errs: string[] = [];
+    const code = await main(['scenario.yaml', '--cell', '500', '--out', join(dir, 'g.json'), '--cache', cache], {
+      ...quiet, cwd: dir, fetcher: flakyFetcher({ failFirst: 0, noDataAt: [5] }), error: (m) => errs.push(m),
+    });
+    expect(code).toBe(1);
+    expect(errs.join('\n')).toContain(cache);
+    expect(errs.join('\n')).toMatch(/1 cells have no data.*nothing written/s);
   });
 
   it('reads the frame from an included file when the root has none', async () => {

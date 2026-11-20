@@ -38,4 +38,13 @@ describe('MapKey', () => {
     const all = keyOf(['wire', 'wood', 'village', 'crater', 'subway', 'battery'], true);
     for (const t of ['Wire', 'Wood', 'Village', 'Crater', 'Subway', 'Battery', 'Contours (5 m)']) expect(all).toContain(t);
   });
+
+  it('names roads, railways, tunnels, strongpoints and communication trenches when the record has them', () => {
+    const labels = ['Road', 'Railway', 'Tunnel', 'Strongpoint', 'Communication trench'];
+    const none = keyOf(['wire']);
+    for (const t of labels) expect(none).not.toContain(t);
+    const all = keyOf(['road', 'railway', 'tunnel', 'strongpoint', 'communication-trench']);
+    for (const t of labels) expect(all).toContain(t);
+    expect(keyOf(['tunnel'])).not.toContain('Subway');
+  });
 });

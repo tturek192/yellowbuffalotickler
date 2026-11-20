@@ -71,7 +71,9 @@ test('plays a run with map features and German garrisons', async ({ page }) => {
   await page.goto('/?run=garrisons');
   // The key names the feature symbols and contours this run has.
   const key = page.getByRole('group', { name: 'Map key' });
-  for (const entry of ['Wire', 'Wood', 'Village', 'Crater', 'Subway', 'Battery', 'Contours (5 m)']) await expect(key).toContainText(entry);
+  for (const entry of ['Communication trench', 'Wire', 'Wood', 'Village', 'Road', 'Railway', 'Crater', 'Subway', 'Tunnel', 'Strongpoint', 'Battery', 'Contours (5 m)']) {
+    await expect(key).toContainText(entry);
+  }
   const map = page.getByRole('img', { name: /^Trench map of / });
   const before = await map.getAttribute('aria-label');
   expect(before).toContain('Mon 9 Apr · 05:30');

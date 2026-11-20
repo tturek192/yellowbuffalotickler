@@ -14,6 +14,8 @@ export const SourcesSchema = z.record(
     year: z.number().optional(),
     url: z.string().optional(),
     tier: z.enum(TIERS),
+    /** What the source is good for, and its limits. */
+    note: z.string().optional(),
   }),
 );
 

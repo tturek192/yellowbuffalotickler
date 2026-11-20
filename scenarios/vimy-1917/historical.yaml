@@ -1,0 +1,4 @@
+# Historical targets the simulator is tested against (filled by a later task). An empty stub until then.
+# Every value here may cite only primary, official or scholarly sources, or be an estimate.
+historical:
+  objectives: []

@@ -9,6 +9,13 @@ type Feature = RunRecord['geometry']['features'][number];
 /** Key symbols for the map features worth naming, in key order; each shows only if the record has one. */
 const FEATURE_KEYS: Array<{ kind: FeatureKind; label: string; symbol: (ink: string) => ReactNode }> = [
   {
+    kind: 'communication-trench',
+    label: 'Communication trench',
+    symbol: (ink) => (
+      <path d="M0 4h3v2h3V4h3v2h3V4h3v2h3V4h3v2h3V4h3" fill="none" stroke={ink} strokeWidth="0.8" opacity="0.8" />
+    ),
+  },
+  {
     kind: 'wire',
     label: 'Wire',
     symbol: (ink) => (
@@ -44,6 +51,21 @@ const FEATURE_KEYS: Array<{ kind: FeatureKind; label: string; symbol: (ink: stri
     ),
   },
   {
+    kind: 'road',
+    label: 'Road',
+    symbol: (ink) => (
+      <>
+        <path d="M1 5h26" stroke={ink} strokeWidth="3.5" strokeLinecap="round" />
+        <path d="M1 5h26" stroke={MAP_COLORS.paper} strokeWidth="1.75" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
+    kind: 'railway',
+    label: 'Railway',
+    symbol: (ink) => <path d="M0 5h28M4 2v6M12 2v6M20 2v6" stroke={ink} strokeWidth="1.2" />,
+  },
+  {
     kind: 'crater',
     label: 'Crater',
     symbol: () => (
@@ -57,6 +79,21 @@ const FEATURE_KEYS: Array<{ kind: FeatureKind; label: string; symbol: (ink: stri
     kind: 'subway',
     label: 'Subway',
     symbol: (ink) => <path d="M0 5h28" stroke={ink} strokeWidth="2.25" strokeDasharray="7 4" opacity="0.5" />,
+  },
+  {
+    kind: 'tunnel',
+    label: 'Tunnel',
+    symbol: (ink) => <path d="M0 5h28" stroke={ink} strokeWidth="2.25" strokeDasharray="3 3" opacity="0.5" />,
+  },
+  {
+    kind: 'strongpoint',
+    label: 'Strongpoint',
+    symbol: (ink) => (
+      <>
+        <rect x="10" y="1" width="8" height="8" fill="none" stroke={ink} strokeWidth="1.5" />
+        <rect x="13" y="4" width="2" height="2" fill={ink} />
+      </>
+    ),
   },
   {
     kind: 'battery',
