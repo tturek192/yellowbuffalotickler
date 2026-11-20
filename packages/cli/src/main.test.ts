@@ -27,6 +27,15 @@ describe('cli', () => {
     expect(r.stderr).toMatch(/usage/i);
   });
 
+  it('exits 3 with a one-line message, not a stack trace, on an unexpected error', () => {
+    // The output's parent "directory" is an existing file, so creating it fails inside node:fs.
+    const r = runCli(['run', draft, '--seed', '1', '--out', 'packages/cli/test/broken.yaml/run.json']);
+    expect(r.code).toBe(3);
+    expect(r.stderr.trim().split('\n')).toHaveLength(1);
+    expect(r.stderr).toMatch(/^error: .*broken\.yaml/);
+    expect(r.stderr).not.toMatch(/\n\s+at /);
+  });
+
   it('run writes a run record, creating parent dirs', () => {
     const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'a/b/run.json');
     const r = runCli(['run', draft, '--seed', '1', '--out', out]);

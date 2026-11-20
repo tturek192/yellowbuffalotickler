@@ -32,6 +32,7 @@ function snapshot(state: SimState, ctx: StepContext): RunRecord['snapshots'][num
       const sector = ctx.scenario.sectors.find((x) => x.id === b.sectorId)!;
       return {
         sectorId: b.sectorId,
+        done: b.phase === 'done',
         points: sampleYs(sector.yMin, sector.yMax).map(
           (y) => [round1(barrageXAt(b, sector, ctx.lines, state.minute, y)), round1(y)] as Point,
         ),

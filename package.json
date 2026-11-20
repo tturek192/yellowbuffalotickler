@@ -9,7 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "npm run typecheck && vitest run",
     "typecheck": "tsc -b",
     "sim": "tsx packages/cli/src/main.ts",
     "app": "npm -w packages/app run dev"

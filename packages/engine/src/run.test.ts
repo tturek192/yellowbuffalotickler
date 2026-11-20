@@ -22,7 +22,7 @@ describe('runScenario', () => {
         expect(c.x).toBeLessThanOrEqual(lineXAt(b, c.y) - 70 + 0.1);
       }
   });
-  it('takes the black line once, after the barrage pauses, and records it in the summary', () => {
+  it('takes the black line once, by minute 73, with the barrage at least the follow distance beyond it, and records it in the summary', () => {
     const r = runScenario(s, d, { seed: 1, snapshotEvery: 1 });
     const taken = r.events.filter((e) => e.kind === 'line-taken');
     expect(taken).toHaveLength(1);
@@ -33,6 +33,12 @@ describe('runScenario', () => {
       expect(lineXAt(snap.barrages[0]!.points, c.y)).toBeGreaterThanOrEqual(lineXAt(black, c.y) + 70 - 0.1);
     expect(taken[0]!.text).toBe('Black Line taken');
     expect(r.summary.lineTaken).toEqual([{ lineId: 'black', sectorId: 's1', minute: taken[0]!.minute }]);
+  });
+  it('snapshots mark each barrage done from the minute it ends', () => {
+    const r = runScenario(s, d, { seed: 1, snapshotEvery: 1, stopEarly: false, endMinute: 90 });
+    const end = r.events.find((e) => e.kind === 'barrage-done')!.minute;
+    for (const snap of r.snapshots) expect(snap.barrages[0]!.done).toBe(snap.minute >= end);
+    expect(r.snapshots.some((x) => x.barrages[0]!.done)).toBe(true);
   });
   it('the record carries the geometry and starts with zero-hour', () => {
     const r = runScenario(s, d, { seed: 1 });

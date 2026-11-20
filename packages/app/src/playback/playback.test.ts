@@ -50,12 +50,24 @@ describe('playback', () => {
   });
   it('takes status from the earlier snapshot and interpolates barrages', () => {
     const r = recordWith([{ minute: 0, x: 0 }, { minute: 10, x: 10 }]);
-    r.snapshots[0]!.barrages = [{ sectorId: 's', points: [[0, 0]] }];
-    r.snapshots[1]!.barrages = [{ sectorId: 's', points: [[10, 20]] }];
-    r.snapshots[1]!.companies[0]!.status = 'held';
+    r.snapshots[0]!.barrages = [{ sectorId: 's', done: false, points: [[0, 0]] }];
+    r.snapshots[1]!.barrages = [{ sectorId: 's', done: false, points: [[10, 20]] }];
+    r.snapshots[1]!.companies[0]!.status = 'consolidating';
     const f = frameAt(r, 5);
     expect(f.companies[0]!.status).toBe('advancing');
     expect(f.barrages[0]!.points[0]).toEqual([5, 10]);
+  });
+  it('marks a barrage done from the minute its barrage-done event says it ended', () => {
+    const r = recordWith([{ minute: 0, x: 0 }, { minute: 10, x: 10 }, { minute: 20, x: 20 }], [
+      { minute: 0, kind: 'zero-hour' },
+      { minute: 13, kind: 'barrage-done', sectorId: 's' },
+    ]);
+    r.snapshots.forEach((snap) => (snap.barrages = [{ sectorId: 's', done: snap.minute >= 13, points: [[1330, 0]] }]));
+    expect(frameAt(r, 5).barrages[0]!.done).toBe(false);
+    expect(frameAt(r, 12).barrages[0]!.done).toBe(false);
+    expect(frameAt(r, 13).barrages[0]!.done).toBe(true);
+    expect(frameAt(r, 15).barrages[0]!.done).toBe(true);
+    expect(frameAt(r, 25).barrages[0]!.done).toBe(true);
   });
   it('builds zero and line-taken markers in time order', () => {
     const r = recordWith([{ minute: 0, x: 0 }], [

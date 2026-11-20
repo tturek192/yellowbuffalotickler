@@ -78,5 +78,7 @@ try {
     console.error(`${e.message}\n${USAGE}`);
     process.exit(1);
   }
-  throw e;
+  // Anything else is a bug or an I/O failure: say what went wrong in one line, without the stack.
+  console.error(`error: ${e instanceof Error ? e.message : String(e)}`.split('\n')[0]);
+  process.exit(3);
 }

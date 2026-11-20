@@ -33,8 +33,15 @@ export function frameAt(r: RunRecord, minute: number): Frame {
   const nextBarrages = new Map(b.barrages.map((x) => [x.sectorId, x]));
   const barrages = a.barrages.map((br) => {
     const nb = nextBarrages.get(br.sectorId);
-    if (!nb || nb.points.length !== br.points.length) return br;
-    return { sectorId: br.sectorId, points: br.points.map((p, i): [number, number] => [lerp(p[0], nb.points[i]![0], t), lerp(p[1], nb.points[i]![1], t)]) };
+    if (!nb) return br;
+    // A barrage that ends between snapshots is done from the minute its barrage-done event names.
+    const endedAt = r.events.find((e) => e.kind === 'barrage-done' && e.sectorId === br.sectorId)?.minute ?? b.minute;
+    const done = br.done || (nb.done && minute >= endedAt);
+    const points =
+      nb.points.length === br.points.length
+        ? br.points.map((p, i): [number, number] => [lerp(p[0], nb.points[i]![0], t), lerp(p[1], nb.points[i]![1], t)])
+        : br.points;
+    return { sectorId: br.sectorId, done, points };
   });
   return { minute, companies, barrages };
 }

@@ -1,4 +1,5 @@
 import type { Point, Scenario } from '@wwi/scenario';
+import type { CompanyState } from './companies';
 import type { SimEvent } from './types';
 
 export const ENGINE_VERSION = '0.1.0';
@@ -7,7 +8,7 @@ export type RunRecord = {
   engineVersion: string;
   scenarioId: string;
   scenarioTitle: string;
-  scenarioStatus: string;
+  scenarioStatus: Scenario['status'];
   seed: number;
   zeroHour: string;
   stepMin: number;
@@ -15,8 +16,16 @@ export type RunRecord = {
   geometry: { lines: Scenario['lines']; sectors: Array<{ id: string; yMin: number; yMax: number }> };
   snapshots: Array<{
     minute: number;
-    companies: Array<{ id: string; side: 'allied' | 'central'; x: number; y: number; strength: number; status: string }>;
-    barrages: Array<{ sectorId: string; points: Point[] }>;
+    companies: Array<{
+      id: string;
+      side: CompanyState['side'];
+      x: number;
+      y: number;
+      strength: number;
+      status: CompanyState['status'];
+    }>;
+    /** `done` once the sector's barrage has ended; its points then hold where it last stood. */
+    barrages: Array<{ sectorId: string; done: boolean; points: Point[] }>;
   }>;
   events: SimEvent[];
   summary: { lineTaken: Array<{ lineId: string; sectorId: string; minute: number }> };
