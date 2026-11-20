@@ -1,3 +1,4 @@
+import type { FeatureKind } from '@wwi/scenario';
 import type { Screen } from './declutter';
 
 /** The trench-map palette: inks on aged paper. */
@@ -12,6 +13,9 @@ export const MAP_COLORS = {
   wood: '#56642e',
   sepia: '#7a6034',
 } as const;
+
+/** Radius a point feature is drawn with when it gives none, metres. */
+export const DEFAULT_RADIUS_M: Partial<Record<FeatureKind, number>> = { wood: 60, village: 50, crater: 10 };
 
 export const LABEL_FONT = '"EB Garamond", Garamond, "Iowan Old Style", Georgia, serif';
 export const MARKER_FONT = '"Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif';

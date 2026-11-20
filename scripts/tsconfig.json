@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": { "types": ["node"], "outDir": "dist", "rootDir": ".", "noEmit": false, "emitDeclarationOnly": true },
+  "include": ["*.ts"],
+  "references": [{ "path": "../packages/scenario" }]
+}

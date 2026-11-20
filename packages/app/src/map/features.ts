@@ -1,7 +1,8 @@
 import type { Feature, FeatureKind } from '@wwi/scenario';
 import type { Screen } from './declutter';
 import { worldToScreen, type View } from './projection';
-import { alongPath, crenellatedPath, LABEL_FONT, MAP_COLORS, sideColor, tracePath } from './style';
+import { liftClear, type Box } from './labels';
+import { alongPath, crenellatedPath, DEFAULT_RADIUS_M, LABEL_FONT, MAP_COLORS, sideColor, tracePath } from './style';
 
 /** Drawing order, bottom first: ground cover, then communications, craters, trenches, then positions. */
 const LAYER: Record<FeatureKind, number> = {
@@ -19,16 +20,14 @@ const LAYER: Record<FeatureKind, number> = {
   battery: 7,
 };
 
-/** Radius used when a point feature gives none, metres. */
-const DEFAULT_RADIUS_M: Partial<Record<FeatureKind, number>> = { wood: 60, village: 50, crater: 10 };
-
 type AreaStyle = { fill: string; hatch: string; edge: string; spacing: number; cross: boolean };
 const AREA: Partial<Record<FeatureKind, AreaStyle>> = {
   wood: { fill: 'rgba(86, 100, 46, 0.10)', hatch: 'rgba(86, 100, 46, 0.42)', edge: 'rgba(86, 100, 46, 0.75)', spacing: 5, cross: false },
   village: { fill: 'rgba(59, 51, 38, 0.08)', hatch: 'rgba(59, 51, 38, 0.32)', edge: 'rgba(59, 51, 38, 0.8)', spacing: 6, cross: true },
 };
 
-function inkOf(f: Feature): string {
+/** The ink a feature is drawn in. */
+export function featureInk(f: Pick<Feature, 'kind' | 'side'>): string {
   if (f.kind === 'wood') return MAP_COLORS.wood;
   if (f.kind === 'village' || f.kind === 'road' || f.kind === 'railway' || f.kind === 'crater') return MAP_COLORS.sepia;
   return sideColor(f.side);
@@ -82,10 +81,10 @@ function drawPolygon(ctx: CanvasRenderingContext2D, f: Feature, pts: Screen[]): 
   ctx.save();
   path();
   ctx.globalAlpha = 0.1;
-  ctx.fillStyle = inkOf(f);
+  ctx.fillStyle = featureInk(f);
   ctx.fill();
   ctx.globalAlpha = 0.8;
-  ctx.strokeStyle = inkOf(f);
+  ctx.strokeStyle = featureInk(f);
   ctx.lineWidth = 1;
   ctx.stroke();
   ctx.restore();
@@ -94,7 +93,7 @@ function drawPolygon(ctx: CanvasRenderingContext2D, f: Feature, pts: Screen[]): 
 function drawPoint(ctx: CanvasRenderingContext2D, view: View, f: Feature, [x, y]: Screen, radiusM: number | undefined): void {
   const r = (radiusM ?? DEFAULT_RADIUS_M[f.kind] ?? 0) * view.scale;
   const style = AREA[f.kind];
-  const ink = inkOf(f);
+  const ink = featureInk(f);
   ctx.save();
   if (style) {
     const rr = Math.max(r, 6);
@@ -138,7 +137,7 @@ function drawPoint(ctx: CanvasRenderingContext2D, view: View, f: Feature, [x, y]
 }
 
 function drawLine(ctx: CanvasRenderingContext2D, f: Feature, pts: Screen[]): void {
-  const ink = inkOf(f);
+  const ink = featureInk(f);
   ctx.save();
   ctx.strokeStyle = ink;
   ctx.lineJoin = 'miter';
@@ -220,26 +219,38 @@ function drawLine(ctx: CanvasRenderingContext2D, f: Feature, pts: Screen[]): voi
   ctx.restore();
 }
 
-/** Name woods and villages at their centre, as the period sheets do. */
-function labelArea(ctx: CanvasRenderingContext2D, f: Feature, pts: Screen[]): void {
+const AREA_LABEL_SIZE = 12;
+
+/**
+ * Name a wood or village at its centre, as the period sheets do. A name that would print over a label
+ * already placed is lifted a row at a time (up to three rows); its box joins `placed`.
+ */
+function labelArea(ctx: CanvasRenderingContext2D, f: Feature, pts: Screen[], placed: Box[]): void {
   if (!f.name) return;
   const x = pts.reduce((a, p) => a + p[0], 0) / pts.length;
   const y = pts.reduce((a, p) => a + p[1], 0) / pts.length;
   ctx.save();
-  ctx.font = `italic 12px ${LABEL_FONT}`;
+  ctx.font = `italic ${AREA_LABEL_SIZE}px ${LABEL_FONT}`;
+  const half = ctx.measureText(f.name).width / 2;
+  const box = liftClear({ x0: x - half - 2, x1: x + half + 2, y0: y - AREA_LABEL_SIZE / 2 - 2, y1: y + AREA_LABEL_SIZE / 2 + 2 }, placed, AREA_LABEL_SIZE + 3, 4);
+  placed.push(box);
+  const ly = (box.y0 + box.y1) / 2;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
   ctx.strokeStyle = MAP_COLORS.paper;
   ctx.lineWidth = 3;
-  ctx.strokeText(f.name, x, y);
-  ctx.fillStyle = inkOf(f);
-  ctx.fillText(f.name, x, y);
+  ctx.strokeText(f.name, x, ly);
+  ctx.fillStyle = featureInk(f);
+  ctx.fillText(f.name, x, ly);
   ctx.restore();
 }
 
-/** Draw the scenario's map features, ground cover first, positions last, then name woods and villages. */
-export function drawFeatures(ctx: CanvasRenderingContext2D, view: View, features: readonly Feature[]): void {
+/**
+ * Draw the scenario's map features, ground cover first, positions last, then name woods and villages,
+ * adding each name's box to `labels` so later labels keep clear of it.
+ */
+export function drawFeatures(ctx: CanvasRenderingContext2D, view: View, features: readonly Feature[], labels: Box[]): void {
   const ordered = [...features].sort((a, b) => LAYER[a.kind] - LAYER[b.kind]);
   for (const f of ordered) {
     const g = f.geometry;
@@ -250,6 +261,6 @@ export function drawFeatures(ctx: CanvasRenderingContext2D, view: View, features
   for (const f of features) {
     if (f.kind !== 'wood' && f.kind !== 'village') continue;
     const g = f.geometry;
-    labelArea(ctx, f, g.type === 'Point' ? [worldToScreen(view, g.coordinates)] : g.coordinates.map((p) => worldToScreen(view, p)));
+    labelArea(ctx, f, g.type === 'Point' ? [worldToScreen(view, g.coordinates)] : g.coordinates.map((p) => worldToScreen(view, p)), labels);
   }
 }

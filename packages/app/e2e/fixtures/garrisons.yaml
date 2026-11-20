@@ -1,7 +1,14 @@
-# E2E fixture, not history: the draft 1st Division scenario plus synthetic map features of every kind
-# and a German garrison, so the time-lapse can be checked with features and holding German companies.
+# E2E fixture, not history: the draft 1st Division scenario plus synthetic map features of every kind,
+# a German garrison and a synthetic ridge (terrain/ridge.json, from make-ridge.ts), so the time-lapse can
+# be checked with features, holding German companies and terrain shading.
 include:
   - ../../../../scenarios/vimy-1917/1cdn-3bde-draft.yaml
+
+sources:
+  synthetic-terrain:
+    title: Synthetic ridge for the e2e visual check (not real terrain)
+    tier: tertiary
+terrain: terrain/ridge.json
 
 features:
   - { id: fx-wood, kind: wood, name: Bois des Essais, geometry: { type: Polygon, coordinates: [[2050, 650], [2450, 600], [2600, 850], [2400, 1100], [2100, 1050]] }, cite: { value: synthetic, estimate: e2e fixture } }

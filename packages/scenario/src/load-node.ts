@@ -4,8 +4,41 @@ import { parse, YAMLParseError } from 'yaml';
 import type { Scenario, Doctrine } from './schema';
 import { parseScenarioData, parseDoctrine, ScenarioError } from './load';
 import { mergeScenarioParts } from './include';
-import { FrameSchema, projectLonLatPlacements } from './frame';
+import { FrameSchema, projectLonLatPlacements, type Frame } from './frame';
+import { terrainGridProblem, type TerrainGrid } from './terrain';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
+
+const fmt = (n: number): string => String(Math.round(n * 10) / 10);
+
+/**
+ * Read and check the terrain grid file named by `terrain` (relative to the scenario file). A grid must
+ * cover the frame's extent: its cells reach half a cell beyond the outermost sample points.
+ */
+function readTerrain(scenarioPath: string, file: unknown, frame: Frame | undefined, problems: string[]): TerrainGrid | undefined {
+  if (typeof file !== 'string') return void problems.push('terrain: expected a file path');
+  let data: unknown;
+  try {
+    data = JSON.parse(readFileSync(resolve(dirname(scenarioPath), file), 'utf8'));
+  } catch (e) {
+    return void problems.push(e instanceof SyntaxError ? `terrain: invalid JSON in ${file}: ${e.message}` : `terrain: cannot read ${file}`);
+  }
+  const problem = terrainGridProblem(data);
+  if (problem) return void problems.push(`terrain: ${file}: ${problem}`);
+  const g = data as TerrainGrid;
+  if (frame) {
+    const half = g.cellM / 2;
+    const has = { minX: g.originX - half, maxX: g.originX + (g.cols - 1) * g.cellM + half, minY: g.originY - half, maxY: g.originY + (g.rows - 1) * g.cellM + half };
+    const e = frame.extent;
+    const eps = 1e-6;
+    if (has.minX > e.minX + eps || has.maxX < e.maxX - eps || has.minY > e.minY + eps || has.maxY < e.maxY - eps) {
+      problems.push(
+        `terrain: ${file}: the grid covers x ${fmt(has.minX)}…${fmt(has.maxX)}, y ${fmt(has.minY)}…${fmt(has.maxY)} ` +
+          `but the frame extent is x ${fmt(e.minX)}…${fmt(e.maxX)}, y ${fmt(e.minY)}…${fmt(e.maxY)}`,
+      );
+    }
+  }
+  return g;
+}
 
 export function loadScenario(
   path: string,
@@ -76,6 +109,10 @@ export function loadScenario(
     }
   }
   const frameParsed = FrameSchema.safeParse(mergedMap?.frame);
+  if (mergedMap?.terrain !== undefined) {
+    const grid = readTerrain(path, mergedMap.terrain, frameParsed.success ? frameParsed.data : undefined, problems);
+    if (grid) mergedMap.terrainGrid = grid;
+  }
   problems.push(...projectLonLatPlacements(merged, frameParsed.success ? frameParsed.data : undefined));
   const structural = problems.length > 0; // a broken include would only cascade into noise
   const raw = merged as { forces?: { doctrine?: unknown }[] } | null;

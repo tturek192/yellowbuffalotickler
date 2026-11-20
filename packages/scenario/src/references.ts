@@ -121,6 +121,9 @@ export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
     if (!sectorIds.has(o.sectorId)) problems.push(`historical.objectives[${i}].sectorId: unknown sector "${o.sectorId}"`);
   });
 
+  if (s.terrainGrid && !sourceIds.has(s.terrainGrid.source.source)) {
+    problems.push(`terrainGrid.source.source: unknown source "${s.terrainGrid.source.source}"`);
+  }
   for (const r of collectSourceRefs(s, '')) {
     if (!sourceIds.has(r.id)) problems.push(`${r.path}: unknown source "${r.id}"`);
   }

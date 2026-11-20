@@ -3,6 +3,7 @@ import { sourced, sourcedOrDisputed, PointSchema } from './sourced';
 import { TIERS } from './sources';
 import { LocalDateTimeSchema } from './local-time';
 import { FrameSchema } from './frame';
+import { TerrainGridSchema } from './terrain';
 
 const Side = z.enum(['allied', 'central']);
 
@@ -152,6 +153,9 @@ export const ScenarioSchema = z.object({
   frame: FrameSchema.optional(),
   /** GeoJSON files (relative to the scenario file) read by the node loader. */
   geo: z.array(z.string()).optional(),
+  /** Terrain grid file (relative to the scenario file) read by the node loader into `terrainGrid`. */
+  terrain: z.string().optional(),
+  terrainGrid: TerrainGridSchema.optional(),
   lines: z.array(LineSchema),
   features: z.array(FeatureSchema).default([]),
   sectors: z.array(

@@ -6,6 +6,9 @@ const out = (name: string): string => fileURLToPath(new URL(`./out/${name}`, imp
 test('plays, scrubs and jumps from the event log', async ({ page }) => {
   await page.goto('/?run=sample');
   await expect(page.getByText('Draft — unverified data')).toBeVisible();
+  // No features or terrain in this run: the key keeps to the basics.
+  await expect(page.getByRole('group', { name: 'Map key' })).not.toContainText('Wire');
+  await expect(page.getByRole('group', { name: 'Map key' })).not.toContainText('Contours');
   const clock = page.getByTestId('battle-clock');
   await expect(clock).toHaveText('Mon 9 Apr · 05:30');
   await page.getByRole('button', { name: '1 s = 1 h', exact: true }).click();
@@ -66,6 +69,9 @@ test('names a missing run instead of failing to parse the fallback page', async 
 
 test('plays a run with map features and German garrisons', async ({ page }) => {
   await page.goto('/?run=garrisons');
+  // The key names the feature symbols and contours this run has.
+  const key = page.getByRole('group', { name: 'Map key' });
+  for (const entry of ['Wire', 'Wood', 'Village', 'Crater', 'Subway', 'Battery', 'Contours (5 m)']) await expect(key).toContainText(entry);
   const map = page.getByRole('img', { name: /^Trench map of / });
   const before = await map.getAttribute('aria-label');
   expect(before).toContain('Mon 9 Apr · 05:30');

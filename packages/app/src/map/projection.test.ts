@@ -53,4 +53,20 @@ describe('projection', () => {
     } as unknown as RunRecord;
     expect(recordBounds(r)).toEqual({ minX: -200, maxX: 700, minY: -300, maxY: 425 });
   });
+
+  it('bounds cover the radius a point wood, village or crater is drawn with when it gives none', () => {
+    const r = {
+      geometry: {
+        lines: [{ id: 'a', name: 'A', kind: 'trench', points: [[0, 0], [0, 100]] }],
+        sectors: [],
+        features: [
+          { id: 'w', kind: 'wood', geometry: { type: 'Point', coordinates: [1000, 50] } },
+          { id: 'v', kind: 'village', geometry: { type: 'Point', coordinates: [-500, 50] } },
+          { id: 'k', kind: 'crater', geometry: { type: 'Point', coordinates: [0, 300] } },
+        ],
+      },
+      snapshots: [{ minute: 0, companies: [], barrages: [] }],
+    } as unknown as RunRecord;
+    expect(recordBounds(r)).toEqual({ minX: -550, maxX: 1060, minY: -10, maxY: 310 });
+  });
 });

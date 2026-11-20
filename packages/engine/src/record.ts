@@ -1,4 +1,4 @@
-import type { Feature, Point, Scenario } from '@wwi/scenario';
+import type { Feature, Point, Scenario, TerrainGrid } from '@wwi/scenario';
 import type { CompanyState } from './companies';
 import type { SimEvent } from './types';
 
@@ -18,6 +18,8 @@ export type RunRecord = {
     sectors: Array<{ id: string; yMin: number; yMax: number }>;
     /** Map features (trenches, wire, woods, …) in local metres, as the scenario holds them. */
     features: Feature[];
+    /** The scenario's elevation grid; absent (not undefined) when the scenario has none. */
+    terrain?: TerrainGrid;
   };
   snapshots: Array<{
     minute: number;

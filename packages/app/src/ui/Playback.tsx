@@ -5,7 +5,7 @@ import { MapCanvas } from './MapCanvas';
 import { Timeline } from './Timeline';
 import { EventLog } from './EventLog';
 import { capQuietAdvance, elapsedLabel, nextEventMinute, prevEventMinute, QUIET_WINDOW_MIN } from './steps';
-import { MAP_COLORS } from '../map/draw';
+import { MapKey } from './MapKey';
 
 const SPEED_LABELS: Record<(typeof SPEEDS)[number], string> = {
   1: '1 s = 1 min',
@@ -143,7 +143,7 @@ export function Playback({ record }: { record: RunRecord }) {
                 {quietNow && <span className="quiet-chip">Quiet · ×{QUIET_SPEEDUP}</span>}
               </div>
             </div>
-            <MapKey />
+            <MapKey record={record} />
           </div>
 
           <div className="controls">
@@ -192,56 +192,5 @@ export function Playback({ record }: { record: RunRecord }) {
         <EventLog events={events} current={current} timeOf={timeOf} onSeek={seekTo} />
       </div>
     </>
-  );
-}
-
-/** The map key, styled as part of the paper sheet. */
-function MapKey() {
-  return (
-    <div className="map-key" aria-label="Map key" role="group">
-      <div className="key-row">
-        <svg viewBox="0 0 28 10" aria-hidden="true">
-          <path d="M0 3h4v4h4V3h4v4h4V3h4v4h4V3h4" fill="none" stroke={MAP_COLORS.allied} strokeWidth="1.6" />
-        </svg>
-        Allied trench
-      </div>
-      <div className="key-row">
-        <svg viewBox="0 0 28 10" aria-hidden="true">
-          <path d="M0 3h4v4h4V3h4v4h4V3h4v4h4V3h4" fill="none" stroke={MAP_COLORS.central} strokeWidth="1.6" />
-        </svg>
-        German trench
-      </div>
-      <div className="key-row">
-        <svg viewBox="0 0 28 10" aria-hidden="true">
-          <path d="M0 5h28" stroke={MAP_COLORS.ink} strokeWidth="2" strokeDasharray="6 3" />
-        </svg>
-        Objective line
-      </div>
-      <div className="key-row">
-        <svg viewBox="0 0 28 10" aria-hidden="true">
-          <defs>
-            <pattern id="key-hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
-              <path d="M0 0v4" stroke={MAP_COLORS.hatch} strokeWidth="2" />
-            </pattern>
-          </defs>
-          <rect x="1" y="1" width="26" height="8" fill="url(#key-hatch)" stroke="rgba(150,116,40,.85)" strokeWidth="1" />
-        </svg>
-        Barrage
-      </div>
-      <div className="key-row">
-        <svg viewBox="0 0 28 10" aria-hidden="true">
-          <rect x="1" y="1" width="12" height="8" fill={MAP_COLORS.allied} />
-          <rect x="15.5" y="1.5" width="11" height="7" fill={MAP_COLORS.central} stroke={MAP_COLORS.centralEdge} strokeWidth="1" />
-        </svg>
-        Company
-      </div>
-      <div className="key-row">
-        <svg viewBox="0 0 28 10" aria-hidden="true">
-          <rect x="5.5" y="0.5" width="17" height="9" fill="none" stroke="rgba(20,16,8,.45)" strokeWidth="1" />
-          <rect x="7.25" y="2.25" width="13.5" height="5.5" fill={MAP_COLORS.allied} stroke="#fff" strokeWidth="1.5" />
-        </svg>
-        Consolidating
-      </div>
-    </div>
   );
 }

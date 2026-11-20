@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunRecord } from '@wwi/engine';
-import { FEATURE_KINDS, type Feature, type FeatureKind } from '@wwi/scenario';
+import { encodeTerrain, FEATURE_KINDS, type Feature, type FeatureKind, type TerrainGrid } from '@wwi/scenario';
 import { frameAt } from '../playback';
 import { drawFrame, shortId } from './draw';
 import type { View } from './projection';
@@ -149,3 +149,90 @@ describe('drawing map features', () => {
     expect(shortId('ir11-12')).toBe('12/11');
   });
 });
+
+const fillTextY = (calls: Call[], text: string): number | undefined => calls.find((c) => c.name === 'fillText' && c.args[0] === text)?.args[2] as number | undefined;
+
+describe('map labels', () => {
+  // The German front line's label sits just above its north end, at screen (175, 100).
+  const woodAt = (id: string, name: string): Feature => ({
+    id, kind: 'wood', name, cite,
+    geometry: { type: 'Polygon', coordinates: [[150, 780], [250, 780], [250, 860], [150, 860]] },
+  });
+
+  it('lifts a line label clear of a wood or village name', () => {
+    const plain = recordingContext();
+    drawFrame(plain.ctx, view, record([]), frameAt(record([]), 0));
+    const r = record([woodAt('w', 'Bois')]);
+    const withWood = recordingContext();
+    drawFrame(withWood.ctx, view, r, frameAt(r, 0));
+    expect(fillTextY(plain.calls, 'German front line')).toBe(93);
+    expect(fillTextY(withWood.calls, 'German front line')!).toBeLessThan(93);
+  });
+
+  it('keeps two area names from printing over each other', () => {
+    const r = record([woodAt('w1', 'Bois Un'), woodAt('w2', 'Bois Deux')]);
+    const calls = recordingContext();
+    drawFrame(calls.ctx, view, r, frameAt(r, 0));
+    expect(fillTextY(calls.calls, 'Bois Un')).not.toBe(fillTextY(calls.calls, 'Bois Deux'));
+  });
+});
+
+describe('terrain', () => {
+  let made = 0;
+  const saved = { OffscreenCanvas: globalThis.OffscreenCanvas, ImageData: globalThis.ImageData };
+  beforeEach(() => {
+    made = 0;
+    (globalThis as Record<string, unknown>).OffscreenCanvas = class {
+      constructor(public width: number, public height: number) {
+        made++;
+      }
+      getContext() {
+        return recordingContext().ctx;
+      }
+    };
+    (globalThis as Record<string, unknown>).ImageData = class {
+      constructor(public data: Uint8ClampedArray, public width: number, public height: number) {}
+    };
+  });
+  afterEach(() => Object.assign(globalThis, saved));
+
+  const ridge = (): TerrainGrid => {
+    const elevM: number[] = [];
+    for (let j = 0; j < 40; j++) for (let i = 0; i < 40; i++) elevM.push(100 + 40 * Math.exp(-(((i - 20) / 6) ** 2)));
+    return { source: { source: 'test-src' }, method: 'test', ...encodeTerrain({ cellM: 25, originX: -100, originY: -100, cols: 40, rows: 40, elevM }) };
+  };
+  const withTerrain = (features: Feature[]): RunRecord => {
+    const r = record(features);
+    return { ...r, geometry: { ...r.geometry, terrain: ridge() } };
+  };
+  const crater: Feature = { id: 'k', kind: 'crater', geometry: { type: 'Point', coordinates: [400, 500], radiusM: 20 }, cite };
+
+  it('draws the hillshade and contours over the paper and under the features', () => {
+    const r = withTerrain([crater]);
+    const calls = recordingContext();
+    drawFrame(calls.ctx, view, r, frameAt(r, 0));
+    const names = calls.calls.map((c) => c.name);
+    const paper = names.indexOf('fillRect');
+    const terrain = names.indexOf('drawImage');
+    expect(paper).toBeGreaterThanOrEqual(0);
+    expect(terrain).toBeGreaterThan(paper);
+    expect(terrain).toBeLessThan(names.indexOf('arc'));
+    expect(calls.calls[terrain]!.args.slice(1)).toEqual([0, 0, 800, 600]);
+  });
+
+  it('draws no terrain layer for a record without one', () => {
+    const calls = recordingContext();
+    drawFrame(calls.ctx, view, record([crater]), frameAt(record([crater]), 0));
+    expect(calls.count('drawImage')).toBe(0);
+    expect(made).toBe(0);
+  });
+
+  it('shades once per view and size, not once per frame', () => {
+    const r = withTerrain([]);
+    for (let i = 0; i < 3; i++) drawFrame(recordingContext().ctx, view, r, frameAt(r, 0));
+    expect(made).toBe(1);
+    drawFrame(recordingContext().ctx, { ...view, scale: 0.6 }, r, frameAt(r, 0));
+    expect(made).toBe(2);
+  });
+});
+

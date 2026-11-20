@@ -1,4 +1,5 @@
 import type { RunRecord } from '@wwi/engine';
+import { DEFAULT_RADIUS_M } from './style';
 
 export type Point = [number, number];
 export type Bounds = { minX: number; maxX: number; minY: number; maxY: number };
@@ -25,7 +26,7 @@ export function worldToScreen(view: View, p: Point): [number, number] {
   return [view.tx + p[0] * view.scale, view.ty - p[1] * view.scale];
 }
 
-/** Everything the map draws: lines, features, sector extents, companies and barrage bands across all snapshots. */
+/** Everything the map draws: lines, features (point features at their drawn radius), sector extents, companies and barrage bands across all snapshots. */
 export function recordBounds(r: RunRecord): Bounds {
   const b: Bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
   const add = (x: number, y: number): void => {
@@ -40,7 +41,7 @@ export function recordBounds(r: RunRecord): Bounds {
     if (g.type !== 'Point') for (const [x, y] of g.coordinates) add(x, y);
     else {
       const [x, y] = g.coordinates;
-      const rad = g.radiusM ?? 0;
+      const rad = g.radiusM ?? DEFAULT_RADIUS_M[f.kind] ?? 0;
       add(x - rad, y - rad);
       add(x + rad, y + rad);
     }

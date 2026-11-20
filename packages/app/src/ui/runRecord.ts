@@ -1,5 +1,5 @@
 import type { RunRecord } from '@wwi/engine';
-import { FEATURE_KINDS, isLocalDateTime, LOCAL_DATETIME_FORMAT } from '@wwi/scenario';
+import { FEATURE_KINDS, isLocalDateTime, LOCAL_DATETIME_FORMAT, terrainGridProblem } from '@wwi/scenario';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -41,6 +41,11 @@ export function parseRunRecord(data: unknown): RunRecord {
   (features as unknown[]).forEach((f, i) => {
     if (!isFeature(f)) fail(`geometry.features[${i}] needs an id, a known kind and a Point, LineString or Polygon geometry`);
   });
+  const terrain = (g as Record<string, unknown>).terrain;
+  if (terrain !== undefined) {
+    const problem = terrainGridProblem(terrain);
+    if (problem) fail(`geometry.terrain: ${problem}`);
+  }
   const snapshots = data.snapshots;
   if (!Array.isArray(snapshots) || snapshots.length === 0) return fail('snapshots must be a non-empty array');
   snapshots.forEach((s: unknown, i) => {

@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureWithDoctrine, withManyCompanies } from '@wwi/scenario/test-fixtures';
+import { encodeTerrain } from '@wwi/scenario';
 import { lineXAt } from './geometry';
 import { runScenario } from './run';
 
 const { scenario: s, doctrines: d } = fixtureWithDoctrine();
 
 describe('runScenario', () => {
+  it('copies the terrain grid into the record, and leaves the key out when there is none', () => {
+    const terrainGrid = { source: { source: 'test-src' }, method: 'test', ...encodeTerrain({ cellM: 25, originX: 0, originY: 0, cols: 2, rows: 1, elevM: [60, 145] }) };
+    expect(runScenario({ ...s, terrainGrid }, d, { seed: 1 }).geometry.terrain).toEqual(terrainGrid);
+    expect('terrain' in runScenario(s, d, { seed: 1 }).geometry).toBe(false);
+  });
   it('does not crash on a garrison company without objective or sector, and leaves it in place', () => {
     const g = structuredClone(s);
     g.forces[0]!.formations[0]!.companies!.push({

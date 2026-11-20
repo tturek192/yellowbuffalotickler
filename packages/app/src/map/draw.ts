@@ -4,6 +4,7 @@ import { BARRAGE_DEPTH_M, worldToScreen, type Point, type View } from './project
 import { declutter, type Screen } from './declutter';
 import { liftClear, type Box } from './labels';
 import { drawFeatures } from './features';
+import { terrainLayer } from './hillshade';
 import { LABEL_FONT, MAP_COLORS, MARKER_FONT, crenellatedPath, sideColor, tracePath } from './style';
 
 export { crenellatedPath, MAP_COLORS } from './style';
@@ -104,6 +105,12 @@ function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord): voi
   g.addColorStop(1, 'rgba(120, 92, 40, 0.16)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
+
+  // Relief: hillshade and 5 m contours, printed on the paper under everything else.
+  if (r.geometry.terrain) {
+    const dpr = ctx.getTransform().a || 1;
+    ctx.drawImage(terrainLayer(r.geometry.terrain, view, w, h, dpr), 0, 0, w, h);
+  }
 
   // Map squares every 500 m, as on the period sheets.
   const grid = 500;
@@ -326,13 +333,13 @@ function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
 }
 
 /**
- * Draw one frame in CSS pixels (the caller sets the devicePixelRatio transform):
- * paper, map features, trenches, objective lines, barrage bands (until each barrage ends), then company markers.
+ * Draw one frame in CSS pixels (the caller sets the devicePixelRatio transform): paper and terrain, map
+ * features, trenches, objective lines, barrage bands (until each barrage ends), then company markers.
  */
 export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame): void {
   drawPaper(ctx, view, r);
-  drawFeatures(ctx, view, r.geometry.features);
   const labels: Box[] = [];
+  drawFeatures(ctx, view, r.geometry.features, labels);
   for (const l of r.geometry.lines) if (l.kind === 'trench') drawTrench(ctx, view, l, labels);
   for (const l of r.geometry.lines) if (l.kind === 'objective') drawObjective(ctx, view, l, labels);
   for (const b of frame.barrages) if (!b.done) drawBarrage(ctx, view, b.points);

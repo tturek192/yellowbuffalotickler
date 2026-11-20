@@ -88,6 +88,7 @@ export function runScenario(s: Scenario, doctrines: Record<string, Doctrine>, op
       lines: s.lines,
       sectors: s.sectors.map((x) => ({ id: x.id, yMin: x.yMin, yMax: x.yMax })),
       features: s.features,
+      ...(s.terrainGrid ? { terrain: s.terrainGrid } : {}),
     },
     snapshots,
     events,

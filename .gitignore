@@ -6,3 +6,4 @@ packages/app/public/runs/
 packages/app/e2e/out/
 test-results/
 playwright-report/
+.cache/

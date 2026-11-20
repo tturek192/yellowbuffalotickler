@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { encodeTerrain } from '@wwi/scenario';
 import { parseRunRecord } from './runRecord';
 
 const good = () => ({
@@ -32,6 +33,11 @@ const withFeature = (f: unknown) => {
   const r = good();
   return { ...r, geometry: { ...r.geometry, features: [...r.geometry.features, f] } };
 };
+const terrain = () => ({ source: { source: 'ign-rge-alti' }, method: 'test', ...encodeTerrain({ cellM: 25, originX: 0, originY: 0, cols: 2, rows: 2, elevM: [1, 2, 3, 4] }) });
+const withTerrain = (t: unknown) => {
+  const r = good();
+  return { ...r, geometry: { ...r.geometry, terrain: t } };
+};
 const withCompany = (c: unknown) => {
   const r = good();
   return { ...r, snapshots: [{ ...r.snapshots[0]!, companies: [c] }] };
@@ -43,6 +49,10 @@ describe('parseRunRecord', () => {
     expect(r.zeroHour).toBe('1917-04-09T05:30');
     expect(r.geometry.features.map((f) => f.kind)).toEqual(['trench', 'wood', 'crater']);
     expect(r.snapshots[0]!.companies.map((c) => c.status)).toEqual(['waiting', 'holding']);
+  });
+
+  it('accepts a record with a terrain grid', () => {
+    expect(parseRunRecord(withTerrain(terrain())).geometry.terrain?.cols).toBe(2);
   });
 
   it.each([
@@ -68,6 +78,9 @@ describe('parseRunRecord', () => {
     ['a barrage without points', () => ({ ...good(), snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', done: true }] }] }), /snapshots\[0\]\.barrages\[0\]/],
     ['events not an array', () => ({ ...good(), events: {} }), /events/],
     ['a malformed event', () => ({ ...good(), events: [{ minute: 'x', text: 'a' }] }), /events\[0\]/],
+    ['a terrain grid whose cells do not match cols × rows', () => withTerrain({ ...terrain(), rows: 3 }), /geometry\.terrain: .*2 × 3 = 6 cells but elevDm holds 4/],
+    ['a terrain grid with a zero cell size', () => withTerrain({ ...terrain(), cellM: 0 }), /geometry\.terrain: .*cellM/],
+    ['a terrain grid that is not an object', () => withTerrain('hills'), /geometry\.terrain/],
     ['a negative end', () => ({ ...good(), endMinute: -1 }), /endMinute/],
   ])('rejects %s', (_, make, message) => {
     expect(() => parseRunRecord(make())).toThrow(message);
