@@ -7,7 +7,7 @@ const good = () => ({
   zeroHour: '1917-04-09T05:30',
   endMinute: 10,
   geometry: { lines: [], sectors: [] },
-  snapshots: [{ minute: 0, companies: [], barrages: [] }],
+  snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', done: false, points: [[0, 0], [0, 10]] }] }],
   events: [{ minute: 0, kind: 'zero-hour', text: 'Zero hour', causes: [] }],
 });
 
@@ -24,6 +24,8 @@ describe('parseRunRecord', () => {
     ['no geometry sectors', () => ({ ...good(), geometry: { lines: [] } }), /geometry\.sectors/],
     ['empty snapshots', () => ({ ...good(), snapshots: [] }), /snapshots/],
     ['a malformed snapshot', () => ({ ...good(), snapshots: [{ minute: 0 }] }), /snapshots\[0\]/],
+    ['a barrage without done (a record from before barrage phases)', () => ({ ...good(), snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', points: [] }] }] }), /snapshots\[0\]\.barrages\[0\]/],
+    ['a barrage without points', () => ({ ...good(), snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', done: true }] }] }), /snapshots\[0\]\.barrages\[0\]/],
     ['events not an array', () => ({ ...good(), events: {} }), /events/],
     ['a malformed event', () => ({ ...good(), events: [{ minute: 'x', text: 'a' }] }), /events\[0\]/],
     ['a negative end', () => ({ ...good(), endMinute: -1 }), /endMinute/],

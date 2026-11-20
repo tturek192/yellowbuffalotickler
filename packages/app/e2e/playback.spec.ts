@@ -58,3 +58,8 @@ test('fits a phone-width screen', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
   await page.screenshot({ path: out('playback-narrow.png'), fullPage: true });
 });
+
+test('names a missing run instead of failing to parse the fallback page', async ({ page }) => {
+  await page.goto('/?run=no-such-run');
+  await expect(page.getByRole('alert')).toHaveText('No run named “no-such-run”.');
+});

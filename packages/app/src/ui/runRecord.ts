@@ -19,7 +19,10 @@ export function parseRunRecord(data: unknown): RunRecord {
   const snapshots = data.snapshots;
   if (!Array.isArray(snapshots) || snapshots.length === 0) return fail('snapshots must be a non-empty array');
   snapshots.forEach((s: unknown, i) => {
-    if (!isObject(s) || !isNum(s.minute) || !Array.isArray(s.companies) || !Array.isArray(s.barrages)) fail(`snapshots[${i}] needs minute, companies and barrages`);
+    if (!isObject(s) || !isNum(s.minute) || !Array.isArray(s.companies) || !Array.isArray(s.barrages)) return fail(`snapshots[${i}] needs minute, companies and barrages`);
+    s.barrages.forEach((b: unknown, j) => {
+      if (!isObject(b) || typeof b.sectorId !== 'string' || typeof b.done !== 'boolean' || !Array.isArray(b.points)) fail(`snapshots[${i}].barrages[${j}] needs sectorId, done and points`);
+    });
   });
   const events = data.events;
   if (!Array.isArray(events)) return fail('events must be an array');

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "cd ../.. && npm run sim -- run scenarios/vimy-1917/1cdn-3bde-draft.yaml --seed 1 --out packages/app/public/runs/sample.json",
     "dev": "vite",
     "build": "vite build",
     "e2e": "playwright test --trace off"

@@ -359,14 +359,14 @@ function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
 
 /**
  * Draw one frame in CSS pixels (the caller sets the devicePixelRatio transform):
- * paper, trenches, objective lines, barrage bands, then company markers.
+ * paper, trenches, objective lines, barrage bands (until each barrage ends), then company markers.
  */
 export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame): void {
   drawPaper(ctx, view, r);
   const labels: Box[] = [];
   for (const l of r.geometry.lines) if (l.kind === 'trench') drawTrench(ctx, view, l, labels);
   for (const l of r.geometry.lines) if (l.kind === 'objective') drawObjective(ctx, view, l, labels);
-  for (const b of frame.barrages) drawBarrage(ctx, view, b.points);
+  for (const b of frame.barrages) if (!b.done) drawBarrage(ctx, view, b.points);
   drawCompanies(ctx, view, r, frame);
   drawFurniture(ctx, view);
 }

@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState, type ChangeEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { RunRecord } from '@wwi/engine';
+import { fetchRun } from './ui/fetchRun';
 import { Playback } from './ui/Playback';
 import { parseRunRecord } from './ui/runRecord';
 import './styles.css';
@@ -15,18 +16,9 @@ function App() {
 
   useEffect(() => {
     if (state.kind !== 'loading') return;
-    const { name } = state;
-    if (!/^[\w.-]+$/.test(name)) {
-      setState({ kind: 'error', message: `“${name}” is not a valid run name.` });
-      return;
-    }
     let live = true;
-    fetch(`/runs/${encodeURIComponent(name)}.json`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Could not load /runs/${name}.json (HTTP ${res.status}).`);
-        return res.json();
-      })
-      .then((data) => live && setState({ kind: 'ready', record: parseRunRecord(data) }))
+    fetchRun(state.name)
+      .then((record) => live && setState({ kind: 'ready', record }))
       .catch((err: unknown) => live && setState({ kind: 'error', message: err instanceof Error ? err.message : String(err) }));
     return () => {
       live = false;
