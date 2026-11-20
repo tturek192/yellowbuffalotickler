@@ -63,3 +63,22 @@ test('names a missing run instead of failing to parse the fallback page', async 
   await page.goto('/?run=no-such-run');
   await expect(page.getByRole('alert')).toHaveText('No run named “no-such-run”.');
 });
+
+test('plays a run with map features and German garrisons', async ({ page }) => {
+  await page.goto('/?run=garrisons');
+  const map = page.getByRole('img', { name: /^Trench map of / });
+  const before = await map.getAttribute('aria-label');
+  expect(before).toContain('Mon 9 Apr · 05:30');
+  await page.screenshot({ path: out('garrisons-start.png') });
+  await page.getByRole('button', { name: '1 s = 1 h', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(map).not.toHaveAttribute('aria-label', before!, { timeout: 3000 });
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+
+  // Mid-attack, for the visual check: features under the markers, German garrisons holding in red.
+  await page.getByLabel('Battle time').fill('120');
+  await expect(page.getByTestId('battle-clock')).toHaveText('Mon 9 Apr · 07:30');
+  await page.screenshot({ path: out('garrisons-mid.png') });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.screenshot({ path: out('garrisons-narrow.png'), fullPage: true });
+});

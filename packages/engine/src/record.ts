@@ -1,8 +1,8 @@
-import type { Point, Scenario } from '@wwi/scenario';
+import type { Feature, Point, Scenario } from '@wwi/scenario';
 import type { CompanyState } from './companies';
 import type { SimEvent } from './types';
 
-export const ENGINE_VERSION = '0.1.0';
+export const ENGINE_VERSION = '0.2.0';
 
 export type RunRecord = {
   engineVersion: string;
@@ -13,7 +13,12 @@ export type RunRecord = {
   zeroHour: string;
   stepMin: number;
   endMinute: number;
-  geometry: { lines: Scenario['lines']; sectors: Array<{ id: string; yMin: number; yMax: number }> };
+  geometry: {
+    lines: Scenario['lines'];
+    sectors: Array<{ id: string; yMin: number; yMax: number }>;
+    /** Map features (trenches, wire, woods, …) in local metres, as the scenario holds them. */
+    features: Feature[];
+  };
   snapshots: Array<{
     minute: number;
     companies: Array<{

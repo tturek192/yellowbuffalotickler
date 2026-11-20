@@ -26,6 +26,7 @@ describe('projection', () => {
       geometry: {
         lines: [{ id: 'a', name: 'A', kind: 'trench', side: 'allied', points: [[0, 0], [0, 1200]] }],
         sectors: [{ id: 's', yMin: -100, yMax: 1300 }],
+        features: [],
       },
       snapshots: [
         { minute: 0, companies: [{ id: 'c', side: 'allied', x: -400, y: 10, strength: 1, status: 'waiting' }], barrages: [] },
@@ -34,5 +35,22 @@ describe('projection', () => {
       ],
     } as unknown as RunRecord;
     expect(recordBounds(r)).toEqual({ minX: -400, maxX: 1090, minY: -100, maxY: 1300 });
+  });
+
+  it('bounds cover every feature geometry, including a crater radius', () => {
+    const r = {
+      geometry: {
+        lines: [{ id: 'a', name: 'A', kind: 'trench', points: [[0, 0], [0, 100]] }],
+        sectors: [],
+        features: [
+          { id: 'w', kind: 'wood', geometry: { type: 'Polygon', coordinates: [[-50, 10], [20, -300], [40, 30]] } },
+          { id: 't', kind: 'trench', geometry: { type: 'LineString', coordinates: [[10, 10], [700, 20]] } },
+          { id: 'k', kind: 'crater', geometry: { type: 'Point', coordinates: [100, 400], radiusM: 25 } },
+          { id: 'b', kind: 'battery', geometry: { type: 'Point', coordinates: [-200, 50] } },
+        ],
+      },
+      snapshots: [{ minute: 0, companies: [], barrages: [] }],
+    } as unknown as RunRecord;
+    expect(recordBounds(r)).toEqual({ minX: -200, maxX: 700, minY: -300, maxY: 425 });
   });
 });

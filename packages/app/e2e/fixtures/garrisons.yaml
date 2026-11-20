@@ -1,0 +1,39 @@
+# E2E fixture, not history: the draft 1st Division scenario plus synthetic map features of every kind
+# and a German garrison, so the time-lapse can be checked with features and holding German companies.
+include:
+  - ../../../../scenarios/vimy-1917/1cdn-3bde-draft.yaml
+
+features:
+  - { id: fx-wood, kind: wood, name: Bois des Essais, geometry: { type: Polygon, coordinates: [[2050, 650], [2450, 600], [2600, 850], [2400, 1100], [2100, 1050]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-village, kind: village, name: Essai, geometry: { type: Polygon, coordinates: [[2950, 150], [3250, 120], [3300, 400], [3000, 450]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-copse, kind: wood, geometry: { type: Point, coordinates: [1500, 250], radiusM: 70 }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-road, kind: road, geometry: { type: LineString, coordinates: [[-500, 300], [800, 350], [1900, 300], [3100, 280]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-rail, kind: railway, geometry: { type: LineString, coordinates: [[3400, -100], [3500, 1300]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-subway, kind: subway, side: allied, geometry: { type: LineString, coordinates: [[-700, 620], [-300, 600], [-10, 640]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-tunnel, kind: tunnel, side: allied, geometry: { type: LineString, coordinates: [[-10, 900], [90, 920]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-crater-1, kind: crater, geometry: { type: Point, coordinates: [80, 420], radiusM: 25 }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-crater-2, kind: crater, geometry: { type: Point, coordinates: [95, 480], radiusM: 18 }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-crater-3, kind: crater, geometry: { type: Point, coordinates: [70, 980], radiusM: 30 }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-wire-ger, kind: wire, side: central, geometry: { type: LineString, coordinates: [[115, 0], [120, 600], [110, 1200]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-ger-support, kind: trench, side: central, geometry: { type: LineString, coordinates: [[420, 0], [380, 400], [440, 800], [400, 1200]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-ger-reserve, kind: trench, side: central, geometry: { type: LineString, coordinates: [[1050, 0], [1100, 600], [1060, 1200]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-ger-comm-1, kind: communication-trench, side: central, geometry: { type: LineString, coordinates: [[150, 300], [400, 340], [700, 260], [1080, 320]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-ger-comm-2, kind: communication-trench, side: central, geometry: { type: LineString, coordinates: [[150, 850], [420, 820], [1080, 880]] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-strongpoint, kind: strongpoint, side: central, geometry: { type: Point, coordinates: [720, 560] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-battery-1, kind: battery, side: central, geometry: { type: Point, coordinates: [3150, 700] }, cite: { value: synthetic, estimate: e2e fixture } }
+  - { id: fx-battery-2, kind: battery, side: central, geometry: { type: Point, coordinates: [3250, 950] }, cite: { value: synthetic, estimate: e2e fixture } }
+
+forces:
+  - side: central
+    doctrine: de-1917
+    formations:
+      - id: rir262
+        name: RIR 262
+        kind: regiment
+        companies:
+          - { id: rir262-1, name: 1./RIR 262, role: garrison, strength: { value: 150, estimate: e2e fixture }, start: [170, 100], trenchFeatureId: fx-ger-support }
+          - { id: rir262-2, name: 2./RIR 262, role: garrison, strength: { value: 150, estimate: e2e fixture }, start: [170, 500], trenchFeatureId: fx-ger-support }
+          - { id: rir262-3, name: 3./RIR 262, role: garrison, strength: { value: 150, estimate: e2e fixture }, start: [170, 1000], trenchFeatureId: fx-ger-support }
+          - { id: rir262-5, name: 5./RIR 262, role: garrison, strength: { value: 150, estimate: e2e fixture }, start: [400, 250], trenchFeatureId: fx-ger-support }
+          - { id: rir262-6, name: 6./RIR 262, role: garrison, strength: { value: 150, estimate: e2e fixture }, start: [420, 750], trenchFeatureId: fx-ger-support }
+          - { id: rir262-9, name: 9./RIR 262, role: reserve, strength: { value: 150, estimate: e2e fixture }, start: [1090, 600], trenchFeatureId: fx-ger-reserve }

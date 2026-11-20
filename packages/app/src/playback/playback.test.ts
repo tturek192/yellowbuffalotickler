@@ -9,7 +9,7 @@ function recordWith(
   return {
     engineVersion: 'test', scenarioId: 't', scenarioTitle: 't', scenarioStatus: 'draft', seed: 1,
     zeroHour: '1917-04-09T05:30', stepMin: 1, endMinute: points[points.length - 1]!.minute,
-    geometry: { lines: [], sectors: [] },
+    geometry: { lines: [], sectors: [], features: [] },
     snapshots: points.map((p) => ({
       minute: p.minute,
       companies: [{ id: 'c1', side: 'allied' as const, x: p.x, y: 0, strength: 100, status: 'advancing' }],

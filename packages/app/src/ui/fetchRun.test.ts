@@ -5,7 +5,7 @@ const record = {
   scenarioTitle: 't',
   zeroHour: '1917-04-09T05:30',
   endMinute: 0,
-  geometry: { lines: [], sectors: [] },
+  geometry: { lines: [], sectors: [], features: [] },
   snapshots: [{ minute: 0, companies: [], barrages: [] }],
   events: [],
 };

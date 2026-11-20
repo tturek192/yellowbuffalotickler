@@ -25,7 +25,7 @@ export function worldToScreen(view: View, p: Point): [number, number] {
   return [view.tx + p[0] * view.scale, view.ty - p[1] * view.scale];
 }
 
-/** Everything the map draws: lines, sector extents, companies and barrage bands across all snapshots. */
+/** Everything the map draws: lines, features, sector extents, companies and barrage bands across all snapshots. */
 export function recordBounds(r: RunRecord): Bounds {
   const b: Bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
   const add = (x: number, y: number): void => {
@@ -35,6 +35,16 @@ export function recordBounds(r: RunRecord): Bounds {
     b.maxY = Math.max(b.maxY, y);
   };
   for (const l of r.geometry.lines) for (const [x, y] of l.points) add(x, y);
+  for (const f of r.geometry.features) {
+    const g = f.geometry;
+    if (g.type !== 'Point') for (const [x, y] of g.coordinates) add(x, y);
+    else {
+      const [x, y] = g.coordinates;
+      const rad = g.radiusM ?? 0;
+      add(x - rad, y - rad);
+      add(x + rad, y + rad);
+    }
+  }
   for (const s of r.snapshots) {
     for (const c of s.companies) add(c.x, c.y);
     for (const br of s.barrages) for (const [x, y] of br.points) add(x + BARRAGE_DEPTH_M, y);

@@ -6,14 +6,43 @@ const good = () => ({
   scenarioStatus: 'draft',
   zeroHour: '1917-04-09T05:30',
   endMinute: 10,
-  geometry: { lines: [], sectors: [] },
-  snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', done: false, points: [[0, 0], [0, 10]] }] }],
+  geometry: {
+    lines: [],
+    sectors: [],
+    features: [
+      { id: 't', kind: 'trench', side: 'central', geometry: { type: 'LineString', coordinates: [[0, 0], [5, 10]] } },
+      { id: 'w', kind: 'wood', geometry: { type: 'Polygon', coordinates: [[0, 0], [5, 10], [10, 0]] } },
+      { id: 'k', kind: 'crater', geometry: { type: 'Point', coordinates: [3, 3], radiusM: 12 } },
+    ],
+  },
+  snapshots: [
+    {
+      minute: 0,
+      companies: [
+        { id: 'c', side: 'allied', x: 0, y: 0, strength: 150, status: 'waiting' },
+        { id: 'g', side: 'central', x: 9, y: 9, strength: 120, status: 'holding' },
+      ],
+      barrages: [{ sectorId: 's', done: false, points: [[0, 0], [0, 10]] }],
+    },
+  ],
   events: [{ minute: 0, kind: 'zero-hour', text: 'Zero hour', causes: [] }],
 });
 
+const withFeature = (f: unknown) => {
+  const r = good();
+  return { ...r, geometry: { ...r.geometry, features: [...r.geometry.features, f] } };
+};
+const withCompany = (c: unknown) => {
+  const r = good();
+  return { ...r, snapshots: [{ ...r.snapshots[0]!, companies: [c] }] };
+};
+
 describe('parseRunRecord', () => {
-  it('accepts a well-formed record', () => {
-    expect(parseRunRecord(good()).zeroHour).toBe('1917-04-09T05:30');
+  it('accepts a well-formed record, with features and holding companies', () => {
+    const r = parseRunRecord(good());
+    expect(r.zeroHour).toBe('1917-04-09T05:30');
+    expect(r.geometry.features.map((f) => f.kind)).toEqual(['trench', 'wood', 'crater']);
+    expect(r.snapshots[0]!.companies.map((c) => c.status)).toEqual(['waiting', 'holding']);
   });
 
   it.each([
@@ -22,6 +51,17 @@ describe('parseRunRecord', () => {
     ['a zero hour with a zone', () => ({ ...good(), zeroHour: '1917-04-09T05:30Z' }), /zeroHour/],
     ['no geometry lines', () => ({ ...good(), geometry: { sectors: [] } }), /geometry\.lines/],
     ['no geometry sectors', () => ({ ...good(), geometry: { lines: [] } }), /geometry\.sectors/],
+    ['no geometry features (a record from before engine 0.2.0)', () => ({ ...good(), geometry: { lines: [], sectors: [] } }), /geometry\.features/],
+    ['a feature without an id', () => withFeature({ kind: 'wood', geometry: { type: 'Point', coordinates: [0, 0] } }), /geometry\.features\[3\]/],
+    ['a feature of an unknown kind', () => withFeature({ id: 'x', kind: 'castle', geometry: { type: 'Point', coordinates: [0, 0] } }), /geometry\.features\[3\]/],
+    ['a feature of an unknown geometry type', () => withFeature({ id: 'x', kind: 'wood', geometry: { type: 'MultiPolygon', coordinates: [] } }), /geometry\.features\[3\]/],
+    ['a feature without geometry', () => withFeature({ id: 'x', kind: 'wood' }), /geometry\.features\[3\]/],
+    ['a line feature with one point', () => withFeature({ id: 'x', kind: 'trench', geometry: { type: 'LineString', coordinates: [[0, 0]] } }), /geometry\.features\[3\]/],
+    ['a polygon with two points', () => withFeature({ id: 'x', kind: 'wood', geometry: { type: 'Polygon', coordinates: [[0, 0], [1, 1]] } }), /geometry\.features\[3\]/],
+    ['a point feature with bad coordinates', () => withFeature({ id: 'x', kind: 'crater', geometry: { type: 'Point', coordinates: ['a', 0] } }), /geometry\.features\[3\]/],
+    ['a company with an unknown status', () => withCompany({ id: 'c', side: 'allied', x: 0, y: 0, strength: 1, status: 'fleeing' }), /snapshots\[0\]\.companies\[0\]/],
+    ['a company without a position', () => withCompany({ id: 'c', side: 'allied', strength: 1, status: 'waiting' }), /snapshots\[0\]\.companies\[0\]/],
+    ['a company on an unknown side', () => withCompany({ id: 'c', side: 'neutral', x: 0, y: 0, strength: 1, status: 'waiting' }), /snapshots\[0\]\.companies\[0\]/],
     ['empty snapshots', () => ({ ...good(), snapshots: [] }), /snapshots/],
     ['a malformed snapshot', () => ({ ...good(), snapshots: [{ minute: 0 }] }), /snapshots\[0\]/],
     ['a barrage without done (a record from before barrage phases)', () => ({ ...good(), snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', points: [] }] }] }), /snapshots\[0\]\.barrages\[0\]/],

@@ -1,7 +1,7 @@
 import { v } from '@wwi/scenario';
 import type { Doctrine, Point, Scenario } from '@wwi/scenario';
 import { barrageXAt, initBarrage } from './barrage';
-import { initCompanies } from './companies';
+import { initCompanies, isHolding } from './companies';
 import { sampleYs } from './geometry';
 import { createRng } from './rng';
 import { ENGINE_VERSION, round1 } from './record';
@@ -70,7 +70,7 @@ export function runScenario(s: Scenario, doctrines: Record<string, Doctrine>, op
     const finished =
       stopEarly &&
       state.barrages.every((b) => b.phase === 'done') &&
-      state.companies.every((c) => c.status === 'consolidating');
+      state.companies.every((c) => isHolding(c) || c.status === 'consolidating');
     if (n % snapshotEvery === 0 || state.minute >= endMinute || finished) snapshots.push(snapshot(state, ctx));
     if (finished) break;
   }
@@ -87,6 +87,7 @@ export function runScenario(s: Scenario, doctrines: Record<string, Doctrine>, op
     geometry: {
       lines: s.lines,
       sectors: s.sectors.map((x) => ({ id: x.id, yMin: x.yMin, yMax: x.yMax })),
+      features: s.features,
     },
     snapshots,
     events,

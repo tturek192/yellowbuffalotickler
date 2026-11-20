@@ -1,13 +1,22 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-/** Write the sample run record the e2e test plays (served from public/runs). */
+/** Scenario files (from the repo root) and the run names the e2e tests play (served from public/runs). */
+const RUNS: Array<[scenario: string, run: string]> = [
+  ['scenarios/vimy-1917/1cdn-3bde-draft.yaml', 'sample'],
+  // The draft plus synthetic features of every kind and a holding German garrison.
+  ['packages/app/e2e/fixtures/garrisons.yaml', 'garrisons'],
+];
+
+/** Write the run records the e2e tests play. */
 export default function globalSetup(): void {
   const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
-  const result = spawnSync(
-    'npm',
-    ['run', 'sim', '--', 'run', 'scenarios/vimy-1917/1cdn-3bde-draft.yaml', '--seed', '1', '--out', 'packages/app/public/runs/sample.json'],
-    { cwd: repoRoot, stdio: 'inherit' },
-  );
-  if (result.status !== 0) throw new Error(`sim run failed with status ${result.status}`);
+  for (const [scenario, run] of RUNS) {
+    const result = spawnSync(
+      'npm',
+      ['run', 'sim', '--', 'run', scenario, '--seed', '1', '--out', `packages/app/public/runs/${run}.json`],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+    if (result.status !== 0) throw new Error(`sim run of ${scenario} failed with status ${result.status}`);
+  }
 }

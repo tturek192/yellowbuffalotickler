@@ -32,6 +32,6 @@ describe('draft Vimy scenario run', () => {
     const record = JSON.stringify(runScenario(s, doctrines, { seed: 1 }));
     // Change this pair only together: any change to the record's bytes (behaviour, rounding, field
     // order, format) needs an ENGINE_VERSION bump, and only then a new pinned hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: fnv1a(record) }).toEqual({ engineVersion: '0.1.0', hash: 'c65cf028' });
+    expect({ engineVersion: ENGINE_VERSION, hash: fnv1a(record) }).toEqual({ engineVersion: '0.2.0', hash: '7d4a90de' });
   });
 });

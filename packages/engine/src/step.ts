@@ -1,7 +1,7 @@
 import type { Doctrine, Point, Scenario } from '@wwi/scenario';
 import { advanceBarrage, barrageXAt } from './barrage';
 import type { BarrageState } from './barrage';
-import { moveCompanies } from './companies';
+import { isHolding, moveCompanies } from './companies';
 import type { CompanyState } from './companies';
 import type { SimEvent } from './types';
 
@@ -43,7 +43,7 @@ export function step(state: SimState, ctx: StepContext, dtMin: number): SimState
   const taken = [...state.taken];
   const groups = new Map<string, CompanyState[]>();
   for (const c of moved.companies) {
-    if (c.objectiveLineId === undefined) continue; // garrison/reserve: holds in place
+    if (isHolding(c)) continue;
     const key = `${c.objectiveLineId}|${c.sectorId}`;
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }

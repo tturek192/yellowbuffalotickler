@@ -3,18 +3,10 @@ import type { Frame } from '../playback';
 import { BARRAGE_DEPTH_M, worldToScreen, type Point, type View } from './projection';
 import { declutter, type Screen } from './declutter';
 import { liftClear, type Box } from './labels';
+import { drawFeatures } from './features';
+import { LABEL_FONT, MAP_COLORS, MARKER_FONT, crenellatedPath, sideColor, tracePath } from './style';
 
-export const MAP_COLORS = {
-  paper: '#efe6cf',
-  ink: '#3b3326',
-  allied: '#1f4e8c',
-  central: '#c0392b',
-  hatch: '#c9a24a',
-} as const;
-
-const LABEL_FONT = '"EB Garamond", Garamond, "Iowan Old Style", Georgia, serif';
-const MARKER_FONT = '"Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif';
-
+export { crenellatedPath, MAP_COLORS } from './style';
 
 /** Vertical room one company marker needs: 16 px box, 2 px gap, 3 px strength bar, 3 px air. */
 const MARKER_PITCH = 24;
@@ -22,41 +14,13 @@ const MARKER_PITCH = 24;
 const MARKER_MAX_SHIFT = Math.min(13, MARKER_PITCH / 2);
 type Line = RunRecord['geometry']['lines'][number];
 
-/** '16bn-a' → '16A'; otherwise the first three characters, upper-cased. */
+/** '16bn-a' → '16A'; 'rir262-1' → '1/262' (company/regiment); otherwise the first three characters, upper-cased. */
 export function shortId(id: string): string {
   const m = /^(\d+)[a-z]*-([a-z0-9]+)$/i.exec(id);
   if (m) return `${m[1]}${m[2]!.toUpperCase()}`;
+  const g = /^[a-z]+(\d+)-(\d+)$/i.exec(id);
+  if (g) return `${g[2]}/${g[1]}`;
   return id.slice(0, 3).toUpperCase();
-}
-
-/** A square wave of ±amp either side of a screen polyline, flipping every `half` pixels. */
-export function crenellatedPath(pts: Screen[], half: number, amp: number): Screen[] {
-  const out: Screen[] = [];
-  let sign = 1;
-  let phase = 0;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const [x0, y0] = pts[i]!;
-    const [x1, y1] = pts[i + 1]!;
-    const len = Math.hypot(x1 - x0, y1 - y0);
-    if (len === 0) continue;
-    const ux = (x1 - x0) / len;
-    const uy = (y1 - y0) / len;
-    const nx = -uy;
-    const ny = ux;
-    const at = (s: number): Screen => [x0 + ux * s + nx * amp * sign, y0 + uy * s + ny * amp * sign];
-    if (out.length === 0) out.push(at(0));
-    let s = 0;
-    while (phase + (len - s) > half) {
-      s += half - phase;
-      phase = 0;
-      out.push(at(s));
-      sign = -sign;
-      out.push(at(s));
-    }
-    phase += len - s;
-    out.push(at(len));
-  }
-  return out;
 }
 
 const SCALE_STEPS = [50, 100, 200, 250, 500, 1000, 2000, 5000, 10000];
@@ -66,11 +30,6 @@ export function niceScaleLength(scale: number, targetPx: number): number {
   let best = SCALE_STEPS[0]!;
   for (const m of SCALE_STEPS) if (m * scale <= targetPx) best = m;
   return best;
-}
-
-function tracePath(ctx: CanvasRenderingContext2D, pts: Screen[]): void {
-  ctx.beginPath();
-  pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
 }
 
 /** Line labels shrink a little on narrow sheets so neighbours fit side by side. */
@@ -192,7 +151,7 @@ function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord): voi
 }
 
 function drawTrench(ctx: CanvasRenderingContext2D, view: View, line: Line, labels: Box[]): void {
-  const color = line.side === 'central' ? MAP_COLORS.central : line.side === 'allied' ? MAP_COLORS.allied : MAP_COLORS.ink;
+  const color = sideColor(line.side);
   const pts = line.points.map((p) => worldToScreen(view, p));
   ctx.save();
   // A faint wash under the trace, like a coloured-in parapet.
@@ -274,7 +233,7 @@ function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, 
     const [sx, sy] = at;
     const x = Math.round(sx - W / 2);
     const y = Math.round(sy - H / 2);
-    const color = c.side === 'central' ? MAP_COLORS.central : MAP_COLORS.allied;
+    const color = sideColor(c.side);
 
     ctx.save();
     ctx.shadowColor = 'rgba(40, 30, 10, 0.35)';
@@ -291,18 +250,27 @@ function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, 
       ctx.strokeStyle = 'rgba(20, 16, 8, 0.4)';
       ctx.lineWidth = 1;
       ctx.strokeRect(x - 2.5, y - 2.5, W + 5, H + 5);
+    } else if (c.side === 'central') {
+      ctx.strokeStyle = MAP_COLORS.centralEdge;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x + 0.75, y + 0.75, W - 1.5, H - 1.5);
     } else {
       ctx.strokeStyle = 'rgba(20, 16, 8, 0.45)';
       ctx.lineWidth = 1;
       ctx.strokeRect(x + 0.5, y + 0.5, W - 1, H - 1);
     }
 
+    const text = shortId(c.id);
     ctx.fillStyle = '#ffffff';
     ctx.font = `600 11px ${MARKER_FONT}`;
+    // Longer ids (German company/regiment) step down a size to stay inside the marker.
+    if (ctx.measureText(text).width > W - 4) ctx.font = `600 9.5px ${MARKER_FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(shortId(c.id), x + W / 2, y + H / 2 + 0.5);
+    ctx.fillText(text, x + W / 2, y + H / 2 + 0.5);
 
+    // Holding companies (garrisons, reserves) have no attack to wear them down: no strength bar.
+    if (c.status === 'holding') continue;
     const full = initial.get(c.id) ?? c.strength;
     const ratio = full > 0 ? Math.max(0, Math.min(1, c.strength / full)) : 0;
     const by = y + H + 2;
@@ -359,10 +327,11 @@ function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
 
 /**
  * Draw one frame in CSS pixels (the caller sets the devicePixelRatio transform):
- * paper, trenches, objective lines, barrage bands (until each barrage ends), then company markers.
+ * paper, map features, trenches, objective lines, barrage bands (until each barrage ends), then company markers.
  */
 export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame): void {
   drawPaper(ctx, view, r);
+  drawFeatures(ctx, view, r.geometry.features);
   const labels: Box[] = [];
   for (const l of r.geometry.lines) if (l.kind === 'trench') drawTrench(ctx, view, l, labels);
   for (const l of r.geometry.lines) if (l.kind === 'objective') drawObjective(ctx, view, l, labels);

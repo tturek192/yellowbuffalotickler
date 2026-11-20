@@ -230,7 +230,8 @@ function MapKey() {
       </div>
       <div className="key-row">
         <svg viewBox="0 0 28 10" aria-hidden="true">
-          <rect x="7" y="1" width="14" height="8" fill={MAP_COLORS.allied} />
+          <rect x="1" y="1" width="12" height="8" fill={MAP_COLORS.allied} />
+          <rect x="15.5" y="1.5" width="11" height="7" fill={MAP_COLORS.central} stroke={MAP_COLORS.centralEdge} strokeWidth="1" />
         </svg>
         Company
       </div>

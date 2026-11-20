@@ -10,17 +10,21 @@ export type CompanyState = {
   doctrineId: string;
   battalionId: string;
   sectorId: string;
-  /** Absent for garrison/reserve companies, which hold in place until Task 4 gives them behaviour. */
+  /** May be absent for holding (garrison/reserve) companies, which ignore it. */
   objectiveLineId: string | undefined;
   x: number;
   y: number;
   strength: number;
-  status: 'waiting' | 'advancing' | 'consolidating';
+  /** `holding`: a garrison or reserve company, which stays where it starts for the whole run. */
+  status: 'waiting' | 'advancing' | 'consolidating' | 'holding';
   startMin: number;
   speedMPerMin: number;
 };
 
 type Formation = NonNullable<Scenario['forces'][number]['formations']>[number];
+
+/** Garrison and reserve companies hold; only the others attack. */
+export const isHolding = (c: Pick<CompanyState, 'status'>): boolean => c.status === 'holding';
 
 export function initCompanies(
   s: Scenario,
@@ -33,8 +37,10 @@ export function initCompanies(
     for (const c of f.companies ?? []) {
       if (!d) throw new Error(`Unknown doctrine "${doctrineId}"`);
       if (!Array.isArray(c.start)) throw new Error(`Company ${c.id}: start was not projected to a local point`);
-      const startMin = (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.startJitterMin);
-      const speedMPerMin = v(d.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.speedJitterFrac));
+      const holding = c.role === 'garrison' || c.role === 'reserve';
+      // Holding companies draw nothing from the rng, so adding them leaves the attackers' timing unchanged.
+      const startMin = holding ? 0 : (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.startJitterMin);
+      const speedMPerMin = holding ? 0 : v(d.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.speedJitterFrac));
       out.push({
         id: c.id,
         name: c.name,
@@ -46,7 +52,7 @@ export function initCompanies(
         x: c.start[0],
         y: c.start[1],
         strength: v(c.strength),
-        status: 'waiting',
+        status: holding ? 'holding' : 'waiting',
         startMin,
         speedMPerMin,
       });
@@ -67,7 +73,7 @@ export function moveCompanies(
 ): { companies: CompanyState[]; events: SimEvent[] } {
   const events: SimEvent[] = [];
   const companies = cs.map((c) => {
-    if (c.status === 'consolidating' || minute < c.startMin || c.objectiveLineId === undefined) return c;
+    if (c.status === 'consolidating' || isHolding(c) || minute < c.startMin) return c;
     const line = lines.find((l) => l.id === c.objectiveLineId);
     const d = doctrines[c.doctrineId];
     if (!line || !d) throw new Error(`Company ${c.id}: unknown line or doctrine`);
