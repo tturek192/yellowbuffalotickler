@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseScenario, loadScenario, ScenarioError } from './load';
+import { parseScenario, ScenarioError } from './load';
+import { loadScenario } from './load-node';
 import { minimalScenario, toYaml } from './test-fixtures';
 
 const doctrine = (sources: object, source = 'd-src') =>
@@ -47,6 +48,15 @@ describe('parseScenario', () => {
   });
 });
 
+describe('yaml and root errors', () => {
+  it('wraps malformed YAML in ScenarioError', () => {
+    expect(() => parseScenario('a: [1,', [])).toThrow(ScenarioError);
+  });
+  it('labels root-level schema issues', () => {
+    expect(() => parseScenario('42', [])).toThrow(/\(root\)/);
+  });
+});
+
 describe('loadScenario', () => {
   const setup = (doctrineYaml: string) => {
     const dir = mkdtempSync(join(tmpdir(), 'wwi-'));
@@ -67,6 +77,6 @@ describe('loadScenario', () => {
   it('reports a missing doctrine file', () => {
     const dir = setup('');
     writeFileSync(join(dir, 'scenario.yaml'), toYaml({ ...minimalScenario(), forces: [{ ...minimalScenario().forces[0], doctrine: 'nope' }] }));
-    expect(() => loadScenario(join(dir, 'scenario.yaml'), dir)).toThrow(/nope/);
+    expect(() => loadScenario(join(dir, 'scenario.yaml'), dir)).toThrow(/doctrine nope: cannot read/);
   });
 });

@@ -11,6 +11,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./node": "./src/load-node.ts",
     "./test-fixtures": "./src/test-fixtures.ts"
   }
 }
