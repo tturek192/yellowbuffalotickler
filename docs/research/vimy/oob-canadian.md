@@ -358,6 +358,11 @@ companies A-D.
 - **Effective strengths at Zero**, battalion by battalion (war diaries' "strength going in"), especially for the
   battalions whose histories are on archive.org but were not read for this (for example the 20th, 25th, 102nd, 4th).
 - **The 9th Brigade's position on 9 April**, and whether the 60th Battalion was still with it.
+- **The British 5th Division is entered as a `group`, not a `division`.** It was a division under Byng's command, in
+  corps reserve with its 15th and 95th Brigades (Nicholson p. 252 note; `hussey-inman-1921` p. 157); its 13th Brigade
+  fought with the 2nd Canadian Division and sits there. It is entered as `kind: group` (`5bdiv`, led by its commander) so
+  that the corps' divisions are the four Canadian ones; nothing else reads the kind. Is that acceptable, or should it be
+  a `division` and the corps' divisions counted another way?
 - **The British 15th and 95th Brigades' bivouacs** lie 0.3-2.9 km west of the frame's extent. Should they be off-map
   `reserves` entries (with `distanceKm` and an `entryPoint`) instead of companies held at the extent's edge, or should
   the extent grow (with the terrain grid)?

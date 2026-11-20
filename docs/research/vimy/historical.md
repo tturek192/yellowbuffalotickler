@@ -225,15 +225,15 @@ the division's, so the division's times are used.
 ## Conflicts
 
 - **The 85th Battalion's attack, 6 p.m. or 6.45 p.m.** Hayes (`hayes-1920`, secondary) fixes it at six o'clock (p. 52),
-  the Zero+750 Task 8 gave the two companies' start; BOH says they "started off ... at 6.45 p.m." (p. 341). The
-  historical target, which may cite only official or better, uses BOH; the companies' start stays Task 8's, from Hayes.
+  the Zero+750 the Canadian order of battle gives the two companies' start (oob-canadian.md); BOH says they "started off ... at 6.45 p.m." (p. 341). The
+  historical target, which may cite only official or better, uses BOH; the companies' start stays the order of battle's, from Hayes.
   (This is the spec's "time of the 85th Battalion's attack" conflict.)
 - **The 10 April attack: barrage at 3 p.m., or in position by 3:15.** BOH p. 342 and Nicholson p. 261; red-4cdn's earliest
   is disputed between them.
 - **The 4th Guard Division: early or evening on the 10th.** BOH p. 356 and p. 345 n.3; entered as disputed.
 - **The 17th Division's 75th Regiment.** BOH p. 356 has it entering the 1st Bavarian Reserve Division's line early on
   the 10th; BOH p. 277 has "the 75th Regiment of the 18th Division" relieving the 2nd Bavarian Reserve Regiment that
-  night (Task 9's oob-german.md notes the division).
+  night (oob-german.md notes the division).
 - **Corps casualties: 10,602 or 11,297.** Nicholson's 10,602 is 9-14 April, BOH's 11,297 is 7-14 April; the difference
   (695) may be the two days before the battle, or a different count. Both are entered with their windows.
 - **The 13th British Brigade: 381 or 287.** BOH p. 339 n.1 gives 381 and Nicholson "approximately 380"; Hussey and Inman

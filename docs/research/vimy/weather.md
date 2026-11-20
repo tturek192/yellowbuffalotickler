@@ -71,7 +71,7 @@ On 9 April the sources describe it in words only: the storm "prolonging the dark
 ## Open questions for the historian
 
 - **War diaries and meteorological records.** The brief asks for war diaries; none was read; the Canadian war diaries
-  held by Library and Archives Canada (`recherche-collection-search.bac-lac.gc.ca`) were not searched in this task. A First Army or Canadian Corps
+  held by Library and Archives Canada (`recherche-collection-search.bac-lac.gc.ca`) were not searched for the weather research. A First Army or Canadian Corps
   meteorological section return would give temperatures, wind speeds and times.
 - **10 April.** Neither source describes the weather by day on the 10th, so there is no entry between the clear night
   of the 9th-10th and the 11th.

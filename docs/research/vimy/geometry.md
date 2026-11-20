@@ -260,7 +260,7 @@ Each overlay (`overlays/`) draws the digitized features in magenta over Map 7 wi
   (only Zivy Cave). Goodman, Grange, Lichfield and the others need a trench map or a tunnelling-company history to tie
   names to outlines. Nicholson counts eleven subways (p. 250) and six in the 4th Division's sector (p. 259); the map shows
   twelve and five.
-- **Mine craters.** Map 7 shows none, and no source in this task gives crater coordinates that can be tied to a named
+- **Mine craters.** Map 7 shows none, and no source read for the geometry gives crater coordinates that can be tied to a named
   crater. The crater groups in no man's land (from trench maps, or the memorial park's preserved craters) are missing.
   The searches tried (all 2026-11-20, UTC):
   - Map 7's legend and symbology: no crater symbol; the green rings are orchards (above).
@@ -284,8 +284,19 @@ Each overlay (`overlays/`) draws the digitized features in magenta over Map 7 wi
 - **The 12th Brigade's objectives** north of the Black and Red bands are estimates (above). Is there a trench map or order
   giving them?
 - **Blue and Brown north of Thélus** are estimates from the text. A barrage map or trench map would fix them.
+- **brown-2cdn's northern section lies inside the barrage's stand-off beyond blue-2cdn.** On the loaded lines the
+  Brown Line is only 43 m beyond the Blue at y −1921, 55 m at y −1952, 99 m at y −2072 and 128 m at y −2200 (measured
+  along x). The fire plan halts the barrage 180 m beyond each objective (`standOffM`, fireplan.md) and companies follow
+  70 m behind it (`followDistanceM`, doctrine), so they may close up to 110 m beyond the Blue Line. That section is one
+  of the text-based estimates above (Blue and Brown north of Thélus). It causes an artefact in runs: where Brown is
+  less than 110 m beyond Blue, companies closing up behind the barrage halted on the Blue Line cross the Brown Line
+  early. In the seed-1 run six companies (2kosb-c, 14rwarwick-b and -c, 15rwarwick-b and -c, 1rwk-d) log "reaches
+  Brown Line, 2nd Canadian Division" at 10:46-10:50, at the start of the 96-minute halt on the Blue Line, more than 1.5
+  hours before the barrage moves on and 2.5 hours before the timetable's Brown Line (13:18). Read those early "reaches" as a geometry artefact, not a result. The geometry and
+  the engine were left unchanged; does Map 7, a barrage map or a trench map put the Brown Line further east north of
+  y ≈ −2200?
 - **Division boundaries** are from the battalion arrows; the Corps' boundary orders would be better.
 - **Five red dots west of x −6000** (around Villers-au-Bois and Mont-St-Éloi): are they batteries, and should the extent
-  reach them in Task 9/10?
+  reach them when batteries are placed on the map? (The artillery park is entered by role and count, not placed.)
 - **Trench maps** (1:10,000 or 1:20,000) remain the way to sharpen the trench geometry; none was reachable from the
-  allowed hosts in this task.
+  allowed hosts during the geometry research.

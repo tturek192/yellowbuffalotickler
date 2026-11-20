@@ -269,8 +269,8 @@ without a source are Nicholson's.
 - **Battalion commanding officers not found** for 26 Canadian battalions: the 1st, 2nd, 4th, 7th, 13th, 14th, 16th, 19th, 20th,
   38th, 42nd, 43rd, 44th, 47th, 50th, 54th, 60th, 73rd, 87th, 102nd, The RCR, the PPCLI, the 1st, 2nd, 4th and 5th
   CMR; and for all 12 British battalions. The Canadian battalions' Wikipedia articles (where they exist) have no dated list, and
-  `www.cefresearch.ca` redirects to `cefresearch.ca`, a host this task may not reach. War diaries on `bac-lac.gc.ca`
-  name them; reading them was beyond this task.
+  `www.cefresearch.ca` redirects to `cefresearch.ca`, a host the research may not reach. War diaries on `bac-lac.gc.ca`
+  name them; reading them was beyond the leaders research.
 - **The British brigades' commanders' first names** (`L. O. W. Jones`, `M. N. Turner`, `Lord E. Gordon-Lennox`) and
   the 5th Division's (`R. B. Stephens`): initials only in `hussey-inman-1921`.
 - **Ratings with no cited conduct** (Stephens, Hill, Turner, Gordon-Lennox, and most moraleEffect and riskTolerance

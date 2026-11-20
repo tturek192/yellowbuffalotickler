@@ -68,7 +68,7 @@ Fusiliers"); that 1-4 belong to the I Battalion and so on is the usual scheme, t
 - **Brigades.** The German divisions' infantry brigade headquarters (79th Reserve Infantry Brigade, and so on) are left
   out: no source read gives their part in the battle, and `wikipedia-vimy-oob` names "Major-General Lamprecht" for two
   different divisions' brigades, which suggests an error. Regiments sit directly under their divisions.
-- **Artillery, machine-gun and pioneer units** are Task 11's (the fire plan) or out of scope. BOH p. 353: the two
+- **Artillery, machine-gun and pioneer units** belong to the fire plan (fireplan.md) or are out of scope. BOH p. 353: the two
   divisions of Group Vimy opposite the Canadians "disposed of 89 heavy and 108 field guns and howitzers".
 
 **Attached battalions sit under the division they were given to**, as battalions with no regiment of their own, so that
@@ -374,13 +374,13 @@ Quotes are at most 25 words. "est." marks a value entered as an `estimate`.
 | Value | Source | Page | Quote | Tier |
 |---|---|---|---|---|
 | Sixth Army, Falkenhausen | `nicholson-1962` | 246 | "the front from north of Cambrai to north of Lille was the responsibility of General von Falkenhausen's Sixth Army" | official |
-| The three divisions and their sectors (n.44: G.O.H. XII, Appx. 8, map) | `nicholson-1962` | 246 | "the 1st Bavarian Reserve Division, holding Thelus and Bailleul, the 79th Reserve Division, responsible for the Vimy sector, and the 16th Bavarian Infantry Division opposite Souchez" | official |
+| The three divisions and their sectors (n.44: G.O.H. XII, Appx. 8, map) | `nicholson-1962` | 246 | "1st Bavarian Reserve Division, holding Thelus and Bailleul, the 79th Reserve Division, responsible for the Vimy sector, and the 16th Bavarian Infantry Division opposite Souchez" | official |
 | Group Vimy | `boh-1917-1` | 197 | "These two, together with 79th Reserve Division, formed the Vimy Group, under the headquarters of the I. Bavarian Reserve Corps (General Ritter von Fasbender)" | official |
 | Group Souchez | `boh-1917-1` | 355 | "by order of the corps further north, Group Souchez, six battalions had assembled between Lievin and Mericourt" | official |
 | Gruppe Souchez = VIII Reserve Corps | `wikipedia-vimy-oob` | German side, citing Godefroy pp. 228-229 | "Gruppe Souchez, under the VIII Reserve Corps commander, General Georg Karl Wichura" | tertiary |
 | 79th RD: RIR 261, 262, 263 | `aef-251-divisions` | 538 | "261st and 262d Reserve Regiments ... 263d Reserve Regiment: 4th Corps District" | primary |
 | 79th RD on the Vimy front | `aef-251-divisions` | 538 | "At the end of February it appeared in the Lens sector and on March 3 on the Vimy front" | primary |
-| 79th RD's front | `boh-1917-1` | 353 | "The three regiments of the 79th, from the cross-roads on Hill 145 to the Thelus—Neuville road, faced the 2nd, 3rd, and half the 4th Canadian Divisions" | official |
+| 79th RD's front | `boh-1917-1` | 353 | "three regiments of the 79th, from the cross-roads on Hill 145 to the Thelus—Neuville road, faced the 2nd, 3rd, and half the 4th Canadian Divisions" | official |
 | 16th Bav's left regiment north of it | `boh-1917-1` | 353 | "On their right part of the left regiment of the 16th Bavarian faced the remainder of the 4th Canadian Division" | official |
 | 1st BRD's right and centre south of it | `boh-1917-1` | 353 | "on their left the right regiment and part of the centre of the 1st Bavarian Reserve Division opposed the 1st Canadian Division" | official |
 | 1st BRD's front; BRIR 2 on the left | `boh-1917-1` | 276 | "in line from east of Roclincourt to the Neuville St. Vaast—Thelus road ... The 2nd Bavarian Reserve Regiment, on the left" | official |
@@ -426,7 +426,7 @@ Quotes are at most 25 words. "est." marks a value entered as an `estimate`.
 | Two hours' march | `nicholson-1962` | 247 | "the third battalions were billeted in rear villages about two hours' march from the battlefield" | official |
 | 262's and 263's billets | `boh-1917-1` | 317 n.3 | "each of which had two battalions on the ridge and the third in rest billets at Bois Bernard and Neuvireuil" | official |
 | The 79th RD's counter-attack, 11 a.m. (`orderedAt` est. for three reserves) | `boh-1917-1` | 354 | "At 11 a.m. on the 9th the commander of the 79th Reserve Division issued orders for an immediate counter-attack to recapture Hill 135" | official |
-| Its battalions | `boh-1917-1` | 354 | "one of the 262nd Reserve Regiment, in the sector concerned, and two from the 56th and 80th Reserve Divisions respectively, which moved up from east of Lens" | official |
+| Its battalions | `boh-1917-1` | 354 | "one of the 262nd Reserve Regiment ... and two from the 56th and 80th Reserve Divisions respectively, which moved up from east of Lens" | official |
 | Their names | `wikipedia-vimy-oob` | 79th Reserve Division, citing Sheldon pp. 291, 308 | "118th Reserve Infantry Regiment ... 34th Bavarian Reserve Infantry Regiment ... Battle reinforcement, sent on 9 April" | tertiary |
 | The 56th Division's IR 118 | `aef-251-divisions` | 352 | "In March it ceded the 118th Infantry Regiment to the 56th Division, a new formation" | primary |
 | The 80th RD's RIR 34 | `aef-251-divisions` | 541 | composition table: "34 Res." | primary |
@@ -528,7 +528,7 @@ The leaders' names, ranks and ratings, with their quotes, are in `leaders.yaml` 
   British trench maps (with the "cross-roads on Hill 145") would fix them.
 - **The second and third trenches.** The map has only the first trench and, in the south, the Zwölfer-Graben and the
   Zwischen-Stellung; most support companies stand on the first position for want of the third trench. Digitizing the
-  forward zone's second and third trenches (Task 7's ruling kept its features unchanged) would let them stand where they
+  forward zone's second and third trenches (the geometry research's ruling kept the map's features unchanged) would let them stand where they
   were.
 - **Which battalion was in front, in support and resting** in each regiment on 9 April, except the four sourced.
 - **Company strength at Zero**, by regiment, and the source of the brief's 264 and 150.
