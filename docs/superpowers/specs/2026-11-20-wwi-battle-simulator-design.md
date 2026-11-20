@@ -50,11 +50,16 @@ https://claude.ai/artifact/CviEMDWHGhNyGwzKCZ1nZP
    was chosen by the owner after the Vimy research showed that the deciding
    events (an un-shelled 100-yard trench, a single machine-gun post, a
    dugout) are smaller than a battalion.
-5. **Visually appealing.** The map is styled like a period trench map, with
-   readable unit markers and a time-lapse that turns a multi-day battle into
-   minutes. The engine and data are built so a 3D view of the terrain can be
-   added later without reworking them.
-6. **Every number has a source.** Each historical value in a scenario
+5. **An animated time-lapse of every battle (required in version 1).** Any
+   run, historical or what-if, can be watched as an animated time-lapse on
+   the map, with a multi-day battle played back in minutes. This is a core
+   feature, not an extra. Version 1 isn't done without it. Details are in
+   section 9.2.
+6. **Visually appealing.** The map is styled like a period trench map, with
+   readable unit markers. The engine and data are built so a 3D view of the
+   terrain can be added later without reworking them. The 3D view will play
+   the same time-lapse.
+7. **Every number has a source.** Each historical value in a scenario
    (strengths, guns, timings, casualties) records where it came from, so the
    owner can check it and correct it.
 
@@ -316,12 +321,40 @@ but Germans ×2"), so the original data stays untouched.
    - force changes (scale, add or remove units, artillery amounts);
    - the trench-style map with layer toggles and unit markers you can drag
      into a new position.
-2. **Playback:**
-   - time-lapse map with a clock;
-   - speed control, and skipping quiet periods;
-   - a timeline scrubber with markers where objectives fall;
-   - the objectives tracker, running totals and the event log, with the
-     "why" trace.
+2. **Playback, the animated time-lapse (required in version 1):**
+   - **What moves on the map:**
+     - Company and battalion markers move smoothly between snapshots. Each
+       marker shows strength, and morale and suppression state.
+     - Each side's front line is redrawn as it moves.
+     - Captured ground fills in.
+     - The creeping barrage is drawn as a moving band. The standing barrages
+       and the machine-gun barrage zone are drawn too.
+     - Shell bursts and fire are suggested, not literal. They are thinned
+       out at high speeds.
+     - Trenches change state as wire is cut, trenches are taken and craters
+       are blown.
+     - German reserve columns move in from the edge of the map.
+     - Weather is overlaid on the map (snow, sleet, rain, mist), along with
+       day and night.
+   - **Controls:**
+     - play and pause;
+     - speeds from 1 second = 1 minute up to 1 second = 6 hours;
+     - skip quiet periods automatically;
+     - a timeline scrubber you can drag to any moment, with markers where
+       objectives fall and key events happen;
+     - step forward or back by event.
+   - **Zoom:** the corps view shows battalions. Zooming in breaks them
+     into companies, trench segments and strongpoints.
+   - **Alongside the map:** a battle clock, the objectives tracker, running
+     totals, and the event log. Clicking an event jumps the playback to
+     that moment. Clicking an event or a stalled unit opens the "why" trace.
+   - **Side by side:** two runs, or a run beside the historical timeline,
+     played in sync.
+   - **Built from the run record.** Playback reads the saved run record and
+     never re-runs the simulation. That makes scrubbing instant, and any
+     run from a batch can be watched again later.
+   - **Export:** save a time-lapse as a video file to share. This can follow
+     shortly after the in-app playback.
 3. **Compare:**
    - the historical record beside the what-if runs (the batch distribution
      for each);
@@ -394,7 +427,8 @@ but Germans ×2"), so the original data stays untouched.
   - The winner is whoever holds the scenario's named key ground at the end.
     For Vimy that is the ridge crest, Hill 145 and the Pimple. Partial
     results are reported objective by objective.
-- **Version 1 is done when Vimy passes and Messines has an honest report.**
+- **Version 1 is done when Vimy passes, any run can be watched as an
+  animated time-lapse, and Messines has an honest report.**
   - A failure at Messines is a result to report, not a blocker.
   - Any change to the model prompted by Messines is logged. After such a
     change, Messines no longer counts as untouched, and a third battle
