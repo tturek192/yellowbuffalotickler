@@ -2,3 +2,7 @@ node_modules
 dist
 runs/
 *.tsbuildinfo
+packages/app/public/runs/
+packages/app/e2e/out/
+test-results/
+playwright-report/
