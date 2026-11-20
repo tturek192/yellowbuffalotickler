@@ -343,6 +343,13 @@ companies A-D.
 
 ## Open questions for the historian
 
+- **The strength estimate's range.** 179 a company counts only the 21 first-wave battalions in Nicholson's 15,000. If the
+  supporting battalions that start at Zero are counted in the first wave too, the same total spreads over more companies
+  and comes to about 139 a company. The entered 179 is the upper end of that range; which reading is right needs the
+  war diaries' strengths.
+- **The 72nd Battalion's place in the line.** The battalion's own history (`mcevoy-finlay-1920`) puts it on the left
+  flank of the whole attack, which conflicts with Nicholson's "from right to left the 38th, 72nd and 73rd" (p. 260), the
+  order entered. Which is right?
 - **Battalion frontages and company dispositions.** Map 7's arrows give each assaulting battalion's axis, but are
   legible only for the 2nd Division at the scan reachable. Brigade operation orders (in the war diaries on
   `recherche-collection-search.bac-lac.gc.ca`) would give each battalion's frontage, its waves and which companies led.

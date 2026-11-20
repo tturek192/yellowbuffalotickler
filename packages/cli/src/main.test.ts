@@ -50,4 +50,18 @@ describe('cli', () => {
     expect(r.stdout).toMatch(/3\/3/);
     expect(r.stdout).toMatch(/\d\d:\d\d–\d\d:\d\d/);
   });
+
+  it('review writes a Markdown review with the open questions from the notes', () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'review.md');
+    const r = runCli(['review', 'scenarios/vimy-1917/scenario.yaml', '--notes', 'docs/research/vimy', '--out', out]);
+    expect(r.code).toBe(0);
+    const md = readFileSync(out, 'utf8');
+    expect(md).toMatch(/## Historical targets/);
+    expect(md).toMatch(/\[leaders\.md\]/);
+    expect(md).toMatch(/change `status: draft` to `status: reviewed`/);
+  });
+
+  it('review exits 1 without --out', () => {
+    expect(runCli(['review', draft]).code).toBe(1);
+  });
 });

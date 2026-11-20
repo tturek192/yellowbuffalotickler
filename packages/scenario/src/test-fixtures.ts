@@ -132,3 +132,53 @@ export function germanForce(companies: Array<Omit<Company, 'start'> & { start: C
 export function wx(at: string): Scenario['weather'][number] {
   return { at, precipitation: { value: 'rain', estimate: 'test fixture' } };
 }
+
+/** 3 sourced, 2 estimates and 1 disputed value, with a mix in the first section (historical targets). */
+export function fixtureWithMixedValues(): Scenario {
+  const s = minimalScenario();
+  s.sources['gossip'] = { title: 'A blog', tier: 'tertiary' };
+  s.zeroHour = { value: '1916-07-01T07:30', source: 'test-src', page: '1' };
+  s.geometrySource = { value: 'a map', source: 'test-src' };
+  s.frame = {
+    origin: { lon: 2, lat: 50 },
+    bearingDeg: est(75, 'measured off the map'),
+    extent: { minX: -10, maxX: 10, minY: -10, maxY: 10 },
+  } as Scenario['frame'];
+  s.lines = [];
+  s.sectors = [];
+  s.forces = [];
+  s.historical = {
+    objectives: [
+      {
+        lineId: 'black',
+        sectorId: 's1',
+        earliest: { value: '1916-07-01T09:00', estimate: 'inferred from the timetable' },
+        latest: { value: '1916-07-01T12:00', source: 'test-src', page: '5' },
+      },
+    ],
+    casualties: [],
+    prisonersTaken: [],
+    reserveArrivals: [],
+    endedAt: {
+      value: '1916-07-01T20:00',
+      range: ['1916-07-01T18:00', '1916-07-01T22:00'],
+      sources: [{ source: 'test-src', page: '9' }, { source: 'gossip' }],
+      note: 'sources disagree',
+    },
+  };
+  return s;
+}
+
+export function fixtureWithLeaders(): Scenario {
+  const s = fixtureWithMixedValues();
+  s.leaders = [
+    {
+      id: 'currie',
+      name: { value: 'Arthur Currie', source: 'test-src' },
+      rank: { value: 'Major-General', estimate: 'test fixture' },
+      ratings: { planning: est(5, 'well-documented planner') } as NonNullable<Scenario['leaders'][number]['ratings']>,
+    },
+  ];
+  return s;
+}
+

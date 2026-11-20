@@ -500,6 +500,8 @@ The leaders' names, ranks and ratings, with their quotes, are in `leaders.yaml` 
 
 ## Open questions for the historian
 
+- **The tier of `aef-251-divisions`.** It is registered as `primary`, but it is a 1919-20 compilation made from Allied
+  intelligence, not German records. Should it be tier `official` (or lower) rather than `primary`? The registry is unchanged.
 - **The northern division: the 16th or the 14th Bavarian Division?** Entered: the 16th Bavarian Infantry Division in
   Gruppe Souchez (Nicholson p. 246, citing the Reichsarchiv map, G.O.H. XII, Appx. 8, in n.44; BOH pp. 317 n.2, 353, 355;
   `aef-251-divisions` p. 273). The owner's brief has the 14th Bavarian, which BOH puts at the other end of Group Vimy,

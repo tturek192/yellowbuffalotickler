@@ -240,6 +240,8 @@ the division's, so the division's times are used.
 
 ## Open questions for the historian
 
+- **`gunsCaptured.field` holds guns of all calibres.** The schema has no other slot, so the field-gun count entered holds
+  the guns of every calibre the sources give (heavy and field together); it is not a count of field guns only.
 - **Captured guns, "54 or 63".** The spec's lead gives 63 as an alternative; no source read gives it. Possibly Duguid,
   "Canada on Vimy Ridge" (*Canada Year Book*, 1936), which Nicholson cites (n.67, n.85), or the Canadian Corps Report on
   Operations.

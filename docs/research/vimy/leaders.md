@@ -260,6 +260,12 @@ without a source are Nicholson's.
 
 ## Open questions for the historian
 
+- **Byng's moraleEffect 4** rests on his commanders briefing their subordinates, while its own justification says there is
+  no direct evidence of his effect on morale. Owner to confirm or lower.
+- **Fasbender's adaptiveness 4** rests on tertiary evidence that BOH p. 355 contradicts (it credits Rupprecht and Lossberg
+  with the defensive adaptation). Owner to confirm or lower.
+- **Wichura's orderSpeed 4** rests on an outcome with no order time; the rubric says a result alone supports a 4 at most.
+  Owner to confirm or lower.
 - **Battalion commanding officers not found** for 26 Canadian battalions: the 1st, 2nd, 4th, 7th, 13th, 14th, 16th, 19th, 20th,
   38th, 42nd, 43rd, 44th, 47th, 50th, 54th, 60th, 73rd, 87th, 102nd, The RCR, the PPCLI, the 1st, 2nd, 4th and 5th
   CMR; and for all 12 British battalions. The Canadian battalions' Wikipedia articles (where they exist) have no dated list, and

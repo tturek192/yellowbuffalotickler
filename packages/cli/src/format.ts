@@ -3,11 +3,19 @@ import { addMinutes } from '@wwi/scenario';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
-/** Clock time HH:MM for `minutes` (rounded) after a zero hour given as 'YYYY-MM-DDTHH:MM'. */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * Clock time HH:MM for `minutes` (rounded) after a zero hour given as 'YYYY-MM-DDTHH:MM'. A time that is
+ * not on the zero day also carries its day, e.g. '10 Apr 15:00'.
+ */
 export function clock(zeroHour: string, minutes: number | null): string {
   if (minutes === null) return '—';
   const t = addMinutes(zeroHour, Math.round(minutes));
-  return `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`;
+  const hm = `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`;
+  const zero = addMinutes(zeroHour, 0);
+  if (t.toISOString().slice(0, 10) === zero.toISOString().slice(0, 10)) return hm;
+  return `${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} ${hm}`;
 }
 
 export function formatBatch(b: BatchSummary, zeroHour: string): string {

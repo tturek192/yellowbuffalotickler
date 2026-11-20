@@ -1,14 +1,16 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runBatch, runScenario } from '@wwi/engine';
-import { ScenarioError, v } from '@wwi/scenario';
+import { buildReview, ScenarioError, v } from '@wwi/scenario';
 import { loadScenario } from '@wwi/scenario/node';
 import { formatBatch } from './format';
+import { extractOpenQuestions, reviewToMarkdown } from './review-md';
 
 const USAGE = `usage:
   sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>]
-  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--doctrine-dir <dir>]`;
+  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--doctrine-dir <dir>]
+  sim review <scenario.yaml> --out <file.md> [--notes <dir>] [--doctrine-dir <dir>]`;
 
 class UsageError extends Error {}
 
@@ -34,6 +36,7 @@ function main(argv: string[]): void {
         runs: { type: 'string' },
         'seed-start': { type: 'string' },
         'doctrine-dir': { type: 'string' },
+        notes: { type: 'string' },
       },
     });
   } catch (e) {
@@ -41,7 +44,7 @@ function main(argv: string[]): void {
   }
   const { values, positionals } = parsed;
   const [command, file] = positionals;
-  if ((command !== 'run' && command !== 'batch') || !file || positionals.length > 2) {
+  if ((command !== 'run' && command !== 'batch' && command !== 'review') || !file || positionals.length > 2) {
     throw new UsageError('expected a command and a scenario file');
   }
   let seed = 0;
@@ -52,13 +55,25 @@ function main(argv: string[]): void {
     seed = intOpt('seed', values.seed);
     if (!values.out) throw new UsageError('missing --out');
     out = values.out;
+  } else if (command === 'review') {
+    if (!values.out) throw new UsageError('missing --out');
+    out = values.out;
   } else {
     runs = intOpt('runs', values.runs);
     if (runs < 1) throw new UsageError('--runs must be at least 1');
     seedStart = intOpt('seed-start', values['seed-start'], 1);
   }
   const { scenario, doctrines } = loadScenario(file, values['doctrine-dir'] ?? 'doctrine');
-  if (command === 'run') {
+  if (command === 'review') {
+    const questions = values.notes
+      ? readdirSync(values.notes)
+          .filter((f) => f.endsWith('.md') && f !== basename(out))
+          .sort()
+          .flatMap((f) => extractOpenQuestions(readFileSync(join(values.notes!, f), 'utf8'), f))
+      : [];
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, reviewToMarkdown(buildReview(scenario, doctrines), questions));
+  } else if (command === 'run') {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, JSON.stringify(runScenario(scenario, doctrines, { seed })));
   } else {

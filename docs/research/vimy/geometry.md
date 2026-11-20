@@ -124,14 +124,16 @@ None elsewhere.
 | black-2cdn | −3389…−1730 | 4 | ±60 m | |
 | black-3cdn | −2154…−316 | 6 | ±60 m | |
 | black-4cdn | −765…1326 | 9 | ±80 m | north of y ≈ 785 an estimate (below) |
-| red-1cdn | −4579…−2995 | 7 | ±60 m | pink band on the Zwischen-Stellung |
+| red-1cdn | −4580…−2995 | 7 | ±60 m | pink band on the Zwischen-Stellung |
 | red-2cdn | −3319…−1959 | 6 | ±80 m | east of the Lens road, through Les Tilleuls |
 | red-3cdn | −1939…−453 | 6 | ±80 m | west edge of the Bois de la Folie |
 | red-4cdn | −637…1293 | 8 | ±100 m | north of y ≈ 785 an estimate (below) |
 | blue-1cdn | −4401…−3339 | 5 | ±60 m | grey band |
-| blue-2cdn | −3541…−1770 | 10 | ±120 m | band legible south of Thélus only; north an estimate (below) |
+| blue-2cdn | −3541…−1759 | 10 | ±120 m | band legible south of Thélus only; north an estimate (below) |
 | brown-1cdn | −4245…−3259 | 4 | ±100 m | |
-| brown-2cdn | −3515…−1890 | 7 | ±150 m | an estimate (below) |
+| brown-2cdn | −3515…−1920 | 8 | ±150 m | an estimate (below) |
+
+**Line table corrected (Task 11).** The table above was checked against the loaded `lines.geojson` data; blue-2cdn's end (−1759), brown-2cdn's end (−1920) and vertex count (8), red-1cdn's start (−4580) and the feature count (44: 14 villages, 12 subways, 7 woods, 5 trenches, 4 strongpoints, 2 communication trenches) were wrong and are fixed. The data was not changed.
 
 **Estimates inside the lines.** (1) The 12th Brigade (4th Division, north flank) was "to seize its sector of the German
 front-line position" (p. 259); Map 7 draws neither band there. North of the band ends (Map 7 pixel y 385), black-4cdn
@@ -141,7 +143,7 @@ included. (3) The Brown band is legible only at Farbus Wood; brown-2cdn follows 
 southern Bois de Bonval (p. 247), kept at least 44 m east of blue-2cdn.
 
 **Checks against the text.** In every sector the lines are ordered cdn-front < ger-front < black < red < blue < brown at
-25 sample y values (the closest pair: red-4cdn 9 m beyond black-4cdn at the north end, where both close on the front).
+25 sample y values (the closest pair: red-4cdn only about 3.5 m beyond black-4cdn at y ≈ 789, where the estimated northern section begins and both lines leave the legible bands; measured on the loaded lines at 1 m steps).
 Black lies 562-782 m beyond the Canadian front at each sector's middle (p. 247: "an average distance of 750 yards",
 686 m). In the 1st Division the Blue Line is 1,159 m beyond the Red (p. 248: "some 1200 yards", 1,097 m) and the Brown
 3,709 m beyond the Canadian front (p. 248: "4000 yards", 3,658 m).
@@ -162,7 +164,7 @@ The four together span 5,970 m; Nicholson gives the Corps "a front of 7000 yards
 The leg values in `fireplan.yaml` were the Plan 1 draft's, entered as estimates "placeholder until Task 10"; Task 10
 replaced them with the corps timetable (fireplan.md, "Leg values").
 
-### Features (`features.geojson`, 39)
+### Features (`features.geojson`, 44)
 
 | Kind | Features | Accuracy |
 |---|---|---|
@@ -249,6 +251,11 @@ Each overlay (`overlays/`) draws the digitized features in magenta over Map 7 wi
 
 ## Open questions for the historian
 
+- **Digitizing scripts were not committed.** The traces were made with scratch scripts (least-cost tracing of the front
+  lines, gridded crops and hand-read vertices for the rest) that are not in the repository; only the fit and overlay code
+  (`tools/georef`) is. The geometry can be checked against Map 7 with the overlays but not regenerated.
+- **The red-4cdn and black-4cdn lines nearly touch** (about 3.5 m apart at y ≈ 789, where the estimated section begins). They are
+  both estimates from the text there; the 12th Brigade's real Red objective may lie further on.
 - **Subway names.** Map 7 draws twelve subway outlines in the Canadian lines without names, and Chapter VIII names none
   (only Zivy Cave). Goodman, Grange, Lichfield and the others need a trench map or a tunnelling-company history to tie
   names to outlines. Nicholson counts eleven subways (p. 250) and six in the 4th Division's sector (p. 259); the map shows
