@@ -1,4 +1,4 @@
-import { v } from '@wwi/scenario';
+import { minutesBetween, v } from '@wwi/scenario';
 import type { Doctrine, Scenario } from '@wwi/scenario';
 import { runScenario } from './run';
 
@@ -30,16 +30,8 @@ export function quantiles(values: number[], qs: number[]): number[] {
   });
 }
 
-/** Whole minutes since a fixed epoch for 'YYYY-MM-DDTHH:MM'; ignores time zones. */
-function localMinutes(iso: string): number {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
-  if (!m) throw new Error(`bad local datetime "${iso}"`);
-  const [y, mo, d, h, mi] = m.slice(1).map(Number);
-  return Date.UTC(y, mo - 1, d, h, mi) / 60000;
-}
-
 export function runBatch(s: Scenario, doctrines: Record<string, Doctrine>, seeds: number[]): BatchSummary {
-  const zero = localMinutes(v(s.zeroHour));
+  const zero = v(s.zeroHour);
   const rows = new Map<string, { lineId: string; sectorId: string; times: number[]; hist: [number, number] | null }>();
   const row = (lineId: string, sectorId: string) => {
     const key = `${lineId}|${sectorId}`;
@@ -48,7 +40,7 @@ export function runBatch(s: Scenario, doctrines: Record<string, Doctrine>, seeds
     return r;
   };
   for (const o of s.historical.objectives) {
-    row(o.lineId, o.sectorId).hist = [localMinutes(v(o.earliest)) - zero, localMinutes(v(o.latest)) - zero];
+    row(o.lineId, o.sectorId).hist = [minutesBetween(zero, v(o.earliest)), minutesBetween(zero, v(o.latest))];
   }
   for (const seed of seeds) {
     for (const t of runScenario(s, doctrines, { seed }).summary.lineTaken) {

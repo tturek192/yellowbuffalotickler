@@ -1,4 +1,5 @@
 import type { RunRecord } from '@wwi/engine';
+import { isLocalDateTime, LOCAL_DATETIME_FORMAT } from '@wwi/scenario';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -9,7 +10,7 @@ export function parseRunRecord(data: unknown): RunRecord {
     throw new Error(`This file is not a run record: ${what}.`);
   };
   if (!isObject(data)) return fail('expected a JSON object');
-  if (typeof data.zeroHour !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(data.zeroHour)) fail("zeroHour must be 'YYYY-MM-DDTHH:MM'");
+  if (typeof data.zeroHour !== 'string' || !isLocalDateTime(data.zeroHour)) fail(`zeroHour must be '${LOCAL_DATETIME_FORMAT}'`);
   if (!isNum(data.endMinute) || data.endMinute < 0) fail('endMinute must be a non-negative number');
   if (typeof data.scenarioTitle !== 'string') fail('scenarioTitle must be a string');
   const g = data.geometry;

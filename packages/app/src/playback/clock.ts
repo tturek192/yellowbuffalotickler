@@ -1,3 +1,5 @@
+import { addMinutes } from '@wwi/scenario';
+
 export const SPEEDS = [1, 10, 60, 360] as const;
 export const QUIET_SPEEDUP = 10;
 
@@ -25,9 +27,6 @@ const pad = (n: number): string => String(n).padStart(2, '0');
 
 /** 'Mon 9 Apr · 06:25' from the ISO local zero hour plus minutes; time-zone independent. */
 export function formatClock(zeroHourIso: string, minute: number): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(zeroHourIso);
-  if (!m) throw new Error(`Invalid zero hour: ${zeroHourIso}`);
-  const [y, mo, d, h, mi] = m.slice(1).map(Number) as [number, number, number, number, number];
-  const t = new Date(Date.UTC(y, mo - 1, d, h, mi + Math.floor(minute)));
+  const t = addMinutes(zeroHourIso, Math.floor(minute));
   return `${DAYS[t.getUTCDay()]} ${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} · ${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`;
 }

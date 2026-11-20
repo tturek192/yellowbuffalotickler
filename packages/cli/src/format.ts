@@ -1,14 +1,13 @@
 import type { BatchSummary } from '@wwi/engine';
+import { addMinutes } from '@wwi/scenario';
 
-/** Clock time HH:MM for `minutes` after a zero hour given as 'YYYY-MM-DDTHH:MM'. */
+const pad = (n: number): string => String(n).padStart(2, '0');
+
+/** Clock time HH:MM for `minutes` (rounded) after a zero hour given as 'YYYY-MM-DDTHH:MM'. */
 export function clock(zeroHour: string, minutes: number | null): string {
   if (minutes === null) return '—';
-  const m = /T(\d{2}):(\d{2})/.exec(zeroHour);
-  if (!m) throw new Error(`bad zero hour "${zeroHour}"`);
-  const total = Math.round(Number(m[1]) * 60 + Number(m[2]) + minutes);
-  const day = 24 * 60;
-  const t = ((total % day) + day) % day;
-  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+  const t = addMinutes(zeroHour, Math.round(minutes));
+  return `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`;
 }
 
 export function formatBatch(b: BatchSummary, zeroHour: string): string {
