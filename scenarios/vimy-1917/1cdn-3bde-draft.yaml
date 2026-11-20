@@ -138,17 +138,17 @@ leaders:
   - id: tuxford
     name:
       value: George Tuxford
-      source: vimy-brief-2026
+      estimate: Full name supplied by builder; brief gives only 'Tuxford'; to confirm in Plan 2 Task 8
     rank:
       value: Brigadier-General
-      source: vimy-brief-2026
+      estimate: Rank supplied by builder; brief does not state it; to confirm in Plan 2 Task 8
   - id: griesbach
     name:
       value: William Griesbach
-      source: vimy-brief-2026
+      estimate: Full name supplied by builder; brief gives only 'Griesbach'; to confirm in Plan 2 Task 8
     rank:
       value: Brigadier-General
-      source: vimy-brief-2026
+      estimate: Rank supplied by builder; brief does not state it; to confirm in Plan 2 Task 8
 forces:
   - side: allied
     doctrine: bef-1917
