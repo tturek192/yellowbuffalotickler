@@ -255,10 +255,13 @@ code {
 
 /* ---------- Map ---------- */
 
+/* The sheet: the map canvas above, the key in a strip under it, so the key never covers the map. */
 .map-frame {
   position: relative;
   margin: 10px 10px 0;
   height: clamp(340px, 58vh, 760px);
+  display: flex;
+  flex-direction: column;
   border-radius: 3px;
   overflow: hidden;
   background: var(--paper);
@@ -266,8 +269,9 @@ code {
 }
 
 .map-canvas {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .map-canvas canvas {
@@ -322,17 +326,14 @@ code {
 }
 
 .map-key {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-  max-width: calc(100% - 210px);
+  flex: none;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 3px 14px;
-  padding: 5px 10px;
+  padding: 6px 12px;
   background: rgba(239, 230, 207, 0.94);
-  border: 1px solid rgba(59, 51, 38, 0.55);
+  border-top: 1px solid rgba(59, 51, 38, 0.35);
   color: var(--ink);
   font-family: var(--font-map);
   font-style: italic;
@@ -781,25 +782,18 @@ code {
 /* ---------- Phone-width map panel ---------- */
 
 @container (max-width: 559.98px) {
+  /* The sheet grows to hold the key strip under a fixed-height map. */
   .map-frame {
     height: auto;
-    display: flex;
-    flex-direction: column;
   }
   .map-canvas {
-    position: relative;
-    inset: auto;
+    flex: none;
     height: 320px;
   }
-  /* The key moves under the sheet instead of covering it. */
   .map-key {
-    position: static;
-    max-width: none;
     justify-content: flex-start;
     gap: 4px 12px;
     padding: 8px 12px;
-    border: none;
-    border-top: 1px solid rgba(59, 51, 38, 0.35);
   }
   .controls {
     padding: 6px 12px 14px;

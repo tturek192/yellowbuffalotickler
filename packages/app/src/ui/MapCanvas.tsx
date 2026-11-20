@@ -4,7 +4,10 @@ import { frameAt } from '../playback';
 import { drawFrame } from '../map/draw';
 import { fitView, recordBounds } from '../map/projection';
 
-/** Room kept clear for the clock card (top) and the map key (bottom), in CSS pixels. */
+/**
+ * Room kept clear for the clock card (top) and the scale bar (bottom), in CSS pixels. The map key sits in a strip
+ * under the canvas (styles.css), so it needs no room here.
+ */
 const INSET_TOP = 92;
 const INSET_BOTTOM = 40;
 

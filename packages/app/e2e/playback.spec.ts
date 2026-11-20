@@ -1,7 +1,17 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 
 const out = (name: string): string => fileURLToPath(new URL(`./out/${name}`, import.meta.url));
+
+/** The map key sits wholly below the map canvas, inside the sheet, so it hides none of the map. */
+async function expectKeyClearOfMap(page: Page): Promise<void> {
+  const map = await page.getByRole('img', { name: /^Trench map of / }).boundingBox();
+  const key = await page.getByRole('group', { name: 'Map key' }).boundingBox();
+  expect(map && key).toBeTruthy();
+  expect(key!.y).toBeGreaterThanOrEqual(map!.y + map!.height - 0.5);
+  expect(key!.x).toBeGreaterThanOrEqual(map!.x - 0.5);
+  expect(key!.x + key!.width).toBeLessThanOrEqual(map!.x + map!.width + 0.5);
+}
 
 test('plays, scrubs and jumps from the event log', async ({ page }) => {
   await page.goto('/?run=sample');
@@ -75,6 +85,7 @@ test('plays a run with map features and German garrisons', async ({ page }) => {
     await expect(key).toContainText(entry);
   }
   const map = page.getByRole('img', { name: /^Trench map of / });
+  await expectKeyClearOfMap(page);
   const before = await map.getAttribute('aria-label');
   expect(before).toContain('Mon 9 Apr · 05:30');
   await page.screenshot({ path: out('garrisons-start.png') });
@@ -87,6 +98,8 @@ test('plays a run with map features and German garrisons', async ({ page }) => {
   await page.getByLabel('Battle time').fill('120');
   await expect(page.getByTestId('battle-clock')).toHaveText('Mon 9 Apr · 07:30');
   await page.screenshot({ path: out('garrisons-mid.png') });
-  await page.setViewportSize({ width: 375, height: 812 });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expectKeyClearOfMap(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({ path: out('garrisons-narrow.png'), fullPage: true });
 });
