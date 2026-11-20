@@ -153,7 +153,9 @@ describe('drawing map features', () => {
 const fillTextY = (calls: Call[], text: string): number | undefined => calls.find((c) => c.name === 'fillText' && c.args[0] === text)?.args[2] as number | undefined;
 
 describe('map labels', () => {
-  // The German front line's label sits just above its north end, at screen (175, 100).
+  // Drawn lower than the shared view so the clock card's corner (reserved at the sheet's top left) is not in the way:
+  // the German front line's label sits just above its north end, at screen (175, 160).
+  const labelView: View = { scale: 0.5, tx: 100, ty: 560 };
   const woodAt = (id: string, name: string): Feature => ({
     id, kind: 'wood', name, cite,
     geometry: { type: 'Polygon', coordinates: [[150, 780], [250, 780], [250, 860], [150, 860]] },
@@ -161,12 +163,33 @@ describe('map labels', () => {
 
   it('lifts a line label clear of a wood or village name', () => {
     const plain = recordingContext();
-    drawFrame(plain.ctx, view, record([]), frameAt(record([]), 0));
+    drawFrame(plain.ctx, labelView, record([]), frameAt(record([]), 0));
     const r = record([woodAt('w', 'Bois')]);
     const withWood = recordingContext();
-    drawFrame(withWood.ctx, view, r, frameAt(r, 0));
-    expect(fillTextY(plain.calls, 'German front line')).toBe(93);
-    expect(fillTextY(withWood.calls, 'German front line')!).toBeLessThan(93);
+    drawFrame(withWood.ctx, labelView, r, frameAt(r, 0));
+    expect(fillTextY(plain.calls, 'German front line')).toBe(153);
+    expect(fillTextY(withWood.calls, 'German front line')!).toBeLessThan(153);
+  });
+
+  it('prints a trench name without its qualifier, each objective line once, and one tag per division', () => {
+    const base = record([]);
+    const lines: RunRecord['geometry']['lines'] = [
+      { id: 'c', name: 'Canadian front line, last light 8 April', kind: 'trench', side: 'allied', points: [[0, 0], [0, 800]] },
+      { id: 'a1', name: 'Red Line, 1st Canadian Division', kind: 'objective', color: '#c00', points: [[300, 0], [320, 300]] },
+      { id: 'a2', name: 'Red Line, 2nd Canadian Division', kind: 'objective', color: '#c00', points: [[320, 400], [330, 700]] },
+      { id: 'b1', name: 'Black Line, 1st Canadian Division', kind: 'objective', color: '#000', points: [[200, 0], [220, 300]] },
+      { id: 'd', name: 'Plain Line', kind: 'objective', color: '#080', points: [[260, 0], [260, 300]] },
+    ];
+    const r: RunRecord = { ...base, geometry: { ...base.geometry, lines } };
+    const rec = recordingContext();
+    drawFrame(rec.ctx, labelView, r, frameAt(r, 0));
+    const texts = rec.calls.filter((c) => c.name === 'fillText').map((c) => c.args[0]);
+    const n = (t: string) => texts.filter((x) => x === t).length;
+    expect(n('Canadian front line')).toBe(1);
+    expect(texts.some((t) => String(t).includes('last light'))).toBe(false);
+    expect([n('Red Line'), n('Black Line'), n('Plain Line')]).toEqual([1, 1, 1]);
+    expect(texts.filter((t) => String(t).includes('Division'))).toEqual([]);
+    expect([n('1st Cdn Div'), n('2nd Cdn Div')]).toEqual([1, 1]);
   });
 
   it('keeps two area names from printing over each other', () => {

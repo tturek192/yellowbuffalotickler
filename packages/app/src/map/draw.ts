@@ -2,7 +2,7 @@ import type { RunRecord } from '@wwi/engine';
 import type { Frame } from '../playback';
 import { BARRAGE_DEPTH_M, worldToScreen, type Point, type View } from './projection';
 import { declutter, type Screen } from './declutter';
-import { liftClear, type Box } from './labels';
+import { divisionTags, nudgeClear, objectiveLabelGroups, overlaps, placeClear, trenchLabel, type Box } from './labels';
 import { drawFeatures } from './features';
 import { terrainLayer } from './hillshade';
 import { LABEL_FONT, MAP_COLORS, MARKER_FONT, crenellatedPath, sideColor, tracePath } from './style';
@@ -57,6 +57,7 @@ function labelAtNorthEnd(
   color: string,
   size: number,
   align: CanvasTextAlign,
+  softCount: number,
 ): void {
   if (pts.length === 0) return;
   const { w } = cssSize(ctx);
@@ -68,11 +69,16 @@ function labelAtNorthEnd(
   const margin = 16;
   const x0 = Math.min(Math.max(want, margin), w - margin - width);
   const baseline = top[1] - 7;
-  const box = liftClear({ x0: x0 - 2, x1: x0 + width + 2, y0: baseline - size, y1: baseline + 3 }, placed, size + 3, 4);
+  const want0 = { x0: x0 - 2, x1: x0 + width + 2, y0: baseline - size, y1: baseline + 3 };
+  const find = (against: readonly Box[]): Box => placeClear(want0, against, size + 3, 10, 10, 24, margin, w - margin, margin);
+  let box = find(placed);
+  // Crowded: if every spot touches something, settle for overlapping only a map name (the first `softCount` boxes), never another line label.
+  if (placed.some((p) => overlaps(box, p))) box = find(placed.slice(softCount));
   placed.push(box);
   const y = box.y1 - 3;
-  if (y < baseline) {
-    // Lifted clear of a neighbour: a hairline leads back down to the line it names.
+  const tx = box.x0 + 2;
+  if (y < baseline || box.x0 !== want0.x0) {
+    // Moved clear of a neighbour: a hairline leads back down to the line it names.
     const lx = Math.min(Math.max(top[0], box.x0 + 4), box.x1 - 4);
     ctx.strokeStyle = color;
     ctx.globalAlpha = 0.6;
@@ -88,9 +94,9 @@ function labelAtNorthEnd(
   ctx.lineJoin = 'round';
   ctx.strokeStyle = MAP_COLORS.paper;
   ctx.lineWidth = 4;
-  ctx.strokeText(text, x0, y);
+  ctx.strokeText(text, tx, y);
   ctx.fillStyle = color;
-  ctx.fillText(text, x0, y);
+  ctx.fillText(text, tx, y);
   ctx.restore();
 }
 
@@ -157,7 +163,7 @@ function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord): voi
   ctx.strokeRect(10, 10, w - 20, h - 20);
 }
 
-function drawTrench(ctx: CanvasRenderingContext2D, view: View, line: Line, labels: Box[]): void {
+function drawTrench(ctx: CanvasRenderingContext2D, view: View, line: Line): void {
   const color = sideColor(line.side);
   const pts = line.points.map((p) => worldToScreen(view, p));
   ctx.save();
@@ -175,10 +181,14 @@ function drawTrench(ctx: CanvasRenderingContext2D, view: View, line: Line, label
   tracePath(ctx, crenellatedPath(pts, 4, 2.5));
   ctx.stroke();
   ctx.restore();
-  labelAtNorthEnd(ctx, labels, pts, line.name, color, labelSize(ctx, 14), line.side === 'central' ? 'left' : line.side === 'allied' ? 'right' : 'center');
 }
 
-function drawObjective(ctx: CanvasRenderingContext2D, view: View, line: Line, labels: Box[]): void {
+function labelTrench(ctx: CanvasRenderingContext2D, view: View, line: Line, labels: Box[], soft: number): void {
+  const pts = line.points.map((p) => worldToScreen(view, p));
+  labelAtNorthEnd(ctx, labels, pts, trenchLabel(line.name), sideColor(line.side), labelSize(ctx, 14), line.side === 'central' ? 'left' : line.side === 'allied' ? 'right' : 'center', soft);
+}
+
+function drawObjective(ctx: CanvasRenderingContext2D, view: View, line: Line): void {
   const color = line.color ?? MAP_COLORS.ink;
   const pts = line.points.map((p) => worldToScreen(view, p));
   ctx.save();
@@ -188,7 +198,51 @@ function drawObjective(ctx: CanvasRenderingContext2D, view: View, line: Line, la
   tracePath(ctx, pts);
   ctx.stroke();
   ctx.restore();
-  labelAtNorthEnd(ctx, labels, pts, line.name, color, labelSize(ctx, 16), 'center');
+}
+
+/** Each objective-line group (Black Line, Red Line …) is labelled once, at the north end of its northernmost segment. */
+function labelObjectives(ctx: CanvasRenderingContext2D, view: View, lines: Line[], labels: Box[], soft: number): void {
+  for (const { text, anchor } of objectiveLabelGroups(lines)) {
+    const pts = anchor.points.map((p) => worldToScreen(view, p));
+    labelAtNorthEnd(ctx, labels, pts, text, anchor.color ?? MAP_COLORS.ink, labelSize(ctx, 16), 'center', soft);
+  }
+}
+
+/**
+ * One small upright sector tag per division, right-aligned just west of the allied front (behind it) at
+ * the middle of that division's objective lines; nudged along the margin clear of other labels and kept inside the sheet.
+ */
+function drawDivisionTags(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, lines: Line[], placed: Box[]): void {
+  const { w, h } = cssSize(ctx);
+  const rear = r.geometry.lines.filter((l) => l.kind === 'trench' && l.side === 'allied');
+  const rearPts = (rear.length > 0 ? rear : r.geometry.lines).flatMap((l) => l.points.map((p) => worldToScreen(view, p)));
+  if (rearPts.length === 0) return;
+  // Behind the front, and behind the companies drawn there at the start, so the tag is not buried under markers.
+  const startPts = (r.snapshots[0]?.companies ?? []).map((c) => worldToScreen(view, [c.x, c.y])[0] - 16);
+  const edge = Math.min(...rearPts.map((p) => p[0]), ...startPts) - 10;
+  const size = labelSize(ctx, 12);
+  const margin = 16;
+  ctx.save();
+  ctx.font = `${size}px ${LABEL_FONT}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.lineJoin = 'round';
+  for (const tag of divisionTags(lines)) {
+    const width = ctx.measureText(tag.text).width;
+    const x0 = Math.max(margin, edge - width);
+    const mid = worldToScreen(view, [0, tag.y])[1];
+    const want = { x0: x0 - 2, x1: x0 + width + 2, y0: mid - size / 2 - 1, y1: mid + size / 2 + 3 };
+    const box = nudgeClear(want, placed, size + 4, 12);
+    if (box.y0 < margin || box.y1 > h - margin || box.x1 > w) continue;
+    placed.push(box);
+    const y = box.y1 - 3;
+    ctx.strokeStyle = MAP_COLORS.paper;
+    ctx.lineWidth = 3;
+    ctx.strokeText(tag.text, x0, y);
+    ctx.fillStyle = MAP_COLORS.sepia;
+    ctx.fillText(tag.text, x0, y);
+  }
+  ctx.restore();
 }
 
 function drawBarrage(ctx: CanvasRenderingContext2D, view: View, points: Point[]): void {
@@ -340,9 +394,18 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   drawPaper(ctx, view, r);
   const labels: Box[] = [];
   drawFeatures(ctx, view, r.geometry.features, labels);
-  for (const l of r.geometry.lines) if (l.kind === 'trench') drawTrench(ctx, view, l, labels);
-  for (const l of r.geometry.lines) if (l.kind === 'objective') drawObjective(ctx, view, l, labels);
+  const soft = labels.length; // map names: a line label may overlap one of these only when nothing else is free
+  const trenches = r.geometry.lines.filter((l) => l.kind === 'trench');
+  for (const l of trenches) drawTrench(ctx, view, l);
+  const objectives = r.geometry.lines.filter((l) => l.kind === 'objective');
+  for (const l of objectives) drawObjective(ctx, view, l);
   for (const b of frame.barrages) if (!b.done) drawBarrage(ctx, view, b.points);
   drawCompanies(ctx, view, r, frame);
+  // The clock card (HTML, .clock-card in styles.css) hides the sheet's top-left corner: keep labels out from under it.
+  labels.push({ x0: 0, x1: cssSize(ctx).w < 600 ? 230 : 300, y0: 0, y1: 86 });
+  // Line labels go on top of the markers so a stack of companies never hides a name.
+  for (const l of trenches) labelTrench(ctx, view, l, labels, soft);
+  labelObjectives(ctx, view, objectives, labels, soft);
+  drawDivisionTags(ctx, view, r, objectives, labels);
   drawFurniture(ctx, view);
 }
