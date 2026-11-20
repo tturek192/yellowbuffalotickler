@@ -1,5 +1,5 @@
 import { stringify } from 'yaml';
-import type { Scenario } from './schema';
+import type { Doctrine, Scenario } from './schema';
 
 const est = (value: number, estimate = 'test fixture') => ({ value, estimate });
 
@@ -54,4 +54,34 @@ export function minimalScenario(): Scenario {
 
 export function toYaml(obj: unknown): string {
   return stringify(obj);
+}
+
+export function fixtureWithDoctrine(): { scenario: Scenario; doctrines: Record<string, Doctrine> } {
+  const doctrine: Doctrine = {
+    id: 'bef-1917',
+    title: 'Fixture doctrine',
+    sources: {},
+    followDistanceM: est(70),
+    maxAdvanceMPerMin: est(50),
+    startJitterMin: est(2),
+    speedJitterFrac: est(0.1),
+  };
+  return { scenario: minimalScenario(), doctrines: { 'bef-1917': doctrine } };
+}
+
+/** Clone the first formation's companies so the scenario holds n companies, spread across the sector. */
+export function withManyCompanies(s: Scenario, n: number): Scenario {
+  const clone: Scenario = structuredClone(s);
+  const force = clone.forces[0]!;
+  const bn = force.formations[0]!;
+  const template = bn.companies![0]!;
+  const sector = clone.sectors.find((x) => x.id === template.sectorId)!;
+  const companies = Array.from({ length: n }, (_, i) => ({
+    ...structuredClone(template),
+    id: `c${i + 1}`,
+    name: `Company ${i + 1}`,
+    start: [0, sector.yMin + ((i + 0.5) / n) * (sector.yMax - sector.yMin)] as [number, number],
+  }));
+  bn.companies = companies;
+  return clone;
 }
