@@ -1,7 +1,7 @@
 import { stringify } from 'yaml';
 import type { Doctrine, Scenario } from './schema';
 
-const est = (value: number, estimate = 'test fixture') => ({ value, estimate });
+export const est = (value: number, estimate = 'test fixture') => ({ value, estimate });
 
 export function minimalScenario(): Scenario {
   return {
@@ -13,6 +13,10 @@ export function minimalScenario(): Scenario {
     timeLimitMinutes: 600,
     geometrySource: { value: 'fixture geometry', estimate: 'synthetic test geometry' },
     features: [],
+    leaders: [],
+    reserves: [],
+    artillery: [],
+    weather: [],
     lines: [
       { id: 'gfront', name: 'German front line', kind: 'trench', side: 'central', points: [[150, 0], [150, 400]] },
       { id: 'black', name: 'Black Line', kind: 'objective', color: '#1a1a1a', points: [[1150, 0], [1150, 400]] },
@@ -49,6 +53,9 @@ export function minimalScenario(): Scenario {
       objectives: [
         { lineId: 'black', sectorId: 's1', earliest: { value: '1916-07-01T10:00', estimate: 'test fixture' }, latest: { value: '1916-07-01T14:00', estimate: 'test fixture' } },
       ],
+      casualties: [],
+      prisonersTaken: [],
+      reserveArrivals: [],
     },
   };
 }
@@ -85,4 +92,43 @@ export function withManyCompanies(s: Scenario, n: number): Scenario {
   }));
   bn.companies = companies;
   return clone;
+}
+
+type Company = NonNullable<Scenario['forces'][number]['formations'][number]['companies']>[number];
+
+/** The minimal scenario plus one leader, a German trench feature and a German doctrine reference. */
+export function minimalScenarioV2(): Scenario {
+  const s = minimalScenario();
+  s.leaders = [
+    { id: 'currie', name: est2('Arthur Currie'), rank: est2('Major-General') },
+  ];
+  s.features = [
+    {
+      id: 'ger-front-a',
+      kind: 'trench',
+      side: 'central',
+      geometry: { type: 'LineString', coordinates: [[150, 0], [150, 400]] },
+      cite: est2('schematic'),
+    },
+    { id: 'old-wood', kind: 'wood', geometry: { type: 'Point', coordinates: [500, 200] }, cite: est2('schematic') },
+  ];
+  s.forces[0]!.formations[0]!.leaderId = 'currie';
+  return s;
+}
+
+function est2<T>(value: T) {
+  return { value, estimate: 'test fixture' };
+}
+
+/** A German force (doctrine de-1917) holding one battalion with the given companies. */
+export function germanForce(companies: Array<Omit<Company, 'start'> & { start: Company['start'] }>): Scenario['forces'][number] {
+  return {
+    side: 'central',
+    doctrine: 'de-1917',
+    formations: [{ id: 'rir262', name: 'RIR 262', kind: 'regiment', companies }],
+  };
+}
+
+export function wx(at: string): Scenario['weather'][number] {
+  return { at, precipitation: { value: 'rain', estimate: 'test fixture' } };
 }

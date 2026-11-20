@@ -11,7 +11,7 @@ export class ScenarioError extends Error {
 }
 
 const issues = (e: z.ZodError) =>
-  e.issues.map((i) => `${i.path.length ? i.path.join('.') : '(root)'}: ${i.message}`);
+  e.issues.map((i) => `${i.path.length ? i.path.reduce<string>((a, p) => (typeof p === 'number' ? `${a}[${p}]` : a ? `${a}.${String(p)}` : String(p)), '') : '(root)'}: ${i.message}`);
 
 function parseYaml(text: string): unknown {
   try {

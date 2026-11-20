@@ -1,5 +1,6 @@
 import type { Scenario, Formation } from './schema';
 import { historicalTierRule } from './sources';
+import { parseLocalDateTime } from './local-time';
 
 /** Collect every Sourced-looking object ({ value, source }) in a tree, with its dotted path. */
 export function collectSourceRefs(node: unknown, path: string, out: { path: string; id: string }[] = []) {
@@ -41,15 +42,45 @@ export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
     featureIds.add(f.id);
   });
 
+  const leaderIds = new Set<string>();
+  s.leaders.forEach((l, i) => {
+    if (leaderIds.has(l.id)) problems.push(`leaders[${i}].id: duplicate id "${l.id}"`);
+    leaderIds.add(l.id);
+  });
+  const featureKind = new Map(s.features.map((f) => [f.id, f.kind]));
+  const formationIds = new Set<string>();
+  const collectIds = (fs: Formation[]) =>
+    fs.forEach((f) => {
+      formationIds.add(f.id);
+      if (f.children) collectIds(f.children);
+    });
+  s.forces.forEach((force) => collectIds(force.formations));
+  const checkFormation = (path: string, id: string | undefined) => {
+    if (id !== undefined && !formationIds.has(id)) problems.push(`${path}: unknown formation "${id}"`);
+  };
+
   const walkFormations = (fs: Formation[], base: string) =>
     fs.forEach((f, i) => {
       const fp = `${base}[${i}]`;
       dup(`${fp}.id`, f.id);
+      if (f.leaderId !== undefined && !leaderIds.has(f.leaderId)) {
+        problems.push(`${fp}.leaderId: unknown leader "${f.leaderId}"`);
+      }
       f.companies?.forEach((c, j) => {
         const cp = `${fp}.companies[${j}]`;
         dup(`${cp}.id`, c.id);
-        if (!sectorIds.has(c.sectorId)) problems.push(`${cp}.sectorId: unknown sector "${c.sectorId}"`);
-        if (!lineIds.has(c.objectiveLineId)) problems.push(`${cp}.objectiveLineId: unknown line "${c.objectiveLineId}"`);
+        if (c.sectorId !== undefined && !sectorIds.has(c.sectorId)) problems.push(`${cp}.sectorId: unknown sector "${c.sectorId}"`);
+        if (c.objectiveLineId !== undefined && !lineIds.has(c.objectiveLineId)) {
+          problems.push(`${cp}.objectiveLineId: unknown line "${c.objectiveLineId}"`);
+        }
+        if (c.trenchFeatureId !== undefined) {
+          const kind = featureKind.get(c.trenchFeatureId);
+          if (kind === undefined) problems.push(`${cp}.trenchFeatureId: unknown feature "${c.trenchFeatureId}"`);
+          else if (kind !== 'trench' && kind !== 'strongpoint') {
+            problems.push(`${cp}.trenchFeatureId: feature "${c.trenchFeatureId}" is a ${kind}; must be a trench or strongpoint`);
+          }
+        }
+        if (!Array.isArray(c.start)) problems.push(`${cp}.start: lonLat start needs the node loader (and a frame) to project it`);
       });
       if (f.children) walkFormations(f.children, `${fp}.children`);
     });
@@ -66,6 +97,24 @@ export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
       if (!lineIds.has(leg.toLineId)) problems.push(`sectors[${i}].legs[${j}].toLineId: unknown line "${leg.toLineId}"`);
     });
   });
+
+  s.reserves.forEach((x, i) => {
+    checkFormation(`reserves[${i}].formationId`, x.formationId);
+    if (!Array.isArray(x.entryPoint)) problems.push(`reserves[${i}].entryPoint: lonLat needs the node loader (and a frame) to project it`);
+  });
+  const artIds = new Set<string>();
+  s.artillery.forEach((a, i) => {
+    if (artIds.has(a.id)) problems.push(`artillery[${i}].id: duplicate id "${a.id}"`);
+    artIds.add(a.id);
+    checkFormation(`artillery[${i}].formationId`, a.formationId);
+  });
+  s.weather.forEach((w, i) => {
+    if (i > 0 && parseLocalDateTime(w.at).getTime() <= parseLocalDateTime(s.weather[i - 1]!.at).getTime()) {
+      problems.push(`weather[${i}].at: must be after weather[${i - 1}].at`);
+    }
+  });
+  s.historical.casualties.forEach((c, i) => checkFormation(`historical.casualties[${i}].formationId`, c.formationId));
+  s.historical.reserveArrivals.forEach((c, i) => checkFormation(`historical.reserveArrivals[${i}].formationId`, c.formationId));
 
   s.historical.objectives.forEach((o, i) => {
     if (!lineIds.has(o.lineId)) problems.push(`historical.objectives[${i}].lineId: unknown line "${o.lineId}"`);

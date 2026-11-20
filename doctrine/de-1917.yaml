@@ -1,0 +1,15 @@
+id: de-1917
+title: German 6th Army defensive doctrine 1917 (stub)
+sources: {}
+followDistanceM:
+  value: 0
+  estimate: Stub; German defensive behaviour is Plan 3 content
+maxAdvanceMPerMin:
+  value: 40
+  estimate: Stub; German defensive behaviour is Plan 3 content
+startJitterMin:
+  value: 0
+  estimate: Stub; German defensive behaviour is Plan 3 content
+speedJitterFrac:
+  value: 0
+  estimate: Stub; German defensive behaviour is Plan 3 content

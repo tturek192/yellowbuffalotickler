@@ -6,6 +6,15 @@ import { runScenario } from './run';
 const { scenario: s, doctrines: d } = fixtureWithDoctrine();
 
 describe('runScenario', () => {
+  it('does not crash on a garrison company without objective or sector, and leaves it in place', () => {
+    const g = structuredClone(s);
+    g.forces[0]!.formations[0]!.companies!.push({
+      id: 'gar', name: 'Garrison', role: 'garrison', strength: { value: 100, estimate: 't' }, start: [400, 100],
+    });
+    const r = runScenario(g, d, { seed: 1, snapshotEvery: 1 });
+    const last = r.snapshots.at(-1)!.companies.find((c) => c.id === 'gar')!;
+    expect([last.x, last.y]).toEqual([400, 100]);
+  });
   it('is deterministic: same seed gives an identical record', () => {
     expect(JSON.stringify(runScenario(s, d, { seed: 7 }))).toBe(JSON.stringify(runScenario(s, d, { seed: 7 })));
   });

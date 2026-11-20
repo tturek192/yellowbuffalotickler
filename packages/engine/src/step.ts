@@ -43,6 +43,7 @@ export function step(state: SimState, ctx: StepContext, dtMin: number): SimState
   const taken = [...state.taken];
   const groups = new Map<string, CompanyState[]>();
   for (const c of moved.companies) {
+    if (c.objectiveLineId === undefined) continue; // garrison/reserve: holds in place
     const key = `${c.objectiveLineId}|${c.sectorId}`;
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }

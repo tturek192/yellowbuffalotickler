@@ -6,5 +6,5 @@ export * from './schema';
 export * from './load';
 export { checkReferences } from './references';
 export { allCompanies } from './all-companies';
-export { projectLonLat, unprojectXY, FrameSchema, type Frame } from './frame';
+export { projectLonLat, unprojectXY, projectLonLatPlacements, FrameSchema, type Frame } from './frame';
 export { geoToScenarioParts, type GeoJsonFeature, type GeoJsonFeatureCollection } from './geo';

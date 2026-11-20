@@ -34,3 +34,47 @@ export function unprojectXY(frame: Frame, [x, y]: Point): [number, number] {
   const dy = x * s + y * c;
   return [frame.origin.lon + dx / kx, frame.origin.lat + dy / M_PER_DEG_LAT];
 }
+
+/**
+ * Replace `{ lonLat }` company starts and reserve entry points in a raw scenario document with
+ * projected local points. Returns problems (naming the item) for any that cannot be projected.
+ */
+export function projectLonLatPlacements(data: unknown, frame: Frame | undefined): string[] {
+  const problems: string[] = [];
+  const isLonLat = (p: unknown): p is { lonLat: [number, number] } =>
+    !!p && typeof p === 'object' && !Array.isArray(p) && Array.isArray((p as { lonLat?: unknown }).lonLat);
+  const place = (owner: Record<string, unknown>, key: string, label: string) => {
+    const p = owner[key];
+    if (!isLonLat(p)) return;
+    if (!frame) return void problems.push(`${label}: lonLat needs a frame in the scenario file`);
+    const ll = p.lonLat;
+    if (ll.length !== 2 || typeof ll[0] !== 'number' || typeof ll[1] !== 'number') {
+      return void problems.push(`${label}: lonLat must be [lon, lat]`);
+    }
+    owner[key] = projectLonLat(frame, ll);
+  };
+  const walk = (fs: unknown) => {
+    if (!Array.isArray(fs)) return;
+    for (const f of fs) {
+      if (!f || typeof f !== 'object') continue;
+      const fo = f as Record<string, unknown>;
+      if (Array.isArray(fo.companies)) {
+        for (const c of fo.companies) {
+          if (c && typeof c === 'object') {
+            const co = c as Record<string, unknown>;
+            place(co, 'start', `company ${String(co.id)}.start`);
+          }
+        }
+      }
+      walk(fo.children);
+    }
+  };
+  const d = data as { forces?: unknown; reserves?: unknown } | null;
+  if (Array.isArray(d?.forces)) for (const force of d.forces) walk((force as { formations?: unknown } | null)?.formations);
+  if (Array.isArray(d?.reserves)) {
+    d.reserves.forEach((r, i) => {
+      if (r && typeof r === 'object') place(r as Record<string, unknown>, 'entryPoint', `reserves[${i}] (${String((r as { formationId?: unknown }).formationId)}).entryPoint`);
+    });
+  }
+  return problems;
+}

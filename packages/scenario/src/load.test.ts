@@ -88,18 +88,18 @@ describe('values the engine cannot run are rejected at load, with their path', (
     expect(() => parseScenario(toYaml(s), ['bef-1917'])).toThrow(message);
   };
   it.each<[string, (s: any) => void, RegExp]>([
-    ['a sector with no legs', (s) => (s.sectors[0].legs = []), /sectors\.0\.legs: .*at least 1/],
-    ['a line with one point', (s) => (s.lines[1].points = [[1150, 0]]), /lines\.1\.points: .*at least 2/],
-    ['a line whose y does not strictly ascend', (s) => (s.lines[1].points = [[1150, 400], [1150, 0]]), /lines\.1\.points: .*strictly ascending y/],
-    ['a line with a repeated y', (s) => (s.lines[0].points = [[150, 0], [160, 0], [150, 400]]), /lines\.0\.points: .*strictly ascending y/],
-    ['a zero lift distance', (s) => (s.sectors[0].legs[0].liftM.value = 0), /sectors\.0\.legs\.0\.liftM\.value: .*greater than 0/],
-    ['a zero lift interval', (s) => (s.sectors[0].legs[0].liftMin.value = 0), /sectors\.0\.legs\.0\.liftMin\.value: .*greater than 0/],
-    ['a negative pause', (s) => (s.sectors[0].legs[0].pauseMin.value = -1), /sectors\.0\.legs\.0\.pauseMin\.value: .*greater than or equal to 0/],
-    ['a negative stand-off', (s) => (s.sectors[0].standOffM.value = -5), /sectors\.0\.standOffM\.value: .*greater than or equal to 0/],
+    ['a sector with no legs', (s) => (s.sectors[0].legs = []), /sectors\[0\]\.legs: .*at least 1/],
+    ['a line with one point', (s) => (s.lines[1].points = [[1150, 0]]), /lines\[1\]\.points: .*at least 2/],
+    ['a line whose y does not strictly ascend', (s) => (s.lines[1].points = [[1150, 400], [1150, 0]]), /lines\[1\]\.points: .*strictly ascending y/],
+    ['a line with a repeated y', (s) => (s.lines[0].points = [[150, 0], [160, 0], [150, 400]]), /lines\[0\]\.points: .*strictly ascending y/],
+    ['a zero lift distance', (s) => (s.sectors[0].legs[0].liftM.value = 0), /sectors\[0\]\.legs\[0\]\.liftM\.value: .*greater than 0/],
+    ['a zero lift interval', (s) => (s.sectors[0].legs[0].liftMin.value = 0), /sectors\[0\]\.legs\[0\]\.liftMin\.value: .*greater than 0/],
+    ['a negative pause', (s) => (s.sectors[0].legs[0].pauseMin.value = -1), /sectors\[0\]\.legs\[0\]\.pauseMin\.value: .*greater than or equal to 0/],
+    ['a negative stand-off', (s) => (s.sectors[0].standOffM.value = -5), /sectors\[0\]\.standOffM\.value: .*greater than or equal to 0/],
     ['a zero hour with a zone', (s) => (s.zeroHour.value = '1916-07-01T07:30Z'), /zeroHour\.value: .*YYYY-MM-DDTHH:MM/],
     ['a zero hour with seconds', (s) => (s.zeroHour.value = '1916-07-01T07:30:00'), /zeroHour\.value: .*YYYY-MM-DDTHH:MM/],
-    ['a bad historical earliest', (s) => (s.historical.objectives[0].earliest.value = '1 July 1916 10:00'), /historical\.objectives\.0\.earliest\.value: .*YYYY-MM-DDTHH:MM/],
-    ['a bad historical latest', (s) => (s.historical.objectives[0].latest.value = '1916-07-01T14:00+01:00'), /historical\.objectives\.0\.latest\.value: .*YYYY-MM-DDTHH:MM/],
+    ['a bad historical earliest', (s) => (s.historical.objectives[0].earliest.value = '1 July 1916 10:00'), /historical\.objectives\[0\]\.earliest\.value: .*YYYY-MM-DDTHH:MM/],
+    ['a bad historical latest', (s) => (s.historical.objectives[0].latest.value = '1916-07-01T14:00+01:00'), /historical\.objectives\[0\]\.latest\.value: .*YYYY-MM-DDTHH:MM/],
   ])('rejects %s', (_, mutate, message) => rejects(mutate, message));
 });
 

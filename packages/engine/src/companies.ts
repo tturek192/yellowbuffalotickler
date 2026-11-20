@@ -10,7 +10,8 @@ export type CompanyState = {
   doctrineId: string;
   battalionId: string;
   sectorId: string;
-  objectiveLineId: string;
+  /** Absent for garrison/reserve companies, which hold in place until Task 4 gives them behaviour. */
+  objectiveLineId: string | undefined;
   x: number;
   y: number;
   strength: number;
@@ -31,7 +32,8 @@ export function initCompanies(
     const d = doctrines[doctrineId];
     for (const c of f.companies ?? []) {
       if (!d) throw new Error(`Unknown doctrine "${doctrineId}"`);
-      const startMin = v(c.startAfterMin) + rng() * v(d.startJitterMin);
+      if (!Array.isArray(c.start)) throw new Error(`Company ${c.id}: start was not projected to a local point`);
+      const startMin = (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.startJitterMin);
       const speedMPerMin = v(d.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.speedJitterFrac));
       out.push({
         id: c.id,
@@ -39,7 +41,7 @@ export function initCompanies(
         side,
         doctrineId,
         battalionId: f.id,
-        sectorId: c.sectorId,
+        sectorId: c.sectorId ?? '',
         objectiveLineId: c.objectiveLineId,
         x: c.start[0],
         y: c.start[1],
@@ -65,7 +67,7 @@ export function moveCompanies(
 ): { companies: CompanyState[]; events: SimEvent[] } {
   const events: SimEvent[] = [];
   const companies = cs.map((c) => {
-    if (c.status === 'consolidating' || minute < c.startMin) return c;
+    if (c.status === 'consolidating' || minute < c.startMin || c.objectiveLineId === undefined) return c;
     const line = lines.find((l) => l.id === c.objectiveLineId);
     const d = doctrines[c.doctrineId];
     if (!line || !d) throw new Error(`Company ${c.id}: unknown line or doctrine`);

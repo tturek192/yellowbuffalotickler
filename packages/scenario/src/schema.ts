@@ -54,36 +54,92 @@ const LineSchema = z.object({
 });
 export type Line = z.infer<typeof LineSchema>;
 
-const Company = z.object({
+const LonLat = z.tuple([z.number(), z.number()]);
+/** A local point, or a lon/lat pair that the node loader projects with the scenario frame. */
+const PlacedPoint = z.union([PointSchema, z.object({ lonLat: LonLat })]);
+
+const CompanyBase = z.object({
   id: z.string(),
   name: z.string(),
+  /** Effective strength at Zero. */
   strength: sourced(z.number()),
-  start: PointSchema,
-  sectorId: z.string(),
-  objectiveLineId: z.string(),
-  startAfterMin: sourced(z.number()),
+  paperStrength: sourced(z.number()).optional(),
+  start: PlacedPoint,
+  sectorId: z.string().optional(),
+  objectiveLineId: z.string().optional(),
+  startAfterMin: sourced(z.number()).optional(),
+  trenchFeatureId: z.string().optional(),
   role: z.enum(['assault', 'mopup', 'support', 'reserve', 'garrison']),
 });
+
+const Company = CompanyBase.superRefine((c, ctx) => {
+  if (c.role === 'garrison' || c.role === 'reserve') return;
+  for (const k of ['sectorId', 'objectiveLineId', 'startAfterMin'] as const) {
+    if (c[k] === undefined) ctx.addIssue({ code: 'custom', path: [k], message: `required for role "${c.role}"` });
+  }
+});
+export type Company = z.infer<typeof CompanyBase>;
+
+const FORMATION_KINDS = ['army', 'corps', 'group', 'division', 'brigade', 'regiment', 'battalion'] as const;
 
 export interface Formation {
   id: string;
   name: string;
-  kind: 'corps' | 'division' | 'brigade' | 'battalion';
-  leader?: string;
+  kind: (typeof FORMATION_KINDS)[number];
+  leaderId?: string;
   children?: Formation[];
-  companies?: z.infer<typeof Company>[];
+  companies?: Company[];
 }
 
 const Formation: z.ZodType<Formation> = z.lazy(() =>
   z.object({
     id: z.string(),
     name: z.string(),
-    kind: z.enum(['corps', 'division', 'brigade', 'battalion']),
-    leader: z.string().optional(),
+    kind: z.enum(FORMATION_KINDS),
+    leaderId: z.string().optional(),
     children: z.array(Formation).optional(),
     companies: z.array(Company).optional(),
   }),
 );
+
+const Rating = sourced(z.number().int().min(1).max(5));
+const LeaderSchema = z.object({
+  id: z.string(),
+  name: sourced(z.string()),
+  rank: sourced(z.string()),
+  ratings: z
+    .object({ planning: Rating, orderSpeed: Rating, adaptiveness: Rating, riskTolerance: Rating, moraleEffect: Rating })
+    .optional(),
+});
+
+const Window = z.object({ from: LocalDateTimeSchema, to: LocalDateTimeSchema });
+const Count = sourcedOrDisputed(z.number().nonnegative());
+
+const ReserveSchema = z.object({
+  formationId: z.string(),
+  side: Side,
+  distanceKm: sourcedOrDisputed(z.number().nonnegative()),
+  entryPoint: PlacedPoint,
+  orderedAt: sourcedOrDisputed(LocalDateTimeSchema).optional(),
+  note: z.string().optional(),
+});
+
+const ArtillerySchema = z.object({
+  id: z.string(),
+  side: Side,
+  formationId: z.string().optional(),
+  weapon: z.string(),
+  count: Count,
+  role: z.enum(['creeping', 'standing', 'heavy', 'counter-battery', 'trench-mortar', 'mg-barrage', 'defensive']),
+});
+
+const WeatherSchema = z.object({
+  at: LocalDateTimeSchema,
+  precipitation: sourced(z.enum(['none', 'rain', 'sleet', 'snow'])),
+  windFromDeg: sourced(z.number()).optional(),
+  visibilityM: sourcedOrDisputed(z.number().nonnegative()).optional(),
+  tempC: sourced(z.number()).optional(),
+});
 
 export const ScenarioSchema = z.object({
   id: z.string(),
@@ -118,9 +174,17 @@ export const ScenarioSchema = z.object({
       standOffM: sourced(z.number().nonnegative()),
     }),
   ),
+  leaders: z.array(LeaderSchema).default([]),
   forces: z.array(
     z.object({ side: Side, doctrine: z.string(), formations: z.array(Formation) }),
   ),
+  /** Off-map formations that arrive later; used by Plan 3. */
+  reserves: z.array(ReserveSchema).default([]),
+  artillery: z.array(ArtillerySchema).default([]),
+  counterBattery: z
+    .object({ side: z.literal('allied'), suppressedAtZeroFrac: sourcedOrDisputed(z.number().min(0).max(1)), note: z.string() })
+    .optional(),
+  weather: z.array(WeatherSchema).default([]),
   historical: z.object({
     objectives: z.array(
       z.object({
@@ -130,6 +194,28 @@ export const ScenarioSchema = z.object({
         latest: sourcedOrDisputed(LocalDateTimeSchema),
       }),
     ),
+    casualties: z
+      .array(
+        z.object({
+          side: Side,
+          formationId: z.string().optional(),
+          window: Window,
+          total: Count,
+          killed: Count.optional(),
+          wounded: Count.optional(),
+          missing: Count.optional(),
+          prisoners: Count.optional(),
+        }),
+      )
+      .default([]),
+    prisonersTaken: z.array(z.object({ bySide: Side, window: Window, count: Count })).default([]),
+    gunsCaptured: z
+      .object({ window: Window, field: Count, trenchMortars: Count.optional(), machineGuns: Count.optional() })
+      .optional(),
+    reserveArrivals: z
+      .array(z.object({ formationId: z.string(), at: sourcedOrDisputed(LocalDateTimeSchema), where: z.string() }))
+      .default([]),
+    endedAt: sourcedOrDisputed(LocalDateTimeSchema).optional(),
   }),
 });
 export type Scenario = z.infer<typeof ScenarioSchema>;

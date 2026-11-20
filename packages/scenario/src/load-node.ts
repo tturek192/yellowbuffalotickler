@@ -4,7 +4,7 @@ import { parse, YAMLParseError } from 'yaml';
 import type { Scenario, Doctrine } from './schema';
 import { parseScenarioData, parseDoctrine, ScenarioError } from './load';
 import { mergeScenarioParts } from './include';
-import { FrameSchema } from './frame';
+import { FrameSchema, projectLonLatPlacements } from './frame';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
 
 export function loadScenario(
@@ -75,6 +75,8 @@ export function loadScenario(
       }
     }
   }
+  const frameParsed = FrameSchema.safeParse(mergedMap?.frame);
+  problems.push(...projectLonLatPlacements(merged, frameParsed.success ? frameParsed.data : undefined));
   const structural = problems.length > 0; // a broken include would only cascade into noise
   const raw = merged as { forces?: { doctrine?: unknown }[] } | null;
   const ids = [

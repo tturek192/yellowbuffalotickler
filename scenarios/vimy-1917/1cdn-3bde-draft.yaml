@@ -127,6 +127,28 @@ sectors:
     standOffM:
       value: 180
       estimate: ~200 yd protective barrage beyond objective; to verify against Corps Artillery Instruction No. 1
+leaders:
+  - id: currie
+    name:
+      value: Arthur Currie
+      source: vimy-brief-2026
+    rank:
+      value: Major-General
+      source: vimy-brief-2026
+  - id: tuxford
+    name:
+      value: George Tuxford
+      source: vimy-brief-2026
+    rank:
+      value: Brigadier-General
+      source: vimy-brief-2026
+  - id: griesbach
+    name:
+      value: William Griesbach
+      source: vimy-brief-2026
+    rank:
+      value: Brigadier-General
+      source: vimy-brief-2026
 forces:
   - side: allied
     doctrine: bef-1917
@@ -134,12 +156,12 @@ forces:
       - id: 1cdn-div
         name: 1st Canadian Division
         kind: division
-        leader: Maj-Gen Arthur Currie
+        leaderId: currie
         children:
           - id: 3bde
             name: 3rd Brigade
             kind: brigade
-            leader: Brig-Gen Tuxford
+            leaderId: tuxford
             children:
               - id: 16bn
                 name: 16th Battalion
@@ -252,7 +274,7 @@ forces:
           - id: 1bde
             name: 1st Brigade
             kind: brigade
-            leader: Brig-Gen Griesbach
+            leaderId: griesbach
             children:
               - id: 1bn
                 name: 1st Battalion
