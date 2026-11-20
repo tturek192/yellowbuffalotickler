@@ -10,8 +10,11 @@ export class ScenarioError extends Error {
   }
 }
 
-const issues = (e: z.ZodError) =>
-  e.issues.map((i) => `${i.path.length ? i.path.reduce<string>((a, p) => (typeof p === 'number' ? `${a}[${p}]` : a ? `${a}.${String(p)}` : String(p)), '') : '(root)'}: ${i.message}`);
+const issues = (e: z.ZodError, locate: (path: string) => string = (p) => p) =>
+  e.issues.map(
+    (i) =>
+      `${i.path.length ? locate(i.path.reduce<string>((a, p) => (typeof p === 'number' ? `${a}[${p}]` : a ? `${a}.${String(p)}` : String(p)), '')) : '(root)'}: ${i.message}`,
+  );
 
 function parseYaml(text: string): unknown {
   try {
@@ -25,11 +28,14 @@ export function parseScenario(yamlText: string, doctrineIds: string[]): Scenario
   return parseScenarioData(parseYaml(yamlText), doctrineIds);
 }
 
-/** Validate an already-parsed (and, for multi-file scenarios, merged) scenario document. */
-export function parseScenarioData(data: unknown, doctrineIds: string[]): Scenario {
+/**
+ * Validate an already-parsed (and, for multi-file scenarios, merged) scenario document. `locate` rewrites each
+ * problem's path to name its file and the index within it (see Provenance in include.ts).
+ */
+export function parseScenarioData(data: unknown, doctrineIds: string[], locate?: (path: string) => string): Scenario {
   const r = ScenarioSchema.safeParse(data);
-  if (!r.success) throw new ScenarioError(issues(r.error));
-  const problems = checkReferences(r.data, doctrineIds);
+  if (!r.success) throw new ScenarioError(issues(r.error, locate));
+  const problems = checkReferences(r.data, doctrineIds, locate);
   if (problems.length) throw new ScenarioError(problems);
   return r.data;
 }

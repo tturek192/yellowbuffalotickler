@@ -1,6 +1,7 @@
 import type { Scenario, Formation } from './schema';
 import { historicalTierRule } from './sources';
 import { parseLocalDateTime } from './local-time';
+import { locateProblem } from './include';
 
 /** Collect every Sourced-looking object ({ value, source }) in a tree, with its dotted path. */
 export function collectSourceRefs(node: unknown, path: string, out: { path: string; id: string }[] = []) {
@@ -23,30 +24,34 @@ export function collectSourceRefs(node: unknown, path: string, out: { path: stri
   return out;
 }
 
-export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
+/**
+ * Problems with ids and cross-references, each `path: message`. `locate` rewrites a merged-scenario path to
+ * name its file and the index within it (see Provenance); a duplicate id names where the first copy is.
+ */
+export function checkReferences(s: Scenario, doctrineIds: string[], locate: (path: string) => string = (p) => p): string[] {
   const problems: string[] = [];
+  /** A duplicate-id check over one id namespace, remembering where each id was first defined. */
+  const dupCheck = () => {
+    const first = new Map<string, string>();
+    return (path: string, id: string) => {
+      const at = first.get(id);
+      if (at !== undefined) problems.push(`${path}: duplicate id "${id}" (first defined at ${locate(at)})`);
+      else first.set(id, path);
+    };
+  };
   const lineIds = new Set(s.lines.map((l) => l.id));
   const sectorIds = new Set(s.sectors.map((x) => x.id));
   const sourceIds = new Set(Object.keys(s.sources));
 
-  const seen = new Set<string>();
-  const dup = (path: string, id: string) => {
-    if (seen.has(id)) problems.push(`${path}: duplicate id "${id}"`);
-    seen.add(id);
-  };
+  const dup = dupCheck();
   s.lines.forEach((l, i) => dup(`lines[${i}].id`, l.id));
   s.sectors.forEach((x, i) => dup(`sectors[${i}].id`, x.id));
-  const featureIds = new Set<string>();
-  s.features.forEach((f, i) => {
-    if (featureIds.has(f.id)) problems.push(`features[${i}].id: duplicate id "${f.id}"`);
-    featureIds.add(f.id);
-  });
+  const dupFeature = dupCheck();
+  s.features.forEach((f, i) => dupFeature(`features[${i}].id`, f.id));
 
-  const leaderIds = new Set<string>();
-  s.leaders.forEach((l, i) => {
-    if (leaderIds.has(l.id)) problems.push(`leaders[${i}].id: duplicate id "${l.id}"`);
-    leaderIds.add(l.id);
-  });
+  const leaderIds = new Set(s.leaders.map((l) => l.id));
+  const dupLeader = dupCheck();
+  s.leaders.forEach((l, i) => dupLeader(`leaders[${i}].id`, l.id));
   const featureKind = new Map(s.features.map((f) => [f.id, f.kind]));
   const formationIds = new Set<string>();
   const collectIds = (fs: Formation[]) =>
@@ -102,10 +107,9 @@ export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
     checkFormation(`reserves[${i}].formationId`, x.formationId);
     if (!Array.isArray(x.entryPoint)) problems.push(`reserves[${i}].entryPoint: lonLat needs the node loader (and a frame) to project it`);
   });
-  const artIds = new Set<string>();
+  const dupArtillery = dupCheck();
   s.artillery.forEach((a, i) => {
-    if (artIds.has(a.id)) problems.push(`artillery[${i}].id: duplicate id "${a.id}"`);
-    artIds.add(a.id);
+    dupArtillery(`artillery[${i}].id`, a.id);
     checkFormation(`artillery[${i}].formationId`, a.formationId);
   });
   s.weather.forEach((w, i) => {
@@ -128,5 +132,5 @@ export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
     if (!sourceIds.has(r.id)) problems.push(`${r.path}: unknown source "${r.id}"`);
   }
   problems.push(...historicalTierRule(s));
-  return problems;
+  return problems.map((p) => locateProblem(p, locate));
 }

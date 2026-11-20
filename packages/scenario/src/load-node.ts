@@ -3,7 +3,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { parse, YAMLParseError } from 'yaml';
 import type { Scenario, Doctrine } from './schema';
 import { parseScenarioData, parseDoctrine, ScenarioError } from './load';
-import { mergeScenarioParts } from './include';
+import { mergeScenarioParts, locateProblem } from './include';
 import { FrameSchema, projectLonLatPlacements, type Frame } from './frame';
 import { terrainGridProblem, type TerrainGrid } from './terrain';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
@@ -80,7 +80,8 @@ export function loadScenario(
       });
     }
   }
-  const { merged, problems: mergeProblems } = mergeScenarioParts(parts);
+  const { merged, problems: mergeProblems, provenance } = mergeScenarioParts(parts);
+  const locate = (p: string) => provenance.locate(p);
   problems.push(...mergeProblems);
   const mergedMap = merged && typeof merged === 'object' && !Array.isArray(merged) ? (merged as Record<string, unknown>) : null;
   const geo = mergedMap?.geo;
@@ -102,8 +103,12 @@ export function loadScenario(
           }
           const r = geoToScenarioParts(fc as GeoJsonFeatureCollection, fr.data, f);
           problems.push(...r.problems);
-          mergedMap!.lines = [...(Array.isArray(mergedMap!.lines) ? mergedMap!.lines : []), ...r.lines];
-          mergedMap!.features = [...(Array.isArray(mergedMap!.features) ? mergedMap!.features : []), ...r.features];
+          for (const key of ['lines', 'features'] as const) {
+            const before = Array.isArray(mergedMap![key]) ? (mergedMap![key] as unknown[]) : [];
+            const added: Array<{ id: string }> = r[key];
+            provenance.addSegment(key, f, before.length, added.length, added.map((x) => x.id));
+            mergedMap![key] = [...before, ...added];
+          }
         }
       }
     }
@@ -113,7 +118,7 @@ export function loadScenario(
     const grid = readTerrain(path, mergedMap.terrain, frameParsed.success ? frameParsed.data : undefined, problems);
     if (grid) mergedMap.terrainGrid = grid;
   }
-  problems.push(...projectLonLatPlacements(merged, frameParsed.success ? frameParsed.data : undefined));
+  problems.push(...projectLonLatPlacements(merged, frameParsed.success ? frameParsed.data : undefined).map((p) => locateProblem(p, locate)));
   const structural = problems.length > 0; // a broken include would only cascade into noise
   const raw = merged as { forces?: { doctrine?: unknown }[] } | null;
   const ids = [
@@ -142,7 +147,7 @@ export function loadScenario(
   try {
     if (structural) throw new ScenarioError([]);
     // attempted ids count as known: their own failures are already reported above
-    scenario = parseScenarioData(merged, ids);
+    scenario = parseScenarioData(merged, ids, locate);
   } catch (e) {
     if (!(e instanceof ScenarioError)) throw e;
     problems.push(...e.problems);

@@ -117,3 +117,92 @@ describe('loadScenario includes', () => {
     expect(msg).toMatch(/liftM\.source: unknown source "nope"/);
   });
 });
+
+describe('load errors name the file and the index within it (I2)', () => {
+  const s = minimalScenario();
+  const { forces, leaders, ...rest } = s;
+  /** Every problem from loading, or [] if it loads. */
+  const problemsOf = (path: string, doctrineDir: string): string[] => {
+    try {
+      loadScenario(path, doctrineDir);
+      return [];
+    } catch (e) {
+      if (!(e instanceof ScenarioError)) throw e;
+      return e.problems;
+    }
+  };
+  const german = (): any => ({
+    side: 'central',
+    doctrine: 'bef-1917',
+    formations: [{ id: 'g1', name: 'Gruppe', kind: 'battalion', companies: [{ ...structuredClone(forces[0]!.formations[0]!.companies![0]!), id: 'gc1', objectiveLineId: 'blak' }] }],
+  });
+
+  it('a reference error in the second file of a merged array names that file and its own index', () => {
+    const { path, doctrineDir } = tmpScenario(
+      ['oob-a.yaml', 'oob-b.yaml'],
+      { 'oob-a.yaml': { forces }, 'oob-b.yaml': { forces: [german()] } },
+      { ...rest, leaders },
+    );
+    expect(problemsOf(path, doctrineDir)).toEqual([
+      'oob-b.yaml: forces[0].formations[0].companies[0].objectiveLineId: unknown line "blak"',
+    ]);
+  });
+  it('a schema error in an include names the file and its own index', () => {
+    const g = german();
+    g.formations[0].companies[0].objectiveLineId = 'black';
+    g.formations[0].companies[0].strength = 'lots';
+    const { path, doctrineDir } = tmpScenario(['oob-a.yaml', 'oob-b.yaml'], { 'oob-a.yaml': { forces }, 'oob-b.yaml': { forces: [g] } }, rest);
+    const p = problemsOf(path, doctrineDir);
+    expect(p.length).toBeGreaterThan(0);
+    expect(p.every((x) => x.startsWith('oob-b.yaml: forces[0].formations[0].companies[0].strength'))).toBe(true);
+  });
+  it('a duplicate id across two files names both files, each with its own index', () => {
+    const byng = { id: 'byng', name: { value: 'Julian Byng', estimate: 't' }, rank: { value: 'Lieutenant-General', estimate: 't' } };
+    const currie = { ...byng, id: 'currie' };
+    const { path, doctrineDir } = tmpScenario(
+      ['leaders-a.yaml', 'leaders-b.yaml'],
+      { 'leaders-a.yaml': { leaders: [byng] }, 'leaders-b.yaml': { leaders: [currie, byng] } },
+      { ...rest, forces },
+    );
+    expect(problemsOf(path, doctrineDir)).toEqual([
+      'leaders-b.yaml: leaders[1].id: duplicate id "byng" (first defined at leaders-a.yaml: leaders[0].id)',
+    ]);
+  });
+  it('a duplicate company id across two OOB files names both files', () => {
+    const g = german();
+    g.formations[0].companies[0].objectiveLineId = 'black';
+    g.formations[0].companies[0].id = 'c2';
+    const { path, doctrineDir } = tmpScenario(['oob-a.yaml', 'oob-b.yaml'], { 'oob-a.yaml': { forces }, 'oob-b.yaml': { forces: [g] } }, rest);
+    expect(problemsOf(path, doctrineDir)).toEqual([
+      'oob-b.yaml: forces[0].formations[0].companies[0].id: duplicate id "c2" (first defined at oob-a.yaml: forces[0].formations[0].companies[1].id)',
+    ]);
+  });
+  it('a problem in a map entry or scalar names the file that defined it', () => {
+    const { path, doctrineDir } = tmpScenario(['more.yaml'], { 'more.yaml': { zeroHour: { value: '1916-07-01T07:30', source: 'nope' } } }, (({ zeroHour, ...r }) => r)(s));
+    expect(problemsOf(path, doctrineDir)).toEqual(['more.yaml: zeroHour.source: unknown source "nope"']);
+  });
+  it('a single-file scenario names its own file', () => {
+    const bad: any = structuredClone(s);
+    bad.lines[1].id = 'gfront';
+    const { path, doctrineDir } = tmpScenario([], {}, bad);
+    expect(problemsOf(path, doctrineDir)).toContainEqual(
+      'scenario.yaml: lines[1].id: duplicate id "gfront" (first defined at scenario.yaml: lines[0].id)',
+    );
+  });
+});
+
+describe('Provenance.locate', () => {
+  it('maps merged indices back to each file, names labelled elements by label, and leaves unknown paths alone', () => {
+    const { provenance } = mergeScenarioParts([
+      { file: 'a.yaml', data: { lines: [{ id: 'x' }], historical: { casualties: [1, 2] } } },
+      { file: 'b.yaml', data: { lines: [{ id: 'y' }], historical: { casualties: [3] } } },
+    ]);
+    provenance.addSegment('lines', 'geo/l.geojson', 2, 1, ['brown']);
+    expect(provenance.locate('lines[1].points[0]')).toBe('b.yaml: lines[0].points[0]');
+    expect(provenance.locate('historical.casualties[2].total')).toBe('b.yaml: historical.casualties[0].total');
+    expect(provenance.locate('historical.casualties[1]')).toBe('a.yaml: historical.casualties[1]');
+    expect(provenance.locate('lines[2].id')).toBe('geo/l.geojson#brown.id');
+    expect(provenance.locate('(root)')).toBe('(root)');
+  });
+});
+

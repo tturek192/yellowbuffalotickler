@@ -36,44 +36,66 @@ export function unprojectXY(frame: Frame, [x, y]: Point): [number, number] {
 }
 
 /**
+ * How far (m) a projected lon/lat point may lie outside the extent and still load: lon/lat written to six decimals
+ * rounds to about 0.1 m, and the Vimy German reserves enter exactly on the extent's edge (up to 4 cm beyond it).
+ */
+export const EXTENT_TOLERANCE_M = 1;
+
+const fmtM = (n: number) => String(Math.round(n));
+
+/**
  * Replace `{ lonLat }` company starts and reserve entry points in a raw scenario document with
- * projected local points. Returns problems (naming the item) for any that cannot be projected.
+ * projected local points. Returns `path: message` problems (naming the item) for any that cannot be projected
+ * or that land outside the frame's extent, the usual sign of lon/lat swapped.
  */
 export function projectLonLatPlacements(data: unknown, frame: Frame | undefined): string[] {
   const problems: string[] = [];
   const isLonLat = (p: unknown): p is { lonLat: [number, number] } =>
     !!p && typeof p === 'object' && !Array.isArray(p) && Array.isArray((p as { lonLat?: unknown }).lonLat);
-  const place = (owner: Record<string, unknown>, key: string, label: string) => {
+  const place = (owner: Record<string, unknown>, key: string, path: string, what: string) => {
     const p = owner[key];
     if (!isLonLat(p)) return;
-    if (!frame) return void problems.push(`${label}: lonLat needs a frame in the scenario file`);
+    if (!frame) return void problems.push(`${path}: ${what}: lonLat needs a frame in the scenario file`);
     const ll = p.lonLat;
     if (ll.length !== 2 || typeof ll[0] !== 'number' || typeof ll[1] !== 'number') {
-      return void problems.push(`${label}: lonLat must be [lon, lat]`);
+      return void problems.push(`${path}: ${what}: lonLat must be [lon, lat]`);
     }
-    owner[key] = projectLonLat(frame, ll);
+    const [x, y] = projectLonLat(frame, ll);
+    const e = frame.extent;
+    const t = EXTENT_TOLERANCE_M;
+    if (!(x >= e.minX - t && x <= e.maxX + t && y >= e.minY - t && y <= e.maxY + t)) {
+      return void problems.push(
+        `${path}: ${what} projects to (${fmtM(x)}, ${fmtM(y)}), outside the frame extent ` +
+          `x ${fmtM(e.minX)}…${fmtM(e.maxX)}, y ${fmtM(e.minY)}…${fmtM(e.maxY)} — are lon/lat swapped?`,
+      );
+    }
+    owner[key] = [x, y];
   };
-  const walk = (fs: unknown) => {
+  const walk = (fs: unknown, base: string) => {
     if (!Array.isArray(fs)) return;
-    for (const f of fs) {
-      if (!f || typeof f !== 'object') continue;
+    fs.forEach((f, i) => {
+      if (!f || typeof f !== 'object') return;
       const fo = f as Record<string, unknown>;
       if (Array.isArray(fo.companies)) {
-        for (const c of fo.companies) {
+        fo.companies.forEach((c, j) => {
           if (c && typeof c === 'object') {
             const co = c as Record<string, unknown>;
-            place(co, 'start', `company ${String(co.id)}.start`);
+            place(co, 'start', `${base}[${i}].companies[${j}].start`, `company ${String(co.id)}`);
           }
-        }
+        });
       }
-      walk(fo.children);
-    }
+      walk(fo.children, `${base}[${i}].children`);
+    });
   };
   const d = data as { forces?: unknown; reserves?: unknown } | null;
-  if (Array.isArray(d?.forces)) for (const force of d.forces) walk((force as { formations?: unknown } | null)?.formations);
+  if (Array.isArray(d?.forces)) {
+    d.forces.forEach((force, i) => walk((force as { formations?: unknown } | null)?.formations, `forces[${i}].formations`));
+  }
   if (Array.isArray(d?.reserves)) {
     d.reserves.forEach((r, i) => {
-      if (r && typeof r === 'object') place(r as Record<string, unknown>, 'entryPoint', `reserves[${i}] (${String((r as { formationId?: unknown }).formationId)}).entryPoint`);
+      if (r && typeof r === 'object') {
+        place(r as Record<string, unknown>, 'entryPoint', `reserves[${i}].entryPoint`, `reserve ${String((r as { formationId?: unknown }).formationId)}`);
+      }
     });
   }
   return problems;

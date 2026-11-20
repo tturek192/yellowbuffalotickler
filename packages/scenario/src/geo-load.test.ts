@@ -45,6 +45,6 @@ describe('checkReferences features', () => {
     const s = minimalScenario();
     const f = { id: 'f1', kind: 'crater' as const, geometry: { type: 'Point' as const, coordinates: [0, 0] as [number, number] }, cite: { value: 'm', estimate: 'e' } };
     s.features = [f, f];
-    expect(checkReferences(s, ['bef-1917'])).toContain('features[1].id: duplicate id "f1"');
+    expect(checkReferences(s, ['bef-1917'])).toContain('features[1].id: duplicate id "f1" (first defined at features[0].id)');
   });
 });
