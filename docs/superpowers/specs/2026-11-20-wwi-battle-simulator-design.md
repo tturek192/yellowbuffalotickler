@@ -332,7 +332,29 @@ but Germans ×2"), so the original data stays untouched.
 - Fictional maps.
 - Open-source release.
 
-### 11. Decisions settled after the builder review (my calls; the owner can override)
+### 11. Who gathers the data (decided by the owner)
+
+- **The builder researches and compiles Vimy Ridge from published sources.**
+  The owner then reviews it as the historian.
+- Sources to work from include:
+  - the Canadian official history (Nicholson, *Canadian Expeditionary Force
+    1914–1919*);
+  - battalion and brigade war diaries (Library and Archives Canada);
+  - the Canadian Corps artillery and barrage plans;
+  - digitized trench maps (for example the McMaster University WWI trench
+    map collection);
+  - German regimental histories and the Reichsarchiv account, for Gruppe
+    Vimy;
+  - well-regarded secondary works on the battle.
+- Every value cites its source. A value that has to be inferred is marked
+  as an estimate, with its reasoning.
+- Leader ratings are drafted by the builder, with a justification for
+  each. The owner owns them and has the final say.
+- Research comes first in the plan, and the data goes to the owner for
+  review before calibration starts.
+- The same process applies to Messines.
+
+### 12. Decisions settled after the builder review (my calls; the owner can override)
 
 - **Commanders make their own decisions after the written plan runs out.**
   - The scenario holds only what was *planned in advance*: objectives,
