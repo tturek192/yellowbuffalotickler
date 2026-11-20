@@ -1,0 +1,10 @@
+{
+  "name": "@wwi/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@wwi/engine": "*",
+    "@wwi/scenario": "*"
+  }
+}

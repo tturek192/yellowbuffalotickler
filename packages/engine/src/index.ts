@@ -11,3 +11,5 @@ export { ENGINE_VERSION } from './record';
 export type { RunRecord } from './record';
 export { runScenario } from './run';
 export type { RunOptions } from './run';
+export { quantiles, runBatch } from './batch';
+export type { BatchLine, BatchSummary } from './batch';
