@@ -24,10 +24,17 @@ describe('Vimy geometry (Task 7)', () => {
     // which is higher than Hill 145 (geometry.md, "Terrain grid"). The ridge is the part of the frame east of
     // x = -2000 m, the extent before it was widened.
     let ridgeMax = -Infinity;
+    let argmax: [number, number] = [NaN, NaN];
     for (let k = 0; k < t.elevM.length; k++) {
-      if (t.originX + (k % t.cols) * t.cellM >= -2000) ridgeMax = Math.max(ridgeMax, t.elevM[k]!);
+      const x = t.originX + (k % t.cols) * t.cellM;
+      if (x >= -2000 && t.elevM[k]! > ridgeMax) {
+        ridgeMax = t.elevM[k]!;
+        argmax = [x, t.originY + Math.floor(k / t.cols) * t.cellM];
+      }
     }
-    expect(t.at(...(hill.geometry.coordinates as [number, number]))).toBeGreaterThan(ridgeMax - 5);
+    const [hx, hy] = hill.geometry.coordinates as [number, number];
+    expect(Math.hypot(hx - argmax[0], hy - argmax[1])).toBeLessThan(150);
+    expect(t.at(hx, hy)).toBeGreaterThan(ridgeMax - 5);
   });
 
   it('every feature is cited, and the georeference fit is recorded under 60 m rms', () => {
