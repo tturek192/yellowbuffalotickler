@@ -9,6 +9,18 @@ sources:
   artillery-notes-4:
     title: Artillery Notes No. 4, as quoted in the brief
     tier: primary
+  nicholson-1962:
+    title: "Canadian Expeditionary Force 1914-1919: Official History of the Canadian Army in the First World War"
+    author: G. W. L. Nicholson
+    year: 1962
+    url: https://publications.gc.ca/collections/collection_2009/forces/DA3-4462E.pdf
+    tier: official
+  boh-1917-1:
+    title: "Military Operations, France and Belgium, 1917: The German Retreat to the Hindenburg Line and the Battles of Arras"
+    author: Cyril Falls
+    year: 1940
+    url: https://archive.org/details/in.ernet.dli.2015.210683
+    tier: official
 zeroHour:
   value: 1917-04-09T05:30
   source: vimy-brief-2026
@@ -332,36 +344,54 @@ forces:
                     startAfterMin: *a3
                     role: assault
 historical:
+  # Task 10: the 1st Canadian Division's line times from the official histories (docs/research/vimy/historical.md,
+  # "The Plan 1 draft's estimates"); the schematic lines stand for the division's Black, Red, Blue and Brown Lines.
   objectives:
     - lineId: black
       sectorId: 1cdn-3bde
       earliest:
-        value: 1917-04-09T06:15
-        estimate: Owner's brief gives 06:15; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T06:05
+        source: boh-1917-1
+        page: "322"
+        note: "'by 6.5 a.m. ... the 1st Canadian Division was in possession of the Zwölfer-Graben, its first objective'"
       latest:
-        value: 1917-04-09T06:25
-        estimate: Owner's brief gives 06:25; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T06:15
+        source: nicholson-1962
+        page: "254"
+        note: "'Both the 1st and 2nd Divisions were reported at the Black Line by 6:15'"
     - lineId: red
       sectorId: 1cdn-3bde
       earliest:
-        value: 1917-04-09T07:00
-        estimate: Owner's brief gives 07:00; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T07:05
+        source: boh-1917-1
+        page: "323"
+        note: "'Shortly after 7 a.m. the division had taken its second objective', less 500 yards on the right"
       latest:
-        value: 1917-04-09T07:30
-        estimate: Owner's brief gives 07:30; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T08:00
+        source: nicholson-1962
+        page: "255"
+        note: "'By eight o'clock the 1st and 2nd Divisions were reported on the Red Line'"
     - lineId: blue
       sectorId: 1cdn-3bde
       earliest:
-        value: 1917-04-09T11:00
-        estimate: Owner's brief gives 11:00; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T10:50
+        source: boh-1917-1
+        page: "304"
+        note: "the timetable: the third objective 'to be concluded at Zero plus 5 hours, 20 minutes'"
       latest:
-        value: 1917-04-09T11:00
-        estimate: Owner's brief gives 11:00; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T11:15
+        source: boh-1917-1
+        page: "334"
+        note: "'By 11.15 a.m. the brigade [the 1st] had reached the Roclincourt—Vimy track'"
     - lineId: brown
       sectorId: 1cdn-3bde
       earliest:
-        value: 1917-04-09T14:00
-        estimate: Owner's brief gives 14:00; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T13:18
+        source: nicholson-1962
+        page: "248"
+        note: "the timetable: the eastern escarpment 'in Canadian hands by 1:18 p.m.'"
       latest:
-        value: 1917-04-09T14:00
-        estimate: Owner's brief gives 14:00; to be replaced by a primary, official or scholarly citation in Task 10
+        value: 1917-04-09T14:40
+        source: nicholson-1962
+        page: "257"
+        note: "'at 2:40, as soon as the capture of the Brown Line seemed assured'"

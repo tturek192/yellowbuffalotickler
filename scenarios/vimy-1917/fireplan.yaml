@@ -1,7 +1,13 @@
-# Artillery and the fire plan. Task 7 adds one barrage sector per attacking division; Task 10 replaces the leg values
-# with researched ones, and adds the artillery. Sector y-ranges are the division boundaries at the German front line
-# (geometry.md). Every leg value below is a placeholder copied from the Plan 1 draft, entered as an estimate.
-artillery: []
+# Artillery and the fire plan for 9 April 1917: the barrage sector of each attacking division, the artillery park by
+# weapon and role, and the counter-battery state at Zero. Research notes: docs/research/vimy/fireplan.md.
+#
+# Sector y-ranges are the division boundaries at the German front line (Task 7, geometry.md).
+# Leg values (Task 10). The engine runs a leg in ceil(depth / liftM) lifts of liftMin minutes each, the depth measured
+# at the sector's middle on the digitized lines. Lift distance and pauses are the corps timetable's (Nicholson
+# pp. 247-248; BOH pp. 304, 333). liftMin is each leg's timetable time divided by its lifts, so the barrage reaches
+# every line at the timetable's minute: Black Zero+35, Red Zero+95, Blue Zero+320, Brown Zero+468 (13:18). It is an
+# average, not the guns' lift rate (3 minutes a lift at first, Nicholson p. 253), because a leg has one pause only
+# and the timetable also stood on the intermediate trenches (fireplan.md, "Leg values").
 sectors:
   - id: barrage-1cdn
     name: 1st Canadian Division barrage sector
@@ -11,22 +17,22 @@ sectors:
     startLineId: ger-front
     legs:
       - toLineId: black-1cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "'lifted 100 yards every three minutes'; p. 249: 'average lifts of 100 yards'; BOH p. 319: 'hundred-yard lifts'" }
+        liftMin: { value: 5, estimate: "the 35 minutes allowed from Zero to the Black Line (Nicholson p. 247; BOH p. 304) over this leg's 7 lifts (567 m, ger-front to black-1cdn at the sector's middle); the guns lifted every 3 minutes (p. 253), the average takes in the opening 3 minutes on the front trench and the standing time on the second and third trenches" }
+        pauseMin: { value: 40, source: nicholson-1962, page: "247", note: "'a 40-minute pause' on the Black Line; BOH pp. 304, 322: 'a pause of forty minutes'" }
       - toLineId: red-1cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 150, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "100-yard lifts" }
+        liftMin: { value: 3.333, estimate: "the 20 minutes allowed from the Black to the Red Line (Nicholson p. 247; BOH p. 304: the Red Line at Zero+95) over this leg's 6 lifts (539 m at the sector's middle)" }
+        pauseMin: { value: 150, source: nicholson-1962, page: "248", note: "'a pause of two and a half hours on the Red Line'; BOH p. 333: the barrage resumed 'on the stroke of 9.35 a.m.' (Zero+245)" }
       - toLineId: blue-1cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
-        pauseMin: { value: 96, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: boh-1917-1, page: "334", note: "'lifting 100 yards every five minutes' on the 1st and 2nd Divisions' front" }
+        liftMin: { value: 5.769, estimate: "from the 9:35 resumption (BOH p. 333) to the Blue Line at Zero+5 h 20 min (BOH p. 304), 75 minutes, over this leg's 13 lifts (1,158 m); BOH p. 334 gives 5 minutes a lift from the Zwischen-Stellung on" }
+        pauseMin: { value: 96, source: nicholson-1962, page: "248", note: "'a further halt of 96 minutes' on the Blue Line; Nicholson p. 257 and BOH p. 336 say ninety minutes (fireplan.md, Conflicts)" }
       - toLineId: brown-1cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
-        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml) (final objective)" }
-    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "100-yard lifts" }
+        liftMin: { value: 3.714, estimate: "from the end of the 96-minute halt (Zero+416) to the Brown Line at 1:18 p.m., Zero+468 (Nicholson p. 248; BOH p. 304: Zero+7 h 48 min), 52 minutes, over this leg's 14 lifts (1,230 m); BOH p. 336 allows the right battalion half an hour for 800 yards, 3.75 minutes a lift" }
+        pauseMin: { value: 0, estimate: "the division's final objective; how long the protective barrage stood beyond it is not in the sources read (fireplan.md, Open questions); 0 ends the barrage on arrival, as in the Plan 1 draft" }
+    standOffM: { value: 180, estimate: "about 200 yards; the protective barrage's distance beyond an objective is not in the sources read (fireplan.md, Open questions). BOH p. 325: men who missed the obliterated third trench walked 'into the halted barrage', so it stood close beyond the line; the Plan 1 draft's figure kept" }
   - id: barrage-2cdn
     name: 2nd Canadian Division barrage sector
     # Division boundary y values: Map 7 battalion arrows, the boundary taken midway between the neighbouring divisions’ outermost arrows at the German front (docs/research/vimy/geometry.md, "Division boundaries").
@@ -35,22 +41,22 @@ sectors:
     startLineId: ger-front
     legs:
       - toLineId: black-2cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "'lifted 100 yards every three minutes'; BOH p. 319" }
+        liftMin: { value: 7, estimate: "the 35 minutes allowed from Zero to the Black Line (Nicholson p. 247; BOH p. 304) over this leg's 5 lifts (404 m at the sector's middle); the guns lifted every 3 minutes (p. 253), the average takes in the opening 3 minutes and the standing time on the intermediate trenches" }
+        pauseMin: { value: 40, source: nicholson-1962, page: "247", note: "'a 40-minute pause' on the Black Line; BOH p. 304" }
       - toLineId: red-2cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 150, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "100-yard lifts" }
+        liftMin: { value: 2.857, estimate: "the 20 minutes allowed from the Black to the Red Line (Nicholson p. 247; BOH p. 304) over this leg's 7 lifts (555 m)" }
+        pauseMin: { value: 150, source: nicholson-1962, page: "248", note: "'a pause of two and a half hours on the Red Line'; BOH p. 333: resumed at 9.35 a.m." }
       - toLineId: blue-2cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
-        pauseMin: { value: 96, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: boh-1917-1, page: "334", note: "'lifting 100 yards every five minutes'" }
+        liftMin: { value: 5, estimate: "from the 9:35 resumption (BOH p. 333) to the Blue Line at Zero+5 h 20 min (BOH p. 304), 75 minutes, over this leg's 15 lifts (1,305 m); it matches BOH p. 334's 5 minutes a lift, which began after a 3-minute pause on the Zwischen-Stellung at 9:55" }
+        pauseMin: { value: 96, source: nicholson-1962, page: "248", note: "'a further halt of 96 minutes'; Nicholson p. 257 and BOH p. 336 say ninety (fireplan.md, Conflicts)" }
       - toLineId: brown-2cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
-        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml) (final objective)" }
-    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "100-yard lifts" }
+        liftMin: { value: 26, estimate: "52 minutes to the Brown Line at Zero+468 (Nicholson p. 248), as in the 1st Division's sector, over this leg's 2 lifts (179 m): the final barrage lifted 'in successive lifts from right to left' (Nicholson p. 257; BOH p. 336), so the left, where the distance 'tapered off to nothing', waited for the right" }
+        pauseMin: { value: 0, estimate: "the division's final objective; the protective barrage's duration is not in the sources read (fireplan.md, Open questions); 0 as in the Plan 1 draft" }
+    standOffM: { value: 180, estimate: "about 200 yards; not in the sources read (fireplan.md, Open questions); BOH p. 325: men walked 'into the halted barrage' just beyond an obliterated trench; the Plan 1 draft's figure kept" }
   - id: barrage-3cdn
     name: 3rd Canadian Division barrage sector
     # Division boundary y values: Map 7 battalion arrows, the boundary taken midway between the neighbouring divisions’ outermost arrows at the German front (docs/research/vimy/geometry.md, "Division boundaries").
@@ -59,27 +65,203 @@ sectors:
     startLineId: ger-front
     legs:
       - toLineId: black-3cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "'lifted 100 yards every three minutes'; BOH p. 319" }
+        liftMin: { value: 7, estimate: "the 35 minutes allowed from Zero to the Black Line (Nicholson p. 247; BOH p. 304) over this leg's 5 lifts (437 m at the sector's middle); the guns lifted every 3 minutes (p. 253), the average takes in the opening 3 minutes and the standing time on the intermediate trenches" }
+        pauseMin: { value: 40, source: nicholson-1962, page: "247", note: "'a 40-minute pause' on the Black Line; BOH pp. 304, 325" }
       - toLineId: red-3cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml); 0 because the Red Line is this division’s final objective, as the draft’s final leg" }
-    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "100-yard lifts" }
+        liftMin: { value: 4, estimate: "the 20 minutes allowed from the Black to the Red Line, the 3rd Division's final objective at Zero+95 (Nicholson p. 247; BOH p. 304), over this leg's 5 lifts (437 m)" }
+        pauseMin: { value: 0, estimate: "the Red Line is the division's final objective (Nicholson p. 247); the protective barrage's duration is not in the sources read (fireplan.md, Open questions); 0 as in the Plan 1 draft" }
+    standOffM: { value: 180, estimate: "about 200 yards; not in the sources read (fireplan.md, Open questions); BOH p. 325: men of this division pushed on past the obliterated third trench 'into the halted barrage'; the Plan 1 draft's figure kept" }
   - id: barrage-4cdn
     name: 4th Canadian Division barrage sector
     # Division boundary y values: Map 7 battalion arrows, the boundary taken midway between the neighbouring divisions’ outermost arrows at the German front (docs/research/vimy/geometry.md, "Division boundaries").
+    # The 9 April barrage only. The 85th and 46th Battalions' evening attack (Zero+750, oob-canadian.yaml) went in without
+    # artillery (BOH p. 341), and the 10 April attack on the Hangstellung had the 9 April barrage repeated at 3 p.m.
+    # (BOH p. 342); neither fits a sector's one timetable, so both are notes for Plan 3 (fireplan.md).
     yMin: -570
     yMax: 1320
     startLineId: ger-front
     legs:
       - toLineId: black-4cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "'lifted 100 yards every three minutes'; BOH p. 319" }
+        liftMin: { value: 5.833, estimate: "the 35 minutes allowed from Zero to the Black Line, 'on the summit of Hill 145' (Nicholson p. 247; BOH p. 304), over this leg's 6 lifts (517 m at the sector's middle); the guns lifted every 3 minutes (p. 253); BOH p. 329: the 38th Battalion advanced again 'after a pause of seventeen minutes' on the first trench" }
+        pauseMin: { value: 40, source: nicholson-1962, page: "247", note: "'a 40-minute pause' on the Black Line; BOH p. 304" }
       - toLineId: red-4cdn
-        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
-        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
-        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml); 0 because the Red Line is this division’s final objective, as the draft’s final leg" }
-    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }
+        liftM: { value: 91.44, source: nicholson-1962, page: "253", note: "100-yard lifts" }
+        liftMin: { value: 5, estimate: "the 20 minutes allowed from the Black Line to the Hangstellung, the 4th Division's final objective at Zero+95 (BOH p. 304; Nicholson p. 247), over this leg's 4 lifts (343 m); BOH p. 329: 'At 7 a.m. ... the barrage had moved beyond the German third trench'" }
+        pauseMin: { value: 0, estimate: "the Red Line (the Hangstellung) is the division's final objective (BOH p. 304); the protective barrage's duration is not in the sources read (fireplan.md, Open questions); 0 as in the Plan 1 draft" }
+    standOffM: { value: 180, estimate: "about 200 yards; not in the sources read (fireplan.md, Open questions); the Plan 1 draft's figure kept" }
+
+# The artillery park supporting the Canadian Corps on 9 April, by weapon and role. The allied counts sum to the park
+# total in fireplan.md ("Park total"). Where a count is sourced but its role is inferred, the count's note says so.
+artillery:
+  # Canadian Corps field artillery: 30 brigades with 480 18-pdrs and 138 4.5-inch howitzers (BOH p. 307; Nicholson p. 248).
+  - id: cdn-18pdr-creeping
+    side: allied
+    formationId: cdn-corps
+    weapon: 18-pdr
+    role: creeping
+    count:
+      value: 320
+      range: [280, 320]
+      sources:
+        - { source: boh-1917-1, page: "319 n.1", note: "'fired by two-thirds of the 18-pdr. batteries, about one gun to 25 yards of frontage': two-thirds of 480 is 320" }
+        - { source: nicholson-1962, page: "253", note: "'one gun to every 25 yards of front' over the Corps' 'front of 7000 yards' (p. 245) is 280" }
+      note: "BOH's two-thirds of the 480 18-pdrs is the working value; one gun to 25 yards gives 280 on Nicholson's 7,000 yards (fireplan.md, Conflicts)"
+  - id: cdn-18pdr-standing
+    side: allied
+    formationId: cdn-corps
+    weapon: 18-pdr
+    role: standing
+    count: { value: 112, estimate: "the remaining third of the 480 18-pdrs 'less the silent forward batteries' formed standing barrages beyond the creeper (BOH p. 319 n.1): 480 - 320 creeping - 48 forward" }
+  - id: cdn-18pdr-forward
+    side: allied
+    formationId: cdn-corps
+    weapon: 18-pdr
+    role: creeping
+    count: { value: 48, estimate: "'nine 18-pdr. ... batteries' dug in about Neuville St. Vaast, silent until they took over the creeping barrage for the final stage (BOH p. 307); guns per battery not given: 480 18-pdrs in 30 brigades of (taken) three 18-pdr batteries each is 5.3 a battery, so 9 x 5.3 = 48" }
+  - id: cdn-45in-how
+    side: allied
+    formationId: cdn-corps
+    weapon: 4.5-in howitzer
+    role: standing
+    count: { value: 138, source: boh-1917-1, page: "307", note: "'480 18-pdrs. and 138 4.5-inch howitzers'; Nicholson p. 248. They fired on strong points, lifting when the creeper came within 150 yards (BOH p. 319 n.1); two batteries were silent forward (p. 307)" }
+  - id: cdn-13pdr
+    side: allied
+    formationId: cdn-corps
+    weapon: 13-pdr
+    role: standing
+    count: { value: 20, source: rca-ww1-history, page: "the paragraphs on Vimy Ridge (no headings)", note: "'twenty 13 Pdrs (A & B Batteries RCHA with C and K Batteries RHA)'; not in Nicholson's or BOH's field totals; taken to be within Nicholson's 983 guns and mortars (fireplan.md); role not given, standing taken" }
+  # Canadian Corps heavy artillery: 245 pieces (BOH p. 306 and n.1; Nicholson p. 248). Eight siege groups and three
+  # counter-battery groups (rca-ww1-history); the pieces are not split by group in the sources read.
+  - id: cdn-60pdr
+    side: allied
+    formationId: cdn-corps
+    weapon: 60-pdr
+    role: counter-battery
+    count: { value: 54, source: boh-1917-1, page: "306 n.1", note: "'54 60-pdrs.'; rca-ww1-history: 'nine 60 Pdr batteries'. Role inferred: the Corps had three counter-battery groups (rca-ww1-history) and the long guns are taken to be theirs (fireplan.md, Open questions)" }
+  - id: cdn-6in-gun
+    side: allied
+    formationId: cdn-corps
+    weapon: 6-in gun
+    role: counter-battery
+    count: { value: 8, source: boh-1917-1, page: "306 n.1", note: "'8 6-inch guns'; rca-ww1-history: 'two batteries of 6-inch Mark VII guns'. Role inferred, as for the 60-pdrs" }
+  - id: cdn-6in-how
+    side: allied
+    formationId: cdn-corps
+    weapon: 6-in howitzer
+    role: heavy
+    count: { value: 104, source: boh-1917-1, page: "306 n.1", note: "'104 6-inch howitzers'" }
+  - id: cdn-8in-how
+    side: allied
+    formationId: cdn-corps
+    weapon: 8-in howitzer
+    role: heavy
+    count: { value: 36, source: boh-1917-1, page: "306 n.1", note: "'36 8-inch howitzers'" }
+  - id: cdn-92in-how
+    side: allied
+    formationId: cdn-corps
+    weapon: 9.2-in howitzer
+    role: heavy
+    count: { value: 36, source: boh-1917-1, page: "306 n.1", note: "'36 9.2-inch howitzers'" }
+  - id: cdn-12in-how
+    side: allied
+    formationId: cdn-corps
+    weapon: 12-in howitzer
+    role: heavy
+    count: { value: 4, source: boh-1917-1, page: "306 n.1", note: "'4 12-inch howitzers'" }
+  - id: cdn-15in-how
+    side: allied
+    formationId: cdn-corps
+    weapon: 15-in howitzer
+    role: heavy
+    count: { value: 3, source: boh-1917-1, page: "306 n.1", note: "'3 15-inch howitzers'" }
+  # Trench mortars: the rest of Nicholson's 983 guns and mortars (p. 253) after the 245 heavies and 618 field pieces.
+  - id: cdn-945in-tm
+    side: allied
+    formationId: cdn-corps
+    weapon: 9.45-in trench mortar
+    role: trench-mortar
+    count: { value: 24, source: rca-ww1-history, page: "the paragraphs on Vimy Ridge (no headings)", note: "'twenty-four 9.45-inch trench mortars' with the divisions' field artillery; BOH p. 314: the heavy mortars' task was demolition" }
+  - id: cdn-medium-tm
+    side: allied
+    formationId: cdn-corps
+    weapon: medium trench mortar
+    role: trench-mortar
+    count: { value: 76, estimate: "the remainder of Nicholson's '983 guns and mortars supporting the Canadians' (p. 253) after 245 heavies, 618 field pieces (p. 248), 20 13-pdrs and 24 9.45-inch mortars (rca-ww1-history); taken as the medium mortars, whose task was wire-cutting (BOH p. 314); the 983's make-up is not given (fireplan.md, Open questions)" }
+  # The indirect machine-gun barrage.
+  - id: cdn-mg-barrage
+    side: allied
+    formationId: cdn-corps
+    weapon: Vickers MG
+    role: mg-barrage
+    count: { value: 150, source: nicholson-1962, page: "253", note: "'the continuous fire of 150 machine-guns, creating a bullet-swept zone 400 yards ahead'; BOH p. 319: 150 guns 'grouped in 8-gun batteries'. Of the Corps' 358 Vickers (p. 253 n.)" }
+  # I Corps, on the left: 132 heavies and 102 field pieces (BOH pp. 306-307; Nicholson p. 248), not under General Byng.
+  - id: i-corps-60pdr
+    side: allied
+    weapon: 60-pdr
+    role: counter-battery
+    count: { value: 60, source: boh-1917-1, page: "306 n.2", note: "'60 60-pdrs.' of the I Corps heavy artillery, two bombardment and three counter-battery groups; the long guns taken as counter-battery, as for the Canadian Corps (fireplan.md)" }
+  - id: i-corps-6in-how
+    side: allied
+    weapon: 6-in howitzer
+    role: heavy
+    count: { value: 48, source: boh-1917-1, page: "306 n.2", note: "'40 6-inch howitzers, 8 6-inch howitzers' as the OCR reads (the second perhaps 6-inch guns); 48 together" }
+  - id: i-corps-8in-how
+    side: allied
+    weapon: 8-in howitzer
+    role: heavy
+    count: { value: 4, source: boh-1917-1, page: "306 n.2", note: "'4 8-inch howitzers'" }
+  - id: i-corps-92in-how
+    side: allied
+    weapon: 9.2-in howitzer
+    role: heavy
+    count: { value: 20, source: boh-1917-1, page: "306 n.2", note: "'20 9.2-inch howitzers'" }
+  - id: i-corps-18pdr
+    side: allied
+    weapon: 18-pdr
+    role: standing
+    count: { value: 66, source: boh-1917-1, page: "307", note: "'102 (66 18-pdrs. and 36 4.5-inch howitzers) of the I. Corps'; role not given: the I Corps stood on the defensive on the left (BOH p. 329), so standing taken" }
+  - id: i-corps-45in-how
+    side: allied
+    weapon: 4.5-in howitzer
+    role: standing
+    count: { value: 36, source: boh-1917-1, page: "307", note: "36 4.5-inch howitzers of the I Corps; role taken as standing" }
+  # First Army pieces.
+  - id: army-12in-how
+    side: allied
+    weapon: 12-in howitzer
+    role: heavy
+    count: { value: 4, source: boh-1917-1, page: "306", note: "'Four 12-inch howitzers, in addition to the four ... attached to the Canadian Corps' at the disposal of the First Army; Nicholson p. 248: 'a few heavy guns'" }
+  - id: army-12in-gun
+    side: allied
+    weapon: 12-in gun
+    role: heavy
+    count: { value: 1, source: boh-1917-1, page: "306", note: "'a single 12-inch gun' at the disposal of the First Army" }
+  # German artillery of Group Vimy's two divisions on the Canadian front (the 16th Bavarian Division's is not given).
+  - id: ger-gruppe-vimy-heavy
+    side: central
+    formationId: gruppe-vimy
+    weapon: heavy guns and howitzers
+    role: defensive
+    count: { value: 89, source: boh-1917-1, page: "353", note: "'The 79th Reserve and 1st Bavarian Reserve Divisions disposed of 89 heavy and 108 field guns and howitzers'" }
+  - id: ger-gruppe-vimy-field
+    side: central
+    formationId: gruppe-vimy
+    weapon: field guns and howitzers
+    role: defensive
+    count: { value: 108, source: boh-1917-1, page: "353", note: "108 field guns and howitzers of the two divisions; also three batteries of 30-cm naval guns before Henin Lietard, not entered" }
+
+# The counter-battery state at Zero: the share of the German guns located, and so engaged, at Zero.
+counterBattery:
+  side: allied
+  suppressedAtZeroFrac:
+    value: 0.83
+    range: [0.83, 0.86]
+    sources:
+      - { source: nicholson-1962, page: "251", note: "'Of an estimated 212 guns opposite the Canadian Corps, 83 per cent were located'" }
+      - { source: boh-1917-1, page: "314", note: "'86 per cent. of the 212 active German battery positions on and behind the ridge had been correctly located'" }
+      - { source: rca-ww1-history, page: "the paragraphs on Vimy Ridge (no headings)", note: "counter-battery fire 'silenced 83% of the German guns'" }
+    note: "located is taken as suppressed at Zero: every located battery was bombarded with high explosive and gas at Zero (BOH pp. 319-320). Nicholson counts guns, BOH battery positions. The '85% of 175 located' lead (plan, from the owner's brief) was not found in any source read (fireplan.md, Open questions)"
+  note: "Of 212 German guns or battery positions, 83-86% were located before Zero (Nicholson p. 251; BOH p. 314). At Zero all known battery positions were bombarded with HE and gas; gassed horses kept the batteries from moving or getting ammunition up, and the response to the S.O.S. rockets was 'very feeble' (BOH p. 320; Nicholson p. 253)."

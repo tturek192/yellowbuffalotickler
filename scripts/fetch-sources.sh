@@ -83,6 +83,16 @@ archive_text tenthbattalion00holluoft holland-1918         # The Story of the Te
 archive_text in.ernet.dli.2015.210683 boh-1917-1 2015.210683.Military-Operations
 archive_text historiesoftwohu00unit aef-251-divisions-1920
 
+# --- Royal Regiment of Canadian Artillery, "The First World War 1914-18" (Task 10): the Vimy artillery ------
+# A heritage page on rca-arc.org; saved as the HTML the site serves (fireplan.md cites its Vimy section).
+RCA="$OUT/rca-ww1-history.html"
+if [ ! -s "$RCA" ]; then
+  echo "fetch-sources: downloading the RCA First World War history page"
+  curl -fsS -L -o "$RCA.part" "https://rca-arc.org/part0120-the-first-world-war-1914-18/"
+  grep -q "Vimy" "$RCA.part" || { echo "fetch-sources: the RCA page has no Vimy section" >&2; exit 1; }
+  mv "$RCA.part" "$RCA"
+fi
+
 # --- English Wikipedia, the exact revisions cited (Task 8) -------------------------------------------------
 WIKI="$OUT/wikipedia"
 mkdir -p "$WIKI"

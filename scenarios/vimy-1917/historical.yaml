@@ -1,4 +1,247 @@
-# Historical targets the simulator is tested against (filled by a later task). An empty stub until then.
-# Every value here may cite only primary, official or scholarly sources, or be an estimate.
+# Historical targets the simulator is tested against. Research notes: docs/research/vimy/historical.md.
+# Every value here cites only primary, official or scholarly sources, or is an estimate (the tier rule).
+# Times are as the sources give them (British time); "earliest" and "latest" bracket when each line fell.
+#
+# The Pimple (Hill 120), 12 April, is a strongpoint feature (`the-pimple`), not an objective line, so it has no
+# objectives entry: the 10th Brigade attacked at 5 a.m.; the 50th Battalion was on its objective about 5.45, the 44th
+# on the Pimple by 6 a.m. (BOH p. 346; Nicholson p. 263: "by six o'clock"), and the 46th reported the left flank
+# secure "in another two hours", about 8 a.m. (Nicholson p. 263). Its losses are under casualties (46bn), and its end
+# is the lower bound of endedAt.
 historical:
-  objectives: []
+  objectives:
+    - lineId: black-1cdn
+      sectorId: barrage-1cdn
+      earliest: { value: 1917-04-09T06:05, source: boh-1917-1, page: "322", note: "'by 6.5 a.m. ... the 1st Canadian Division was in possession of the Zwölfer-Graben, its first objective'" }
+      latest: { value: 1917-04-09T06:15, source: nicholson-1962, page: "254", note: "'Both the 1st and 2nd Divisions were reported at the Black Line by 6:15'" }
+    - lineId: black-2cdn
+      sectorId: barrage-2cdn
+      earliest: { value: 1917-04-09T06:05, source: boh-1917-1, page: "323", note: "'By 6.5 a.m. the four battalions ... had reached the line of the third trench, the division's first objective'" }
+      latest: { value: 1917-04-09T06:15, source: nicholson-1962, page: "254", note: "reported at the Black Line by 6:15" }
+    - lineId: black-3cdn
+      sectorId: barrage-3cdn
+      earliest: { value: 1917-04-09T06:05, source: boh-1917-1, page: "325", note: "the advance 'reached the third trench in the allotted time', 35 minutes after Zero (p. 304)" }
+      latest: { value: 1917-04-09T06:25, source: nicholson-1962, page: "255", note: "'by 6:25 the capture of the Black Line by both brigades had been confirmed'" }
+    - lineId: black-4cdn
+      sectorId: barrage-4cdn
+      earliest: { value: 1917-04-09T18:45, source: boh-1917-1, page: "341", note: "the 102nd Battalion held its half from the first rush, but the 87th's front fell to bombers at 1 p.m. and to two companies of the 85th, who 'started off across No Man's Land at 6.45 p.m.' (historical.md)" }
+      latest: { value: 1917-04-10T04:15, source: boh-1917-1, page: "342", note: "'At 4.15 a.m. on the 10th patrols ... towards the German third trench beyond the summit ... found it empty'; it was occupied by the 85th and 75th, completing the first system (p. 304)" }
+    - lineId: red-1cdn
+      sectorId: barrage-1cdn
+      earliest: { value: 1917-04-09T07:05, source: boh-1917-1, page: "323", note: "'Shortly after 7 a.m. the division had taken its second objective ... with the exception of 500 yards on the right'; the 1st Battalion took that at 7.40 or after" }
+      latest: { value: 1917-04-09T08:00, source: nicholson-1962, page: "255", note: "'By eight o'clock the 1st and 2nd Divisions were reported on the Red Line'" }
+    - lineId: red-2cdn
+      sectorId: barrage-2cdn
+      earliest: { value: 1917-04-09T07:05, source: boh-1917-1, page: "324", note: "'Both brigades had reached their objectives up to time': Zero plus 95 minutes in the timetable (p. 304)" }
+      latest: { value: 1917-04-09T08:00, source: nicholson-1962, page: "255", note: "'By eight o'clock the 1st and 2nd Divisions were reported on the Red Line'" }
+    - lineId: red-3cdn
+      sectorId: barrage-3cdn
+      earliest: { value: 1917-04-09T07:05, source: boh-1917-1, page: "304", note: "the timetable's Zero plus 95 minutes, when the barrage reached the final objective of the 3rd and 4th Divisions; no earlier capture is recorded" }
+      latest: { value: 1917-04-09T07:30, source: nicholson-1962, page: "255", note: "'the 3rd Division had reached the crest at 7:30 and occupied the western edge of the Bois de la Folie'; BOH p. 326: 'By 7.30 a.m.'" }
+    - lineId: red-4cdn
+      sectorId: barrage-4cdn
+      earliest:
+        value: 1917-04-10T15:00
+        range: [1917-04-10T15:00, 1917-04-10T15:15]
+        sources:
+          - { source: boh-1917-1, page: "342", note: "the barrage 'opened at 3 p.m. on the Hangstellung', and the 44th and 50th entered it 'almost immediately after the barrage had lifted'" }
+          - { source: nicholson-1962, page: "261", note: "'By 3:15 next afternoon' the two battalions 'were in position on Hill 145'; they charged as the barrage lifted" }
+        note: "BOH's barrage opens at 3 p.m.; Nicholson has the battalions only in position by 3:15 (historical.md, Conflicts)"
+      latest: { value: 1917-04-10T16:00, estimate: "BOH p. 343: 'Within thirty minutes' the Hangstellung was cleared (15:30, or 15:45 on Nicholson's 3:15); the 12th Brigade then moved its right forward and occupied its last objective 'at mid-afternoon' (Nicholson p. 261); 16:00 taken for the whole line" }
+    - lineId: blue-1cdn
+      sectorId: barrage-1cdn
+      earliest: { value: 1917-04-09T10:50, source: boh-1917-1, page: "304", note: "the timetable: the third objective 'to be concluded at Zero plus 5 hours, 20 minutes'" }
+      latest: { value: 1917-04-09T11:15, source: boh-1917-1, page: "334", note: "'By 11.15 a.m. the brigade had reached the Roclincourt—Vimy track'; Nicholson p. 256: reported 'shortly after eleven o'clock'" }
+    - lineId: blue-2cdn
+      sectorId: barrage-2cdn
+      earliest: { value: 1917-04-09T10:50, source: boh-1917-1, page: "304", note: "the timetable's Zero plus 5 hours, 20 minutes" }
+      latest: { value: 1917-04-09T11:30, estimate: "Nicholson p. 256: the 1st Division reported the Blue Line 'shortly after eleven o'clock', 'and a little later' the 2nd; BOH gives no time for Thelus and Hill 135 (p. 335); 11:30 taken" }
+    - lineId: brown-1cdn
+      sectorId: barrage-1cdn
+      earliest: { value: 1917-04-09T13:18, source: nicholson-1962, page: "248", note: "the timetable: the escarpment 'in Canadian hands by 1:18 p.m.'; BOH p. 336: 'soon after 1 p.m.' the leading companies were closed up to the barrage on the first belt of wire" }
+      latest: { value: 1917-04-09T14:40, source: nicholson-1962, page: "257", note: "'at 2:40, as soon as the capture of the Brown Line seemed assured, General Byng had telephoned the First Army'" }
+    - lineId: brown-2cdn
+      sectorId: barrage-2cdn
+      earliest: { value: 1917-04-09T13:18, source: nicholson-1962, page: "248", note: "the timetable's 1:18 p.m." }
+      latest: { value: 1917-04-09T14:40, source: nicholson-1962, page: "257", note: "the Brown Line's capture 'seemed assured' at 2:40" }
+
+  casualties:
+    # Canadian Corps totals (Canadian troops only, except where noted).
+    - side: allied
+      window: { from: 1917-04-09T05:30, to: 1917-04-10T23:59 }
+      total: { value: 7707, source: nicholson-1962, page: "261", note: "'Canadian casualties in the two days' fighting totalled 7707'; the 13th British Brigade's 'approximately 380' are additional" }
+      killed: { value: 2967, source: nicholson-1962, page: "261", note: "'of which 2967 were fatal': killed and died of wounds" }
+    - side: allied
+      window: { from: 1917-04-09T05:30, to: 1917-04-14T23:59 }
+      total: { value: 10602, source: nicholson-1962, page: "265", note: "'Canadian casualties (for the period 9-14 April) of 10,602 all ranks'" }
+      killed: { value: 3598, source: nicholson-1962, page: "265", note: "'3598 of them fatal'" }
+    - side: allied
+      window: { from: 1917-04-07T00:00, to: 1917-04-14T23:59 }
+      total: { value: 11297, source: boh-1917-1, page: "342 n.1", note: "'The total casualties of Canadian Corps during the period 7th-14th April 1917 were 11,297'" }
+    # Brigades, 9 April, from BOH's tables (pp. 339 n.1, 342 n.1, 'approximately'); killed, wounded and missing are
+    # officers and other ranks added together. The OCR of the tables is broken in places: the 3rd, 8th and 11th
+    # Brigades' rows could not be read and are not entered (historical.md, Open questions).
+    - side: allied
+      formationId: 1bde
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 465, source: boh-1917-1, page: "339 n.1", note: "officers 7 killed, 15 wounded, 1 missing; other ranks 82, 285, 75" }
+      killed: { value: 89, source: boh-1917-1, page: "339 n.1" }
+      wounded: { value: 300, source: boh-1917-1, page: "339 n.1" }
+      missing: { value: 76, source: boh-1917-1, page: "339 n.1" }
+    - side: allied
+      formationId: 2bde
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 1109, source: boh-1917-1, page: "339 n.1", note: "officers 14 killed, 23 wounded, 1 missing; other ranks 265, 767, 39" }
+      killed: { value: 279, source: boh-1917-1, page: "339 n.1" }
+      wounded: { value: 790, source: boh-1917-1, page: "339 n.1" }
+      missing: { value: 40, source: boh-1917-1, page: "339 n.1" }
+    - side: allied
+      formationId: 4bde
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 750, source: boh-1917-1, page: "339 n.1", note: "officers 6 killed, 21 wounded, 4 missing; other ranks 141, 505, 73" }
+      killed: { value: 147, source: boh-1917-1, page: "339 n.1" }
+      wounded: { value: 526, source: boh-1917-1, page: "339 n.1" }
+      missing: { value: 77, source: boh-1917-1, page: "339 n.1" }
+    - side: allied
+      formationId: 5bde
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 755, source: boh-1917-1, page: "339 n.1", note: "officers 7 killed, 31 wounded; other ranks 113, 353, 251 missing" }
+      killed: { value: 120, source: boh-1917-1, page: "339 n.1" }
+      wounded: { value: 384, source: boh-1917-1, page: "339 n.1" }
+      missing: { value: 251, source: boh-1917-1, page: "339 n.1" }
+    - side: allied
+      formationId: 6bde
+      window: { from: 1917-04-09T05:30, to: 1917-04-10T23:59 }
+      total: { value: 527, source: boh-1917-1, page: "339 n.1", note: "officers 6 killed, 17 wounded; other ranks 84, 420; none missing; 'include about 133 casualties suffered next day', so the window runs to 10 April" }
+      killed: { value: 90, source: boh-1917-1, page: "339 n.1" }
+      wounded: { value: 437, source: boh-1917-1, page: "339 n.1" }
+    - side: allied
+      formationId: 13bde-brit
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 381, source: boh-1917-1, page: "339 n.1", note: "officers 3 killed, 5 wounded; other ranks 38, 318, 17 missing; Nicholson p. 261: 'approximately 380'" }
+      killed: { value: 41, source: boh-1917-1, page: "339 n.1" }
+      wounded: { value: 323, source: boh-1917-1, page: "339 n.1" }
+      missing: { value: 17, source: boh-1917-1, page: "339 n.1" }
+    - side: allied
+      formationId: 7bde
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 965, source: boh-1917-1, page: "342 n.1", note: "officers 11 killed, 30 wounded; other ranks 181, 576, 167 missing (the row's order reconstructed from broken OCR; historical.md)" }
+      killed: { value: 192, source: boh-1917-1, page: "342 n.1" }
+      wounded: { value: 606, source: boh-1917-1, page: "342 n.1" }
+      missing: { value: 167, source: boh-1917-1, page: "342 n.1" }
+    - side: allied
+      formationId: 12bde
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 1344, source: boh-1917-1, page: "342 n.1", note: "officers 20 killed, 37 wounded, 2 missing; other ranks 297, 854, 134" }
+      killed: { value: 317, source: boh-1917-1, page: "342 n.1" }
+      wounded: { value: 891, source: boh-1917-1, page: "342 n.1" }
+      missing: { value: 136, source: boh-1917-1, page: "342 n.1" }
+    - side: allied
+      formationId: 2cdn
+      window: { from: 1917-04-09T05:30, to: 1917-04-10T23:59 }
+      total: { value: 2413, estimate: "the sum of BOH's figures for the 4th (750), 5th (755) and 6th (527) Canadian and the attached 13th British (381) Brigades (p. 339 n.1); the 6th's include about 133 on 10 April; the division's other troops are not counted" }
+    # Battalions.
+    - side: allied
+      formationId: 21bn
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T08:00 }
+      total: { value: 215, source: nicholson-1962, page: "255", note: "through Les Tilleuls to the Red Line: 'At that stage of the advance its own casualties numbered 215' (from the 21st Battalion's war diary, n.78)" }
+    - side: allied
+      formationId: 25bn
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      total: { value: 250, source: nicholson-1962, page: "255", note: "'Its casualty list of more than 250'; a lower bound" }
+    - side: allied
+      formationId: 50bn
+      window: { from: 1917-04-10T15:00, to: 1917-04-10T23:59 }
+      total:
+        value: 229
+        range: [229, 240]
+        sources:
+          - { source: boh-1917-1, page: "343", note: "'the Calgary Battalion having lost no fewer than 11 officers and 218 rank and file'" }
+          - { source: nicholson-1962, page: "261", note: "'the 50th Battalion suffered almost 240 casualties'" }
+        note: "the attack on the Hangstellung; BOH's count is the working value"
+    - side: allied
+      formationId: 46bn
+      window: { from: 1917-04-12T05:00, to: 1917-04-12T08:00 }
+      total: { value: 108, source: nicholson-1962, page: "263", note: "two companies on the Pimple's left: 'suffered 108 casualties—about half the strength of the two companies involved'" }
+    # German divisions, from German figures as BOH gives them.
+    - side: central
+      formationId: 79rd
+      window: { from: 1917-04-01T00:00, to: 1917-04-11T23:59 }
+      total: { value: 3473, source: boh-1917-1, page: "341 n.1", note: "'80 officers and 3,393 other ranks ... for the period 1st to 11th April'; excludes attached battalions of other divisions and the bombardment's first stage" }
+    - side: central
+      formationId: 1brd
+      window: { from: 1917-04-01T00:00, to: 1917-04-11T23:59 }
+      total: { value: 3133, source: boh-1917-1, page: "341 n.1", note: "'112 officers and 3,021 other ranks' for 1-11 April; part of the division faced the British 51st Division, not the Canadians (p. 276)" }
+
+  prisonersTaken:
+    - bySide: allied
+      window: { from: 1917-04-09T05:30, to: 1917-04-09T23:59 }
+      count:
+        value: 3404
+        range: [3400, 3404]
+        sources:
+          - { source: boh-1917-1, page: "341 n.1", note: "'counted up to midnight was 62 officers and 3,342 other ranks, but at that hour more were still coming in'" }
+          - { source: nicholson-1962, page: "261", note: "'Up to midnight on 9-10 April, about 3400 German prisoners had been counted'" }
+        note: "the same count, exact in BOH and rounded in Nicholson; both say more were still coming in"
+    - bySide: allied
+      window: { from: 1917-04-09T05:30, to: 1917-04-14T23:59 }
+      count: { value: 4000, source: nicholson-1962, page: "265", note: "'capturing more than 4000 prisoners' in the six days; a lower bound" }
+
+  gunsCaptured:
+    window: { from: 1917-04-09T05:30, to: 1917-04-14T23:59 }
+    field: { value: 54, source: nicholson-1962, page: "265", note: "'seized 54 guns, 104 trench mortars and 124 machine-guns' in six days, guns of all calibres; BOH p. 337 n.1: 31 pieces by the 1st and 2nd Divisions on 9 April, 21-cm howitzers to 77-mm guns" }
+    trenchMortars: { value: 104, source: nicholson-1962, page: "265" }
+    machineGuns: { value: 124, source: nicholson-1962, page: "265" }
+
+  # When the German reserves reached the battlefield (formation ids from oob-german.yaml; times are British time).
+  reserveArrivals:
+    - formationId: rir262-iii
+      at: { value: 1917-04-09T20:00, estimate: "BOH p. 355: 'It was snowing and already dark when the troops for the northern part of the operation reached La Chaudiere'; p. 354: 'after nightfall'; computed sunset on 9 April at Vimy is about 19:30 British Summer Time and civil dusk about 20:05, so dark about 20:00 (historical.md)" }
+      where: "La Chaudière, to counter-attack Hill 135; held instead to fill gaps along the lower edge of the Bois de la Folie (BOH p. 355)"
+    - formationId: ir118-i
+      at: { value: 1917-04-09T20:00, estimate: "with the northern counter-attack force, which reached La Chaudière 'already dark' (BOH p. 355); as for rir262-iii" }
+      where: "La Chaudière, from east of Lens (BOH pp. 354-355)"
+    - formationId: rir34-iii
+      at: { value: 1917-04-09T20:00, estimate: "with the northern counter-attack force, which reached La Chaudière 'already dark' (BOH p. 355); as for rir262-iii" }
+      where: "La Chaudière, from east of Lens (BOH pp. 354-355)"
+    - formationId: rir225-i
+      at: { value: 1917-04-09T16:30, estimate: "BOH p. 338 n.1: 'newly arrived in Arleux' when ordered to 'recapture' Willerval after the Canadian Light Horse patrols, which set out at 4.20 p.m. (p. 338); 16:30 taken" }
+      where: "Arleux, then towards Willerval and Farbus (BOH pp. 338-339)"
+    - formationId: bir6-iii
+      at: { value: 1917-04-09T20:00, estimate: "the southern counter-attack force 'likewise failed to materialize' after dark and only closed gaps (BOH p. 355); its arrival time is not given; taken with bir21-iii, 'after dusk' (p. 277)" }
+      where: "behind the 1st Bavarian Reserve Division, closing gaps between Farbus Wood and the Bois de la Ville (BOH pp. 354-355)"
+    - formationId: bir21-iii
+      at: { value: 1917-04-09T20:00, estimate: "BOH p. 277: 'After dusk there appeared on its right flank III./21st Bavarian Regiment'; dark about 20:00, as for rir262-iii" }
+      where: "on the right of the 1st Bavarian Reserve Regiment's remnant in the Point du Jour line, by the Bailleul-Thélus road (BOH p. 277)"
+    - formationId: bir11-iii
+      at: { value: 1917-04-09T17:00, estimate: "BOH p. 355: Group Souchez's resting battalions assembled between Liévin and Méricourt and 'were in position by late afternoon'; this one reinforced the southern end of Givenchy; 17:00 taken" }
+      where: "the southern end of Givenchy (BOH p. 355)"
+    - formationId: brir21-i
+      at: { value: 1917-04-09T17:00, estimate: "BOH p. 355: halted 'behind the Bois de l'Hirondelle', in position 'by late afternoon'; 17:00 taken" }
+      where: "behind the Bois de l'Hirondelle, two miles behind Givenchy (BOH p. 355)"
+    - formationId: bir14-i
+      at: { value: 1917-04-10T00:00, source: nicholson-1962, page: "260", note: "ordered at 6 p.m. to regain Hill 145's northern slope: 'It was midnight before the troops reached the Pimple'; BOH p. 355 agrees ('till midnight'); it had halted behind the Bois de l'Hirondelle by late afternoon" }
+      where: "the Pimple, the start of its counter-attack on Hill 145's northern slope (Nicholson p. 260)"
+    - formationId: 111id
+      at: { value: 1917-04-10T06:00, estimate: "BOH p. 356: 'Early on the 10th the first regiments of the counter-attack divisions arrived in the battle zone', the 111th's 73rd and 164th entering the 79th Reserve Division's line; 06:00 taken for 'early'" }
+      where: "the 79th Reserve Division's line, east of the ridge (BOH p. 356)"
+    - formationId: 17id
+      at: { value: 1917-04-10T06:00, estimate: "BOH p. 356: 'Early on the 10th', the 89th Grenadier and 75th Regiments entering the 1st Bavarian Reserve Division's line; BOH p. 277 has the 75th relieving on the night of the 10th (historical.md, Conflicts); 06:00 taken" }
+      where: "the 1st Bavarian Reserve Division's line, before Bailleul and Farbus (BOH pp. 277, 356)"
+    - formationId: 4gd
+      at:
+        value: 1917-04-10T18:00
+        range: [1917-04-10T06:00, 1917-04-10T18:00]
+        sources:
+          - { source: boh-1917-1, page: "356", note: "'Early on the 10th ... The 5th Guard Grenadier Regiment (4th Guard Division) entered the line of the 16th Bavarian Division'" }
+          - { source: boh-1917-1, page: "345 n.3", note: "'The 4th Guard Division began to arrive in the battle zone from Tournai ... on the evening of 10th April'" }
+        note: "BOH gives both; the evening of the 10th is the division's arrival, early on the 10th its first regiment's; 06:00 and 18:00 taken for 'early' and 'evening'"
+      where: "Givenchy and the Souchez valley, relieving the 16th Bavarian Division; the rest of the division east of Givenchy and between Avion and Méricourt (BOH p. 345 n.3)"
+
+  endedAt:
+    value: 1917-04-12T08:00
+    range: [1917-04-12T08:00, 1917-04-14T18:00]
+    sources:
+      - { source: nicholson-1962, page: "263", note: "on 12 April, after the Pimple fell 'by six o'clock', 'in another two hours the 46th could report the left flank secure'; the ridge was then all in Canadian hands" }
+      - { source: nicholson-1962, page: "265", note: "'With the completion of this limited exploitation the Battle of Vimy Ridge ended', on 14 April" }
+      - { source: boh-1917-1, page: "351", note: "the advance of 14 April: 'By evening the nine-mile outpost line' ran from east of Bailleul to the Bois de l'Hirondelle" }
+    note: "the scenario covers 9-12 April, so the working value is the capture of the Pimple and the whole ridge; the official battle runs to 14 April (historical.md)"

@@ -92,3 +92,9 @@ sources:
     title: English Wikipedia articles on places outside France (coordinates)
     tier: tertiary
     note: "each citation's page names the article and the revision read (fetched 2026-11-20); used for Tournai, which IGN's French data does not cover"
+  rca-ww1-history:
+    title: "The First World War 1914-18 (The Royal Regiment of Canadian Artillery, heritage pages)"
+    author: The Royal Regiment of Canadian Artillery
+    url: https://rca-arc.org/part0120-the-first-world-war-1914-18/
+    tier: secondary
+    note: "the regiment's own history page, unsigned and without notes (fetched 2026-11-20); its Vimy section gives the Corps heavy artillery by battery and group, the 13-pdrs and 9.45-inch mortars, and 'silenced 83%' (Task 10, fireplan.md). Local copy via scripts/fetch-sources.sh"

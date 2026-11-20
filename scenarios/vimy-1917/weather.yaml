@@ -1,2 +1,32 @@
-# Weather, 9-12 April 1917 (filled by a later task). An empty stub until then.
-weather: []
+# Weather, 8-12 April 1917, in time order. Research notes: docs/research/vimy/weather.md.
+# Each `at` is when the sources put the change; where they give only a part of the day ("early in the afternoon"),
+# weather.md says which minute was taken. windFromDeg: north-west 315, west 270. Temperature is not given in figures.
+weather:
+  - at: 1917-04-08T21:00
+    precipitation: { value: none, source: boh-1917-1, page: "318", note: "'After a fine, sunny day, the early part of the night was clear, with bright moonlight'; Nicholson p. 252: the barometer dropping, the air 'turning much colder'" }
+  - at: 1917-04-09T05:00
+    precipitation: { value: sleet, source: nicholson-1962, page: "252", note: "'Shortly before dawn ... a driving north-west wind swept the countryside with snow and sleet'; BOH p. 319: 'squalls of snow and sleet'" }
+    windFromDeg: { value: 315, source: nicholson-1962, page: "252", note: "'a driving north-west wind'; the attackers had it 'at their backs' (p. 253)" }
+  - at: 1917-04-09T06:45
+    precipitation: { value: snow, source: boh-1917-1, page: "323", note: "as the advance on the Red Line began, 'the rain and sleet now turning to snow'; Nicholson p. 255: 'driving snow across the front'" }
+    windFromDeg: { value: 270, source: boh-1917-1, page: "321", note: "the wind, 'backing from north-west to west, blew the sleet into the faces of the enemy'; Nicholson p. 255: 'The wind had turned' (weather.md, Conflicts)" }
+  - at: 1917-04-09T11:00
+    precipitation: { value: none, source: nicholson-1962, page: "256", note: "as the 1st and 2nd Divisions neared the Blue Line 'there was an unexpected break in the stormclouds and spring sunshine flooded the air'; BOH p. 334: 'bright spring sunlight' as the 1st Brigade topped the ridge" }
+  - at: 1917-04-09T13:00
+    precipitation: { value: sleet, source: nicholson-1962, page: "257", note: "'Early in the afternoon the sleet began again'" }
+  - at: 1917-04-09T18:00
+    precipitation: { value: snow, source: nicholson-1962, page: "257", note: "'the day closed with intermittent snow flurries driven before a gusty westerly breeze'; BOH p. 355: 'It was snowing and already dark'" }
+    windFromDeg: { value: 270, source: nicholson-1962, page: "257", note: "'a gusty westerly breeze'" }
+  - at: 1917-04-10T00:00
+    precipitation: { value: none, source: boh-1917-1, page: "342", note: "on the night of 9-10 April 'the sky cleared and the moon, not long past the full, gave light'" }
+  - at: 1917-04-11T12:00
+    precipitation: { value: snow, estimate: "Nicholson p. 262: 'On 11 April the weather deteriorated rapidly', without saying how; BOH p. 352: 'rain and snow which continued intermittently after the capture of the ridge'; snow taken, as it ran on into the sleet and snow of the 12th" }
+  - at: 1917-04-12T01:45
+    precipitation: { value: sleet, source: nicholson-1962, page: "262", note: "as the 10th Brigade moved forward in the early hours of the 12th 'a strong westerly gale was raging, driving sleet and snow'; BOH p. 344: they moved at 1.45 a.m." }
+    windFromDeg: { value: 270, source: nicholson-1962, page: "262", note: "'a strong westerly gale'" }
+  - at: 1917-04-12T04:30
+    precipitation: { value: snow, source: boh-1917-1, page: "344", note: "'about 4.30 a.m. snow began to fall, driven by a strong westerly wind'" }
+    windFromDeg: { value: 270, source: boh-1917-1, page: "344", note: "'a strong westerly wind'; at 5 a.m. 'The wind had increased in violence' (p. 345)" }
+    visibilityM: { value: 11, source: boh-1917-1, page: "345", note: "'Darkness and snow limited visibility to ten or fifteen yards' (9-14 m)" }
+  - at: 1917-04-12T06:00
+    precipitation: { value: none, source: boh-1917-1, page: "346", note: "'With daylight the storm ceased and the sun rose into a clear sky'; Nicholson p. 263: 'The sky cleared at daybreak'" }

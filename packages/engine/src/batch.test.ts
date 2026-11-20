@@ -21,7 +21,8 @@ describe('batch', () => {
     const black = b.lines.find((l) => l.lineId === 'black')!;
     expect(b.runs).toBe(5);
     expect(black.takenIn).toBe(5);
-    expect(black.historicalEarliest).toBe(45);
-    expect(black.historicalLatest).toBe(55);
+    // The draft's Black Line window, 06:05-06:15 (BOH p. 322; Nicholson p. 254; Task 10).
+    expect(black.historicalEarliest).toBe(35);
+    expect(black.historicalLatest).toBe(45);
   });
 });

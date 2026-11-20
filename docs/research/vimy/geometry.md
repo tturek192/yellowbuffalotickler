@@ -159,8 +159,8 @@ between the outermost arrows of the two neighbouring divisions, where they cross
 | barrage-4cdn | −570 | 1320 | 1,890 m | — |
 
 The four together span 5,970 m; Nicholson gives the Corps "a front of 7000 yards" (6,400 m, p. 245; see Conflicts).
-The leg values in `fireplan.yaml` are the Plan 1 draft's, entered as estimates "placeholder until Task 10". The 3rd and
-4th Divisions' Red leg pauses 0 min, the draft's value for a final objective.
+The leg values in `fireplan.yaml` were the Plan 1 draft's, entered as estimates "placeholder until Task 10"; Task 10
+replaced them with the corps timetable (fireplan.md, "Leg values").
 
 ### Features (`features.geojson`, 39)
 
@@ -231,7 +231,7 @@ Each overlay (`overlays/`) draws the digitized features in magenta over Map 7 wi
 | la-folie-farm | `nicholson-1962` | Map 7; p. 246 | "La Folie Farm (midway between Hills 135 and 145)" | official |
 | woods, villages | `nicholson-1962` | Map 7 | (map labels) | official (digitized) |
 | sector y-ranges | `nicholson-1962` | Map 7; p. 254 | "advancing on a 1400-yard front with four battalions forward" | estimate |
-| sector leg values | Plan 1 draft (`artillery-notes-4`, `vimy-brief-2026`) | — | — | estimate, "placeholder until Task 10" |
+| sector leg values | see fireplan.md (Task 10) | — | — | — |
 
 ## Conflicts
 
