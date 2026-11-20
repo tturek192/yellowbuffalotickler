@@ -363,7 +363,7 @@ code {
 .timeline {
   --thumb: 16px;
   position: relative;
-  padding-top: 44px;
+  padding-top: 62px;
 }
 
 .timeline-markers {
@@ -371,7 +371,7 @@ code {
   top: 0;
   left: calc(var(--thumb) / 2);
   right: calc(var(--thumb) / 2);
-  height: 50px;
+  height: 68px;
 }
 
 .marker {
@@ -384,6 +384,18 @@ code {
 
 .marker-row-1 {
   height: 32px;
+}
+
+.marker-row-2 {
+  height: 50px;
+}
+
+.marker-hit {
+  position: absolute;
+  bottom: 0;
+  left: -5px;
+  width: 10px;
+  height: 100%;
 }
 
 .marker-label {
@@ -399,15 +411,6 @@ code {
   font-size: 13px;
   letter-spacing: 0.02em;
   color: var(--muted);
-  transform: translateX(-50%);
-}
-
-.marker-start .marker-label {
-  transform: translateX(-4px);
-}
-
-.marker-end .marker-label {
-  transform: translateX(calc(-100% + 4px));
 }
 
 .marker-line-taken {
@@ -797,15 +800,6 @@ code {
     padding: 8px 12px;
     border: none;
     border-top: 1px solid rgba(59, 51, 38, 0.35);
-  }
-  .timeline {
-    padding-top: 62px;
-  }
-  .timeline-markers {
-    height: 68px;
-  }
-  .marker-row-2 {
-    height: 50px;
   }
   .controls {
     padding: 6px 12px 14px;
