@@ -1,2 +1,85 @@
-# Artillery and the fire plan (filled by a later task). An empty stub until then.
+# Artillery and the fire plan. Task 7 adds one barrage sector per attacking division; Task 10 replaces the leg values
+# with researched ones, and adds the artillery. Sector y-ranges are the division boundaries at the German front line
+# (geometry.md). Every leg value below is a placeholder copied from the Plan 1 draft, entered as an estimate.
 artillery: []
+sectors:
+  - id: barrage-1cdn
+    name: 1st Canadian Division barrage sector
+    # Division boundary y values: Map 7 battalion arrows, the boundary taken midway between the neighbouring divisions’ outermost arrows at the German front (docs/research/vimy/geometry.md, "Division boundaries").
+    yMin: -4650
+    yMax: -2980
+    startLineId: ger-front
+    legs:
+      - toLineId: black-1cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: red-1cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 150, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: blue-1cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
+        pauseMin: { value: 96, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: brown-1cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
+        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml) (final objective)" }
+    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }
+  - id: barrage-2cdn
+    name: 2nd Canadian Division barrage sector
+    # Division boundary y values: Map 7 battalion arrows, the boundary taken midway between the neighbouring divisions’ outermost arrows at the German front (docs/research/vimy/geometry.md, "Division boundaries").
+    yMin: -2980
+    yMax: -1770
+    startLineId: ger-front
+    legs:
+      - toLineId: black-2cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: red-2cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 150, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: blue-2cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
+        pauseMin: { value: 96, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: brown-2cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 5, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026 (about 5 min per lift)" }
+        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml) (final objective)" }
+    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }
+  - id: barrage-3cdn
+    name: 3rd Canadian Division barrage sector
+    # Division boundary y values: Map 7 battalion arrows, the boundary taken midway between the neighbouring divisions’ outermost arrows at the German front (docs/research/vimy/geometry.md, "Division boundaries").
+    yMin: -1770
+    yMax: -570
+    startLineId: ger-front
+    legs:
+      - toLineId: black-3cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: red-3cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml); 0 because the Red Line is this division’s final objective, as the draft’s final leg" }
+    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }
+  - id: barrage-4cdn
+    name: 4th Canadian Division barrage sector
+    # Division boundary y values: Map 7 battalion arrows, the boundary taken midway between the neighbouring divisions’ outermost arrows at the German front (docs/research/vimy/geometry.md, "Division boundaries").
+    yMin: -570
+    yMax: 1320
+    startLineId: ger-front
+    legs:
+      - toLineId: black-4cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 40, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites vimy-brief-2026" }
+      - toLineId: red-4cdn
+        liftM: { value: 91, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4 (100 yards)" }
+        liftMin: { value: 3, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml), which cites artillery-notes-4" }
+        pauseMin: { value: 0, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml); 0 because the Red Line is this division’s final objective, as the draft’s final leg" }
+    standOffM: { value: 180, estimate: "placeholder until Task 10: copied from the Plan 1 draft (1cdn-3bde-draft.yaml): about 200 yd protective barrage beyond the objective" }

@@ -19,8 +19,14 @@ zeroHour:
 # One day of battle; a simulation setting, not a historical value.
 timeLimitMinutes: 1440
 geometrySource:
-  value: Not yet digitized
-  estimate: Placeholder until the trench and objective lines are traced from Nicholson Map 7 and the trench maps (a later task)
+  value: Nicholson 1962 Map 7, georeferenced to IGN BD TOPO road and railway junctions (geometry.md)
+  source: nicholson-1962
+  page: Map 7 (facing p. 262)
+  note: Lines and features digitized off the georeferenced map; every feature carries its own method and accuracy.
+geo:
+  - geo/lines.geojson
+  - geo/features.geojson
+terrain: terrain/rge-alti-25m.json
 frame:
   # The Canadian National Vimy Memorial on Hill 145 (en.wikipedia.org, rev. 1377286572; see sources.md).
   origin: { lon: 2.7736, lat: 50.3794 }
@@ -30,10 +36,10 @@ frame:
       Measured off Nicholson 1962 Map 7, georeferenced with 17 village GCPs (rms 134 m): the dominant direction of
       the red 9 April attack arrows is 62° (4th Div), 74° (3rd), 87° (2nd) and 75° (1st); mean 74.6°, rounded to 75°.
       Expected error about ±5°; the divisions' arrows fan over 62-87°. Method in docs/research/vimy/sources.md.
-  # Local metres (x along the bearing, y to its left). Measured on georeferenced Map 7 (sources.md):
-  # Souchez River north of the Pimple (y 3014) to below Farbus Wood (y -4865); the Canadian assembly area
-  # behind Neuville-St Vaast and the 1st Division (x -1840) to the German Third Line (Oppy-Mericourt line, x 7545).
-  # Each bound rounded outward by 135-200 m: 9.7 km x 8.2 km.
-  extent: { minX: -2000, maxX: 7700, minY: -5000, maxY: 3200 }
+  # Local metres (x along the bearing, y to its left). Measured on georeferenced Map 7 (sources.md, geometry.md):
+  # Souchez River north of the Pimple (y 3014) to below Farbus Wood (y -4865); the Canadian field and medium
+  # batteries west of Carency and Mont-St-Eloi (westernmost battery dot x -5966, geometry.md) to the German Third Line
+  # (Oppy-Mericourt line, x 7545). Bounds rounded outward: 13.7 km x 8.2 km.
+  extent: { minX: -6000, maxX: 7700, minY: -5000, maxY: 3200 }
 lines: []
 sectors: []

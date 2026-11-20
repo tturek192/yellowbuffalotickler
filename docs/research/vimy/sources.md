@@ -50,7 +50,7 @@ Sources used only in this note, and not registered because no scenario value cit
 | `zeroHour` = 1917-04-09T05:30 | `scenario.yaml` | `nicholson-1962` | p. 253 | "Promptly at 5:30 on the morning of Easter Monday, 9 April, the attack on Vimy Ridge opened" | official |
 | `frame.origin` = lon 2.7736, lat 50.3794 | `scenario.yaml` | Wikipedia, "Canadian National Vimy Memorial" (rev. 1377286572) | infobox coordinates | 50.3794° N, 2.7736° E | tertiary |
 | `frame.bearingDeg` = 75° | `scenario.yaml` | estimate, measured off Map 7 (`nicholson-1962`) | Map 7, facing p. 262 | (measurement; see below) | estimate |
-| `frame.extent` = x −2000…7700, y −5000…3200 m | `scenario.yaml` | estimate, measured off Map 7 (`nicholson-1962`), with Nicholson's text for what the bounds are | Map 7; pp. 244, 246, 262, 263 | "passing in front of the villages of Mericourt and Oppy" (p. 246, the German Third Line) | estimate |
+| `frame.extent` = x −2000…7700, y −5000…3200 m (Task 7 widened minX to −6000 for the battery positions; geometry.md) | `scenario.yaml` | estimate, measured off Map 7 (`nicholson-1962`), with Nicholson's text for what the bounds are | Map 7; pp. 244, 246, 262, 263 | "passing in front of the villages of Mericourt and Oppy" (p. 246, the German Third Line) | estimate |
 | `ign-rge-alti` note | `sources.yaml` | the owner's ruling for this task | — | — | — |
 
 The frame origin is not a historical target: it only anchors the local metric grid. Its accuracy matters

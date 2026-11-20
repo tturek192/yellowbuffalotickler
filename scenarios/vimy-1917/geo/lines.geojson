@@ -1,0 +1,1085 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "cdn-front",
+    "kind": "front-line",
+    "name": "Canadian front line, last light 8 April",
+    "side": "allied",
+    "color": "#b3261e",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 least-cost trace of the red front line on a rectified copy of the map; 2 vertices that doubled back in y dropped"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.777418,
+      50.336975
+     ],
+     [
+      2.777798,
+      50.337602
+     ],
+     [
+      2.776521,
+      50.338844
+     ],
+     [
+      2.77557,
+      50.339167
+     ],
+     [
+      2.774981,
+      50.33974
+     ],
+     [
+      2.774276,
+      50.340031
+     ],
+     [
+      2.773991,
+      50.340993
+     ],
+     [
+      2.774455,
+      50.343096
+     ],
+     [
+      2.775346,
+      50.344036
+     ],
+     [
+      2.775454,
+      50.344617
+     ],
+     [
+      2.776479,
+      50.345655
+     ],
+     [
+      2.776227,
+      50.34696
+     ],
+     [
+      2.775638,
+      50.347533
+     ],
+     [
+      2.775706,
+      50.348069
+     ],
+     [
+      2.776292,
+      50.34862
+     ],
+     [
+      2.775631,
+      50.350903
+     ],
+     [
+      2.778155,
+      50.352124
+     ],
+     [
+      2.778604,
+      50.352726
+     ],
+     [
+      2.778094,
+      50.35395
+     ],
+     [
+      2.778381,
+      50.355497
+     ],
+     [
+      2.778004,
+      50.357381
+     ],
+     [
+      2.77757,
+      50.35828
+     ],
+     [
+      2.775047,
+      50.360693
+     ],
+     [
+      2.775224,
+      50.361248
+     ],
+     [
+      2.774949,
+      50.362325
+     ],
+     [
+      2.774542,
+      50.362741
+     ],
+     [
+      2.774355,
+      50.363608
+     ],
+     [
+      2.773569,
+      50.364934
+     ],
+     [
+      2.77352,
+      50.36575
+     ],
+     [
+      2.773856,
+      50.366482
+     ],
+     [
+      2.773266,
+      50.367617
+     ],
+     [
+      2.773046,
+      50.368703
+     ],
+     [
+      2.771995,
+      50.370245
+     ],
+     [
+      2.771418,
+      50.371907
+     ],
+     [
+      2.769464,
+      50.372395
+     ],
+     [
+      2.767424,
+      50.372531
+     ],
+     [
+      2.766437,
+      50.37266
+     ],
+     [
+      2.764951,
+      50.375102
+     ],
+     [
+      2.76376,
+      50.375721
+     ],
+     [
+      2.762561,
+      50.376077
+     ],
+     [
+      2.762346,
+      50.376452
+     ],
+     [
+      2.761685,
+      50.376638
+     ],
+     [
+      2.761343,
+      50.377179
+     ],
+     [
+      2.759475,
+      50.37858
+     ],
+     [
+      2.757983,
+      50.380759
+     ],
+     [
+      2.757063,
+      50.381425
+     ],
+     [
+      2.756775,
+      50.384072
+     ],
+     [
+      2.757279,
+      50.384683
+     ],
+     [
+      2.757295,
+      50.385623
+     ],
+     [
+      2.757828,
+      50.386164
+     ],
+     [
+      2.757894,
+      50.387262
+     ],
+     [
+      2.757024,
+      50.388648
+     ],
+     [
+      2.757201,
+      50.389203
+     ],
+     [
+      2.756513,
+      50.390433
+     ],
+     [
+      2.756519,
+      50.391258
+     ],
+     [
+      2.755804,
+      50.392971
+     ],
+     [
+      2.755847,
+      50.393428
+     ],
+     [
+      2.755029,
+      50.393849
+     ],
+     [
+      2.754858,
+      50.39412
+     ],
+     [
+      2.755054,
+      50.39449
+     ],
+     [
+      2.754454,
+      50.394949
+     ],
+     [
+      2.755175,
+      50.395598
+     ],
+     [
+      2.754985,
+      50.396052
+     ],
+     [
+      2.753814,
+      50.397461
+     ],
+     [
+      2.753504,
+      50.398344
+     ],
+     [
+      2.751654,
+      50.399562
+     ],
+     [
+      2.751393,
+      50.39963
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "ger-front",
+    "kind": "front-line",
+    "name": "German front line, last light 8 April",
+    "side": "central",
+    "color": "#1f3a93",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 least-cost trace of the dark-blue front line on a rectified copy of the map"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.780465,
+      50.3375
+     ],
+     [
+      2.780269,
+      50.337691
+     ],
+     [
+      2.78041,
+      50.338052
+     ],
+     [
+      2.779135,
+      50.338732
+     ],
+     [
+      2.778018,
+      50.34015
+     ],
+     [
+      2.777066,
+      50.340474
+     ],
+     [
+      2.776782,
+      50.340874
+     ],
+     [
+      2.777591,
+      50.343411
+     ],
+     [
+      2.777968,
+      50.343626
+     ],
+     [
+      2.778333,
+      50.344288
+     ],
+     [
+      2.778049,
+      50.344689
+     ],
+     [
+      2.778432,
+      50.345729
+     ],
+     [
+      2.77814,
+      50.346428
+     ],
+     [
+      2.779,
+      50.348561
+     ],
+     [
+      2.778064,
+      50.350385
+     ],
+     [
+      2.78153,
+      50.352705
+     ],
+     [
+      2.780949,
+      50.354516
+     ],
+     [
+      2.780218,
+      50.355289
+     ],
+     [
+      2.78014,
+      50.358273
+     ],
+     [
+      2.77857,
+      50.359239
+     ],
+     [
+      2.777817,
+      50.360345
+     ],
+     [
+      2.776814,
+      50.361072
+     ],
+     [
+      2.77661,
+      50.361561
+     ],
+     [
+      2.776903,
+      50.361837
+     ],
+     [
+      2.776898,
+      50.362547
+     ],
+     [
+      2.776455,
+      50.364869
+     ],
+     [
+      2.776004,
+      50.365391
+     ],
+     [
+      2.776064,
+      50.366225
+     ],
+     [
+      2.775489,
+      50.366763
+     ],
+     [
+      2.775462,
+      50.367807
+     ],
+     [
+      2.774556,
+      50.369
+     ],
+     [
+      2.774136,
+      50.370426
+     ],
+     [
+      2.773565,
+      50.370815
+     ],
+     [
+      2.773186,
+      50.371724
+     ],
+     [
+      2.77231,
+      50.372285
+     ],
+     [
+      2.771884,
+      50.372886
+     ],
+     [
+      2.768916,
+      50.374548
+     ],
+     [
+      2.768712,
+      50.375037
+     ],
+     [
+      2.767658,
+      50.375605
+     ],
+     [
+      2.766854,
+      50.376553
+     ],
+     [
+      2.766759,
+      50.377061
+     ],
+     [
+      2.766098,
+      50.377247
+     ],
+     [
+      2.764283,
+      50.37922
+     ],
+     [
+      2.761563,
+      50.380288
+     ],
+     [
+      2.761191,
+      50.380899
+     ],
+     [
+      2.760628,
+      50.380989
+     ],
+     [
+      2.760736,
+      50.38157
+     ],
+     [
+      2.760084,
+      50.382993
+     ],
+     [
+      2.758985,
+      50.384228
+     ],
+     [
+      2.759937,
+      50.386002
+     ],
+     [
+      2.760151,
+      50.387725
+     ],
+     [
+      2.75822,
+      50.389978
+     ],
+     [
+      2.757814,
+      50.391369
+     ],
+     [
+      2.757313,
+      50.391732
+     ],
+     [
+      2.758011,
+      50.392714
+     ],
+     [
+      2.757858,
+      50.393362
+     ],
+     [
+      2.758311,
+      50.395351
+     ],
+     [
+      2.758361,
+      50.396071
+     ],
+     [
+      2.757897,
+      50.397602
+     ],
+     [
+      2.757325,
+      50.398553
+     ],
+     [
+      2.75596,
+      50.399029
+     ],
+     [
+      2.755331,
+      50.399558
+     ],
+     [
+      2.75431,
+      50.399907
+     ],
+     [
+      2.75341,
+      50.399827
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "black-1cdn",
+    "kind": "objective-line",
+    "name": "Black Line, 1st Canadian Division",
+    "color": "#1a1a1a",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 grey band (the Zw\u00f6lfer-Graben, p. 254)"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.786614,
+      50.339505
+     ],
+     [
+      2.785407,
+      50.340985
+     ],
+     [
+      2.784905,
+      50.342848
+     ],
+     [
+      2.786722,
+      50.348105
+     ],
+     [
+      2.78705,
+      50.349978
+     ],
+     [
+      2.786384,
+      50.354829
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "black-2cdn",
+    "kind": "objective-line",
+    "name": "Black Line, 2nd Canadian Division",
+    "color": "#1a1a1a",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 grey band"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.78705,
+      50.349978
+     ],
+     [
+      2.786108,
+      50.357443
+     ],
+     [
+      2.785606,
+      50.359305
+     ],
+     [
+      2.783388,
+      50.364884
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "black-3cdn",
+    "kind": "objective-line",
+    "name": "Black Line, 3rd Canadian Division",
+    "color": "#1a1a1a",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 grey band"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.784866,
+      50.361165
+     ],
+     [
+      2.783388,
+      50.364884
+     ],
+     [
+      2.779853,
+      50.371343
+     ],
+     [
+      2.777814,
+      50.372962
+     ],
+     [
+      2.77542,
+      50.374501
+     ],
+     [
+      2.773021,
+      50.376339
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "black-4cdn",
+    "kind": "objective-line",
+    "name": "Black Line, 4th Canadian Division",
+    "color": "#1a1a1a",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b180 m \u2014 grey band; north of Map 7 px y 385 (the 12th Brigade sector) the band is not drawn and the line is an estimate 250 m beyond the German front, the brigade's objective being the German front-line position (p. 259)"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.777814,
+      50.372962
+     ],
+     [
+      2.77542,
+      50.374501
+     ],
+     [
+      2.773021,
+      50.376339
+     ],
+     [
+      2.770858,
+      50.37833
+     ],
+     [
+      2.769167,
+      50.380401
+     ],
+     [
+      2.767948,
+      50.382628
+     ],
+     [
+      2.766718,
+      50.385603
+     ],
+     [
+      2.762407,
+      50.388538
+     ],
+     [
+      2.760967,
+      50.389641
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "red-1cdn",
+    "kind": "objective-line",
+    "name": "Red Line, 1st Canadian Division",
+    "color": "#b3261e",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 pink band along the Zwischen-Stellung (p. 247)"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.792301,
+      50.339728
+     ],
+     [
+      2.792744,
+      50.341828
+     ],
+     [
+      2.793269,
+      50.34632
+     ],
+     [
+      2.793235,
+      50.348563
+     ],
+     [
+      2.792964,
+      50.350802
+     ],
+     [
+      2.792575,
+      50.35304
+     ],
+     [
+      2.792079,
+      50.354529
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "red-2cdn",
+    "kind": "objective-line",
+    "name": "Red Line, 2nd Canadian Division",
+    "color": "#b3261e",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b180 m \u2014 pink band, just east of the Lens road through Les Tilleuls (p. 255)"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.79236,
+      50.351542
+     ],
+     [
+      2.791971,
+      50.35378
+     ],
+     [
+      2.791114,
+      50.355638
+     ],
+     [
+      2.791797,
+      50.357516
+     ],
+     [
+      2.793633,
+      50.361503
+     ],
+     [
+      2.79548,
+      50.364817
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "red-3cdn",
+    "kind": "objective-line",
+    "name": "Red Line, 3rd Canadian Division",
+    "color": "#b3261e",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b180 m \u2014 pink band along the west edge of the Bois de la Folie"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.798079,
+      50.365448
+     ],
+     [
+      2.789726,
+      50.369079
+     ],
+     [
+      2.786739,
+      50.370685
+     ],
+     [
+      2.78375,
+      50.372366
+     ],
+     [
+      2.780759,
+      50.374196
+     ],
+     [
+      2.778716,
+      50.376039
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "red-4cdn",
+    "kind": "objective-line",
+    "name": "Red Line, 4th Canadian Division",
+    "color": "#b3261e",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 pink band from the Bois de la Folie to the end of the grey band; north of Map 7 px y 387 an estimate beside the Black Line, as for black-4cdn"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.780161,
+      50.374562
+     ],
+     [
+      2.778349,
+      50.376782
+     ],
+     [
+      2.776775,
+      50.379004
+     ],
+     [
+      2.774721,
+      50.381595
+     ],
+     [
+      2.771726,
+      50.383649
+     ],
+     [
+      2.768744,
+      50.384882
+     ],
+     [
+      2.766957,
+      50.385457
+     ],
+     [
+      2.761918,
+      50.389504
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "blue-1cdn",
+    "kind": "objective-line",
+    "name": "Blue Line, 1st Canadian Division",
+    "color": "#2c5fa8",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 grey band south of Th\u00e9lus"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.809065,
+      50.344282
+     ],
+     [
+      2.808676,
+      50.34652
+     ],
+     [
+      2.808648,
+      50.348389
+     ],
+     [
+      2.809209,
+      50.350489
+     ],
+     [
+      2.810926,
+      50.354549
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "blue-2cdn",
+    "kind": "objective-line",
+    "name": "Blue Line, 2nd Canadian Division",
+    "color": "#2c5fa8",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1120 m \u2014 grey band visible south of px y 835 only; northward an estimate placing Th\u00e9lus, Hill 135, Count's Wood and the Bois de Bonval inside the line, as p. 247 says"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.810127,
+      50.35252
+     ],
+     [
+      2.810926,
+      50.354549
+     ],
+     [
+      2.811487,
+      50.35665
+     ],
+     [
+      2.811811,
+      50.358748
+     ],
+     [
+      2.812966,
+      50.360781
+     ],
+     [
+      2.812346,
+      50.362642
+     ],
+     [
+      2.809711,
+      50.364403
+     ],
+     [
+      2.806133,
+      50.365852
+     ],
+     [
+      2.802206,
+      50.366848
+     ],
+     [
+      2.799236,
+      50.367333
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "brown-1cdn",
+    "kind": "objective-line",
+    "name": "Brown Line, 1st Canadian Division",
+    "color": "#7a4b23",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 band ends at the \"BROWN LINE\" label at Farbus Wood"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.827133,
+      50.348852
+     ],
+     [
+      2.825526,
+      50.353243
+     ],
+     [
+      2.825021,
+      50.35533
+     ],
+     [
+      2.824039,
+      50.35756
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "brown-2cdn",
+    "kind": "objective-line",
+    "name": "Brown Line, 2nd Canadian Division",
+    "color": "#7a4b23",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); text pp. 247-248, 255",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1150 m \u2014 an estimate along the eastern edge of the ridge woods through the southern Bois de Bonval (p. 247); the band is not legible north of Farbus Wood"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.825021,
+      50.35533
+     ],
+     [
+      2.824039,
+      50.35756
+     ],
+     [
+      2.822465,
+      50.359783
+     ],
+     [
+      2.819477,
+      50.361389
+     ],
+     [
+      2.81375,
+      50.363857
+     ],
+     [
+      2.810769,
+      50.365015
+     ],
+     [
+      2.807553,
+      50.36602
+     ],
+     [
+      2.803988,
+      50.366646
+     ]
+    ]
+   }
+  }
+ ]
+}

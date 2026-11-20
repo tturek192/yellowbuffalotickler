@@ -56,7 +56,7 @@ extract() { # extract <pdf page> <name>
 extract 293 map-7-vimy-ridge            # colour fold-out, facing book p. 262; 2550 x 1423 px
 extract 263 sketch-37-balkan-front-1916 # p. 235; a 1-bit stencil, so it comes out white on black
 extract 265 sketch-38-nivelle-plan      # p. 237
-extract 295 sketch-39-battles-of-scarpe # p. 265
+extract 295 sketch-39-battles-of-scarpe # p. 264
 
 size=$(wc -c <"$NICHOLSON_TXT")
 if [ "$size" -le 1000000 ]; then

@@ -21,3 +21,9 @@ sources:
   artillery-notes-4:
     title: Artillery Notes No. 4, as quoted in the brief
     tier: primary
+  ign-bdtopo:
+    title: BD TOPO V3 road and railway sections (troncon_de_route, troncon_de_voie_ferree), Géoplateforme WFS
+    author: IGN (Institut national de l'information géographique et forestière)
+    url: https://data.geopf.fr/wfs/ows
+    tier: secondary
+    note: "modern centrelines (fetched 2026-11-20); the ground control points that georeference Map 7 are their junctions, matched to the same roads on the 1917 map (docs/research/vimy/geometry.md)"

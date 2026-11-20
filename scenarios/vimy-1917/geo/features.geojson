@@ -1,0 +1,1502 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "ger-first-position",
+    "kind": "trench",
+    "name": "German first position: front trench",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 246",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 the dark-blue front line",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 the dark-blue front line"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.75341,
+      50.399827
+     ],
+     [
+      2.75431,
+      50.399907
+     ],
+     [
+      2.755331,
+      50.399558
+     ],
+     [
+      2.75596,
+      50.399029
+     ],
+     [
+      2.757325,
+      50.398553
+     ],
+     [
+      2.757897,
+      50.397602
+     ],
+     [
+      2.758361,
+      50.396071
+     ],
+     [
+      2.758311,
+      50.395351
+     ],
+     [
+      2.757858,
+      50.393362
+     ],
+     [
+      2.758011,
+      50.392714
+     ],
+     [
+      2.757313,
+      50.391732
+     ],
+     [
+      2.757814,
+      50.391369
+     ],
+     [
+      2.75822,
+      50.389978
+     ],
+     [
+      2.760151,
+      50.387725
+     ],
+     [
+      2.759937,
+      50.386002
+     ],
+     [
+      2.758985,
+      50.384228
+     ],
+     [
+      2.760084,
+      50.382993
+     ],
+     [
+      2.760736,
+      50.38157
+     ],
+     [
+      2.760628,
+      50.380989
+     ],
+     [
+      2.761191,
+      50.380899
+     ],
+     [
+      2.761563,
+      50.380288
+     ],
+     [
+      2.764283,
+      50.37922
+     ],
+     [
+      2.766098,
+      50.377247
+     ],
+     [
+      2.766759,
+      50.377061
+     ],
+     [
+      2.766854,
+      50.376553
+     ],
+     [
+      2.767658,
+      50.375605
+     ],
+     [
+      2.768712,
+      50.375037
+     ],
+     [
+      2.768916,
+      50.374548
+     ],
+     [
+      2.771884,
+      50.372886
+     ],
+     [
+      2.77231,
+      50.372285
+     ],
+     [
+      2.773186,
+      50.371724
+     ],
+     [
+      2.773565,
+      50.370815
+     ],
+     [
+      2.774136,
+      50.370426
+     ],
+     [
+      2.774556,
+      50.369
+     ],
+     [
+      2.775462,
+      50.367807
+     ],
+     [
+      2.775489,
+      50.366763
+     ],
+     [
+      2.776064,
+      50.366225
+     ],
+     [
+      2.776004,
+      50.365391
+     ],
+     [
+      2.776455,
+      50.364869
+     ],
+     [
+      2.776898,
+      50.362547
+     ],
+     [
+      2.776903,
+      50.361837
+     ],
+     [
+      2.77661,
+      50.361561
+     ],
+     [
+      2.776814,
+      50.361072
+     ],
+     [
+      2.777817,
+      50.360345
+     ],
+     [
+      2.77857,
+      50.359239
+     ],
+     [
+      2.78014,
+      50.358273
+     ],
+     [
+      2.780218,
+      50.355289
+     ],
+     [
+      2.780949,
+      50.354516
+     ],
+     [
+      2.78153,
+      50.352705
+     ],
+     [
+      2.778064,
+      50.350385
+     ],
+     [
+      2.779,
+      50.348561
+     ],
+     [
+      2.77814,
+      50.346428
+     ],
+     [
+      2.778432,
+      50.345729
+     ],
+     [
+      2.778049,
+      50.344689
+     ],
+     [
+      2.778333,
+      50.344288
+     ],
+     [
+      2.777968,
+      50.343626
+     ],
+     [
+      2.777591,
+      50.343411
+     ],
+     [
+      2.776782,
+      50.340874
+     ],
+     [
+      2.777066,
+      50.340474
+     ],
+     [
+      2.778018,
+      50.34015
+     ],
+     [
+      2.779135,
+      50.338732
+     ],
+     [
+      2.78041,
+      50.338052
+     ],
+     [
+      2.780269,
+      50.337691
+     ],
+     [
+      2.780465,
+      50.3375
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "zwolfer-graben",
+    "kind": "trench",
+    "name": "Zw\u00f6lfer-Graben",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 254",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 the labelled grey band",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b160 m \u2014 the labelled grey band"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.786614,
+      50.339505
+     ],
+     [
+      2.785407,
+      50.340985
+     ],
+     [
+      2.784905,
+      50.342848
+     ],
+     [
+      2.785356,
+      50.344349
+     ],
+     [
+      2.786039,
+      50.346227
+     ],
+     [
+      2.786722,
+      50.348105
+     ],
+     [
+      2.78705,
+      50.349978
+     ],
+     [
+      2.786779,
+      50.352218
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "zwischen-stellung",
+    "kind": "trench",
+    "name": "Zwischen-Stellung (Intermediate Line), south of Les Tilleuls",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 246",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b180 m \u2014 the thin labelled trench line; north of Les Tilleuls its course is not legible",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b180 m \u2014 the thin labelled trench line; north of Les Tilleuls its course is not legible"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.79148,
+      50.354895
+     ],
+     [
+      2.792344,
+      50.352664
+     ],
+     [
+      2.793325,
+      50.350433
+     ],
+     [
+      2.794189,
+      50.348201
+     ],
+     [
+      2.795052,
+      50.34597
+     ],
+     [
+      2.796265,
+      50.344116
+     ],
+     [
+      2.798181,
+      50.34287
+     ],
+     [
+      2.80021,
+      50.341924
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "ger-second-position",
+    "kind": "trench",
+    "name": "German Second Line (along the Brown Line)",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1150 m \u2014 traced as the Brown Line, which \"covered the German Second Line\" (p. 247); not drawn separately on Map 7",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1150 m \u2014 traced as the Brown Line, which \"covered the German Second Line\" (p. 247); not drawn separately on Map 7"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.827133,
+      50.348852
+     ],
+     [
+      2.826271,
+      50.35101
+     ],
+     [
+      2.825526,
+      50.353243
+     ],
+     [
+      2.825021,
+      50.35533
+     ],
+     [
+      2.824039,
+      50.35756
+     ],
+     [
+      2.822465,
+      50.359783
+     ],
+     [
+      2.819477,
+      50.361389
+     ],
+     [
+      2.816494,
+      50.362696
+     ],
+     [
+      2.81375,
+      50.363857
+     ],
+     [
+      2.810769,
+      50.365015
+     ],
+     [
+      2.807553,
+      50.36602
+     ],
+     [
+      2.803988,
+      50.366646
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "ger-third-position",
+    "kind": "trench",
+    "name": "German Third Line (Oppy-M\u00e9ricourt line)",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 246",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the blue dotted line in front of M\u00e9ricourt and Arleux (its dots detected by colour, ordered, median-smoothed), clipped to the frame extent",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the blue dotted line in front of M\u00e9ricourt and Arleux (its dots detected by colour, ordered, median-smoothed), clipped to the frame extent"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.857534,
+      50.401375
+     ],
+     [
+      2.859117,
+      50.400679
+     ],
+     [
+      2.860113,
+      50.399802
+     ],
+     [
+      2.86104,
+      50.396525
+     ],
+     [
+      2.861679,
+      50.395825
+     ],
+     [
+      2.866851,
+      50.395051
+     ],
+     [
+      2.873491,
+      50.392303
+     ],
+     [
+      2.87681,
+      50.387815
+     ],
+     [
+      2.879247,
+      50.38569
+     ],
+     [
+      2.879501,
+      50.384569
+     ],
+     [
+      2.879045,
+      50.381318
+     ],
+     [
+      2.881686,
+      50.379226
+     ],
+     [
+      2.88238,
+      50.377821
+     ],
+     [
+      2.882123,
+      50.376876
+     ],
+     [
+      2.880928,
+      50.375459
+     ],
+     [
+      2.878806,
+      50.374282
+     ],
+     [
+      2.872849,
+      50.373005
+     ],
+     [
+      2.871348,
+      50.372233
+     ],
+     [
+      2.864959,
+      50.364332
+     ],
+     [
+      2.864013,
+      50.36227
+     ],
+     [
+      2.864796,
+      50.361073
+     ],
+     [
+      2.868358,
+      50.359625
+     ],
+     [
+      2.87571,
+      50.354744
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "turko-graben",
+    "kind": "communication-trench",
+    "name": "Turko-Graben",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 255",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the labelled thin trench east of the Lens road",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the labelled thin trench east of the Lens road"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.794423,
+      50.356279
+     ],
+     [
+      2.794274,
+      50.358296
+     ],
+     [
+      2.794602,
+      50.36017
+     ],
+     [
+      2.795285,
+      50.362048
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "thelus-trench",
+    "kind": "communication-trench",
+    "name": "Th\u00e9lus Trench",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 257",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1120 m \u2014 the thin trench labelled THELUS TR north of the village",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1120 m \u2014 the thin trench labelled THELUS TR north of the village"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.80273,
+      50.355639
+     ],
+     [
+      2.802226,
+      50.357651
+     ],
+     [
+      2.801842,
+      50.359516
+     ],
+     [
+      2.802051,
+      50.361388
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-1",
+    "kind": "subway",
+    "name": "Subway (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.7563,
+      50.384721
+     ],
+     [
+      2.760685,
+      50.384777
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-2",
+    "kind": "subway",
+    "name": "Subway (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.754369,
+      50.379088
+     ],
+     [
+      2.763495,
+      50.379206
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-3",
+    "kind": "subway",
+    "name": "Subway (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.750493,
+      50.37672
+     ],
+     [
+      2.756419,
+      50.376797
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-4",
+    "kind": "subway",
+    "name": "Subway (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.760083,
+      50.369592
+     ],
+     [
+      2.767429,
+      50.369837
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-5",
+    "kind": "subway",
+    "name": "Subway (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.752508,
+      50.36097
+     ],
+     [
+      2.758789,
+      50.361052
+     ],
+     [
+      2.761935,
+      50.364681
+     ],
+     [
+      2.773785,
+      50.364984
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-6",
+    "kind": "subway",
+    "name": "Subway (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.766879,
+      50.351212
+     ],
+     [
+      2.772802,
+      50.351513
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "subway-7",
+    "kind": "subway",
+    "name": "Subway (unnamed on Map 7)",
+    "side": "allied",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 250",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 the faint double outline of the \"Subways\" legend symbol; the map does not name them"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      2.77171,
+      50.345294
+     ],
+     [
+      2.774095,
+      50.344352
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "bois-de-la-folie",
+    "kind": "wood",
+    "name": "Bois de la Folie",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.775556,
+       50.381232
+      ],
+      [
+       2.778877,
+       50.381125
+      ],
+      [
+       2.78366,
+       50.378346
+      ],
+      [
+       2.789044,
+       50.375051
+      ],
+      [
+       2.79502,
+       50.371764
+      ],
+      [
+       2.801589,
+       50.368485
+      ],
+      [
+       2.801028,
+       50.366384
+      ],
+      [
+       2.796877,
+       50.366554
+      ],
+      [
+       2.790906,
+       50.369468
+      ],
+      [
+       2.784342,
+       50.372373
+      ],
+      [
+       2.778959,
+       50.375668
+      ],
+      [
+       2.775593,
+       50.378765
+      ],
+      [
+       2.775556,
+       50.381232
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "bois-de-bonval",
+    "kind": "wood",
+    "name": "Bois de Bonval",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.796877,
+       50.366554
+      ],
+      [
+       2.803993,
+       50.366273
+      ],
+      [
+       2.809371,
+       50.363352
+      ],
+      [
+       2.806662,
+       50.362195
+      ],
+      [
+       2.799534,
+       50.363224
+      ],
+      [
+       2.796306,
+       50.365052
+      ],
+      [
+       2.796877,
+       50.366554
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "bois-du-goulot",
+    "kind": "wood",
+    "name": "Bois du Goulot (Count's Wood)",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.805805,
+       50.364053
+      ],
+      [
+       2.812346,
+       50.362642
+      ],
+      [
+       2.816177,
+       50.360075
+      ],
+      [
+       2.813819,
+       50.359222
+      ],
+      [
+       2.807633,
+       50.360712
+      ],
+      [
+       2.805805,
+       50.364053
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "farbus-wood",
+    "kind": "wood",
+    "name": "Farbus Wood",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.824112,
+       50.352701
+      ],
+      [
+       2.82791,
+       50.352377
+      ],
+      [
+       2.828548,
+       50.349394
+      ],
+      [
+       2.825593,
+       50.348832
+      ],
+      [
+       2.823666,
+       50.350826
+      ],
+      [
+       2.824112,
+       50.352701
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "bois-de-la-ville",
+    "kind": "wood",
+    "name": "Bois de la Ville",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.824541,
+       50.355697
+      ],
+      [
+       2.827628,
+       50.355364
+      ],
+      [
+       2.827901,
+       50.352975
+      ],
+      [
+       2.824936,
+       50.353086
+      ],
+      [
+       2.824541,
+       50.355697
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "bois-de-givenchy",
+    "kind": "wood",
+    "name": "Bois de Givenchy",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.757283,
+       50.398192
+      ],
+      [
+       2.763164,
+       50.401258
+      ],
+      [
+       2.770269,
+       50.401724
+      ],
+      [
+       2.772673,
+       50.399512
+      ],
+      [
+       2.767989,
+       50.395713
+      ],
+      [
+       2.759695,
+       50.395456
+      ],
+      [
+       2.757283,
+       50.398192
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "bois-en-hache",
+    "kind": "wood",
+    "name": "Bois en Hache",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 247",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 outline of the green hatching, simplified"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       2.751052,
+       50.402597
+      ],
+      [
+       2.754258,
+       50.402265
+      ],
+      [
+       2.756081,
+       50.399297
+      ],
+      [
+       2.752531,
+       50.398878
+      ],
+      [
+       2.751052,
+       50.402597
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "souchez",
+    "kind": "village",
+    "name": "Souchez",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 250
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.744122,
+     50.39047
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "givenchy-en-gohelle",
+    "kind": "village",
+    "name": "Givenchy-en-Gohelle",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 350
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.772566,
+     50.390838
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "vimy",
+    "kind": "village",
+    "name": "Vimy",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 400
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.809247,
+     50.371649
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "petit-vimy",
+    "kind": "village",
+    "name": "Petit Vimy",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 150
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.799744,
+     50.372947
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "la-chaudiere",
+    "kind": "village",
+    "name": "La Chaudi\u00e8re",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 200
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.802606,
+     50.379713
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "thelus",
+    "kind": "village",
+    "name": "Th\u00e9lus",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 350
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.799913,
+     50.353808
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "les-tilleuls",
+    "kind": "village",
+    "name": "Les Tilleuls",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 80
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.789919,
+     50.356221
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "farbus",
+    "kind": "village",
+    "name": "Farbus",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 300
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.822131,
+     50.358283
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "neuville-st-vaast",
+    "kind": "village",
+    "name": "Neuville-St-Vaast",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 450
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.761347,
+     50.356524
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "willerval",
+    "kind": "village",
+    "name": "Willerval",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 300
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.844203,
+     50.356775
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "arleux-en-gohelle",
+    "kind": "village",
+    "name": "Arleux-en-Gohelle",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 300
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.870672,
+     50.362351
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "mericourt",
+    "kind": "village",
+    "name": "M\u00e9ricourt",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 400
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.867385,
+     50.399692
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "carency",
+    "kind": "village",
+    "name": "Carency",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 300
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.703877,
+     50.378659
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "ablain-st-nazaire",
+    "kind": "village",
+    "name": "Ablain-St-Nazaire",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262)",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b1100 m \u2014 centre of the hatched built-up block",
+    "radiusM": 300
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.717556,
+     50.391322
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "hill-145",
+    "kind": "strongpoint",
+    "name": "Hill 145",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); pp. 245, 258-259",
+    "method": "the highest ign-rge-alti grid cell (149.8 m) within 450 m of the \"HILL 145\" label on Map 7 (map fit rms 42 m); the grid is the modern surface",
+    "estimate": "the highest ign-rge-alti grid cell (149.8 m) within 450 m of the \"HILL 145\" label on Map 7 (map fit rms 42 m); the grid is the modern surface"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.774065,
+     50.379597
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "hill-135",
+    "kind": "strongpoint",
+    "name": "Hill 135",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 245",
+    "method": "the highest ign-rge-alti grid cell (139.7 m) within 400 m of the \"HILL 135\" label, \"immediately north of the village of Thelus\" (p. 245) on Map 7 (map fit rms 42 m); the grid is the modern surface",
+    "estimate": "the highest ign-rge-alti grid cell (139.7 m) within 400 m of the \"HILL 135\" label, \"immediately north of the village of Thelus\" (p. 245) on Map 7 (map fit rms 42 m); the grid is the modern surface"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.806044,
+     50.358876
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "the-pimple",
+    "kind": "strongpoint",
+    "name": "The Pimple",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 245",
+    "method": "the highest ign-rge-alti grid cell (122.2 m) within 300 m of the west end of \"THE PIMPLE\" label, at the German front on Map 7 (map fit rms 42 m); the grid is the modern surface",
+    "estimate": "the highest ign-rge-alti grid cell (122.2 m) within 300 m of the west end of \"THE PIMPLE\" label, at the German front on Map 7 (map fit rms 42 m); the grid is the modern surface"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.75816,
+     50.39325
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "la-folie-farm",
+    "kind": "strongpoint",
+    "name": "La Folie Farm",
+    "side": "central",
+    "source": "nicholson-1962",
+    "page": "Map 7 (facing p. 262); p. 246",
+    "method": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b180 m \u2014 the farm symbol",
+    "estimate": "digitized from Map 7, affine fit rms 42 m; expected accuracy \u00b180 m \u2014 the farm symbol"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.784993,
+     50.368494
+    ]
+   }
+  }
+ ]
+}
