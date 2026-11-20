@@ -4,6 +4,7 @@ sources:
   vimy-brief-2026:
     title: Owner's Vimy research brief
     year: 2026
+    tier: secondary
 followDistanceM:
   value: 70
   estimate: SS 135/SS 143 practice of keeping close to the barrage; to source in Plan 2

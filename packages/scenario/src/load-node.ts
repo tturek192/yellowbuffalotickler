@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { parse } from 'yaml';
+import { basename, dirname, resolve } from 'node:path';
+import { parse, YAMLParseError } from 'yaml';
 import type { Scenario, Doctrine } from './schema';
-import { parseScenario, parseDoctrine, ScenarioError } from './load';
+import { parseScenarioData, parseDoctrine, ScenarioError } from './load';
+import { mergeScenarioParts } from './include';
 
 export function loadScenario(
   path: string,
@@ -13,17 +15,40 @@ export function loadScenario(
   } catch {
     throw new ScenarioError([`cannot read ${path}`]);
   }
-  let raw: { forces?: { doctrine?: unknown }[] } | null = null;
+  let mainData: unknown = null;
   try {
-    raw = parse(text);
-  } catch {
-    /* parseScenario below reports the syntax error */
+    mainData = parse(text);
+  } catch (e) {
+    throw new ScenarioError([`invalid YAML: ${(e as Error).message}`]);
   }
+  const mainMap = mainData && typeof mainData === 'object' && !Array.isArray(mainData) ? (mainData as Record<string, unknown>) : null;
+  const { include, ...mainRest } = mainMap ?? {};
+  const parts: Array<{ file: string; data: unknown }> = [{ file: basename(path), data: mainMap ? mainRest : mainData }];
+  const problems: string[] = [];
+  if (include !== undefined) {
+    if (!Array.isArray(include) || include.some((f) => typeof f !== 'string')) {
+      problems.push('include: expected a list of file paths');
+    } else {
+      include.forEach((f: string, i) => {
+        try {
+          parts.push({ file: f, data: parse(readFileSync(resolve(dirname(path), f), 'utf8')) });
+        } catch (e) {
+          problems.push(
+            e instanceof YAMLParseError ? `include[${i}]: invalid YAML in ${f}: ${e.message}` : `include[${i}]: cannot read ${f}`,
+          );
+        }
+      });
+    }
+  }
+  const { merged, problems: mergeProblems } = mergeScenarioParts(parts);
+  problems.push(...mergeProblems);
+  const raw = merged as { forces?: { doctrine?: unknown }[] } | null;
   const ids = [
-    ...new Set((raw?.forces ?? []).map((f) => f?.doctrine).filter((d): d is string => typeof d === 'string')),
+    ...new Set(
+      (Array.isArray(raw?.forces) ? raw.forces : []).map((f) => f?.doctrine).filter((d): d is string => typeof d === 'string'),
+    ),
   ];
   const doctrines: Record<string, Doctrine> = {};
-  const problems: string[] = [];
   for (const id of ids) {
     const file = `${doctrineDir}/${id}.yaml`;
     let dtext: string;
@@ -40,10 +65,12 @@ export function loadScenario(
       problems.push(...e.problems.map((m) => `doctrine ${id}: ${m}`));
     }
   }
+  const structural = problems.length > 0; // a broken include would only cascade into noise
   let scenario: Scenario | undefined;
   try {
+    if (structural) throw new ScenarioError([]);
     // attempted ids count as known: their own failures are already reported above
-    scenario = parseScenario(text, ids);
+    scenario = parseScenarioData(merged, ids);
   } catch (e) {
     if (!(e instanceof ScenarioError)) throw e;
     problems.push(...e.problems);

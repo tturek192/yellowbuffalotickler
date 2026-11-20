@@ -1,4 +1,5 @@
 import type { Scenario, Formation } from './schema';
+import { historicalTierRule } from './sources';
 
 /** Collect every Sourced-looking object ({ value, source }) in a tree, with its dotted path. */
 export function collectSourceRefs(node: unknown, path: string, out: { path: string; id: string }[] = []) {
@@ -7,8 +8,14 @@ export function collectSourceRefs(node: unknown, path: string, out: { path: stri
   } else if (node && typeof node === 'object') {
     const o = node as Record<string, unknown>;
     if ('value' in o && typeof o.source === 'string') out.push({ path: `${path}.source`, id: o.source });
+    if ('value' in o && Array.isArray(o.sources)) {
+      o.sources.forEach((c, i) => {
+        const id = (c as { source?: unknown } | null)?.source;
+        if (typeof id === 'string') out.push({ path: `${path}.sources[${i}].source`, id });
+      });
+    }
     for (const [k, val] of Object.entries(o)) {
-      if (k === 'sources') continue;
+      if (k === 'sources' && !Array.isArray(val)) continue; // the source registry itself
       collectSourceRefs(val, path ? `${path}.${k}` : k, out);
     }
   }
@@ -63,5 +70,6 @@ export function checkReferences(s: Scenario, doctrineIds: string[]): string[] {
   for (const r of collectSourceRefs(s, '')) {
     if (!sourceIds.has(r.id)) problems.push(`${r.path}: unknown source "${r.id}"`);
   }
+  problems.push(...historicalTierRule(s));
   return problems;
 }

@@ -22,7 +22,12 @@ function parseYaml(text: string): unknown {
 }
 
 export function parseScenario(yamlText: string, doctrineIds: string[]): Scenario {
-  const r = ScenarioSchema.safeParse(parseYaml(yamlText));
+  return parseScenarioData(parseYaml(yamlText), doctrineIds);
+}
+
+/** Validate an already-parsed (and, for multi-file scenarios, merged) scenario document. */
+export function parseScenarioData(data: unknown, doctrineIds: string[]): Scenario {
+  const r = ScenarioSchema.safeParse(data);
   if (!r.success) throw new ScenarioError(issues(r.error));
   const problems = checkReferences(r.data, doctrineIds);
   if (problems.length) throw new ScenarioError(problems);

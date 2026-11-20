@@ -8,7 +8,7 @@ export function minimalScenario(): Scenario {
     id: 'fixture',
     title: 'Fixture scenario',
     status: 'draft',
-    sources: { 'test-src': { title: 'Test source' } },
+    sources: { 'test-src': { title: 'Test source', tier: 'official' } },
     zeroHour: { value: '1916-07-01T07:30', estimate: 'test fixture' },
     timeLimitMinutes: 600,
     geometrySource: { value: 'fixture geometry', estimate: 'synthetic test geometry' },

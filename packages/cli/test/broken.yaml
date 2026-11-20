@@ -4,6 +4,7 @@ status: draft
 sources:
   test-src:
     title: Test source
+    tier: official
 zeroHour:
   value: 1916-07-01T07:30
   estimate: test fixture

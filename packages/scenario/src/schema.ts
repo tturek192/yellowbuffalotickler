@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { sourced, PointSchema } from './sourced';
+import { sourced, sourcedOrDisputed, PointSchema } from './sourced';
+import { TIERS } from './sources';
 import { LocalDateTimeSchema } from './local-time';
 
 const Side = z.enum(['allied', 'central']);
@@ -10,6 +11,7 @@ export const SourcesSchema = z.record(
     author: z.string().optional(),
     year: z.number().optional(),
     url: z.string().optional(),
+    tier: z.enum(TIERS),
   }),
 );
 
@@ -98,8 +100,8 @@ export const ScenarioSchema = z.object({
       z.object({
         lineId: z.string(),
         sectorId: z.string(),
-        earliest: sourced(LocalDateTimeSchema),
-        latest: sourced(LocalDateTimeSchema),
+        earliest: sourcedOrDisputed(LocalDateTimeSchema),
+        latest: sourcedOrDisputed(LocalDateTimeSchema),
       }),
     ),
   }),

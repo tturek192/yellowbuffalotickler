@@ -65,13 +65,13 @@ describe('loadScenario', () => {
     return dir;
   };
   it('loads the scenario and its doctrines', () => {
-    const dir = setup(doctrine({ 'd-src': { title: 'D' } }));
+    const dir = setup(doctrine({ 'd-src': { title: 'D', tier: 'official' } }));
     const r = loadScenario(join(dir, 'scenario.yaml'), dir);
     expect(r.scenario.id).toBe('fixture');
     expect(r.doctrines['bef-1917'].id).toBe('bef-1917');
   });
   it("rejects doctrine values citing sources missing from the doctrine's own sources", () => {
-    const dir = setup(doctrine({ other: { title: 'O' } }));
+    const dir = setup(doctrine({ other: { title: 'O', tier: 'official' } }));
     expect(() => loadScenario(join(dir, 'scenario.yaml'), dir)).toThrow(/followDistanceM.source: unknown source "d-src"/);
   });
   it('reports a missing doctrine file', () => {

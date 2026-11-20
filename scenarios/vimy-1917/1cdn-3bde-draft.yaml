@@ -5,8 +5,10 @@ sources:
   vimy-brief-2026:
     title: Owner's Vimy research brief (compiles Nicholson, Campbell, the RCA fire-plan essay and others)
     year: 2026
+    tier: secondary
   artillery-notes-4:
     title: Artillery Notes No. 4, as quoted in the brief
+    tier: primary
 zeroHour:
   value: 1917-04-09T05:30
   source: vimy-brief-2026
@@ -313,31 +315,31 @@ historical:
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T06:15
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T06:25
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
     - lineId: red
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T07:00
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T07:30
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
     - lineId: blue
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T11:00
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T11:00
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
     - lineId: brown
       sectorId: 1cdn-3bde
       earliest:
         value: 1917-04-09T14:00
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
       latest:
         value: 1917-04-09T14:00
-        source: vimy-brief-2026
+        estimate: Owner's brief figure; to be replaced by a primary, official or scholarly citation in Task 10
