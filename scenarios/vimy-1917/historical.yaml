@@ -23,7 +23,7 @@ historical:
       latest: { value: 1917-04-09T06:25, source: nicholson-1962, page: "255", note: "'by 6:25 the capture of the Black Line by both brigades had been confirmed'" }
     - lineId: black-4cdn
       sectorId: barrage-4cdn
-      earliest: { value: 1917-04-09T18:45, source: boh-1917-1, page: "341", note: "the 102nd Battalion held its half from the first rush, but the 87th's front fell to bombers at 1 p.m. and to two companies of the 85th, who 'started off across No Man's Land at 6.45 p.m.' (historical.md)" }
+      earliest: { value: 1917-04-09T18:45, estimate: "a lower bound, not a reported capture time: BOH p. 341 has the 102nd Battalion hold its half from the first rush, the 87th's front trench taken by bombers after 1 p.m., and two companies of the 85th, who completed the line, 'started off across No Man's Land at 6.45 p.m.'; 18:45 is the start of that attack, so the line cannot have fallen before it (historical.md)" }
       latest: { value: 1917-04-10T04:15, source: boh-1917-1, page: "342", note: "'At 4.15 a.m. on the 10th patrols ... towards the German third trench beyond the summit ... found it empty'; it was occupied by the 85th and 75th, completing the first system (p. 304) on the Hill 145 front; the 12th Brigade's part of the line may have closed later (historical.md, Open questions)" }
     - lineId: red-1cdn
       sectorId: barrage-1cdn

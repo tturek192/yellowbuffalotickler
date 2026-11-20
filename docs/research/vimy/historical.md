@@ -29,15 +29,17 @@ Page numbers are the printed ones. In the BOH OCR text a page's number stands at
 A line's window brackets when it fell: `earliest` is the first time the sources allow, `latest` the time by which it is
 reported taken. Where the narrative gives no earlier time the timetable's minute is the earliest, as the barrage did not
 reach a line before then. Those earliest times (red-3cdn, blue-1cdn, blue-2cdn, brown-1cdn, brown-2cdn, and the draft's
-blue and brown) are entered as **estimates**, lower bounds from the timetable, not reported capture times. black-3cdn's
-"in the allotted time" and red-2cdn's "up to time" are reported captures, at the timetable minute, so they stay sourced.
+blue and brown) are entered as **estimates**, lower bounds from the timetable, not reported capture times. black-4cdn's
+earliest, 18:45, is likewise an **estimate**, a lower bound: it is when the 85th Battalion's two companies "started off"
+(BOH p. 341), the attack that completed the line, not when the line fell. black-3cdn's "in the allotted time" and
+red-2cdn's "up to time" are reported captures, at the timetable minute, so they stay sourced.
 
 | Line | Earliest | Latest | Sources and reasoning |
 |---|---|---|---|
 | black-1cdn | 06:05 | 06:15 | BOH p. 322: in possession of the Zwölfer-Graben "by 6.5 a.m."; Nicholson p. 254: reported "by 6:15" |
 | black-2cdn | 06:05 | 06:15 | BOH p. 323: the third trench "By 6.5 a.m."; Nicholson p. 254 |
 | black-3cdn | 06:05 | 06:25 | BOH p. 325: "in the allotted time" (Zero+35, p. 304); Nicholson p. 255: confirmed "by 6:25" |
-| black-4cdn | 18:45 | 04:15 on 10 April | BOH p. 341: the 85th's two companies "started off ... at 6.45 p.m." and took the trench and road short of the summit; BOH p. 342: the third trench beyond the summit found empty and occupied at 4.15 a.m. |
+| black-4cdn | 18:45 (estimate: lower bound) | 04:15 on 10 April | BOH p. 341: the 85th's two companies "started off ... at 6.45 p.m." and took the trench and road short of the summit; BOH p. 342: the third trench beyond the summit found empty and occupied at 4.15 a.m. |
 | red-1cdn | 07:05 | 08:00 | BOH p. 323: "Shortly after 7 a.m.", less 500 yards taken by the 1st Battalion from 7.40; Nicholson p. 255: "By eight o'clock" |
 | red-2cdn | 07:05 | 08:00 | BOH p. 324: "up to time" (Zero+95); Nicholson p. 255 |
 | red-3cdn | 07:05 | 07:30 | BOH p. 304: Zero+95; Nicholson p. 255 and BOH p. 326: "7:30" |
@@ -179,7 +181,7 @@ the division's, so the division's times are used.
 | black-2cdn earliest 06:05 | `boh-1917-1` | 323 | "By 6.5 a.m. the four battalions, after a steady uphill advance, had reached the line of the third trench" | official |
 | black-3cdn earliest 06:05 | `boh-1917-1` | 325 | "reached the third trench in the allotted time" | official |
 | black-3cdn latest 06:25 | `nicholson-1962` | 255 | "by 6:25 the capture of the Black Line by both brigades had been confirmed" | official |
-| black-4cdn earliest 18:45 | `boh-1917-1` | 341 | "Despite the absence of artillery fire, they started off across No Man's Land at 6.45 p.m." | official |
+| black-4cdn earliest 18:45 | estimate (lower bound: the attack's start) | BOH p. 341 | "Despite the absence of artillery fire, they started off across No Man's Land at 6.45 p.m." | estimate |
 | black-4cdn latest 04:15 | `boh-1917-1` | 342 | "At 4.15 a.m. on the 10th patrols were sent forward towards the German third trench beyond the summit, and found it empty" | official |
 | red-1cdn earliest 07:05 | `boh-1917-1` | 323 | "Shortly after 7 a.m. the division had taken its second objective, the intermediate line" | official |
 | red-1/2cdn latest 08:00 | `nicholson-1962` | 255 | "By eight o'clock the 1st and 2nd Divisions were reported on the Red Line" | official |

@@ -50,6 +50,15 @@ describe('Vimy fire plan, weather and historical results (Task 10)', () => {
       expect(parseLocalDateTime(v(o.earliest)).getTime(), o.lineId).toBeLessThanOrEqual(parseLocalDateTime(v(o.latest)).getTime());
     }
   });
+  it('earliest times that are lower bounds (a timetable minute or an attack\'s start) are estimates saying so', () => {
+    for (const id of ['red-3cdn', 'blue-1cdn', 'blue-2cdn', 'brown-1cdn', 'brown-2cdn', 'black-4cdn']) {
+      const e = s.historical.objectives.find(o => o.lineId === id)!.earliest as { estimate?: string; source?: string };
+      expect(e.source, id).toBeUndefined();
+      expect(e.estimate, id).toMatch(/lower bound/);
+    }
+    const b4 = s.historical.objectives.find(o => o.lineId === 'black-4cdn')!.earliest as { estimate?: string };
+    expect(b4.estimate).toMatch(/BOH p\. 341/);
+  });
   it('no barrage leg is a Task 7 placeholder any more', () => {
     for (const sec of s.sectors) {
       for (const leg of sec.legs) {
