@@ -218,7 +218,7 @@ forces:
                         start: { lonLat: [2.775841, 50.336887] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                       - id: 5bn-d
                         name: "5th Bn, Company D"
                         role: assault
@@ -227,7 +227,7 @@ forces:
                         start: { lonLat: [2.775289, 50.338096] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                   - id: 7bn
                     name: "7th Battalion"
                     kind: battalion
@@ -258,7 +258,7 @@ forces:
                         start: { lonLat: [2.773624, 50.339112] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                       - id: 7bn-d
                         name: "7th Bn, Company D"
                         role: assault
@@ -267,7 +267,7 @@ forces:
                         start: { lonLat: [2.772435, 50.340211] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                   - id: 8bn
                     name: "8th Battalion"
                     kind: battalion
@@ -328,7 +328,7 @@ forces:
                         start: { lonLat: [2.772471, 50.341521] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                       - id: 10bn-d
                         name: "10th Bn, Company D"
                         role: assault
@@ -337,7 +337,7 @@ forces:
                         start: { lonLat: [2.772833, 50.342886] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
               - id: 3bde
                 name: "3rd Canadian Infantry Brigade"
                 kind: brigade
@@ -401,7 +401,7 @@ forces:
                         start: { lonLat: [2.774159, 50.347025] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                       - id: 14bn-d
                         name: "14th Bn, Company D"
                         role: assault
@@ -410,7 +410,7 @@ forces:
                         start: { lonLat: [2.774570, 50.348399] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                   - id: 15bn
                     name: "15th Battalion"
                     kind: battalion
@@ -442,7 +442,7 @@ forces:
                         start: { lonLat: [2.773782, 50.344353] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                       - id: 15bn-d
                         name: "15th Bn, Company D"
                         role: assault
@@ -451,7 +451,7 @@ forces:
                         start: { lonLat: [2.774691, 50.345813] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                   - id: 16bn
                     name: "16th Battalion"
                     kind: battalion
@@ -482,7 +482,7 @@ forces:
                         start: { lonLat: [2.774211, 50.349640] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
                       - id: 16bn-d
                         name: "16th Bn, Company D"
                         role: assault
@@ -491,7 +491,7 @@ forces:
                         start: { lonLat: [2.774845, 50.351053] }
                         sectorId: barrage-1cdn
                         objectiveLineId: red-1cdn
-                        startAfterMin: { value: 0, source: nicholson-1962, page: "255", note: "crossed at Zero behind the forward companies; took the lead to the Red Line at 6:45 (the engine holds them behind the barrage)" }
+                        startAfterMin: { value: 0, estimate: "Nicholson p. 255 has the rear companies of the forward battalions taking the lead at 6:45 (Zero + 75) but gives no start; taken to cross at Zero behind the forward companies (p. 253: the assault opened at 5:30), held behind the barrage by the engine" }
           - id: 2cdn
             name: "2nd Canadian Division"
             kind: division
@@ -1966,7 +1966,7 @@ forces:
                       - id: 72bn-a
                         name: "72nd Bn, Company A"
                         role: assault
-                        strength: { value: 100, source: mcevoy-finlay-1920, page: "46", note: "400 all ranks assembled in Gobron Tunnel on the eve of the attack, a quarter each" }
+                        strength: { value: 100, estimate: "mcevoy-finlay-1920 p. 46: 400 of all ranks assembled in Gobron Tunnel on the eve of the attack; 400 / 4 companies, battalion HQ not split out, so a little high" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
                         start: { lonLat: [2.756584, 50.382639] }
                         sectorId: barrage-4cdn
@@ -1975,7 +1975,7 @@ forces:
                       - id: 72bn-b
                         name: "72nd Bn, Company B"
                         role: assault
-                        strength: { value: 100, source: mcevoy-finlay-1920, page: "46", note: "400 all ranks assembled in Gobron Tunnel on the eve of the attack, a quarter each" }
+                        strength: { value: 100, estimate: "mcevoy-finlay-1920 p. 46: 400 of all ranks assembled in Gobron Tunnel on the eve of the attack; 400 / 4 companies, battalion HQ not split out, so a little high" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
                         start: { lonLat: [2.756791, 50.384445] }
                         sectorId: barrage-4cdn
@@ -1984,7 +1984,7 @@ forces:
                       - id: 72bn-c
                         name: "72nd Bn, Company C"
                         role: support
-                        strength: { value: 100, source: mcevoy-finlay-1920, page: "46", note: "400 all ranks assembled in Gobron Tunnel on the eve of the attack, a quarter each" }
+                        strength: { value: 100, estimate: "mcevoy-finlay-1920 p. 46: 400 of all ranks assembled in Gobron Tunnel on the eve of the attack; 400 / 4 companies, battalion HQ not split out, so a little high" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
                         start: { lonLat: [2.755224, 50.382405] }
                         sectorId: barrage-4cdn
@@ -1993,7 +1993,7 @@ forces:
                       - id: 72bn-d
                         name: "72nd Bn, Company D"
                         role: support
-                        strength: { value: 100, source: mcevoy-finlay-1920, page: "46", note: "400 all ranks assembled in Gobron Tunnel on the eve of the attack, a quarter each" }
+                        strength: { value: 100, estimate: "mcevoy-finlay-1920 p. 46: 400 of all ranks assembled in Gobron Tunnel on the eve of the attack; 400 / 4 companies, battalion HQ not split out, so a little high" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
                         start: { lonLat: [2.755430, 50.384211] }
                         sectorId: barrage-4cdn
@@ -2119,7 +2119,7 @@ forces:
             name: "British 5th Division (corps reserve: 15th and 95th Brigades)"
             kind: group
             leaderId: stephens
-            # A division in fact; kind "group" so the corps lists only the four attacking Canadian divisions (oob-canadian.md)
+            # A division in fact, "in corps reserve" (Nicholson p. 252 note; hussey-inman-1921 p. 157); kind "group" so the corps lists only the four attacking Canadian divisions (oob-canadian.md)
             children:
               - id: 15bde-brit
                 name: "British 15th Infantry Brigade (corps reserve)"

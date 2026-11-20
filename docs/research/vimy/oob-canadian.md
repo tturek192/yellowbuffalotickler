@@ -14,9 +14,9 @@ scenarios/vimy-1917/scenario.yaml --seed 1`) runs to completion at minute 768.
 
 | id | Tier | Used for |
 |---|---|---|
-| `nicholson-1962` | official | The spine: ch. VIII pp. 247-263 (the plan, each division's assaulting battalions right to left, the bounds and the reserve brigades); Appendix A pp. 539-542 (commanders' dates); Appendix B p. 546 (brigades' battalions, November 1918); pp. 225, 232 (the 85th and 116th; battalion strength). |
+| `nicholson-1962` | official | The spine: ch. VIII pp. 247-263 (the plan, each division's assaulting battalions right to left, the bounds and the reserve brigades); Appendix A pp. 539-542 (commanders' dates); Appendix B p. 545 (brigades' battalions, November 1918); pp. 225, 232 (the 85th and 116th; battalion strength); p. 252 note (the British 5th Division in corps reserve). |
 | `hussey-inman-1921` | secondary | The British 13th Brigade's assembly, start time, battalion order and roles (pp. 149, 153-155); the 5th Division in corps reserve (p. 157); the 15th and 95th Brigades' battalions (pp. 158, 161). |
-| `mcevoy-finlay-1920` | secondary | The 72nd Battalion's strength on the eve of the attack (p. 46). |
+| `mcevoy-finlay-1920` | secondary | The 72nd Battalion's strength on the eve of the attack (p. 46), the basis of an estimate. |
 | `hayes-1920` | secondary | The 85th Battalion: reserve role (p. 45), the evening attack by C and D Companies (pp. 51-53). |
 | `holland-1918` | secondary | The 10th Battalion's two objectives (pp. 28-29). |
 | `wikipedia-vimy-oob` | tertiary | A lead for the whole structure; the only source read for the 60th Battalion in the 9th Brigade and for the 9th, 15th and 95th Brigades in corps reserve (citing Turner 2005, p. 39, which was not read); the British battalions' full titles. |
@@ -31,21 +31,21 @@ entered. The other divisions' arrows were not readable.
 
 | Division | Brigade (leader) | Battalions | Source |
 |---|---|---|---|
-| `1cdn` | `1bde` (Griesbach), division reserve for the Blue and Brown | 1st, 2nd, 3rd, 4th | pp. 255-257; App. B p. 546 |
-| | `2bde` (Loomis) | 5th, 7th, 10th (assault), 8th | p. 253; App. B p. 546 |
-| | `3bde` (Tuxford) | 15th, 14th, 16th (assault), 13th | p. 253; App. B p. 546 |
-| `2cdn` | `4bde` (Rennie) | 18th, 19th (assault), 21st (Red), 20th | pp. 254-255; App. B p. 546 |
-| | `5bde` (A. H. Macdonell) | 24th, 26th (assault), 25th (Red), 22nd (mop-up) | pp. 254-255; App. B p. 546 |
+| `1cdn` | `1bde` (Griesbach), division reserve for the Blue and Brown | 1st, 2nd, 3rd, 4th | pp. 255-257; App. B p. 545 |
+| | `2bde` (Loomis) | 5th, 7th, 10th (assault), 8th | p. 253; App. B p. 545 |
+| | `3bde` (Tuxford) | 15th, 14th, 16th (assault), 13th | p. 253; App. B p. 545 |
+| `2cdn` | `4bde` (Rennie) | 18th, 19th (assault), 21st (Red), 20th | pp. 254-255; App. B p. 545 |
+| | `5bde` (A. H. Macdonell) | 24th, 26th (assault), 25th (Red), 22nd (mop-up) | pp. 254-255; App. B p. 545 |
 | | `6bde` (Ketchen), division reserve for the Blue and Brown | 31st, 28th, 29th (Blue), 27th (Brown) | pp. 256-257 |
 | | `13bde-brit` (Jones), attached | 1st Royal West Kent, 2nd KOSB (Blue, then Brown), 14th and 15th Royal Warwicks | p. 256; `hussey-inman-1921` pp. 149, 153-154 |
-| `3cdn` | `7bde` (A. C. Macdonell) | RCR, PPCLI, 42nd (assault), 49th | pp. 254-256; App. B p. 546 |
-| | `8bde` (Elmsley) | 1st, 2nd, 4th CMR (assault), 5th CMR | pp. 254-256; App. B p. 546 |
-| | `9bde` (Hill), corps reserve | 43rd, 52nd, 58th, 60th, 116th | `wikipedia-vimy-oob`; App. B p. 546; p. 225 |
+| `3cdn` | `7bde` (A. C. Macdonell) | RCR, PPCLI, 42nd (assault), 49th | pp. 254-256; App. B p. 545 |
+| | `8bde` (Elmsley) | 1st, 2nd, 4th CMR (assault), 5th CMR | pp. 254-256; App. B p. 545 |
+| | `9bde` (Hill), corps reserve | 43rd, 52nd, 58th, 60th, 116th | `wikipedia-vimy-oob`; App. B p. 545; p. 225 |
 | `4cdn` | `10bde` (Hilliam) | 44th, 50th (standing by for the Pimple) | pp. 259, 261 |
 | | `11bde` (Odlum) | 102nd, 87th (assault), 54th, 75th (through to the Red), 47th (attached from the 10th), 85th | p. 259 |
 | | `12bde` (MacBrien) | 38th, 72nd, 73rd (assault), 78th (through to the Red), 46th (attached from the 10th) | pp. 259-261 |
-| `5bdiv` (group) | `15bde-brit` (Turner), corps reserve | 16th Royal Warwicks, 1st Norfolk, 1st Bedford, 1st Cheshire | `hussey-inman-1921` pp. 157-158; `wikipedia-vimy-oob` |
-| | `95bde-brit` (Gordon-Lennox), corps reserve | 1st Devon, 1st East Surrey, 1st DCLI, 12th Gloucester | `hussey-inman-1921` pp. 157-158, 161; `wikipedia-vimy-oob` |
+| `5bdiv` (group) | `15bde-brit` (Turner), corps reserve | 16th Royal Warwicks, 1st Norfolk, 1st Bedford, 1st Cheshire | p. 252 note (the 5th Division "in corps reserve"); `hussey-inman-1921` pp. 157-158; `wikipedia-vimy-oob` |
+| | `95bde-brit` (Gordon-Lennox), corps reserve | 1st Devon, 1st East Surrey, 1st DCLI, 12th Gloucester | p. 252 note; `hussey-inman-1921` pp. 157-158, 161; `wikipedia-vimy-oob` |
 
 **Attached battalions sit under the brigade they fought with** (the 47th under the 11th Brigade, the 46th under the
 12th, the 85th under the 11th; the British 13th Brigade under the 2nd Canadian Division), because the engine and the
@@ -65,8 +65,8 @@ Battalion's companies, which mopped up for the 25th), `reserve` (holds where it 
 **The pattern by division** (each line an `objectiveLineId`; the engine moves each company to its line, never past it):
 
 - **1st Division** (pp. 253, 255): each assaulting battalion's two forward companies (A, B) to the Black; its two rear
-  companies (C, D) cross at Zero behind them and take the lead to the Red, "the original rear companies of the forward
-  battalions taking the lead" (p. 255). The 10th Battalion's history confirms its "second and final objective" (holland
+  companies (C, D) take the lead to the Red, "the original rear companies of the forward battalions taking the lead"
+  (p. 255, at 6:45); that they crossed at Zero behind the forward companies is an estimate (p. 255 gives no start). The 10th Battalion's history confirms its "second and final objective" (holland
   p. 29). The 1st Brigade's 1st, 3rd and 4th Battalions take the Blue with A and B, and the Brown with C and D (see
   Conflicts).
 - **2nd Division** (pp. 254-257): the assaulting battalions' four companies to the Black (A, B assault; C, D support);
@@ -93,7 +93,7 @@ Battalion's companies, which mopped up for the 25th), `reserve` (holds where it 
 | Value | Who | Basis |
 |---|---|---|
 | 0 | every first-wave company | p. 253: the attack opened "Promptly at 5:30" (sourced) |
-| 0 | 1st Division rear companies | p. 255 (sourced; they crossed at Zero and led to the Red at 6:45; the engine holds them behind the barrage) |
+| 0 | 1st Division rear companies | estimate: p. 255 has them "taking the lead" to the Red at 6:45 (Zero + 75) but gives no start time; taken to cross at Zero behind the forward companies (p. 253), and the engine holds them behind the barrage |
 | 0 | other following companies; the passing-through battalions (21st, 25th, 54th, 75th, 78th) and the 22nd | estimate: p. 253 names no interval between waves; p. 259 has the supporting 75th pinned in its assembly trenches by the opening fire, so the supporting battalions moved at Zero; the engine holds them behind the barrage |
 | 120 | British 13th Brigade | `hussey-inman-1921` p. 153: "moved forward at 7.30 a.m." (sourced) |
 | 120 | 1st and 6th Brigades | estimate: taken to move with the 13th Brigade, as the other reserve brigades of the same bound; p. 256 has them on the Red Line by 9:30 |
@@ -152,8 +152,9 @@ the 13th Brigade's left); the lines, not the companies, stop short.
   21 are exactly the first-wave battalions entered here (6 + 4 + 6 + 5). 15,000 ÷ 21 = 714 a battalion, 179 a company.
   The 15,000 probably includes attached machine-gunners, sappers and carrying parties, so this is high for the rifle
   companies. The same figure is used for every Canadian battalion, for want of others (Conflicts).
-- **The 72nd Battalion: 100 a company** (sourced): "400 of all ranks was the total number assembled in the tunnel on
-  that evening" (`mcevoy-finlay-1920` p. 46), a quarter each.
+- **The 72nd Battalion: 100 a company** (estimate from a sourced total): "400 of all ranks was the total number
+  assembled in the tunnel on that evening" (`mcevoy-finlay-1920` p. 46); 400 ÷ 4 = 100. The 400 includes battalion
+  headquarters, so a company figure is a little lower in fact.
 - **British battalions: 150 a company** (estimate): no figure for April 1917 was found. Nicholson p. 232 (note) has
   Currie reckoning about 1,000 a battalion of which "some 400 men in each unit would not be available for the fighting
   line" (1918, of Canadian battalions): 600 a battalion.
@@ -166,7 +167,7 @@ the 13th Brigade's left); the lines, not the companies, stop short.
 ### Battalions: membership, roles, objectives, start times
 
 Company entries read `letter role → objective line, +startAfterMin`. Pages are Nicholson's unless another source is
-named; the start-time sources are in the table above. "App. B p. 546" is Nicholson's list of the brigades' battalions
+named; the start-time sources are in the table above. "App. B p. 545" is Nicholson's list of the brigades' battalions
 in November 1918, used where Nicholson's Vimy narrative does not name a battalion; it agrees with the narrative and
 with `wikipedia-vimy-oob` for April 1917 except for the 12th Brigade (the 85th replaced the 73rd later in 1917, p. 225)
 and the 9th (the 60th, below).
@@ -174,20 +175,20 @@ and the 9th (the 60th, below).
 | Battalion | Name | Brigade | Companies | Membership | Role / objective | Quote (≤ 25 words) | Tier |
 |---|---|---|---|---|---|---|---|
 | `1bn` | 1st Battalion | `1bde` | A assault → blue-1cdn, +120 min; B assault → blue-1cdn, +120 min; C assault → brown-1cdn, +120 min; D assault → brown-1cdn, +120 min | p. 256 | pp. 256-257 | "On the extreme right the 1st Battalion ran into spirited resistance at the Zwischen-Stellung" | official |
-| `2bn` | 2nd Battalion | `1bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
+| `2bn` | 2nd Battalion | `1bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
 | `3bn` | 3rd Battalion | `1bde` | A assault → blue-1cdn, +120 min; B assault → blue-1cdn, +120 min; C assault → brown-1cdn, +120 min; D assault → brown-1cdn, +120 min | p. 256 | pp. 256-257 | "Griesbach keeping his 3rd and 4th Battalions forward" | official |
 | `4bn` | 4th Battalion | `1bde` | A assault → blue-1cdn, +120 min; B assault → blue-1cdn, +120 min; C assault → brown-1cdn, +120 min; D assault → brown-1cdn, +120 min | p. 256 | pp. 256-257 | "the 1st Brigade had deployed the 1st, 3rd and 4th Battalions" | official |
 | `5bn` | 5th Battalion | `2bde` | A assault → black-1cdn, +0 min; B assault → black-1cdn, +0 min; C assault → red-1cdn, +0 min; D assault → red-1cdn, +0 min | p. 253 | pp. 253, 255 | "from right to left the 5th, 7th and 10th Battalions of the 2nd Brigade" | official |
 | `7bn` | 7th Battalion | `2bde` | A assault → black-1cdn, +0 min; B assault → black-1cdn, +0 min; C assault → red-1cdn, +0 min; D assault → red-1cdn, +0 min | p. 253 | pp. 253, 255 | "the original rear companies of the forward battalions taking the lead" | official |
-| `8bn` | 8th Battalion | `2bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
+| `8bn` | 8th Battalion | `2bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
 | `10bn` | 10th Battalion | `2bde` | A assault → black-1cdn, +0 min; B assault → black-1cdn, +0 min; C assault → red-1cdn, +0 min; D assault → red-1cdn, +0 min | p. 253 | pp. 253, 255; holland-1918 pp. 28-29 | "Shortly after 9.0 a.m. the 10th Battalion reached its second and final objective" | official / secondary |
-| `13bn` | 13th Battalion | `3bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
+| `13bn` | 13th Battalion | `3bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
 | `14bn` | 14th Battalion | `3bde` | A assault → black-1cdn, +0 min; B assault → black-1cdn, +0 min; C assault → red-1cdn, +0 min; D assault → red-1cdn, +0 min | p. 253 | pp. 253, 255 | "the 15th, 14th and 16th Battalions of the 3rd Brigade" | official |
 | `15bn` | 15th Battalion | `3bde` | A assault → black-1cdn, +0 min; B assault → black-1cdn, +0 min; C assault → red-1cdn, +0 min; D assault → red-1cdn, +0 min | p. 253 | pp. 253, 255 | "the 15th, 14th and 16th Battalions of the 3rd Brigade" | official |
 | `16bn` | 16th Battalion | `3bde` | A assault → black-1cdn, +0 min; B assault → black-1cdn, +0 min; C assault → red-1cdn, +0 min; D assault → red-1cdn, +0 min | p. 253 | pp. 253-255 | "Private W. J. Milne, of the 16th Battalion" | official |
 | `18bn` | 18th Battalion | `4bde` | A assault → black-2cdn, +0 min; B assault → black-2cdn, +0 min; C support → black-2cdn, +0 min; D support → black-2cdn, +0 min | p. 254 | p. 254 | "the 18th and 19th Battalions of the 4th Brigade" | official |
 | `19bn` | 19th Battalion | `4bde` | A assault → black-2cdn, +0 min; B assault → black-2cdn, +0 min; C support → black-2cdn, +0 min; D support → black-2cdn, +0 min | p. 254 | p. 254 | "advancing on a 1400-yard front with four battalions forward" | official |
-| `20bn` | 20th Battalion | `4bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
+| `20bn` | 20th Battalion | `4bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | estimate | (not named at Vimy; brigade reserve assumed) | estimate |
 | `21bn` | 21st Battalion | `4bde` | A assault → red-2cdn, +0 min; B assault → red-2cdn, +0 min; C support → red-2cdn, +0 min; D support → red-2cdn, +0 min | p. 255 | p. 255 | "the 21st Battalion to attack and pass through Les Tilleuls" | official |
 | `22bn` | 22nd Battalion | `5bde` | A mop-up → red-2cdn, +0 min; B mop-up → red-2cdn, +0 min; C mop-up → red-2cdn, +0 min; D mop-up → red-2cdn, +0 min | p. 255 | p. 255 | "with the aid of mop-up parties from the 22nd Battalion took close to 400 prisoners" | official |
 | `24bn` | 24th Battalion | `5bde` | A assault → black-2cdn, +0 min; B assault → black-2cdn, +0 min; C support → black-2cdn, +0 min; D support → black-2cdn, +0 min | p. 254 | p. 254 | "the 24th and 26th Battalions of the 5th Brigade" | official |
@@ -204,16 +205,16 @@ and the 9th (the 60th, below).
 | `rcr` | The Royal Canadian Regiment | `7bde` | A assault → black-3cdn, +0 min; B assault → black-3cdn, +0 min; C assault → red-3cdn, +0 min; D assault → red-3cdn, +0 min | p. 254 | pp. 254-256 | "The Royal Canadian Regiment, P.P.C.L.I., and the -42nd Battalion" | official |
 | `ppcli` | Princess Patricia's Canadian Light Infantry | `7bde` | A assault → black-3cdn, +0 min; B assault → black-3cdn, +0 min; C assault → red-3cdn, +0 min; D assault → red-3cdn, +0 min | p. 254 | pp. 254-256 | "The P.P.C.L.I. took over part of the front of the 42nd Battalion" | official |
 | `42bn` | 42nd Battalion | `7bde` | A assault → black-3cdn, +0 min; B assault → black-3cdn, +0 min; C assault → red-3cdn, +0 min; D assault → red-3cdn, +0 min | p. 254 | pp. 254-256 | "which in turn extended to the left to cover the new flank" | official |
-| `49bn` | 49th Battalion | `7bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | p. 256 | "carrying parties of the reserve battalion from each brigade brought forward tools and wire" | official |
+| `49bn` | 49th Battalion | `7bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | p. 256 | "carrying parties of the reserve battalion from each brigade brought forward tools and wire" | official |
 | `1cmr` | 1st Battalion, Canadian Mounted Rifles | `8bde` | A assault → black-3cdn, +0 min; B assault → black-3cdn, +0 min; C assault → red-3cdn, +0 min; D assault → red-3cdn, +0 min | p. 254 | pp. 254-255 | "the infantry (1st C.M.R.) which they were supporting" | official |
 | `2cmr` | 2nd Battalion, Canadian Mounted Rifles | `8bde` | A assault → black-3cdn, +0 min; B assault → black-3cdn, +0 min; C assault → red-3cdn, +0 min; D assault → red-3cdn, +0 min | p. 254 | pp. 254-256 | "the 8th Brigade's centre battalion, still the 2nd C.M.R., had found La Folie Farm a mass of rubble" | official |
 | `4cmr` | 4th Battalion, Canadian Mounted Rifles | `8bde` | A assault → black-3cdn, +0 min; B assault → black-3cdn, +0 min; C assault → red-3cdn, +0 min; D assault → red-3cdn, +0 min | p. 254 | pp. 254-256 | "Elmsley's 8th Brigade (1st, 2nd and 4th Canadian Mounted Rifles)" | official |
-| `5cmr` | 5th Battalion, Canadian Mounted Rifles | `8bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | p. 256 | "carrying parties of the reserve battalion from each brigade" | official |
-| `43bn` | 43rd Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | wikipedia-vimy-oob | "the 9th Canadian Brigade, 15th Brigade and 95th Brigade were kept in corps reserve" | official / tertiary |
-| `52bn` | 52nd Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | wikipedia-vimy-oob | "kept in corps reserve" | official / tertiary |
-| `58bn` | 58th Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546 | wikipedia-vimy-oob | "kept in corps reserve" | official / tertiary |
+| `5cmr` | 5th Battalion, Canadian Mounted Rifles | `8bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | p. 256 | "carrying parties of the reserve battalion from each brigade" | official |
+| `43bn` | 43rd Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | wikipedia-vimy-oob | "the 9th Canadian Brigade, 15th Brigade and 95th Brigade were kept in corps reserve" | official / tertiary |
+| `52bn` | 52nd Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | wikipedia-vimy-oob | "kept in corps reserve" | official / tertiary |
+| `58bn` | 58th Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545 | wikipedia-vimy-oob | "kept in corps reserve" | official / tertiary |
 | `60bn` | 60th Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | wikipedia-vimy-oob; p. 225 | wikipedia-vimy-oob | "60th (Victoria rifles of Canada) Battalion" | tertiary |
-| `116bn` | 116th Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 546; p. 225 | wikipedia-vimy-oob | "the 116th Battalion, raised in Ontario, were sent to France" | official / tertiary |
+| `116bn` | 116th Battalion | `9bde` | A reserve; B reserve; C reserve; D reserve | App. B p. 545; p. 225 | wikipedia-vimy-oob | "the 116th Battalion, raised in Ontario, were sent to France" | official / tertiary |
 | `44bn` | 44th Battalion | `10bde` | A reserve; B reserve; C reserve; D reserve | p. 261 | p. 261 | "which had been standing by in readiness to assault the Pimple" | official |
 | `50bn` | 50th Battalion | `10bde` | A reserve; B reserve; C reserve; D reserve | p. 261 | p. 261 | "the 44th Battalion on the right and the 50th on the left" | official |
 | `54bn` | 54th Battalion | `11bde` | A assault → red-4cdn, +0 min; B assault → red-4cdn, +0 min; C support → red-4cdn, +0 min; D support → red-4cdn, +0 min | p. 259 | p. 259 | "the 102nd Battalion seizing its half of the forward slope and the 54th passing through" | official |
@@ -227,20 +228,20 @@ and the 9th (the 60th, below).
 | `73bn` | 73rd Battalion | `12bde` | A assault → black-4cdn, +0 min; B assault → black-4cdn, +0 min; C support → black-4cdn, +0 min; D support → black-4cdn, +0 min | p. 260 | p. 260 | "here the 73rd consolidated to form a firm left flank" | official |
 | `78bn` | 78th Battalion | `12bde` | A assault → red-4cdn, +0 min; B assault → red-4cdn, +0 min; C support → red-4cdn, +0 min; D support → red-4cdn, +0 min | p. 261 | p. 261 | "Passing through the 38th Battalion according to plan, the 78th Battalion" | official |
 | `46bn` | 46th Battalion (attached from the 10th Brigade) | `12bde` | A assault → black-4cdn, +750 min; B assault → black-4cdn, +750 min; C reserve; D reserve | p. 259 | p. 261 | "two companies of the 46th, which was on loan from the 10th Brigade, came forward to capture a number of craters" | official |
-| `16rwarwick` | 16th Battalion, Royal Warwickshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "the 5th Division had been kept back in reserve, ready, on the 9th, to move at two hours' notice" | secondary / tertiary |
-| `1norfolk` | 1st Battalion, Norfolk Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "in the 15th Brigade, the Norfolks and Bedfords" | secondary / tertiary |
-| `1bedford` | 1st Battalion, Bedfordshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "in the 15th Brigade, the Norfolks and Bedfords" | secondary / tertiary |
-| `1cheshire` | 1st Battalion, Cheshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "1st Battalion, Cheshire Regiment" | tertiary / secondary |
-| `1devon` | 1st Battalion, Devonshire Regiment | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "in the 95th Brigade, the Devons and D.C.L.I." | secondary / tertiary |
-| `1esurrey` | 1st Battalion, East Surrey Regiment | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 161; wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "the East Surreys, on the right of the 95th Brigade" | secondary / tertiary |
-| `1dcli` | 1st Battalion, Duke of Cornwall's Light Infantry | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "in the 95th Brigade, the Devons and D.C.L.I." | secondary / tertiary |
-| `12glosters` | 12th Battalion, Gloucestershire Regiment | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 161; wikipedia-vimy-oob | hussey-inman-1921 p. 157 | "the machine-guns and rifles of the Gloucesters and East Surreys" | secondary / tertiary |
+| `16rwarwick` | 16th Battalion, Royal Warwickshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "the 5th Division had been kept back in reserve, ready, on the 9th, to move at two hours' notice" | official / secondary / tertiary |
+| `1norfolk` | 1st Battalion, Norfolk Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "in the 15th Brigade, the Norfolks and Bedfords" | official / secondary / tertiary |
+| `1bedford` | 1st Battalion, Bedfordshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "in the 15th Brigade, the Norfolks and Bedfords" | official / secondary / tertiary |
+| `1cheshire` | 1st Battalion, Cheshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "1st Battalion, Cheshire Regiment" | official / tertiary / secondary |
+| `1devon` | 1st Battalion, Devonshire Regiment | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "in the 95th Brigade, the Devons and D.C.L.I." | official / secondary / tertiary |
+| `1esurrey` | 1st Battalion, East Surrey Regiment | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 161; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "the East Surreys, on the right of the 95th Brigade" | official / secondary / tertiary |
+| `1dcli` | 1st Battalion, Duke of Cornwall's Light Infantry | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "in the 95th Brigade, the Devons and D.C.L.I." | official / secondary / tertiary |
+| `12glosters` | 12th Battalion, Gloucestershire Regiment | `95bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 161; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "the machine-guns and rifles of the Gloucesters and East Surreys" | official / secondary / tertiary |
 ### Global values
 
 | Value | Where | Source | Page | Quote (≤ 25 words) | Tier |
 |---|---|---|---|---|---|
 | `strength` 179 (Canadian companies) | 196 companies (49 battalions) | `nicholson-1962` | 252, 253 | "Fifteen thousand Canadians, the first wave"; "the long line of twenty-one battalions pushed forward in good order" | estimate |
-| `strength` 100 (72nd Battalion) | `72bn-a`…`d` | `mcevoy-finlay-1920` | 46 | "400 of all ranks was the total number assembled in the tunnel on that evening" | secondary |
+| `strength` 100 (72nd Battalion) | `72bn-a`…`d` | `mcevoy-finlay-1920` (in the estimate text) | 46 | "400 of all ranks was the total number assembled in the tunnel on that evening" | estimate (400 ÷ 4, from a secondary source) |
 | `strength` 150 (British companies) | 48 companies (12 battalions) | `nicholson-1962` | 232 note | "some 400 men in each unit would not be available for the fighting line" | estimate |
 | `paperStrength` 250 | all 248 companies | `nicholson-1962` | 232 note | "of the six battalions' total strength of approximately 6000 men" | estimate |
 | `startAfterMin` | see "Start times" | as cited there | | | official / secondary / estimate |
@@ -334,8 +335,8 @@ companies A-D.
   numbered about 216 ("108 casualties—about half the strength of the two companies", p. 263), about 108 a company
   after three days' fighting. The average is kept for want of per-battalion figures.
 - **Corps reserve.** `wikipedia-vimy-oob` (citing Turner) puts the 9th, 15th and 95th Brigades in corps reserve;
-  `hussey-inman-1921` p. 157 has the 5th Division "kept back in reserve, ready... to move at two hours' notice".
-  Consistent; neither gives the 9th Brigade's position.
+  Nicholson's p. 252 note has "the British 5th Division (in corps reserve)" (official); `hussey-inman-1921` p. 157 has the 5th Division "kept back in reserve, ready... to move at two hours' notice".
+  Consistent; none gives the 9th Brigade's position, and only the tertiary source puts the 9th Brigade in corps reserve.
 - **The 2nd Division's Blue frontage.** The 13th Brigade came in "because of the 2nd Division's widening front" (p.
   256), but the scenario's 2nd Division sector keeps its width; the Blue-line battalions share it (method 5), so the
   13th Brigade's companies stand within the sector rather than to its north.
