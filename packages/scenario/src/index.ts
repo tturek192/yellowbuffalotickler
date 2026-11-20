@@ -6,6 +6,7 @@ export * from './schema';
 export * from './load';
 export { checkReferences } from './references';
 export { allCompanies } from './all-companies';
+export * from './queries';
 export { projectLonLat, unprojectXY, projectLonLatPlacements, FrameSchema, type Frame } from './frame';
 export { geoToScenarioParts, type GeoJsonFeature, type GeoJsonFeatureCollection } from './geo';
 export { decodeTerrain, encodeTerrain, terrainGridProblem, TerrainGridSchema, type Terrain, type TerrainGrid, type TerrainGridData } from './terrain';

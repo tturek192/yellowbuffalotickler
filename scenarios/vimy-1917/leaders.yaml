@@ -1,2 +1,291 @@
-# Leaders of both sides (filled by a later task). An empty stub until then.
-leaders: []
+# Leaders of both sides. Task 8 entered the allied leaders below; Task 9 adds the German ones.
+# Research notes: docs/research/vimy/leaders.md (names, ranks, sources) and docs/research/vimy/leader-rubric.md (what each
+# rating means). Every rating is a DRAFT ESTIMATE by the builder, justified from cited conduct; the ratings are the
+# owner's to change. A rating of 3 with "no conduct ... found" is a placeholder midpoint, not a judgement.
+leaders:
+  # First Army. Recorded as a leader only; the scenario has no army formation.
+  - id: horne
+    name: { value: "Henry Horne", source: "nicholson-1962", page: "247", note: "the text layer reads 'Home', an OCR slip; index p. 602: 'Horne, Gen. Sir H.'" }
+    rank: { value: "General", source: "nicholson-1962", page: "247" }
+  # Canadian Corps
+  - id: byng
+    name: { value: "Julian Byng", source: "nicholson-1962", page: "247", note: "'Sir Julian Byng sent General Sir Henry Home a copy of his \"Scheme of Operations\"'" }
+    rank: { value: "Lieutenant-General", source: "nicholson-1962", page: "283", note: "'Lieut.-General Sir Julian Byng was taking over the British Third Army' (June 1917)" }
+    ratings:
+      planning: { value: 5, estimate: "Nicholson p. 247: wrote the corps 'Scheme of Operations' (5 March); p. 250: a full-scale replica of the battle area laid out 'under General Byng's personal direction', rehearsed from platoon to division" }
+      orderSpeed: { value: 4, estimate: "pp. 257-258: 'shortly after two o'clock' ordered a squadron to push on to Willerval, and at 2:40 telephoned First Army to propose using cavalry, once the Brown Line 'seemed assured'" }
+      adaptiveness: { value: 3, estimate: "p. 258: sought to exploit beyond the plan the same afternoon; but p. 268 calls the corps timetable 'inflexible', and the cavalry had been left out of the scheme (p. 258)" }
+      riskTolerance: { value: 3, estimate: "p. 258: the attack was framed as a limited-objective, rigidly timed set-piece; the afternoon cavalry proposal was the one reach beyond it" }
+      moraleEffect: { value: 4, estimate: "p. 250: commanders 'at all levels freely briefed their subordinates' so that 'all ranks knew just where they would have to go'; no direct evidence of his personal effect on morale" }
+  # 1st Canadian Division
+  - id: currie
+    name: { value: "Arthur Currie", source: "nicholson-1962", page: "283", note: "'Lieut.-General Sir Arthur Currie' (June 1917); Appendix A, p. 541: 'Maj.-Gen. A. W. Currie', GOC 1st Division 13 Sep. 15 - 8 Jun. 17" }
+    rank: { value: "Major-General", source: "nicholson-1962", page: "253", note: "'the 1st Division, commanded by MajorGeneral Currie'" }
+    ratings:
+      planning: { value: 5, estimate: "p. 250: studied the French Verdun attack and lectured the corps on its lessons; p. 258: his division took all four objectives 'on schedule'" }
+      orderSpeed: { value: 4, estimate: "p. 255: when the Red Line's right 500 yards held out, the 1st Brigade was brought forward from reserve to take it as part of the next bound" }
+      adaptiveness: { value: 4, estimate: "p. 255: re-tasked the reserve brigade to the uncaptured right of the Red Line; p. 257: threw back the right flank to keep touch with the 51st Division" }
+      riskTolerance: { value: 3, estimate: "p. 247-248: kept to the corps timetable and its pauses; nothing in the sources read shows him reaching beyond it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 2nd Canadian Division
+  - id: burstall
+    name: { value: "H. E. Burstall", source: "nicholson-1962", page: "Appendix A, p. 541", note: "'Maj.-Gen. Sir H. E. Burstall', GOC 2nd Division 15 Dec. 16 - 22 May 19" }
+    rank: { value: "Major-General", source: "nicholson-1962", page: "254", note: "'Major-General Burstall's 2nd Division'" }
+    ratings:
+      planning: { value: 4, estimate: "p. 254: Black Line by 6:15; p. 255: Red by eight o'clock; p. 256: Blue, then p. 257 Brown, with the attached British 13th Brigade worked into the plan on the widening front" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "p. 254: the eight attached tanks failed early and the attack went on without them; the plan had not relied on them (p. 248)" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 3rd Canadian Division
+  - id: lipsett
+    name: { value: "L. J. Lipsett", source: "nicholson-1962", page: "Appendix A, p. 542", note: "'Maj.-Gen. L. J. Lipsett', GOC 3rd Division 16 Jun. 16 - 12 Sep. 18" }
+    rank: { value: "Major-General", source: "nicholson-1962", page: "254", note: "'Major-General Lipsett attacked on the right, opposite Bois de la Folie'" }
+    ratings:
+      planning: { value: 4, estimate: "p. 254: 'in general the attack went like clockwork'; Black confirmed by 6:25 and the crest by 7:30 (p. 255)" }
+      orderSpeed: { value: 4, estimate: "p. 256: at about nine o'clock, on learning Hill 145 was still German, the 7th Brigade was set to form a defensive flank" }
+      adaptiveness: { value: 4, estimate: "p. 256: the defensive flank on the open left, from the Bois de la Folie back to the old front line" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 4th Canadian Division
+  - id: watson
+    name: { value: "D. Watson", source: "nicholson-1962", page: "Appendix A, p. 542", note: "'Maj.-Gen. Sir D. Watson', GOC 4th Division 25 Apr. 16 - 23 Jun. 19" }
+    rank: { value: "Major-General", source: "nicholson-1962", page: "259", note: "'Major-General Watson hoped to overrun the forward slope position by surprise'" }
+    ratings:
+      planning: { value: 3, estimate: "p. 259: assembly trenches dug well forward and subways driven to within 150 yards of the German line; but a German trench left unshelled at a battalion's request broke the 11th Brigade's left" }
+      orderSpeed: { value: 3, estimate: "p. 261: called the 10th Brigade forward at 6:00 p.m. on 9 April, after the morning's failure; Hill 145 fell the next afternoon" }
+      adaptiveness: { value: 4, estimate: "p. 261: committed the reserve brigade meant for the Pimple to Hill 145 instead, and (p. 262) put off the Pimple attack 48 hours to let it recover" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # British 5th Division (13th Brigade attached to 2nd Canadian Division; 15th and 95th in corps reserve)
+  - id: stephens
+    name: { value: "R. B. Stephens", source: "hussey-inman-1921", page: "267", note: "Appendix II, 1917: 'Maj.-Gen. R. B. Stephens', GOC 5th Division" }
+    rank: { value: "Major-General", source: "hussey-inman-1921", page: "267" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 1st Canadian Infantry Brigade
+  - id: griesbach
+    name: { value: "W. A. Griesbach", source: "nicholson-1962", page: "255", note: "'the 1st Brigade (Brig.-Gen. W. A. Griesbach), brought forward from reserve'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "255" }
+    ratings:
+      planning: { value: 5, estimate: "p. 257: foreseeing uncut wire on the right, every forward company of two battalions carried 24 pairs of wire-cutters and rifle wire-breakers, and got through both belts 'without losing the barrage'" }
+      orderSpeed: { value: 4, estimate: "p. 257: at mid-afternoon threw back his right flank to keep touch with the 51st Division" }
+      adaptiveness: { value: 4, estimate: "p. 255-257: took on the Red Line's uncaptured right as well as the Blue and Brown bounds" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 2nd Canadian Infantry Brigade
+  - id: loomis
+    name: { value: "F. O. W. Loomis", source: "nicholson-1962", page: "253", note: "'the 2nd Brigade (Brig.-Gen. F. O. W. Loomis)'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "253" }
+    ratings:
+      planning: { value: 4, estimate: "p. 254-255: Black by 6:15 and the Red's left half by shortly after seven, on the timetable; holland-1918 pp. 28-29: the 10th Battalion on its final objective soon after 9 a.m." }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 3rd Canadian Infantry Brigade
+  - id: tuxford
+    name: { value: "G. S. Tuxford", source: "nicholson-1962", page: "253", note: "'the 3rd Brigade (Brig.-Gen. G. S. Tuxford)'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "253" }
+    ratings:
+      planning: { value: 4, estimate: "p. 254: heavy losses at the Zwolfer-Graben but the Black Line taken by 6:15; Red by shortly after seven (p. 255)" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 4th Canadian Infantry Brigade
+  - id: rennie
+    name: { value: "R. Rennie", source: "nicholson-1962", page: "254", note: "'the 4th Brigade (Brig.-Gen. R. Rennie)'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "254" }
+    ratings:
+      planning: { value: 4, estimate: "p. 254-255: Black by 6:15; its supporting 21st Battalion through Les Tilleuls to the Red Line, on time" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 5th Canadian Infantry Brigade
+  - id: macdonell-ah
+    name: { value: "A. H. Macdonell", source: "nicholson-1962", page: "254", note: "'the 5th Brigade (Brig.-Gen. A. H. Macdonell)'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "254" }
+    ratings:
+      planning: { value: 4, estimate: "p. 255: the 25th Battalion seized the Turko-Graben with mop-up parties of the 22nd, close to 400 prisoners" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 6th Canadian Infantry Brigade
+  - id: ketchen
+    name: { value: "H. D. B. Ketchen", source: "nicholson-1962", page: "Appendix A, p. 542", note: "6th Infantry Brigade, 25 Jun. 15 - 20 Apr. 18" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "256", note: "'Brig.-Gen. Ketchen's 6th Brigade'" }
+    ratings:
+      planning: { value: 4, estimate: "p. 256: Thelus cleared 'in precisely the same manner as it had been worked out on the practice fields'" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "p. 257: the final attack wheeled half-left on its objectives as planned; no departure from plan recorded" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 7th Canadian Infantry Brigade
+  - id: macdonell-ac
+    name: { value: "A. C. Macdonell", source: "nicholson-1962", page: "254", note: "'the 7th Brigade (Brig.-Gen. A. C. Macdonell)'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "254" }
+    ratings:
+      planning: { value: 4, estimate: "p. 255-256: on the crest by 7:30 against local counter-attacks in the orchards" }
+      orderSpeed: { value: 4, estimate: "p. 256: formed the defensive flank toward Hill 145 when called on at about nine o'clock" }
+      adaptiveness: { value: 4, estimate: "p. 256: the PPCLI took over part of the 42nd's front so the 42nd could extend to cover the new flank" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 8th Canadian Infantry Brigade
+  - id: elmsley
+    name: { value: "J. H. Elmsley", source: "nicholson-1962", page: "254", note: "'Brig.-Gen. J. H. Elmsley's 8th Brigade'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "254" }
+    ratings:
+      planning: { value: 4, estimate: "p. 254-256: the first large haul of prisoners (150, by the 2nd CMR) and La Folie Farm overrun on time" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 9th Canadian Infantry Brigade (corps reserve)
+  - id: hill-fw
+    name: { value: "F. W. Hill", source: "nicholson-1962", page: "Appendix A, p. 542", note: "9th Infantry Brigade, 7 Jan. 16 - 25 May 18" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "Appendix A, p. 542" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 10th Canadian Infantry Brigade
+  - id: hilliam
+    name: { value: "E. Hilliam", source: "nicholson-1962", page: "261", note: "'the 10th Brigade (Brig.-Gen. E. Hilliam)'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "261" }
+    ratings:
+      planning: { value: 4, estimate: "p. 261: the 10 April attack down Hill 145's eastern slope 'was a brilliant success'; p. 263: the Pimple taken on 12 April by six o'clock" }
+      orderSpeed: { value: 4, estimate: "p. 261: called at 6:00 p.m. on 9 April, its two uncommitted battalions were in position on Hill 145 by 3:15 next afternoon" }
+      adaptiveness: { value: 4, estimate: "p. 261: switched from the planned Pimple attack to Hill 145 at a few hours' notice" }
+      riskTolerance: { value: 4, estimate: "p. 262-263: attacked the Pimple in a gale of sleet and snow, which helped surprise" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 11th Canadian Infantry Brigade
+  - id: odlum
+    name: { value: "V. W. Odlum", source: "nicholson-1962", page: "259", note: "'the 11th Brigade, commanded by Brig.-Gen. V. W. Odium' (the text layer's 'Odium' is an OCR slip; Appendix A has the same)" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "259" }
+    ratings:
+      planning: { value: 2, estimate: "p. 259: the left assaulting battalion's request to spare a German trench from the heavy artillery was allowed, and fire from it broke the brigade's left wing" }
+      orderSpeed: { value: 3, estimate: "p. 260: the uncaptured trench was taken by bombing parties at one o'clock, and the summit's west side by the 85th's two companies before dark" }
+      adaptiveness: { value: 4, estimate: "p. 260: committed its reserve, the 85th, to restore the attack; hayes-1920 p. 52: the barrage was called off at the last minute because the lines were too close" }
+      riskTolerance: { value: 4, estimate: "hayes-1920 pp. 45, 51-52: sent two companies of a battalion new to battle against the strongpoint that had stopped the brigade, in the end without a barrage" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # 12th Canadian Infantry Brigade
+  - id: macbrien
+    name: { value: "J. H. MacBrien", source: "nicholson-1962", page: "259", note: "'the 12th Brigade (Brig.-Gen. J. H. MacBrien)'" }
+    rank: { value: "Brigadier-General", source: "nicholson-1962", page: "259" }
+    ratings:
+      planning: { value: 3, estimate: "p. 260-261: two mines blown under the German front at Zero eased the 73rd's attack, but the 78th lost its barrage and the brigade could not finish until Hill 145 fell" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "p. 260: the 73rd consolidated the first trench as a firm left flank; the final objective waited on the neighbouring brigade" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # British 13th Infantry Brigade
+  - id: jones-low
+    name: { value: "L. O. W. Jones", source: "hussey-inman-1921", page: "267", note: "Appendix II, 1917: 'Brig.-Gen. L. O. W. Jones', 13th Infantry Brigade" }
+    rank: { value: "Brigadier-General", source: "hussey-inman-1921", page: "267" }
+    ratings:
+      planning: { value: 4, estimate: "hussey-inman-1921 p. 153: a fortnight practising the attack over taped trenches, and a plan to take Thelus Trench frontally then swing south through the Goulot Wood, avoiding a double belt of wire" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "p. 154-155: a defensive flank put out on the left against fire from the Bonval Wood" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # British 15th Infantry Brigade (corps reserve)
+  - id: turner-mn
+    name: { value: "M. N. Turner", source: "hussey-inman-1921", page: "267", note: "Appendix II, 1917: 'Brig.-Gen. M. N. Turner', 15th Infantry Brigade" }
+    rank: { value: "Brigadier-General", source: "hussey-inman-1921", page: "267" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  # British 95th Infantry Brigade (corps reserve)
+  - id: gordon-lennox
+    name: { value: "Lord E. Gordon-Lennox", source: "hussey-inman-1921", page: "267", note: "Appendix II, 1917: 'Brig.-Gen. Lord E. Gordon-Lennox', 95th Infantry Brigade; index: 'Lord E. C.'" }
+    rank: { value: "Brigadier-General", source: "hussey-inman-1921", page: "267" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      orderSpeed: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      adaptiveness: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      riskTolerance: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+      moraleEffect: { value: 3, estimate: "no conduct at Vimy found in the sources read; the rubric midpoint until the owner rates it" }
+  - id: co-3bn
+    name: { value: "Joseph B. Rogers", source: "wikipedia-cef-battalions", page: "3rd Battalion (Toronto Regiment), CEF, rev. 1375579158, list of commanding officers", note: "in command October 1916 to April 1919" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "3rd Battalion (Toronto Regiment), CEF, rev. 1375579158, list of commanding officers" }
+  - id: co-5bn
+    name: { value: "H. M. Dyer", source: "wikipedia-cef-battalions", page: "5th Battalion (Western Cavalry), CEF, rev. 1356545002, list of commanding officers", note: "in command 11 January 1916 - 29 June 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "5th Battalion (Western Cavalry), CEF, rev. 1356545002, list of commanding officers" }
+  - id: co-8bn
+    name: { value: "J. M. Prower", source: "wikipedia-cef-battalions", page: "8th Battalion (90th Winnipeg Rifles), CEF, rev. 1386529871, list of commanding officers", note: "in command 3 August 1916 - 20 April 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "8th Battalion (90th Winnipeg Rifles), CEF, rev. 1386529871, list of commanding officers" }
+  - id: co-15bn
+    name: { value: "C. E. Bent", source: "wikipedia-cef-battalions", page: "15th Battalion (48th Highlanders of Canada), CEF, rev. 1328939893, list of commanding officers", note: "in command 20 May 1916 - 29 December 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "15th Battalion (48th Highlanders of Canada), CEF, rev. 1328939893, list of commanding officers" }
+  - id: co-18bn
+    name: { value: "G. F. Morrison", source: "wikipedia-cef-battalions", page: "18th Battalion (Western Ontario), CEF, rev. 1375579163, list of commanding officers", note: "in command 9 October 1916 - 19 April 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "18th Battalion (Western Ontario), CEF, rev. 1375579163, list of commanding officers" }
+  - id: co-21bn
+    name: { value: "Thomas F. Elmitt", source: "wikipedia-cef-battalions", page: "21st Battalion (Eastern Ontario), CEF, rev. 1386532405, list of commanding officers", note: "in command 7 January 1917 - 1 July 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "21st Battalion (Eastern Ontario), CEF, rev. 1386532405, list of commanding officers" }
+  - id: co-22bn
+    name: { value: "T. L. Tremblay", source: "wikipedia-cef-battalions", page: "22nd Battalion (French Canadian), CEF, rev. 1325400995, list of commanding officers", note: "in command 15 February 1917 - 8 August 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "22nd Battalion (French Canadian), CEF, rev. 1325400995, list of commanding officers" }
+  - id: co-24bn
+    name: { value: "C. F. Ritchie", source: "wikipedia-cef-battalions", page: "24th Battalion (Victoria Rifles), CEF, rev. 1386533139, list of commanding officers", note: "in command 7 December 1916 - 14 April 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "24th Battalion (Victoria Rifles), CEF, rev. 1386533139, list of commanding officers" }
+  - id: co-25bn
+    name: { value: "D. S. Bauld", source: "wikipedia-cef-battalions", page: "25th Battalion (Nova Scotia Rifles), CEF, rev. 1379968631, list of commanding officers", note: "in command 4 April 1917 - 9 July 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "25th Battalion (Nova Scotia Rifles), CEF, rev. 1379968631, list of commanding officers" }
+  - id: co-26bn
+    name: { value: "A. E. G. McKenzie", source: "wikipedia-cef-battalions", page: "26th Battalion (New Brunswick), CEF, rev. 1386535720, list of commanding officers", note: "in command 29 May 1916 - 2 July 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "26th Battalion (New Brunswick), CEF, rev. 1386535720, list of commanding officers" }
+  - id: co-27bn
+    name: { value: "Patrick J. Daley", source: "wikipedia-cef-battalions", page: "27th Battalion (City of Winnipeg), CEF, rev. 1379481661, list of commanding officers", note: "in command 15 April 1916 - 4 April 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "27th Battalion (City of Winnipeg), CEF, rev. 1379481661, list of commanding officers" }
+  - id: co-28bn
+    name: { value: "A. Ross", source: "wikipedia-cef-battalions", page: "28th Battalion (Northwest), CEF, rev. 1381494295, list of commanding officers", note: "in command 17 September 1916 - 1 October 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "28th Battalion (Northwest), CEF, rev. 1381494295, list of commanding officers" }
+  - id: co-29bn
+    name: { value: "J. M. Ross", source: "wikipedia-cef-battalions", page: "29th Battalion, (Vancouver), CEF, rev. 1375578992, list of commanding officers", note: "in command 22 January 1917 - 23 July 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "29th Battalion, (Vancouver), CEF, rev. 1375578992, list of commanding officers" }
+  - id: co-31bn
+    name: { value: "A. H. Bell", source: "wikipedia-cef-battalions", page: "31st Battalion (Alberta), CEF, rev. 1386348707, list of commanding officers", note: "in command 29 May 1915 - 23 April 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "31st Battalion (Alberta), CEF, rev. 1386348707, list of commanding officers" }
+  - id: co-46bn
+    name: { value: "H. J. Dawson", source: "wikipedia-cef-battalions", page: "46th Battalion (South Saskatchewan), CEF, rev. 1386714836, list of commanding officers", note: "in command 29 August 1916 - demobilization" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "46th Battalion (South Saskatchewan), CEF, rev. 1386714836, list of commanding officers" }
+  - id: co-49bn
+    name: { value: "R. H. Palmer", source: "wikipedia-cef-battalions", page: "49th Battalion (Edmonton Regiment), CEF, rev. 1345849028, list of commanding officers", note: "in command 14 February 1917 - 1 July 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "49th Battalion (Edmonton Regiment), CEF, rev. 1345849028, list of commanding officers" }
+  - id: co-52bn
+    name: { value: "W. B. Evans", source: "wikipedia-cef-battalions", page: "52nd Battalion (New Ontario), CEF, rev. 1379890539, list of commanding officers", note: "in command 25 September 1916 - 11 July 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "52nd Battalion (New Ontario), CEF, rev. 1379890539, list of commanding officers" }
+  - id: co-58bn
+    name: { value: "H. J. Genet", source: "wikipedia-cef-battalions", page: "58th Battalion, CEF, rev. 1386783789, list of commanding officers", note: "in command 22 November 1915 - 11 January 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "58th Battalion, CEF, rev. 1386783789, list of commanding officers" }
+  - id: co-72bn
+    name: { value: "J. A. Clark", source: "wikipedia-cef-battalions", page: "72nd Battalion (Seaforth Highlanders of Canada), CEF, rev. 1375428624, list of commanding officers", note: "in command 25 April 1916 - 12 September 1918" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "72nd Battalion (Seaforth Highlanders of Canada), CEF, rev. 1375428624, list of commanding officers" }
+  - id: co-75bn
+    name: { value: "C. B. Worsnop", source: "wikipedia-cef-battalions", page: "75th Battalion (Mississauga), CEF, rev. 1381442040, list of commanding officers", note: "in command 11 March 1917 - 16 April 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "75th Battalion (Mississauga), CEF, rev. 1381442040, list of commanding officers" }
+  - id: co-78bn
+    name: { value: "J. Kirkcaldy", source: "wikipedia-cef-battalions", page: "78th Battalion (Winnipeg Grenadiers), CEF, rev. 1308898073, list of commanding officers", note: "in command 22 May 1916 - 15 November 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "78th Battalion (Winnipeg Grenadiers), CEF, rev. 1308898073, list of commanding officers" }
+  - id: co-116bn
+    name: { value: "S. S. Sharpe", source: "wikipedia-cef-battalions", page: "116th Battalion (Ontario County), CEF, rev. 1335680448, list of commanding officers", note: "in command 23 July 1916 - 28 December 1917" }
+    rank: { value: "Lieutenant-Colonel", source: "wikipedia-cef-battalions", page: "116th Battalion (Ontario County), CEF, rev. 1335680448, list of commanding officers" }
+  - id: co-10bn
+    name: { value: "D. M. Ormond", source: "holland-1918", page: "28", note: "'Lieut.-Col. D. M. Ormond was now commanding the 10th Battalion'" }
+    rank: { value: "Lieutenant-Colonel", source: "holland-1918", page: "28" }
+  - id: co-85bn
+    name: { value: "A. H. Borden", source: "hayes-1920", page: "45", note: "'the Commanding Officer Lieut-Col. A. H. Borden'" }
+    rank: { value: "Lieutenant-Colonel", source: "hayes-1920", page: "45" }

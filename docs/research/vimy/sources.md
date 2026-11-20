@@ -17,6 +17,8 @@ The script is idempotent: it skips any file that already exists.
 | `.cache/sources/nicholson-maps/sketch-37-balkan-front-1916.png` | **Sketch 37, "The Balkan Front 1916"**: PDF page 263, book p. 235. A 1-bit stencil, so it is extracted white on black. |
 | `.cache/sources/nicholson-maps/sketch-38-nivelle-plan.png` | **Sketch 38, "Nivelle's Plan and the German Withdrawal, Spring 1917"**: PDF page 265, book p. 237. |
 | `.cache/sources/nicholson-maps/sketch-39-battles-of-scarpe.png` | **Sketch 39, "The Battles of the Scarpe, April-May 1917"**: PDF page 295, book p. 264. |
+| `.cache/sources/hussey-inman-1921.txt`, `mcevoy-finlay-1920.txt`, `hayes-1920.txt`, `holland-1918.txt` | OCR text of four unit histories on archive.org (Task 8), read from each item's `archive.org/stream/…_djvu.txt` page: the item download links redirect to storage hosts outside the allowed list. Page numbers are the books' own, from the page heads in the text. |
+| `.cache/sources/wikipedia/<revision>.wiki` | The exact English Wikipedia revisions cited in Task 8 (`index.php?oldid=…&action=raw`), fetched two seconds apart because the site rate-limits. |
 
 Chapter VIII, "The Battle of Vimy Ridge, 9-14 April 1917", runs over book pp. 233-268 (PDF pages 261-299) and
 opens "(See Map 7 and Sketches 37-39)". Each file above was identified by reading its title off the image,
@@ -35,6 +37,12 @@ The script first requests that page with a cookie jar, then the PDF with the jar
 | `ign-rge-alti` | secondary | IGN RGE ALTI elevation model, sampled through the Géoplateforme altimetry service (`data.geopf.fr`, resource `ign_rge_alti_wld`). | Modern 1 m–5 m elevation resampled to 25 m; post-war terrain, including the memorial park; not 1917 micro-relief. Shell holes, mine craters and trenches have been filled or landscaped since. |
 | `vimy-brief-2026` | secondary | The owner's Vimy research brief, compiling Nicholson, Campbell, the RCA fire-plan essay and others. | A compilation, so never a historical target's only source. Carried over from the Plan 1 draft. |
 | `artillery-notes-4` | primary | Artillery Notes No. 4, as quoted in the brief. | Carried over from the Plan 1 draft. Known only through the brief's quotations. |
+| `hussey-inman-1921` | secondary | A. H. Hussey and D. S. Inman, *The Fifth Division in the Great War* (1921). | Divisional history by two of its officers; the British 13th, 15th and 95th Brigades at Vimy, and its commanders by year (Task 8, `oob-canadian.md`, `leaders.md`). |
+| `mcevoy-finlay-1920` | secondary | B. McEvoy and A. H. Finlay, *History of the 72nd Canadian Infantry Battalion, Seaforth Highlanders of Canada* (1920). | The 72nd's strength at Vimy (Task 8). |
+| `hayes-1920` | secondary | J. Hayes, *The Eighty-Fifth in France and Flanders* (1920). | The 85th Battalion at Vimy (Task 8). |
+| `holland-1918` | secondary | J. A. Holland, *The Story of the Tenth Canadian Battalion, 1914-1917* (1918). | The 10th Battalion's commanding officer and objectives (Task 8). |
+| `wikipedia-vimy-oob` | tertiary | English Wikipedia, "Battle of Vimy Ridge order of battle", revision 1283223092. | A lead; cited only where no higher tier was found (Task 8). |
+| `wikipedia-cef-battalions` | tertiary | English Wikipedia's CEF battalion articles: their dated lists of commanding officers. | Each citation names the article and revision (Task 8, `leaders.md`). |
 
 Sources used only in this note, and not registered because no scenario value cites them:
 

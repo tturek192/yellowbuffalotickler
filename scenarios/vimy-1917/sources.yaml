@@ -27,3 +27,40 @@ sources:
     url: https://data.geopf.fr/wfs/ows
     tier: secondary
     note: "modern centrelines (fetched 2026-11-20); the ground control points that georeference Map 7 are their junctions, matched to the same roads on the 1917 map (docs/research/vimy/geometry.md)"
+  hussey-inman-1921:
+    title: The Fifth Division in the Great War
+    author: A. H. Hussey and D. S. Inman
+    year: 1921
+    url: https://archive.org/details/fifthdivisioning00huss
+    tier: secondary
+    note: "divisional history by two of its officers (Hussey was its CRA); ch. VIII, Vimy Ridge (pp. 151-157), the 13th Brigade with the 2nd Canadian Division; Appendix II (p. 267), commanders by year. Local text via scripts/fetch-sources.sh"
+  mcevoy-finlay-1920:
+    title: History of the 72nd Canadian Infantry Battalion, Seaforth Highlanders of Canada
+    author: Bernard McEvoy and A. H. Finlay
+    year: 1920
+    url: https://archive.org/details/72seaforthhigh00mcevuoft
+    tier: secondary
+    note: "battalion history; Vimy Ridge pp. 46-50, with the battalion's strength on the eve of the attack (p. 46)"
+  hayes-1920:
+    title: The Eighty-Fifth in France and Flanders (85th Canadian Infantry Battalion, Nova Scotia Highlanders)
+    author: Joseph Hayes
+    year: 1920
+    url: https://archive.org/details/eightyfifthinfra00hayeuoft
+    tier: secondary
+    note: "battalion history by its chaplain; ch. III, Vimy Ridge (pp. 47-54): the battalion's reserve role, and the evening attack by C and D Companies"
+  holland-1918:
+    title: The Story of the Tenth Canadian Battalion, 1914-1917
+    author: J. A. Holland
+    year: 1918
+    url: https://archive.org/details/tenthbattalion00holluoft
+    tier: secondary
+    note: "short battalion history; Vimy pp. 28-29 (its commanding officer and its two objectives)"
+  wikipedia-vimy-oob:
+    title: Battle of Vimy Ridge order of battle (English Wikipedia, revision 1283223092, 31 March 2025)
+    url: https://en.wikipedia.org/w/index.php?oldid=1283223092
+    tier: tertiary
+    note: "unit lists and commanders per brigade, mostly uncited at row level; used as a lead and for battalions no higher-tier source read lists (the 60th Battalion; the British brigades' full battalion titles)"
+  wikipedia-cef-battalions:
+    title: English Wikipedia articles on CEF infantry battalions (lists of commanding officers with dates)
+    tier: tertiary
+    note: "each citation's page names the article and the revision read (fetched 2026-11-20); the lists mostly cite Meek, Over the Top! (1971), which was not itself read"
