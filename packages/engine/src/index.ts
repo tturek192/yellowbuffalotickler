@@ -25,3 +25,7 @@ export { initRun, runScenario } from './run';
 export type { Models, RunOptions } from './run';
 export { quantiles, runBatch } from './batch';
 export type { BatchLine, BatchSummary } from './batch';
+export { buildWorld, churn, groundAt, speedFactor, wetness } from './ground';
+export type { World } from './ground';
+export { lineOfSight } from './sight';
+export { daylight, noteLightDefaults, sunTimes, utcOffsetOf, visibility, visibilityM } from './light';

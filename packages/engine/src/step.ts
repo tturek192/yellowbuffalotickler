@@ -1,4 +1,5 @@
 import type { Doctrine, Point, Scenario, Tables, Terrain } from '@wwi/scenario';
+import type { World } from './ground';
 import type { BarrageState } from './barrage';
 import { emit } from './causes';
 import { isHolding } from './companies';
@@ -25,6 +26,8 @@ export type SimState = {
   messages: Message[];
   /** Off-map formations (Task 13). */
   reserves: ReserveState[];
+  /** Shells landed per 50 m cell (Task 6), row-major over the world's grid; the same array as `World.churn`. Not in the run record. */
+  churn: Float32Array;
   /** The id the next emitted event gets. */
   nextEventId: number;
 };
@@ -38,6 +41,8 @@ export type StepContext = {
   /** The run's only source of randomness: createRng(seed), drawn in a fixed order. */
   rng: () => number;
   terrain?: Terrain;
+  /** Ground, sight and light for the run (Task 6). */
+  world: World;
   /** Defaults applied, at setup and during the run; the record lists them sorted. */
   defaultsUsed: Set<string>;
   /** Called with each phase's name before it runs (tests and profiling). */

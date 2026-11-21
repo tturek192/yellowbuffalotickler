@@ -3,6 +3,7 @@ import type { Doctrine, Point, Scenario, Tables } from '@wwi/scenario';
 import { barrageXAt, initBarrage } from './barrage';
 import { emit } from './causes';
 import { initCompanies, isHolding } from './companies';
+import { buildWorld } from './ground';
 import { resolveDefaults } from './defaults';
 import { sampleYs } from './geometry';
 import { runPipeline } from './pipeline';
@@ -47,13 +48,15 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
   checkCompanyWeapons(s, models);
   const { scenario, used } = resolveDefaults(s, models.doctrines, models.tables);
   const rng = createRng(opts.seed);
+  const terrain = scenario.terrainGrid ? decodeTerrain(scenario.terrainGrid) : undefined;
   const ctx: StepContext = {
     scenario,
     lines: new Map(scenario.lines.map((l) => [l.id, l.points])),
     doctrines: models.doctrines,
     tables: models.tables,
     rng,
-    ...(scenario.terrainGrid ? { terrain: decodeTerrain(scenario.terrainGrid) } : {}),
+    ...(terrain ? { terrain } : {}),
+    world: buildWorld(scenario, models.tables, terrain),
     defaultsUsed: new Set(used),
   };
   const state: SimState = {
@@ -67,6 +70,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     hqs: [],
     messages: [],
     reserves: [],
+    churn: ctx.world.churn,
     nextEventId: 0,
   };
   return { state: emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' }), ctx };
