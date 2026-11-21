@@ -11,7 +11,7 @@ import type { Models } from './run';
 import { quietStep, SCHEDULES } from './schedule';
 import { isBusy, takeLines } from './step';
 import type { SimState, StepContext } from './step';
-import { fixtureComms, fixtureCounter, fixtureStall, runStates, withQuietStep, withRearTrench } from './test-helpers';
+import { fixtureComms, fixtureCounter, fixtureReserves, fixtureStall, runStates, withQuietStep, withRearTrench } from './test-helpers';
 import type { CommandOpts, CounterOpts } from './test-helpers';
 import type { Order, SimEvent } from './types';
 
@@ -356,23 +356,21 @@ describe('the command model', () => {
     const after = r.states.find((s) => s.minute === e.minute)!;
     expect(after.reserves[0]).toMatchObject({ formationId: 'gres', status: 'ordered', orderedMin: e.minute });
     expect(after.hqs.find((h) => h.formationId === 'gd')!.pending.map((p) => p.kind)).toEqual(['divisional-counter-attack']);
-    // Task 13 marches the reserve; until it arrives the counter-attack waits.
+    // The reserve marches (reserves.ts: 8 km at the fixture's 1 km/h); until it arrives the counter-attack waits.
     expect(firstOf(r, 'counter-attack-ordered')).toBeUndefined();
-    // Once it has arrived (standing in for Task 13's march), the division sends its reserve companies in,
-    // divisionalCounterAttackDelayMin (30) after the arrival.
-    const { state, ctx } = initRun(...fixtureCounter({ divOrderSpeed: 3, offMapReserve: true }), { seed: 1 });
-    let s = state;
-    const events: SimEvent[] = [];
-    while (s.minute < 300) {
-      if (s.minute >= 120 && s.reserves[0]!.status === 'ordered') s = { ...s, reserves: [{ ...s.reserves[0]!, status: 'arrived', arriveMin: 120 }] };
-      s = runPipeline(s, ctx, 2);
-      events.push(...s.events);
-    }
-    // Arrived at 120, known at the next step's end (122): it goes in at 150.
-    const go = events.find((x) => x.kind === 'counter-attack-ordered')!;
-    expect(go.minute).toBe(122);
-    expect(go.factors!.goAtMin).toBe(150);
-    expect(go.refs).toContain(e.id);
+    // With the repository's march values it arrives at 225 (60 + 15 + 120 + 30); once the division's picture shows its
+    // companies there, it sends its reserve companies in, divisionalCounterAttackDelayMin (30) after the arrival or at once.
+    const run = runStates(fixtureReserves(), { endMinute: 400 });
+    const ordered = firstOf(run, 'reserve-ordered')!;
+    const arrived = firstOf(run, 'reserve-arrived')!;
+    expect(arrived.factors!.arriveMin).toBe(225);
+    const go = firstOf(run, 'counter-attack-ordered')!;
+    expect(go.minute).toBeGreaterThan(arrived.minute);
+    const known = run.states.find((x) => x.minute === go.minute)!.hqs.find((h) => h.formationId === 'gd')!;
+    expect(['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4'].every((id) => known.picture.units[id]!.status === 'holding')).toBe(true);
+    expect(go.factors!.goAtMin).toBe(Math.max(go.minute, 225 + 30));
+    expect(go.text).toMatch(/by 5 companies/);
+    expect(go.refs).toContain(ordered.id);
   });
 
   it('orders reach only the companies they name', () => {

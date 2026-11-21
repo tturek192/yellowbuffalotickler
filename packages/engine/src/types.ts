@@ -295,7 +295,12 @@ export type BatteryState = {
   captured: boolean;
 };
 
-/** An off-map formation (Task 13). */
+/**
+ * An off-map formation (Task 13): waiting where the scenario puts it until a headquarters orders it forward (`ordered`,
+ * at `orderedMin`), marching from when the order is out until `arriveMin`, then `arrived`: its companies stand at
+ * `entryPoint`. `orderedBy`: the headquarters that ordered it, whose leader's orderSpeed scales the order delay;
+ * `orderedEventId`: its `reserve-ordered` event, which `reserve-arrived` refers to.
+ */
 export type ReserveState = {
   formationId: string;
   side: Side;
@@ -303,6 +308,8 @@ export type ReserveState = {
   orderedMin: number | null;
   arriveMin: number | null;
   entryPoint: Point;
+  orderedBy: string | null;
+  orderedEventId: number | null;
 };
 
 /**

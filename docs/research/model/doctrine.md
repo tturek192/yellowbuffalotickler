@@ -50,6 +50,7 @@ The three archive.org texts new to this note are fetched by `scripts/fetch-sourc
 | bef-1917 companyDefaults.bombsPerMan 2 | `ss143-1917` | 10 | "carries at least 120 rounds S. A. A. and 2 or more bombs" | primary |
 | bef-1917 companyDefaults.strength 158 | `ss143-1917` | 22 | "The Company, Taking 4 Average Strength Platoons of 36 O.R. and Coy. H.Q. 14" | primary |
 | de-1917 companyDefaults.companiesPerBattalion 4 | `german-handbook-1917` | 30 | "Each battalion is divided into 4 companies and a machine gun company." | primary |
+| de-1917 companyDefaults.battalionsPerDivision 9 | `german-handbook-1917` | 30 | "the great majority of German Divisions have now been organized on the 3-regiment basis, the three infantry regiments (9 battalions)" | primary |
 | bef-1917 companyDefaults.roundsPerRifle 120 | `ss143-1917` | 10 | "every man (except bombers, signalers, scouts, runners, and Lewis gunners who carry 50 rounds) carries at least 120 rounds S. A. A." | primary |
 | bef-1917 companyDefaults.roundsPerLightMg 1,410 | `ss143-1917`; `lewis-1917` | 10; 18 | "The Lewis gun section carries 30 drums"; "The magazine, which holds forty-seven rounds": 30 × 47 | primary |
 | de-1917 companyDefaults.roundsPerRifle 150 | `german-handbook-1917` | 44 | rounds per man "Carried on the soldier ... 150"; 70 more in the company ammunition wagon | primary |
@@ -64,6 +65,7 @@ The three archive.org texts new to this note are fetched by `scripts/fetch-sourc
 | de companyDefaults.lewisGuns | 1 | The 08/15s, fired as `mg08-15`: "The issue of the '08/'15 light machine gun began in March, 1917, on the scale of 3 to every infantry company" (p. 61); "By the end of 1917 every infantry company ... had received 3" (p. 55) | german-handbook-1918 | primary |
 | companyDefaults.roundsPerMg (BEF) / roundsPerLightMg (German) | 8,000 / 4,000 | BEF: taken as the German figure, 8,000 a gun on its limber (`german-handbook-1917` p. 52); British companies carry no machine guns, so only a scenario that gives them Vickers guns reads it. German 08/15: half the heavy gun's limber load, its team carrying the belt boxes by hand, though a trench garrison kept boxes at the gun | german-handbook-1917 | primary |
 | de companyDefaults.strength | 187 | "to reduce the strength of a battalion to 750 other ranks" (p. 44), a quarter each; the earlier establishment was 259 (`german-handbook-1917` p. 39) | german-handbook-1918 | primary |
+| bef companyDefaults.battalionsPerDivision | 12 | Three brigades of four battalions, as every Canadian division in the scenario's order of battle has (the 3rd Division's 9th Brigade has five); no source read prints it. Only an off-map reserve division with no battalions entered reads it | oob-canadian.yaml | estimate |
 | ncoPenalty.rehearsed | 0.1 / 0.1 | BEF: "Section commanders control and lead their sections" (`ss143-1917` p. 12); the Canadians "rehearsed repeatedly on this model from platoon to divisional level" (`nicholson-1962` p. 250). German: the group leader's right "within certain limits, to retire in any direction before strong enemy fire" (`nicholson-1962` p. 240) | as cited | primary / official |
 | attack.trainingBonusRehearsed | 0.1 | "By the day of the attack all ranks knew just where they would have to go and what to do when they got there." | nicholson-1962 p. 250 | official |
 | attack.waveSpacingM | 70 / 50 | BEF: SS 143's diagram of two waves, 50 to 100 yards apart (Appendix I, p. 20, read from the OCR). German: counter-attack troops "advance in waves" (`survey-german-tactics-1918` p. 35), no distance | as cited | primary |
@@ -122,7 +124,8 @@ only once they have arrived.
   scenario's reserves hold what was done.
 - **Company strength: example or establishment.** The BEF default (158) is SS 143's "average strength" example, the
   German (187) the March 1917 order's battalion of 750 over four companies; the German war establishment was 259. The
-  scenario gives every company's strength, so the defaults apply only to scenarios that do not.
+  scenario gives the strength of every company on the map; the defaults make up the off-map reserves that have no
+  companies entered (the Vimy German resting battalions and reserve divisions), so their strength is the German default's.
 - **A 1918 source for 1917 practice.** The AEF's survey translates German orders of 1918; its counter-attack principles
   match what BOH and Nicholson say of 1917, but its timings and formations may not.
 

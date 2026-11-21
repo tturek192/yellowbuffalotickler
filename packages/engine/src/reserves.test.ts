@@ -1,0 +1,236 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+import { encodeTerrain } from '@wwi/scenario';
+import type { Scenario } from '@wwi/scenario';
+import { est, minimalDoctrineV2, minimalScenario } from '@wwi/scenario/test-fixtures';
+import { resolveDefaults } from './defaults';
+import { runPipeline } from './pipeline';
+import { RESERVE_COLUMNS } from './record';
+import type { RunRecord } from './record';
+import { arrivalOf, reserveTimes } from './reserves';
+import { initRun, runScenario } from './run';
+import type { Models } from './run';
+import { quietStep, SCHEDULES } from './schedule';
+import type { SimState } from './step';
+import { fixtureFire, fixtureReserves, hash, ofKind, withQuietStep } from './test-helpers';
+import type { ReserveOpts } from './test-helpers';
+
+/** The minute the fixture's reserve gres would arrive if its division ordered it at minute 60. */
+function arrival(o: ReserveOpts): number {
+  const { state, ctx } = initRun(...fixtureReserves(o), { seed: 1 });
+  return arrivalOf(state.reserves[0]!, 60, ctx).arriveMin;
+}
+
+/** The fixture run to minute 600 (its division orders gres forward once it has lost a quarter of its front). */
+const runReserves = (o: ReserveOpts = {}, m?: (f: [Scenario, Models]) => [Scenario, Models]): RunRecord => {
+  const f = fixtureReserves(o);
+  return runScenario(...(m ? m(f) : f), { seed: 1, endMinute: 600 });
+};
+
+/** A snapshot's reserve rows, as objects keyed by column. */
+const reserveRows = (r: RunRecord, i: number) => {
+  const t = r.snapshots[i]!.reserves!;
+  return t.rows.map((row) => Object.fromEntries(t.columns.map((c, j) => [c, row[j]])));
+};
+
+// ---- the uphill counter-attack -----------------------------------------------------------------------------------
+
+/**
+ * fixtureFire with the attack over: c1 and c2, 40 men each, hold the German trench at x 150 (its garrisons gone), and
+ * the German reserve company kr (150 men) counter-attacks it from x 650 under their fire, the ground rising `climbM`
+ * from x 650 to the trench. Returns kr after `minutes`, and the events.
+ */
+function counterAttack(o: { climbM: number; seed?: number; minutes?: number }) {
+  const [s, m] = fixtureFire();
+  s.forces[1]!.formations[0]!.companies!.push({ id: 'kr', name: 'Reserve-Kompanie', role: 'reserve', strength: est(150), start: [650, 200] });
+  const cellM = 25;
+  const originX = -1000;
+  const originY = -200;
+  const cols = 121;
+  const rows = 33;
+  const elev = new Float32Array(cols * rows);
+  for (let j = 0; j < rows; j++)
+    for (let i = 0; i < cols; i++) elev[j * cols + i] = o.climbM * Math.min(1, Math.max(0, (650 - (originX + i * cellM)) / 500));
+  s.terrainGrid = encodeTerrain({ cellM, originX, originY, cols, rows, elevM: elev });
+  const { state, ctx } = initRun(s, m, { seed: o.seed ?? 1 });
+  const seg = state.segments[0]!;
+  let st: SimState = {
+    ...state,
+    segments: state.segments.map((x) => ({ ...x, holder: 'allied' as const, emerged: true })),
+    companies: state.companies.map((c) => {
+      if (c.id === 'c1' || c.id === 'c2') return { ...c, x: 150, men: 40, killed: c.men - 40, status: 'holding' as const, intent: 'hold' as const, posture: 'in-trench' as const, startMin: 0 };
+      if (c.id === 'k1' || c.id === 'k2') return { ...c, killed: c.killed + c.men, men: 0, status: 'destroyed' as const, posture: 'in-trench' as const };
+      if (c.id === 'kr')
+        return { ...c, status: 'counter-attacking' as const, intent: 'counter-attack' as const, posture: 'moving' as const, orders: [{ kind: 'counter-attack' as const, target: { segmentId: seg.id }, fromFormationId: 'rir262', issuedMin: 0 }] };
+      return c;
+    }),
+  };
+  const events: RunRecord['events'] = [];
+  const end = st.minute + (o.minutes ?? 20);
+  while (st.minute < end) {
+    st = runPipeline(st, ctx, 2);
+    events.push(...st.events);
+  }
+  return { kr: st.companies.find((c) => c.id === 'kr')!, events };
+}
+
+/** kr's men lost (killed and wounded) in the counter-attack, summed over 30 seeds. */
+function counterAttackLosses(o: { climbM: number }): number {
+  let n = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const { kr } = counterAttack({ climbM: o.climbM, seed });
+    n += kr.killed + kr.wounded;
+  }
+  return n;
+}
+
+describe('reserves off the map', () => {
+  it('a reserve 5 km back arrives earlier than one 24 km back (the spec what-if)', () => {
+    expect(arrival({ distanceKm: 5 })).toBeLessThan(arrival({ distanceKm: 24 }));
+  });
+
+  it('arrives orderedMin + baseOrderDelayMin · delayFactor + distanceKm / (marchKmPerHour · weather) · 60 + deployMin', () => {
+    // 60 + 15 + 8 / 4 · 60 + 30.
+    expect(arrival({})).toBeCloseTo(225, 9);
+    // A slow division leader (orderSpeed 1: delayFactor 5/3) takes longer over the order.
+    expect(arrival({ divOrderSpeed: 1 })).toBeCloseTo(60 + 25 + 120 + 30, 9);
+    // In the rain the road is mud: mudSpeedFactor 0.6 over the march, every hour of the past day wet.
+    expect(arrival({ rain: true })).toBeCloseTo(60 + 15 + 120 / 0.6 + 30, 6);
+  });
+
+  it('scenario orderedAt values are validation targets only and never change a run', () => {
+    const early = runReserves({ orderedAt: '1917-04-09T08:00' });
+    expect(ofKind(early, 'reserve-arrived')).toHaveLength(1);
+    expect(hash(early)).toBe(hash(runReserves({ orderedAt: '1917-04-09T20:00' })));
+    expect(hash(early)).toBe(hash(runReserves()));
+  });
+
+  it('no engine code reads orderedAt or historical.reserveArrivals', () => {
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const src = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && f !== 'test-helpers.ts');
+    expect(src.length).toBeGreaterThan(20);
+    for (const f of src) expect(readFileSync(resolve(dir, f), 'utf8'), f).not.toMatch(/orderedAt|reserveArrivals/);
+  });
+
+  it('a reserve formation with no companies arrives with default companies, recorded in defaultsUsed', () => {
+    const r = runReserves({ noCompanies: true });
+    expect(r.defaultsUsed.some((d) => /companiesPerBattalion/.test(d))).toBe(true);
+    expect(r.units.filter((u) => u.battalionId === 'gres').map((u) => u.id)).toEqual(['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4']);
+    const arrived = ofKind(r, 'reserve-arrived')[0]!;
+    expect(arrived.causes).toEqual(['reserve-arrived']);
+    expect(arrived.refs).toEqual([ofKind(r, 'reserve-ordered')[0]!.id]);
+    expect(arrived.factors).toMatchObject({ companies: 4, men: 600 });
+    // On the map at the entry point once arrived, and not before.
+    const i = r.snapshots.findIndex((x) => x.minute >= arrived.minute);
+    const row = r.snapshots[i]!.companies.rows.find((x) => x[0] === 'gres-g1')!;
+    expect([row[1], row[2], row[3], row[4]]).toEqual([2500, 200, 150, 'holding']);
+    expect(r.snapshots[i - 1]!.companies.rows.find((x) => x[0] === 'gres-g1')![4]).not.toBe('holding');
+  });
+
+  it('a reserve with companies of its own brings them, to its entry point; nothing is made up', () => {
+    const r = runReserves({ noCompanies: false });
+    expect(r.defaultsUsed.some((d) => d.startsWith('reserves[gres]'))).toBe(false);
+    expect(r.units.filter((u) => u.battalionId === 'gres').map((u) => u.id)).toEqual(['gres-1', 'gres-2']);
+    expect(ofKind(r, 'reserve-arrived')[0]!.factors).toMatchObject({ companies: 2, men: 200 });
+    const last = r.snapshots.at(-1)!.companies.rows.find((x) => x[0] === 'gres-1')!;
+    expect(last[4]).not.toBe('off-map');
+  });
+
+  it('a division with no battalions gets battalionsPerDivision battalions of companiesPerBattalion companies', () => {
+    const s = minimalScenario();
+    s.forces[0]!.formations.push({ id: 'rd', name: 'Reserve Division', kind: 'division' });
+    s.reserves = [{ formationId: 'rd', side: 'allied', distanceKm: est(20), entryPoint: [-3000, 0] }];
+    const d = minimalDoctrineV2();
+    d.companyDefaults = { ...d.companyDefaults, battalionsPerDivision: { value: 3, estimate: 't', description: 't' }, companiesPerBattalion: { value: 2, estimate: 't', description: 't' } };
+    const { scenario, used } = resolveDefaults(s, { 'bef-1917': d }, {} as never);
+    const rd = scenario.forces[0]!.formations.find((f) => f.id === 'rd')!;
+    expect(rd.children!.map((b) => [b.id, b.kind, b.companies!.map((c) => c.id)])).toEqual([
+      ['rd-bn1', 'battalion', ['rd-bn1-g1', 'rd-bn1-g2']],
+      ['rd-bn2', 'battalion', ['rd-bn2-g1', 'rd-bn2-g2']],
+      ['rd-bn3', 'battalion', ['rd-bn3-g1', 'rd-bn3-g2']],
+    ]);
+    expect(rd.children![0]!.companies![0]).toMatchObject({ role: 'reserve', start: [-3000, 0], strength: { value: 1 }, officers: { value: 1 }, training: 'standard' });
+    expect(used.filter((u) => u.startsWith('reserves[rd]'))).toEqual([
+      'reserves[rd] ← 3 battalions (bef-1917.companyDefaults.battalionsPerDivision) of 2 companies (bef-1917.companyDefaults.companiesPerBattalion) of 1 men (bef-1917.companyDefaults.strength); officers, lewisGuns, machineGuns from bef-1917.companyDefaults, training standard',
+    ]);
+  });
+
+  it('waits off the map, is ordered, marches and arrives; each snapshot says so', () => {
+    const r = runReserves();
+    expect(r.snapshots[0]!.reserves!.columns).toEqual([...RESERVE_COLUMNS]);
+    expect(reserveRows(r, 0)).toEqual([{ formationId: 'gres', status: 'waiting', orderedMin: null, arriveMin: null }]);
+    const ordered = ofKind(r, 'reserve-ordered')[0]!;
+    const arrived = ofKind(r, 'reserve-arrived')[0]!;
+    const last = reserveRows(r, r.snapshots.length - 1)[0]!;
+    expect(last).toMatchObject({ status: 'arrived', orderedMin: ordered.minute });
+    // Arrives at the first step end at or after arriveMin (a fine step: startsMovement).
+    expect(arrived.minute).toBeGreaterThanOrEqual(last.arriveMin as number);
+    expect(arrived.minute - (last.arriveMin as number)).toBeLessThan(2);
+    const statuses = r.snapshots.flatMap((_, i) => reserveRows(r, i).map((x) => x.status));
+    expect(statuses.filter((x, i) => statuses.indexOf(x) === i)).toEqual(['waiting', 'ordered', 'marching', 'arrived']);
+    // The companies are off the map, then marching, then on it.
+    const g1 = r.snapshots.map((x) => x.companies.rows.find((y) => y[0] === 'gres-g1')![4]);
+    expect(g1.filter((x, i) => g1.indexOf(x) === i).slice(0, 3)).toEqual(['off-map', 'marching', 'holding']);
+  });
+
+  it('the arrived reserve goes into the planned divisional counter-attack', () => {
+    const r = runReserves();
+    const arrived = ofKind(r, 'reserve-arrived')[0]!;
+    const go = ofKind(r, 'counter-attack-ordered').find((e) => e.minute > arrived.minute)!;
+    expect(go).toBeDefined();
+    expect(go.text).toMatch(/counter-attack by \d+ companies/);
+    // The arrived companies take it up.
+    expect(r.snapshots.some((x) => x.companies.rows.some((y) => String(y[0]).startsWith('gres-g') && y[4] === 'counter-attacking'))).toBe(true);
+  });
+
+  it('a run does not end while a reserve is on its way, and is not held open by reserves never ordered', () => {
+    const r = runReserves();
+    expect(r.endMinute).toBeGreaterThan(ofKind(r, 'reserve-arrived')[0]!.minute);
+    // Nobody orders a reserve that is never needed: the fixture without its attack ends early with gres still waiting.
+    const quiet = runReserves({}, ([s, m]) => {
+      s.forces[0]!.formations[0]!.companies = s.forces[0]!.formations[0]!.companies!.map((c) => ({ ...c, startAfterMin: est(100000) }));
+      s.timeLimitMinutes = 600;
+      return [s, m];
+    });
+    expect(ofKind(quiet, 'reserve-ordered')).toEqual([]);
+  });
+
+  it('the arrival is a scheduled minute that starts movement, and the march start one that does not', () => {
+    const { state, ctx } = initRun(...fixtureReserves(), { seed: 1 });
+    expect(SCHEDULES.some(([name]) => name === 'reserves')).toBe(true);
+    expect(reserveTimes(state, ctx)).toEqual([]);
+    const ordered: SimState = { ...state, minute: 60, reserves: [{ ...state.reserves[0]!, status: 'ordered', orderedMin: 60, arriveMin: 225 }] };
+    expect(reserveTimes(ordered, ctx)).toEqual([
+      { minute: 75, startsMovement: false },
+      { minute: 225, startsMovement: true },
+    ]);
+    // A quiet step ends on the last grid minute strictly before the arrival.
+    const marching: SimState = { ...ordered, minute: 220, reserves: [{ ...ordered.reserves[0]!, status: 'marching' }] };
+    expect(quietStep(marching, ctx, 2, 10)).toBe(4);
+  });
+
+  it('quiet steps do not change the march or the arrival', () => {
+    const [s, m] = fixtureReserves();
+    const coarse = runScenario(s, withQuietStep(m, 10), { seed: 1, endMinute: 600 });
+    const fine = runScenario(s, withQuietStep(m, 2), { seed: 1, endMinute: 600 });
+    const of = (r: RunRecord) => r.events.filter((e) => e.kind === 'reserve-ordered' || e.kind === 'reserve-arrived').map((e) => [e.minute, e.kind, e.text, e.factors]);
+    expect(of(coarse)).toHaveLength(2);
+    expect(of(coarse)).toEqual(of(fine));
+    expect(reserveRows(coarse, coarse.snapshots.length - 1)).toEqual(reserveRows(fine, fine.snapshots.length - 1));
+  });
+
+  it('a counter-attack up the ridge is slower and weaker than the same attack on the flat', () => {
+    expect(counterAttackLosses({ climbM: 40 })).toBeGreaterThan(counterAttackLosses({ climbM: 0 }));
+    // Slower: after 6 minutes it is further from the trench.
+    expect(counterAttack({ climbM: 40, minutes: 6 }).kr.x).toBeGreaterThan(counterAttack({ climbM: 0, minutes: 6 }).kr.x);
+    // Weaker: its fire carries the cause, and the climb between it and its target.
+    const fire = counterAttack({ climbM: 40, minutes: 6 }).events.filter((e) => e.kind === 'direct-fire' && (e.unitId === 'c1' || e.unitId === 'c2'));
+    expect(fire.length).toBeGreaterThan(0);
+    expect(fire.every((e) => e.causes.includes('uphill-counter-attack'))).toBe(true);
+    expect(fire[0]!.factors!.climbM).toBeGreaterThan(0);
+    const flat = counterAttack({ climbM: 0, minutes: 6 }).events.filter((e) => e.kind === 'direct-fire' && (e.unitId === 'c1' || e.unitId === 'c2'));
+    expect(flat.some((e) => e.causes.includes('uphill-counter-attack'))).toBe(false);
+  });
+});

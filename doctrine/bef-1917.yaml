@@ -191,6 +191,11 @@ companyDefaults:
     estimate: the British battalion of four companies; every Canadian battalion in the scenario has four. No source read prints it (SS
       143 gives the company of four platoons, ss143-1917 p. 22)
     description: Companies in a battalion when the scenario does not say.
+  battalionsPerDivision:
+    value: 12
+    estimate: three brigades of four battalions; every Canadian division in the scenario has three brigades, of four battalions each
+      (the 3rd Division's 9th Brigade has five). No source read prints it
+    description: Battalions in a division when the scenario gives the division none (an off-map reserve division, say).
   dugoutDepthM:
     value: 6.1
     estimate: taken as the German figure (de-1917, twenty feet, from boh-1917-1 p. 316); no British figure was found in the sources read.

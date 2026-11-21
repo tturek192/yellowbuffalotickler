@@ -1,17 +1,16 @@
 import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
 import type { CompanyState, CompanyStatus } from './companies';
-import type { CasualtyCount, SegmentState, Side, SimEvent } from './types';
+import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent } from './types';
 
-export const ENGINE_VERSION = '0.3.6';
+export const ENGINE_VERSION = '0.3.7';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
 export const SNAPSHOT_QUIET_MIN = 60;
 
 /**
- * A table held as column names and rows of values in that order. Snapshot tables use it: `companies` and
- * `segments` now; `reserves` (Task 13) is added beside them the same way. Readers find a value by
- * its column name, so a table can gain columns without breaking them.
+ * A table held as column names and rows of values in that order. Snapshot tables use it: `companies`, `segments`
+ * and `reserves` (Task 13). Readers find a value by its column name, so a table can gain columns without breaking them.
  */
 export type Columnar<C extends string, R extends readonly unknown[]> = { columns: C[]; rows: R[] };
 
@@ -38,6 +37,11 @@ export type SegmentColumn = (typeof SEGMENT_COLUMNS)[number];
 /** `segment` is the segment's index in `geometry.segments`; wireCut to 0.01. */
 export type SegmentRow = [segment: number, holder: Side, wireCut: number, emerged: boolean];
 
+export const RESERVE_COLUMNS = ['formationId', 'status', 'orderedMin', 'arriveMin'] as const;
+export type ReserveColumn = (typeof RESERVE_COLUMNS)[number];
+/** An off-map reserve (Task 13): its formation, status, the minute it was ordered and the minute it arrives (to 0.1), null until ordered. */
+export type ReserveRow = [formationId: string, status: ReserveState['status'], orderedMin: number | null, arriveMin: number | null];
+
 /** A trench segment as the record's geometry lists it: what does not change during the run (y and length to 0.1 m). */
 export type SegmentGeometry = Pick<SegmentState, 'id' | 'featureId' | 'garrisonIds' | 'yMin' | 'yMax' | 'lengthM'>;
 
@@ -47,6 +51,8 @@ export type Snapshot = {
   companies: Columnar<CompanyColumn, CompanyRow>;
   /** One row per trench segment, in `geometry.segments` order. */
   segments: Columnar<SegmentColumn, SegmentRow>;
+  /** One row per off-map reserve, in the scenario's order (Task 13; absent in records before engine 0.3.7). */
+  reserves?: Columnar<ReserveColumn, ReserveRow>;
   /** `done` once the sector's barrage has ended; its points then hold where it last stood. */
   barrages: Array<{ sectorId: string; done: boolean; points: Point[] }>;
 };

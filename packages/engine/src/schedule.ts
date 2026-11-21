@@ -3,6 +3,7 @@ import { counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts
 import { fireMissionEnds, messageDueTimes } from './comms';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
+import { reserveTimes } from './reserves';
 import { dugoutSorties } from './trenches';
 import type { SimState, StepContext } from './step';
 
@@ -55,6 +56,8 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['off-map-attacks', offMapAttackWindows],
   // Task 12 fix round: a failed local counter-attack may be ordered again (a decision, which moves nobody).
   ['counter-attack-retries', counterAttackRetries],
+  // Task 13: an ordered reserve setting off (moves nobody on the map) and arriving (its companies come on to the map).
+  ['reserves', reserveTimes],
 ];
 
 /**

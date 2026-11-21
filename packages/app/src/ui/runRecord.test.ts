@@ -56,6 +56,12 @@ const withSegments = (geometrySegments: unknown = [{ id: 't:001', featureId: 't'
   return { ...r, geometry: { ...r.geometry, segments: geometrySegments }, snapshots: [{ ...r.snapshots[0]!, segments: snapshotSegments }] };
 };
 const segRows = (rows: unknown[]) => withSegments(undefined, { columns: ['segment', 'holder', 'wireCut', 'emerged'], rows });
+/** The good record with off-map reserves' state in its snapshot (engine 0.3.7 on). */
+const withReserves = (reserves: unknown = { columns: ['formationId', 'status', 'orderedMin', 'arriveMin'], rows: [['rir261-iii', 'waiting', null, null], ['4gd', 'marching', 40, 236.5]] }) => {
+  const r = good();
+  return { ...r, snapshots: [{ ...r.snapshots[0]!, reserves }] };
+};
+const resRows = (rows: unknown[]) => withReserves({ columns: ['formationId', 'status', 'orderedMin', 'arriveMin'], rows });
 
 describe('parseRunRecord', () => {
   it('accepts a well-formed record, with features and holding companies', () => {
@@ -69,6 +75,11 @@ describe('parseRunRecord', () => {
     const r = parseRunRecord(withSegments());
     expect(r.geometry.segments.map((x) => x.id)).toEqual(['t:001']);
     expect(r.snapshots[0]!.segments.rows).toEqual([[0, 'central', 0.85, false]]);
+  });
+
+  it('accepts a record with off-map reserves in each snapshot, and one from before engine 0.3.7 without them', () => {
+    expect(parseRunRecord(withReserves()).snapshots[0]!.reserves!.rows).toEqual([['rir261-iii', 'waiting', null, null], ['4gd', 'marching', 40, 236.5]]);
+    expect(parseRunRecord(good()).snapshots[0]!.reserves).toBeUndefined();
   });
 
   it('accepts a record with a terrain grid', () => {
@@ -121,6 +132,12 @@ describe('parseRunRecord', () => {
     ['a segment row with an unknown holder', () => segRows([[0, 'neutral', 0, false]]), /snapshots\[0\]\.segments\.rows\[0\]/],
     ['a wire cut above 1', () => segRows([[0, 'central', 1.2, false]]), /snapshots\[0\]\.segments\.rows\[0\]/],
     ['an emerged flag that is not a boolean', () => segRows([[0, 'central', 0.5, 0]]), /snapshots\[0\]\.segments\.rows\[0\]/],
+    ['reserves that are not a table', () => withReserves([]), /snapshots\[0\]\.reserves needs columns and rows/],
+    ['reserve columns without arriveMin', () => withReserves({ columns: ['formationId', 'status', 'orderedMin'], rows: [] }), /snapshots\[0\]\.reserves\.columns lacks arriveMin/],
+    ['a reserve with an unknown status', () => resRows([['4gd', 'lost', null, null]]), /snapshots\[0\]\.reserves\.rows\[0\]/],
+    ['a reserve without a formation id', () => resRows([[4, 'waiting', null, null]]), /snapshots\[0\]\.reserves\.rows\[0\]/],
+    ['a reserve ordered at a negative minute', () => resRows([['4gd', 'ordered', -5, 100]]), /snapshots\[0\]\.reserves\.rows\[0\]/],
+    ['a reserve row shorter than the columns', () => resRows([['4gd', 'waiting', null]]), /snapshots\[0\]\.reserves\.rows\[0\]/],
   ])('rejects %s', (_, make, message) => {
     expect(() => parseRunRecord(make())).toThrow(message);
   });

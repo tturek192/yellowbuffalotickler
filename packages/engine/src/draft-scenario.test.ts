@@ -40,6 +40,9 @@ describe('draft Vimy scenario run', () => {
     // counter-attack and no off-map attacks; its companies' start jitter is scaled by their leaders' planning, which counts as 3 for the draft's
     // unrated leaders. The hash moves with the version and with defaultsUsed, which now lists the leaders the command
     // model and the timetable read as 3 (formations with no leader, leaders with no ratings).
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.6', hash: 'e95e2f6f' });
+    // 0.3.7 (Task 13): off-map reserves and the uphill counter-attack. The draft has no reserves, no terrain grid and no
+    // German companies, so nothing marches, arrives or counter-attacks: removing the new (empty) snapshots[].reserves
+    // tables and setting the version back gives 0.3.6's hash, e95e2f6f. Only the version and those tables move it.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.7', hash: '458e0fac' });
   });
 });

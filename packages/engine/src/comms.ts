@@ -109,7 +109,12 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
     for (const id of c.formationPath) formationOf.get(id)?.companyIds.push(c.id);
   }
   const byCompany = new Map(state.companies.map((c) => [c.id, c]));
-  for (const f of formations) f.pos = hqPlace(f, f.companyIds.map((id) => byCompany.get(id)!), given.get(f.id), ctx);
+  // Behind its companies on the map: an off-map reserve's companies count only for a formation that has no others.
+  for (const f of formations) {
+    const cs = f.companyIds.map((id) => byCompany.get(id)!);
+    const on = cs.filter((c) => c.status !== 'off-map');
+    f.pos = hqPlace(f, on.length ? on : cs, given.get(f.id), ctx);
+  }
   const comms = s.communications;
   let links: Topology['links'] = null;
   if (comms) {

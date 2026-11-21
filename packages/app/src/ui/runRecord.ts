@@ -29,6 +29,10 @@ function isFeature(f: unknown): boolean {
 
 /** The segment columns the player reads; a record may carry more. */
 const NEEDED_SEGMENT_COLUMNS = ['segment', 'holder', 'wireCut', 'emerged'] as const;
+/** The reserve columns the player reads (engine 0.3.7 on); a record may carry more. */
+const NEEDED_RESERVE_COLUMNS = ['formationId', 'status', 'orderedMin', 'arriveMin'] as const;
+const RESERVE_STATUSES: readonly unknown[] = ['waiting', 'ordered', 'marching', 'arrived'];
+const isMinute = (v: unknown): boolean => v === null || (isNum(v) && v >= 0);
 
 /** A trench segment in the geometry: an id, its feature, its garrisons and a y band. */
 const isSegment = (x: unknown): boolean =>
@@ -129,6 +133,25 @@ export function parseRunRecord(data: unknown): RunRecord {
           isFrac(row[at.wireCut]) &&
           typeof row[at.emerged] === 'boolean';
         if (!ok) fail(`snapshots[${i}].segments.rows[${j}] needs a segment index into geometry.segments, a holder side, wireCut from 0 to 1 and emerged true or false`);
+      });
+    }
+    // Off-map reserves' state: optional (records before engine 0.3.7 have none), checked when present.
+    const res = s.reserves;
+    if (res !== undefined) {
+      if (!isObject(res) || !Array.isArray(res.columns) || !Array.isArray(res.rows)) return fail(`snapshots[${i}].reserves needs columns and rows`);
+      const rc = res.columns as unknown[];
+      const at = Object.fromEntries(NEEDED_RESERVE_COLUMNS.map((c) => [c, rc.indexOf(c)])) as Record<(typeof NEEDED_RESERVE_COLUMNS)[number], number>;
+      const lacking = NEEDED_RESERVE_COLUMNS.filter((c) => at[c] < 0);
+      if (lacking.length) fail(`snapshots[${i}].reserves.columns lacks ${lacking.join(', ')}`);
+      res.rows.forEach((row: unknown, j) => {
+        const ok =
+          Array.isArray(row) &&
+          row.length === rc.length &&
+          typeof row[at.formationId] === 'string' &&
+          RESERVE_STATUSES.includes(row[at.status]) &&
+          isMinute(row[at.orderedMin]) &&
+          isMinute(row[at.arriveMin]);
+        if (!ok) fail(`snapshots[${i}].reserves.rows[${j}] needs a formation id, a known status (waiting, ordered, marching or arrived), and orderedMin and arriveMin as minutes or null`);
       });
     }
     s.barrages.forEach((b: unknown, j) => {

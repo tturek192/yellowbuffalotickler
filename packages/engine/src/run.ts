@@ -16,7 +16,8 @@ import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
 import { createRng } from './rng';
-import { COMPANY_COLUMNS, ENGINE_VERSION, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
+import { COMPANY_COLUMNS, ENGINE_VERSION, RESERVE_COLUMNS, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
+import { offMapAtZero, reservesUnderWay } from './reserves';
 import type { RunRecord, Snapshot } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
@@ -79,7 +80,8 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
   const state: SimState = {
     minute: 0,
     barrages: scenario.sectors.map(initBarrage),
-    companies: withStartingMorale(initCompanies(scenario, models.doctrines, rng, ctx.defaultsUsed), ctx).map((c) => {
+    // The companies of off-map reserves wait off the map until they are ordered forward and arrive (reserves.ts).
+    companies: offMapAtZero(withStartingMorale(initCompanies(scenario, models.doctrines, rng, ctx.defaultsUsed), ctx), scenario).map((c) => {
       const seg = segmentOf.get(c.id);
       return seg === undefined ? c : { ...c, segmentId: seg };
     }),
@@ -108,7 +110,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
 function initReserves(s: Scenario): ReserveState[] {
   return s.reserves.map((r) => {
     if (!Array.isArray(r.entryPoint)) throw new Error(`Reserve ${r.formationId}: entryPoint was not projected to a local point`);
-    return { formationId: r.formationId, side: r.side, status: 'waiting', orderedMin: null, arriveMin: null, entryPoint: [r.entryPoint[0], r.entryPoint[1]] };
+    return { formationId: r.formationId, side: r.side, status: 'waiting', orderedMin: null, arriveMin: null, entryPoint: [r.entryPoint[0], r.entryPoint[1]], orderedBy: null, orderedEventId: null };
   });
 }
 
@@ -142,6 +144,10 @@ function snapshot(state: SimState, ctx: StepContext): Snapshot {
       columns: [...SEGMENT_COLUMNS],
       rows: state.segments.map((x, i) => [i, x.holder, round(x.wireCut, 2), x.emerged]),
     },
+    reserves: {
+      columns: [...RESERVE_COLUMNS],
+      rows: state.reserves.map((r) => [r.formationId, r.status, r.orderedMin, r.arriveMin === null ? null : round(r.arriveMin, 1)]),
+    },
     barrages: state.barrages.map((b) => {
       const sector = ctx.scenario.sectors.find((x) => x.id === b.sectorId)!;
       return {
@@ -155,8 +161,11 @@ function snapshot(state: SimState, ctx: StepContext): Snapshot {
   };
 }
 
-/** Statuses of a company that has nothing more to do in the attack: at its objective, or out of the fight. */
-const DONE: ReadonlySet<string> = new Set(['consolidating', 'surrendered', 'destroyed']);
+/**
+ * Statuses of a company that has nothing more to do in the attack: at its objective, or out of the fight; or off the map
+ * in a reserve nobody has ordered forward (a reserve on its way keeps the run going: `reservesUnderWay`).
+ */
+const DONE: ReadonlySet<string> = new Set(['consolidating', 'surrendered', 'destroyed', 'off-map']);
 
 export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunRecord {
   const stepMin = opts.stepMin ?? 2;
@@ -182,7 +191,9 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
       stopEarly &&
       state.barrages.every((b) => b.phase === 'done') &&
       state.companies.every((c) => isHolding(c) || DONE.has(c.status)) &&
-      // Task 12: nor while a headquarters has an order on its way, a stall to act on or an operation waiting for its hour.
+      // Task 12: nor while a headquarters has an order on its way, a stall to act on or an operation waiting for its hour;
+      // Task 13: nor while a reserve is on its way, or arrived and not yet known to the headquarters that ordered it.
+      !reservesUnderWay(state, ctx) &&
       !commandPending(state, ctx);
     const every = busy ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
     const due = opts.snapshotEveryStep || Math.floor(state.minute / every) > Math.floor(lastSnapshot / every);

@@ -677,3 +677,41 @@ export function fixtureCounter(o: CounterOpts = {}): [Scenario, Models] {
   }
   return [s, m];
 }
+
+// ---- reserves off the map (Task 13) --------------------------------------------------------------------------------
+
+export type ReserveOpts = {
+  /** The off-map reserve gres's distance (default 8 km) and its scenario `orderedAt` (absent by default; never read). */
+  distanceKm?: number;
+  orderedAt?: string;
+  /** Give gres no companies (the default: the engine makes them up), or two of its own (100 men each, at x 3000). */
+  noCompanies?: boolean;
+  /** The orderSpeed of the division's leader gl (default 3). */
+  divOrderSpeed?: number;
+  /** Weather: rain over the 24 hours before Zero and all through the battle (default dry). */
+  rain?: boolean;
+};
+
+/**
+ * fixtureCounter's divisional counter-attack with its off-map reserve: division gd (leader gl) holds the regiment
+ * rir262 (k1, k2 on `ger-front-a`), its own reserve battalion grb (kr, 300 men at x 600) and the resting battalion gres,
+ * off the map `distanceKm` back, entering at (2500, 200). The German doctrine's march values are the repository's:
+ * baseOrderDelayMin 15, marchKmPerHour 4, deployMin 30, companiesPerBattalion 4, strength 150 (officers 3, one light
+ * and 1.5 heavy machine guns), battalionsPerDivision 9; mud 0.6 in the rain.
+ */
+export function fixtureReserves(o: ReserveOpts = {}): [Scenario, Models] {
+  const [s, m] = fixtureCounter({ divOrderSpeed: o.divOrderSpeed ?? 3, offMapReserve: true });
+  const r = s.reserves[0]!;
+  r.distanceKm = est(o.distanceKm ?? 8);
+  if (o.orderedAt !== undefined) r.orderedAt = { value: o.orderedAt, estimate: 'test: a historical time, a validation target only' };
+  if (o.noCompanies === false) {
+    const gres = s.forces[1]!.formations[0]!.children!.find((f) => f.id === 'gres')!;
+    gres.companies = [1, 2].map((n) => ({ id: `gres-${n}`, name: `Ruhe-Kompanie ${n}`, role: 'reserve' as const, strength: est(100), start: [3000, 100 * n] as [number, number] }));
+  }
+  if (o.rain) s.weather = [{ at: '1916-06-30T00:00', precipitation: { value: 'rain', estimate: 'test' } }];
+  const de = m.doctrines['de-1917']!;
+  de.common = { ...de.common, baseOrderDelayMin: param(15), marchKmPerHour: param(4), deployMin: param(30) };
+  de.companyDefaults = { ...de.companyDefaults, companiesPerBattalion: param(4), battalionsPerDivision: param(9), strength: param(150), officers: param(3), lewisGuns: param(1), machineGuns: param(1.5) };
+  (m.tables.effects as Record<string, unknown>).mudSpeedFactor = param(0.6);
+  return [s, m];
+}

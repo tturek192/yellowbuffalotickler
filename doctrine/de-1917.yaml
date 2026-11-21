@@ -208,6 +208,13 @@ companyDefaults:
     page: '30'
     note: '"Each battalion is divided into 4 companies and a machine gun company"'
     description: Companies in a battalion when the scenario does not say.
+  battalionsPerDivision:
+    value: 9
+    source: german-handbook-1917
+    page: '30'
+    note: '"the great majority of German Divisions have now been organized on the 3-regiment basis, the three infantry regiments (9
+      battalions)"'
+    description: Battalions in a division when the scenario gives the division none (an off-map reserve division, say).
   dugoutDepthM:
     value: 6.1
     estimate: 'twenty feet, the shallow end of the deep mined dug-outs: on Vimy Ridge "the main German dug-outs and tunnels twenty to

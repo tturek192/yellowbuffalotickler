@@ -8,6 +8,7 @@ import type { NewEvent } from './causes';
 import { directFire } from './fire';
 import { morale } from './morale';
 import { behaviour, moveCompanies } from './movement';
+import { marchReserves } from './reserves';
 import { resolve } from './resolve';
 import { takeLines } from './step';
 import type { SimState, StepContext } from './step';
@@ -39,12 +40,13 @@ const artillery: Phase = (state, ctx, dt, pending) => {
 /**
  * Companies move (movement.ts); then each attacker's gap to the barrage is taken, and garrisons come up out of their
  * dugouts or are caught in them (gap.ts); then segments change hands and guns are overrun, the dugouts are mopped up,
- * and men left in them too long come up (trenches.ts).
+ * and men left in them too long come up (trenches.ts); then the reserves off the map march, and those due arrive
+ * (reserves.ts).
  */
 const movement: Phase = (state, ctx, dt, pending) => {
   const moved = moveCompanies(state, ctx, dt, pending);
   const gaps = emergence(trackGaps(moved, ctx, dt, state.companies), ctx);
-  return sorties(mopUp(captureSegments(gaps, ctx), ctx, dt), ctx);
+  return marchReserves(sorties(mopUp(captureSegments(gaps, ctx), ctx, dt), ctx), ctx);
 };
 
 /** Headquarters decide from their pictures and send their orders; off-map attacks apply (command.ts). */

@@ -11,6 +11,7 @@ import { lineXAt } from './geometry';
 import { adaptFactor, delayFactor, leaderOf, riskRatio } from './leaders';
 import type { Ratings } from './leaders';
 import { round } from './record';
+import { arrivalKnown, orderReserve } from './reserves';
 import type { Scheduled } from './schedule';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
@@ -33,7 +34,7 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
  *    attackers have had `counterAttackConsolidateMin` to consolidate by the time it would go in. They go in
  *    `localCounterAttackDelayMin · delayFactor` after the decision (`counter-attack-ordered`, cause `ground-lost`).
  * 3. Defender, divisional counter-attack. A division whose picture shows at least `commitReserveWhenLostFrac` of its front
- *    (the segments its garrisons hold) lost orders its off-map reserves forward (`reserve-ordered`; Task 13 marches them)
+ *    (the segments its garrisons hold) lost orders its off-map reserves forward (`reserve-ordered`; reserves.ts marches them)
  *    and plans a counter-attack for when they are there; then its reserve-role companies (those on the map, and the
  *    reserves once arrived) go in `divisionalCounterAttackDelayMin · delayFactor` after that, at the same ratio test.
  * 4. Attacker, stall. The timetable runs itself (companies' starts, companies.ts). A headquarters whose picture shows a
@@ -446,7 +447,9 @@ function divisionalCounterAttacks(w: Work): void {
       const r = ratingsOf(w, fid);
       const refs = aboutOf(h0, lost.map((x) => `s:${x}`));
       const ordered: number[] = [];
+      const eventOf = new Map<string, number>();
       for (const res of reserves) {
+        eventOf.set(res.formationId, w.state.nextEventId);
         ordered.push(w.state.nextEventId);
         w.state = emit(w.state, {
           minute: M,
@@ -458,8 +461,8 @@ function divisionalCounterAttacks(w: Work): void {
         });
       }
       if (reserves.length) {
-        const ids = new Set(reserves.map((x) => x.formationId));
-        w.state = { ...w.state, reserves: w.state.reserves.map((x) => (ids.has(x.formationId) ? { ...x, status: 'ordered' as const, orderedMin: M } : x)) };
+        // Task 13 (reserves.ts) works out when each arrives, and marches it.
+        w.state = { ...w.state, reserves: w.state.reserves.map((x) => (eventOf.has(x.formationId) ? orderReserve(x, w.ctx, M, fid, eventOf.get(x.formationId)!) : x)) };
       }
       const plan: Decision = { kind: 'divisional-counter-attack', atMin: M, formationId: fid, segmentIds: lost, reserveIds: reserves.map((x) => x.formationId), eventRefs: unique([...refs, ...ordered]) };
       const i = w.hqAt.get(fid)!;
@@ -470,7 +473,7 @@ function divisionalCounterAttacks(w: Work): void {
   }
 }
 
-/** A division's planned counter-attack goes in once its reserves are there (all its off-map ones arrived). */
+/** A division's planned counter-attack goes in once its reserves are there (all its off-map ones arrived, as its picture shows). */
 function goDivisional(w: Work, fid: string, d: Doctrine): void {
   const M = w.state.minute;
   const i = w.hqAt.get(fid)!;
@@ -481,7 +484,8 @@ function goDivisional(w: Work, fid: string, d: Doctrine): void {
     w.state = { ...w.state, hqs: w.state.hqs.map((x, j) => (j === i ? { ...x, pending: x.pending.filter((p) => p !== plan) } : x)) };
   };
   const waited = w.state.reserves.filter((x) => plan.reserveIds.includes(x.formationId));
-  if (waited.some((x) => x.status !== 'arrived')) return;
+  // Its picture must show them there (Task 13): every company of each reserve it waits for reported on the map.
+  if (waited.some((x) => x.status !== 'arrived' || !arrivalKnown(w.state, w.ctx, h, x.formationId))) return;
   const targets = plan.segmentIds.filter((x) => h.picture.segments[x] !== h.side);
   const force = free(w, h, fid, 'reserve');
   if (targets.length === 0 || force.length === 0) {

@@ -20,7 +20,7 @@ export const DEFENCE_KEYS = [
   'counterAttackMinRatio', 'commitReserveWhenLostFrac', 'counterAttackMinMen', 'counterAttackRetryMin',
 ] as const;
 export const COMPANY_DEFAULT_KEYS = [
-  'officers', 'lewisGuns', 'machineGuns', 'bombsPerMan', 'strength', 'companiesPerBattalion', 'dugoutDepthM',
+  'officers', 'lewisGuns', 'machineGuns', 'bombsPerMan', 'strength', 'companiesPerBattalion', 'battalionsPerDivision', 'dugoutDepthM',
   'roundsPerRifle', 'roundsPerLightMg', 'roundsPerMg',
 ] as const;
 
