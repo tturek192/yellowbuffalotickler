@@ -4,9 +4,11 @@
  */
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Doctrine, Scenario, Tables } from '@wwi/scenario';
-import { est, germanForce, minimalDoctrineV2, minimalScenarioV3, minimalTables } from '@wwi/scenario/test-fixtures';
+import { decodeTerrain, encodeTerrain } from '@wwi/scenario';
+import type { Doctrine, Feature, Scenario, Tables } from '@wwi/scenario';
+import { est, germanForce, minimalDoctrineV2, minimalScenario, minimalScenarioV3, minimalTables } from '@wwi/scenario/test-fixtures';
 import { loadScenario, loadTables } from '@wwi/scenario/node';
+import { buildWorld } from './ground';
 import { createRng } from './rng';
 import type { RunRecord } from './record';
 import { initRun } from './run';
@@ -135,3 +137,35 @@ export function ctxWithPhaseSpy(seen: string[]): StepContext {
   const { ctx } = initRun(...fixtureWithDoctrineV3(), { seed: 1 });
   return { ...ctx, onPhase: (name: PhaseName) => void seen.push(name) };
 }
+
+const cite = { value: 'fixture', estimate: 'test fixture' };
+
+/** Fixture tables with ground, mud, uphill and light values set. */
+export function tablesWith(over: Record<string, number> = {}) {
+  const t = fixtureTables();
+  const set = { mudSpeedFactor: 0.6, uphillPenaltyPer10m: 0.02, trenchProximityM: 15, nightVisibilityM: 50, twilightMin: 35, ...over };
+  for (const [k, value] of Object.entries(set)) (t.effects as Record<string, unknown>)[k] = { value, estimate: 'test', description: 'test', calibrated: true };
+  return t;
+}
+
+/** A world over a 1000 × 200 m frame at 50.4 N; `elevM(x)` makes a terrain grid, `weather` the weather list. */
+export function worldWith(features: Feature[] = [], elevM?: (x: number) => number, weather: Scenario['weather'] = []) {
+  const s = minimalScenario();
+  s.zeroHour = { value: '1917-04-09T05:30', estimate: 'test fixture' };
+  s.features = features;
+  s.weather = weather;
+  s.frame = { origin: { lon: 2.7, lat: 50.4 }, bearingDeg: est(75), extent: { minX: 0, maxX: 1000, minY: -100, maxY: 100 } };
+  let terrain;
+  if (elevM) {
+    const cols = 41; // 0..1000 m at 25 m
+    const elev = new Float32Array(cols * 9);
+    for (let j = 0; j < 9; j++) for (let i = 0; i < cols; i++) elev[j * cols + i] = elevM(i * 25);
+    terrain = decodeTerrain(encodeTerrain({ cellM: 25, originX: 0, originY: -100, cols, rows: 9, elevM: elev }));
+  }
+  return buildWorld(s, tablesWith(), terrain);
+}
+
+export const featureOf = (id: string, kind: Feature['kind'], geometry: Feature['geometry']): Feature => ({ id, kind, geometry, cite });
+export const woodAt = (x0: number, x1: number) =>
+  featureOf('w', 'wood', { type: 'Polygon', coordinates: [[x0, -100], [x1, -100], [x1, 100], [x0, 100]] });
+
