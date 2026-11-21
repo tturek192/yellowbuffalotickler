@@ -251,6 +251,12 @@ Whether the field guns cut wire there after 7 April is an open question (below).
 (heavy only), so in the model the 18-pdrs' and mortars' wire rounds do cut this stretch, against the sourced outcome;
 sparing it from all fire would match the outcome instead (Conflicts).
 
+**The owner's confirmation (2026-11-21).** The owner, a historian, confirmed that only a specific portion of German
+trench ahead of the 87th Battalion was left undestroyed by the heavy artillery, not Hill 145 itself. That settles the
+attribution: the data stands as entered, a band on `ger-first-position` spared from the heavy pieces only
+(`onlyKinds: [heavy]`), while the `hill-145` strong point is shelled like the rest of the front. Where the stretch lay
+within the 87th's frontage, and how long it was, remain open (below).
+
 **Timing.** The stretch was not spared for the whole bombardment: it was "destroyed early in the bombardment" and left
 alone only after the 7 April photographs showed it repaired (BOH p. 328). The schema's band spares it from 20 March.
 That is recorded under Conflicts.
@@ -429,12 +435,12 @@ by battery or group (Open questions), a run's captured-guns count should not be 
   has 378 m, the 4th Division's sector split equally among five battalions (`oob-canadian.md`). The spared band follows
   the scenario's frontage.
 
-- **The spared stretch: heavy-only, or all fire.** Both sources say the heavy artillery spared it (Nicholson p. 259;
-  BOH p. 328: "The heavy artillery commander had desired to destroy it again"). Its covering wire survived and stopped
-  the attack (BOH pp. 328-329). The field guns and medium mortars cut wire elsewhere, and no source says whether they
-  fired on this stretch. The data spares it from the heavies only (`onlyKinds: [heavy]`, the attribution), which lets
-  the 18-pdrs' and mortars' wire rounds cut it in the model, against the outcome (the wire held); sparing it from all
-  fire would match the outcome instead. The two readings cannot both be kept until the field guns' fire there is known.
+- **The spared stretch: heavy-only, or all fire. Settled: heavy-only.** Both sources say the heavy artillery spared it
+  (Nicholson p. 259; BOH p. 328: "The heavy artillery commander had desired to destroy it again"), and the owner, a
+  historian, confirmed it: only a portion of German trench ahead of the 87th was left undestroyed by the heavy
+  artillery, not Hill 145 itself (The spared stretch). The data spares it from the heavies only (`onlyKinds: [heavy]`).
+  What remains is a known limit of the model, not a conflict of sources: the 18-pdrs' and mortars' wire rounds cut
+  the stretch's wire in the model, while its covering wire survived and stopped the attack (BOH pp. 328-329).
 - **The spared stretch: from when.** It was "destroyed early in the bombardment" and left alone only after the
   photographs of 7 April showed it repaired (BOH p. 328). The schema's band spares it for the whole bombardment, from
   20 March, so the model's strong point takes no early damage either.
@@ -454,10 +460,6 @@ by battery or group (Open questions), a run's captured-guns count should not be 
 - **The spared stretch's extent.** How long was the stretch of trench opposite the 87th left unbombarded, and where did
   it lie in the 87th's frontage? The band entered is the right half of the frontage. The 87th's war diary or a trench
   map of Hill 145 would place it. Was any other stretch spared for the same reason?
-- **Did the field guns fire on the spared stretch, or cut its wire, after 7 April?** The heavy artillery left it alone
-  (BOH p. 328; Nicholson p. 259), and its covering wire survived and stopped the 87th (BOH pp. 328-329). Were the 18-pdrs
-  and the medium mortars also told to leave it, or did their wire-cutting simply fail there? The answer decides whether
-  the stretch is spared from the heavies only or from all fire (Conflicts).
 - **German machine guns at Vimy.** Was the resting battalions' machine-gun company in the line, as entered, or with its
   battalion? Did the 79th Reserve, 1st Bavarian Reserve and 16th Bavarian Divisions have a machine-gun marksman
   detachment on the ridge? How many 08/15 light machine guns had reached the companies by 9 April? The regimental

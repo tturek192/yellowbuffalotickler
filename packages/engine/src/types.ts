@@ -1,7 +1,9 @@
-import type { ChannelKind, FORMATION_KINDS, Point } from '@wwi/scenario';
+import type { ChannelKind, FORMATION_KINDS, Point, Scenario } from '@wwi/scenario';
 import type { Cause } from './causes';
 
 export type Side = 'allied' | 'central';
+export type ArtilleryRole = Scenario['artillery'][number]['role'];
+export type Observation = NonNullable<Scenario['artillery'][number]['observation']>;
 export type FormationKind = (typeof FORMATION_KINDS)[number];
 
 export const EVENT_KINDS = [
@@ -12,6 +14,8 @@ export const EVENT_KINDS = [
   'garrison-emerged', 'defenders-trapped', 'segment-lost', 'segment-retaken', 'dugout-cleared', 'dugout-sortie',
   'officers-lost', 'fire-opened', 'bombardment-result', 'message-lost', 'order-issued', 'counter-attack-ordered',
   'operation-launched', 'reserve-ordered', 'reserve-arrived', 'run-ended',
+  // Plan 3, artillery in battle (Task 8)
+  'shelled', 'barrage-passed', 'barrage-lost', 'batteries-recovered', 'ammunition-exhausted',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -117,9 +121,19 @@ export type SegmentState = {
   /** Whether any part of it was spared by the bombardment, by any weapon kind. */
   spared: boolean;
   holder: Side;
+  /** The last minute a barrage (creeping or standing) was on it; null: none since Zero (Task 8). */
   barrageLastOverMin: number | null;
+  /**
+   * The event that last told of fire on it, for the refs of its garrison's emergence: the `barrage-passed`
+   * when the creeping barrage lifted off it, else its `bombardment-result`; null: neither (Task 8).
+   */
+  barrageEventId: number | null;
+  /** Its garrison is up and manning the trench (Task 8). */
   emerged: boolean;
-  dugoutPoints: Array<{ point: Point; men: number }>;
+  /** Attackers reached it before its garrison emerged: part surrendered, the rest are left in its dugouts (Task 8). */
+  trapped: boolean;
+  /** Men of a garrison company left below ground when the segment was taken over them, to be cleared (Tasks 8, 10). */
+  dugoutPoints: Array<{ companyId: string; point: Point; men: number }>;
 };
 
 /**
@@ -131,6 +145,10 @@ export type BatteryState = {
   id: string;
   side: Side;
   weapon: string;
+  /** The artillery entry's role: what it fires in the battle (Task 8). */
+  role: ArtilleryRole;
+  /** How it sees its fall of shot (the entry's observation; map when none is given). */
+  observation: Observation;
   guns: number;
   /** The minute after Zero the battery fires again; null: in action. */
   suppressedUntilMin: number | null;
@@ -152,8 +170,23 @@ export type ReserveState = {
 };
 
 /**
- * Damage gathered by the artillery and direct-fire phases, applied all at once by `resolve` (Task 9
- * fills it). `hits` is an expected count, rounded by `stochasticRound` only when applied.
+ * One fire in one step (an artillery source, Task 8): `resolve` reports all the damage that names it in one
+ * event, with these factors and the men it hit.
+ */
+export type FireGroup = {
+  /** Unique within the step. */
+  key: string;
+  /** What fired, for the event's text ("Creeping barrage, Sector 1"). */
+  text: string;
+  sectorId?: string;
+  /** Set when the fire is about one company (the own barrage on a company too close to it). */
+  unitId?: string;
+  factors: Record<string, number>;
+};
+
+/**
+ * Damage gathered by the artillery and direct-fire phases, applied all at once by `resolve` (Task 8's
+ * minimal resolve; Task 9 extends it). `hits` is an expected count, rounded by `stochasticRound` only when applied.
  */
 export type PendingDamage = {
   targetId: string;
@@ -162,8 +195,11 @@ export type PendingDamage = {
   hits: number;
   /** Rounds that arrived, for suppression. */
   rounds: number;
+  /** Suppression per round (the rounds-weighted mean of the weapons that fired them). */
   suppressPerRound: number;
   causes: Cause[];
   refs: number[];
+  /** The fire this damage is part of. */
+  fire?: FireGroup;
 };
 export type Pending = { damage: PendingDamage[] };

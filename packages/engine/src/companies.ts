@@ -62,6 +62,13 @@ export type CompanyState = {
   status: CompanyStatus;
   startMin: number;
   speedMPerMin: number;
+  /**
+   * How far its sector's barrage stands ahead of it, `barrageX − x`, in metres, as of the end of its last
+   * step (Task 8); null for holding companies and once the barrage has ended.
+   */
+  gapM: number | null;
+  /** It has fallen so far behind its barrage that the barrage no longer protects it (Task 8, `barrage-lost`). */
+  barrageLost: boolean;
 };
 
 /** Garrison and reserve companies hold; only the others attack. */
@@ -135,6 +142,8 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       status: holding ? 'holding' : 'waiting',
       startMin,
       speedMPerMin,
+      gapM: null,
+      barrageLost: false,
     };
   });
 }

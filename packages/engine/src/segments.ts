@@ -142,7 +142,9 @@ export function deriveSegments(s: Scenario, tables?: Tables, defaultsUsed?: Set<
         spared: false,
         holder: 'central',
         barrageLastOverMin: null,
+        barrageEventId: null,
         emerged: false,
+        trapped: false,
         dugoutPoints: [],
       });
     });

@@ -235,3 +235,71 @@ export const runBombardmentOn = (f: [Scenario, Models], seed = 1): SimState => i
 
 /** The mean wire cut over a state's segments. */
 export const wireCutOf = (state: SimState): number => state.segments.reduce((a, x) => a + x.wireCut, 0) / state.segments.length;
+
+// ---- artillery in battle (Task 8) -------------------------------------------------------------------------
+
+/** The battle artillery's effect keys at the repository's starting values (tables/effects.yaml), for fixtures. */
+export const ARTILLERY_EFFECTS = {
+  barrageBandDepthM: 90, mgBarrageDepthM: 400, gapMultiplier: 2, densityRefMen: 30, suppressionHalfLifeMin: 5, captureRadiusM: 50,
+  unobservedFireFactor: 0.3, observerRangeM: 1500, batteriesRecoveredFrac: 0.5, blockedExitFactor: 1,
+};
+
+export type ArtilleryOpts = {
+  /** Every attacking company starts this many minutes late (default 0). */
+  lagMin?: number;
+  /** The attackers' doctrine followDistanceM (default 70) and maxAdvanceMPerMin (default 50). */
+  followDistanceM?: number;
+  speedMPerMin?: number;
+  /** The attackers' start x (default 0). */
+  startX?: number;
+  /** Garrison doctrine emergeMin (default 3). */
+  emergeMin?: number;
+  /** Extra effect keys. */
+  effects?: Record<string, number>;
+};
+
+/**
+ * fixtureWithDoctrineV3 with real-sized effect values: assault companies c1 (y 100) and c2 (y 300) behind the
+ * creeping battery g1 (18 18-pdrs); German garrisons k1 and k2 on `ger-front-a` (x 150), each 120 men, in two
+ * segments of 200 m; de-1917 emergeMin 3 and trappedSurrenderFrac 0.5. The barrage lifts 91 m every 3 minutes
+ * from x 150 to the Black Line (x 1150), then stands 180 m beyond it for 40 minutes.
+ */
+export function fixtureArtillery(o: ArtilleryOpts = {}): [Scenario, Models] {
+  const [s, m] = fixtureWithDoctrineV3();
+  for (const c of s.forces[0]!.formations[0]!.companies!) {
+    c.startAfterMin = est(o.lagMin ?? 0);
+    if (o.startX !== undefined && Array.isArray(c.start)) c.start = [o.startX, c.start[1]];
+  }
+  const doctrines = structuredClone(m.doctrines);
+  const bef = doctrines['bef-1917']!;
+  bef.attack!.followDistanceM = { ...bef.attack!.followDistanceM, value: o.followDistanceM ?? 70 };
+  bef.attack!.maxAdvanceMPerMin = { ...bef.attack!.maxAdvanceMPerMin, value: o.speedMPerMin ?? 50 };
+  for (const d of Object.values(doctrines)) {
+    d.defence!.emergeMin = { ...d.defence!.emergeMin, value: o.emergeMin ?? 3 };
+    d.defence!.trappedSurrenderFrac = { ...d.defence!.trappedSurrenderFrac, value: 0.5 };
+  }
+  return [s, { doctrines, tables: bombTables({ ...ARTILLERY_EFFECTS, ...o.effects }) }];
+}
+
+/** Add a German trench at x with one garrison company `id` (120 men) at its middle, y 0 to 400. */
+export function withRearTrench(f: [Scenario, Models], x: number, id = 'k3'): [Scenario, Models] {
+  const [s, m] = f;
+  s.features.push({ id: `ger-rear-${id}`, kind: 'trench', side: 'central', geometry: { type: 'LineString', coordinates: [[x, 0], [x, 400]] }, cite });
+  s.forces[1]!.formations[0]!.companies!.push({ id, name: `Rear garrison ${id}`, role: 'garrison', strength: est(120), start: [x, 200], trenchFeatureId: `ger-rear-${id}` });
+  return [s, m];
+}
+
+/** Add a holding allied reserve company `res` (150 men) at (x, y). */
+export function withReserve(f: [Scenario, Models], x: number, y = 200): [Scenario, Models] {
+  f[0].forces[0]!.formations[0]!.companies!.push({ id: 'res', name: 'Reserve Company', role: 'reserve', strength: est(150), start: [x, y] });
+  return f;
+}
+
+/** Add an allied front trench line at x (y 0 to 400), so the fixture has a no man's land between it and gfront (x 150). */
+export function withAlliedFront(f: [Scenario, Models], x = -100): [Scenario, Models] {
+  f[0].lines.unshift({ id: 'afront', name: 'Allied front line', kind: 'trench', side: 'allied', points: [[x, 0], [x, 400]] });
+  return f;
+}
+
+/** Events of a kind. */
+export const ofKind = (r: RunRecord, kind: RunRecord['events'][number]['kind']) => r.events.filter((e) => e.kind === kind);

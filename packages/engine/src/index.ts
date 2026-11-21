@@ -1,14 +1,14 @@
 export { createRng } from './rng';
 export { stochasticRound } from './stochastic';
 export { lineXAt, sampleYs } from './geometry';
-export { initBarrage, advanceBarrage, barrageXAt } from './barrage';
+export { initBarrage, advanceBarrage, bandAt, barrageXAt, planReachX } from './barrage';
 export type { BarrageState } from './barrage';
 export { CAUSES } from './causes';
 export type { Cause } from './causes';
 export { EVENT_KINDS } from './types';
 export type {
   BatteryState, CasualtyCount, Decision, EventKind, FormationKind, HqState, Intent, Message, Order, OrderTarget,
-  Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
+  FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
 } from './types';
 export { initCompanies, moveCompanies } from './companies';
 export type { CompanyState, CompanyStatus } from './companies';
@@ -25,6 +25,8 @@ export type {
 } from './record';
 export { deriveSegments } from './segments';
 export { initBatteries, runBombardment } from './bombardment';
+export { artilleryFire, emergeAtMin, emergence, noMansLandAt, observationFactor, trackGaps } from './artillery';
+export { resolve } from './resolve';
 export { initRun, runScenario } from './run';
 export type { Models, RunOptions } from './run';
 export { quantiles, runBatch } from './batch';

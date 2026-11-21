@@ -1,8 +1,10 @@
+import { artilleryFire, emergence, trackGaps } from './artillery';
 import { advanceBarrage, barrageXAt } from './barrage';
 import { emit } from './causes';
 import type { NewEvent } from './causes';
 import { isHolding, moveCompanies } from './companies';
 import type { CompanyState } from './companies';
+import { resolve } from './resolve';
 import { takeLines } from './step';
 import type { SimState, StepContext } from './step';
 import type { Intent, Pending } from './types';
@@ -22,8 +24,8 @@ const behaviour: Phase = (state) => {
   return { ...state, companies: state.companies.map((c) => (c.intent === intentOf(c) ? c : { ...c, intent: intentOf(c) })) };
 };
 
-/** Barrages advance along their timetables. */
-const artillery: Phase = (state, ctx) => {
+/** Barrages advance along their timetables; then every artillery effect is gathered as pending damage (artillery.ts). */
+const artillery: Phase = (state, ctx, dt, pending) => {
   const events: NewEvent[] = [];
   const barrages = state.barrages.map((b) => {
     const sector = ctx.scenario.sectors.find((x) => x.id === b.sectorId)!;
@@ -31,10 +33,13 @@ const artillery: Phase = (state, ctx) => {
     events.push(...r.events);
     return r.state;
   });
-  return emit({ ...state, barrages }, ...events);
+  return artilleryFire(emit({ ...state, barrages }, ...events), ctx, dt, pending);
 };
 
-/** Companies follow their sector's barrage toward their objective line. */
+/**
+ * Companies follow their sector's barrage toward their objective line; then each attacker's gap to the
+ * barrage is taken, and garrisons come up out of their dugouts or are caught in them (artillery.ts).
+ */
 const movement: Phase = (state, ctx, dt) => {
   const barrageX = (sectorId: string, y: number): number => {
     const b = state.barrages.find((x) => x.sectorId === sectorId)!;
@@ -42,7 +47,7 @@ const movement: Phase = (state, ctx, dt) => {
     return barrageXAt(b, sector, ctx.lines, state.minute, y);
   };
   const moved = moveCompanies(state.companies, barrageX, ctx.scenario.lines, ctx.doctrines, state.minute, dt);
-  return emit({ ...state, companies: moved.companies }, ...moved.events);
+  return emergence(trackGaps(emit({ ...state, companies: moved.companies }, ...moved.events), ctx), ctx);
 };
 
 /** Line-taken checks. */
@@ -55,7 +60,7 @@ export const PHASES = [
   ['behaviour', behaviour],
   ['artillery', artillery],
   ['directFire', none],
-  ['resolve', none],
+  ['resolve', resolve],
   ['morale', none],
   ['movement', movement],
   ['log', log],

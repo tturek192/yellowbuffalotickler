@@ -12,7 +12,7 @@ import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
 import { createRng } from './rng';
-import { ENGINE_VERSION, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
+import { COMPANY_COLUMNS, ENGINE_VERSION, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
 import type { RunRecord, Snapshot } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
@@ -101,7 +101,7 @@ function snapshot(state: SimState, ctx: StepContext): Snapshot {
   return {
     minute: state.minute,
     companies: {
-      columns: ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured'],
+      columns: [...COMPANY_COLUMNS],
       rows: state.companies.map((c) => [
         c.id,
         round(c.x),
@@ -114,6 +114,7 @@ function snapshot(state: SimState, ctx: StepContext): Snapshot {
         c.killed,
         c.wounded,
         c.captured,
+        c.gapM === null ? null : round(c.gapM),
       ]),
     },
     segments: {
@@ -206,7 +207,11 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
           captured: c.captured,
         })),
       },
-      prisoners: { allied: 0, central: 0 },
+      // Men taken prisoner by each side: the other side's captured.
+      prisoners: {
+        allied: state.companies.filter((c) => c.side === 'central').reduce((a, c) => a + c.captured, 0),
+        central: state.companies.filter((c) => c.side === 'allied').reduce((a, c) => a + c.captured, 0),
+      },
       gunsCaptured: 0,
       endedAt: state.minute,
       endReason: null,

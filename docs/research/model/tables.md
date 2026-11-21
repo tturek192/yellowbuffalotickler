@@ -170,9 +170,10 @@ All 16 values are calibrated estimates; the scenario says which channels link wh
 
 ## Effects
 
-The 35 effects are estimates; 29 are calibrated coefficients, `crewPerLewis` is sourced, and `twilightMin`,
-`lineFeatureMatchM`, `gapMultiplier`, `crewPerMg` and `trenchProximityM` are plain estimates (a calculation, a tolerance,
-an explanation threshold or a count, not fitted). The reasoning is in each entry; the ones with sources behind them:
+The 44 effects are estimates except `crewPerLewis`, which is sourced; 33 are calibrated coefficients, and `twilightMin`,
+`lineFeatureMatchM`, `gapMultiplier`, `crewPerMg`, `trenchProximityM`, `wireUncutBelow`, `batteriesRecoveredFrac` and the
+village, wood and crater radii are plain estimates (a calculation, a tolerance, an explanation threshold, a count or a
+map default, not fitted). The reasoning is in each entry; the ones with sources behind them:
 
 | Key | Value | Basis |
 |---|---|---|
@@ -191,6 +192,12 @@ an explanation threshold or a count, not fitted). The reasoning is in each entry
 | sortieDelayMin | 30 | Germans "emerging from dug-outs which had been passed over" during the consolidation (`boh-1917-1` p. 333) |
 | crewPerLewis | 2 | sourced: the Nos. 1 and 2 (`ss143-1917` p. 9) |
 | crewPerMg | 4 | firer, loader and two carriers; the German company had "48 machine gunners (8 per gun)" with reliefs and carriers (`german-handbook-1917` p. 50) |
+
+Four keys came with the artillery of the battle, all by judgement, with no source behind them:
+`unobservedFireFactor` 0.3 (fire meant to be observed, when nobody sees it fall), `observerRangeM` 1,500 m (how far an
+observer must see to watch the fall of shot), `blockedExitFactor` 1 (a wholly wrecked trench doubles the time its
+garrison takes to come up) and `batteriesRecoveredFrac` 0.5 (an explanation threshold: half a side's guns back in
+action).
 
 **Changed from the plan's starting values** (the pre-flight ruling seeded the 16 later keys with the plan's numbers for
 review here): `gasHorseRadiusM` 1,000 → 200 m (a gas shell's cloud spreads a couple of hundred metres, not a kilometre),

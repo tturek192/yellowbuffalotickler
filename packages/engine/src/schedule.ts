@@ -1,3 +1,4 @@
+import { batteryRecoveries, garrisonEmergences, offMapWindows } from './artillery';
 import { phaseEndMin } from './barrage';
 import type { SimState, StepContext } from './step';
 
@@ -29,6 +30,10 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
     'company-starts',
     (state) => state.companies.filter((c) => c.status === 'waiting').map((c) => ({ minute: c.startMin, startsMovement: true })),
   ],
+  // Task 8: silenced batteries coming back, garrisons coming up, off-map fire opening and stopping; none moves anyone.
+  ['battery-recovery', batteryRecoveries],
+  ['garrison-emergence', garrisonEmergences],
+  ['off-map-fire', offMapWindows],
 ];
 
 /**

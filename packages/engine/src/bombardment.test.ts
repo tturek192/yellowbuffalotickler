@@ -30,8 +30,11 @@ describe('the compressed bombardment', () => {
     expect(totalsOverTime(r, 'k1')[0]).toBe(120);
     const k = r.snapshots[0]!.companies.rows.find((x) => x[0] === 'k1')!;
     expect(k[3]).toBeLessThan(120);
-    // Bombardment losses are not counted again in the battle; they roll up by formation.
-    expect(r.summary.casualties.battle.central.total).toBe(0);
+    // Bombardment losses are not counted again in the battle (its only German losses are the garrisons the attackers
+    // trapped in their dugouts, captured); they roll up by formation.
+    const battle = r.summary.casualties.battle.central;
+    expect([battle.killed, battle.wounded]).toEqual([0, 0]);
+    expect(battle.captured).toBe(r.summary.prisoners.allied);
     expect(r.summary.casualties.bombardment.central.formations['rir262']!.total).toBe(r.summary.casualties.bombardment.central.total);
     expect(r.summary.casualties.bombardment.allied.total).toBe(0);
   });
@@ -134,6 +137,23 @@ describe('the compressed bombardment', () => {
     expect(r.defaultsUsed.some((x) => x.includes('no frontage'))).toBe(false);
   });
 
+  it('a spared band straddling two segments maps onto each by the share of its y extent it covers', () => {
+    const state = runBombardmentOn(fixtureBomb({ trenchRounds: 60, spared: [{ yMin: 150, yMax: 250 }] }));
+    expect(state.segments.map((x) => x.spared)).toEqual([true, true]);
+    expect(results(state).map((e) => e.factors!.sparedFrac)).toEqual([0.25, 0.25]);
+    // 60 rounds over the 300 m left unspared: 30 on each segment's 150 m, so the two are damaged alike.
+    for (const x of state.segments) expect(x.trenchDamage).toBeCloseTo(0.75 * (1 - Math.exp((-30 * 5) / 150)), 9);
+  });
+
+  it('a wire belt or spared band on a garrisoned trench but beyond its segments is recorded, not dropped silently', () => {
+    const [s, m] = fixtureBomb({ wireRounds: 1000, spared: [{ yMin: 500, yMax: 600 }] });
+    s.bombardment!.wire.push({ featureId: 'ger-front-a', yMin: 400, yMax: 450, beltDepthM: { value: 10, estimate: 'test' } });
+    const r = runScenario(s, m, { seed: 1 });
+    expect(r.defaultsUsed).toContain('bombardment.spared[ger-front-a y 500 to 600] ← not applied (no garrison segment over it)');
+    expect(r.defaultsUsed).toContain('bombardment.wire[ger-front-a y 400 to 450] ← not applied (no garrison segment over it)');
+    expect(r.defaultsUsed.filter((x) => x.includes('y 0 to 400'))).toEqual([]);
+  });
+
   it('a wire belt or spared stretch on a trench with no garrison is recorded once and affects nothing', () => {
     const [s, m] = fixtureBomb({ wireRounds: 1000 });
     s.features.push({ id: 'ger-support', kind: 'trench', side: 'central', geometry: { type: 'LineString', coordinates: [[400, 0], [400, 400]] }, cite: { value: 'x', estimate: 'test' } });
@@ -148,7 +168,7 @@ describe('batteries at Zero', () => {
   it('every artillery entry becomes batteries with its guns, position, ammunition and horses', () => {
     const { state } = initRun(...fixtureBomb(), { seed: 1 });
     const g1 = state.batteries.find((b) => b.id === 'g1')!;
-    expect(g1).toEqual({ id: 'g1', side: 'allied', weapon: '18pdr', guns: 18, suppressedUntilMin: null, ammoLeft: 5000, position: [-800, 200], horses: false });
+    expect(g1).toEqual({ id: 'g1', side: 'allied', weapon: '18pdr', role: 'creeping', observation: 'map', guns: 18, suppressedUntilMin: null, ammoLeft: 5000, position: [-800, 200], horses: false });
     expect(state.batteries.map((b) => b.id)).toEqual([...state.batteries.map((b) => b.id)].sort());
   });
 

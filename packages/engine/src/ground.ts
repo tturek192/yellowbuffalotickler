@@ -83,7 +83,8 @@ export function cellOf(w: World, p: Point): number {
   return cy * w.cols + cx;
 }
 
-function inPolygon(pts: Point[], x: number, y: number): boolean {
+/** Whether (x, y) lies inside the polygon (even-odd rule). */
+export function inPolygon(pts: Point[], x: number, y: number): boolean {
   let inside = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
     const [xi, yi] = pts[i]!;
@@ -93,7 +94,8 @@ function inPolygon(pts: Point[], x: number, y: number): boolean {
   return inside;
 }
 
-function distToSegment(p: Point, a: Point, b: Point): number {
+/** Distance from p to the straight piece a–b. */
+export function distToSegment(p: Point, a: Point, b: Point): number {
   const dx = b[0] - a[0];
   const dy = b[1] - a[1];
   const len2 = dx * dx + dy * dy;

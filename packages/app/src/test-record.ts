@@ -13,7 +13,7 @@ export function unitsFor(...lists: TestCompany[][]): RunRecord['units'] {
 /** A snapshot's columnar company table. */
 export function companyTable(cs: TestCompany[]): Snapshot['companies'] {
   return {
-    columns: ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured'],
-    rows: cs.map((c) => [c.id, c.x, c.y, c.men, c.status, 1, 0, 'moving', 0, 0, 0]),
+    columns: ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured', 'gapM'],
+    rows: cs.map((c) => [c.id, c.x, c.y, c.men, c.status, 1, 0, 'moving', 0, 0, 0, null]),
   };
 }

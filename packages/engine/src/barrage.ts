@@ -108,3 +108,18 @@ export function barrageXAt(b: BarrageState, sector: Sector, lines: Lines, minute
       : Math.min(1, Math.max(0, (Math.floor((minute - b.phaseStartMin) / g.liftMin) * g.liftM) / g.depthM));
   return fromX + (toX - fromX) * t;
 }
+
+/**
+ * The creeping barrage's band at y: the zone its shells fall in at that minute, `depthM` deep (tables
+ * `barrageBandDepthM`) and centred on the barrage line, as [near edge, far edge]; null once the barrage has ended.
+ */
+export function bandAt(b: BarrageState, sector: Sector, lines: Lines, minute: number, y: number, depthM: number): [number, number] | null {
+  if (b.phase === 'done') return null;
+  const x = barrageXAt(b, sector, lines, minute, y);
+  return [x - depthM / 2, x + depthM / 2];
+}
+
+/** The farthest the sector's fire plan reaches at y: its last objective line plus the stand-off. */
+export function planReachX(sector: Sector, lines: Lines, y: number): number {
+  return lineXAt(linePoints(lines, sector.legs[sector.legs.length - 1]!.toLineId), y) + sector.standOffM.value;
+}

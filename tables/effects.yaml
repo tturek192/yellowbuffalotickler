@@ -235,3 +235,31 @@ effects:
     estimate: the radius the map has drawn a crater with when it gives none (packages/app/src/map/style.ts DEFAULT_RADIUS_M); a mine
       crater of 1916-17 was some tens of metres across, a shell crater a few metres
     description: Radius in metres of a crater mapped as a point with no radius of its own.
+  unobservedFireFactor:
+    value: 0.3
+    estimate: a battery that should be corrected by an observer but whose fall of shot nobody sees fires by the map at a target it has not
+      registered, and most of its rounds land off it; about a third as effective as observed fire. Order of magnitude, not fitted to Vimy
+    description: How effective the fire of a battery observed by forward observers or aircraft is when nobody can see where it falls, as
+      a share of observed fire (fire by the map on positions plotted in advance is not reduced).
+    calibrated: true
+  observerRangeM:
+    value: 1500
+    estimate: a forward observer in an observation post, or an aircraft observer over the lines, watches shells fall on targets one to two
+      kilometres off; 1,500 m is the middle. When men can see less far than that (night, mist, snow) observation falls in proportion.
+      Order of magnitude, not fitted to Vimy
+    description: Distance in metres an artillery observer must be able to see to watch the fall of shot; observed fire loses effect in
+      proportion when visibility is shorter.
+    calibrated: true
+  batteriesRecoveredFrac:
+    value: 0.5
+    estimate: an explanation threshold, not behaviour. Once half of a side's guns are back in action after the counter-battery fire at Zero,
+      its defensive fire is said to have recovered (cause batteries-recovered)
+    description: Share of a side's guns in action at which the event batteries-recovered is emitted, and its defensive fire carries that
+      cause.
+  blockedExitFactor:
+    value: 1
+    estimate: shelling that wrecks a trench also buries and blocks dug-out stairways, and the garrison must dig or climb out through the
+      wreckage; a wholly wrecked trench is taken to double the time to come up. Order of magnitude, not fitted to Vimy
+    description: How much a wrecked trench slows its garrison coming up out of its dug-outs; the time to emerge is emergeMin x (1 +
+      blockedExitFactor x trenchDamage).
+    calibrated: true

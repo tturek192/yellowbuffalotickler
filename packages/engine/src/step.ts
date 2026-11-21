@@ -51,7 +51,8 @@ export type StepContext = {
 
 /** Statuses of companies that are not on the field as a fighting body. */
 const GONE: ReadonlySet<string> = new Set(['surrendered', 'destroyed', 'off-map', 'marching']);
-const onField = (c: CompanyState): boolean => c.men > 0 && !GONE.has(c.status);
+/** On the field as a fighting body: men standing, and not surrendered, destroyed, off the map or marching. */
+export const onField = (c: CompanyState): boolean => c.men > 0 && !GONE.has(c.status);
 
 /**
  * Contact, the one definition every task extends: some attacking company (any that is not holding) is

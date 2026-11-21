@@ -110,7 +110,7 @@ describe('runScenario', () => {
       { id: 'c2', battalionId: 'bn1', name: 'B Company', side: 'allied' },
     ]);
     const snap = r.snapshots[1]!.companies;
-    expect(snap.columns).toEqual(['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured']);
+    expect(snap.columns).toEqual(['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured', 'gapM']);
     for (const row of snap.rows) {
       expect(Number.isInteger(row[1]) && Number.isInteger(row[2])).toBe(true);
       expect(row[5] * 100).toBeCloseTo(Math.round(row[5] * 100), 9);

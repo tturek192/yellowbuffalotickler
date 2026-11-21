@@ -2,7 +2,7 @@ import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenar
 import type { CompanyState, CompanyStatus } from './companies';
 import type { CasualtyCount, SegmentState, Side, SimEvent } from './types';
 
-export const ENGINE_VERSION = '0.3.1';
+export const ENGINE_VERSION = '0.3.2';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -15,9 +15,9 @@ export const SNAPSHOT_QUIET_MIN = 60;
  */
 export type Columnar<C extends string, R extends readonly unknown[]> = { columns: C[]; rows: R[] };
 
-export const COMPANY_COLUMNS = ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured'] as const;
+export const COMPANY_COLUMNS = ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured', 'gapM'] as const;
 export type CompanyColumn = (typeof COMPANY_COLUMNS)[number];
-/** x and y to 1 m; morale and suppression to 0.01; counts are whole men. */
+/** x and y to 1 m; morale and suppression to 0.01; counts are whole men; gapM (Task 8) to 1 m, null when the company has no barrage to follow. */
 export type CompanyRow = [
   id: string,
   x: number,
@@ -30,6 +30,7 @@ export type CompanyRow = [
   killed: number,
   wounded: number,
   captured: number,
+  gapM: number | null,
 ];
 
 export const SEGMENT_COLUMNS = ['segment', 'holder', 'wireCut', 'emerged'] as const;

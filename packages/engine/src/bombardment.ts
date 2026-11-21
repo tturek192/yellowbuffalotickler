@@ -40,10 +40,13 @@ export function initBatteries(s: Scenario, defaultsUsed: Set<string>): BatterySt
   return [...s.artillery].sort(byId).map((a): BatteryState => {
     if (a.ammunition === undefined) defaultsUsed.add(`artillery[${a.id}].ammunition ← unlimited (none given)`);
     if (a.horseDrawn === undefined) defaultsUsed.add(`artillery[${a.id}].horseDrawn ← false (not given)`);
+    if (a.observation === undefined) defaultsUsed.add(`artillery[${a.id}].observation ← map (not given)`);
     return {
       id: a.id,
       side: a.side,
       weapon: a.weapon,
+      role: a.role,
+      observation: a.observation ?? 'map',
       guns: v(a.count),
       suppressedUntilMin: null,
       ammoLeft: a.ammunition === undefined ? Infinity : v(a.ammunition),
@@ -184,6 +187,12 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
   };
   const wireBy = bandsOn(b.wire, 'wire');
   const sparedBy = bandsOn(b.spared, 'spared');
+  // A band on a feature with segments that overlaps none of them (it lies beyond the garrisons' stretches) is listed too.
+  const overlaps = (x: { featureId: string; yMin: number; yMax: number }): boolean =>
+    state.segments.some((seg) => seg.featureId === x.featureId && (seg.yMin === seg.yMax ? x.yMin <= seg.yMin && seg.yMin <= x.yMax : x.yMin < seg.yMax && x.yMax > seg.yMin));
+  for (const [what, by] of [['wire', wireBy], ['spared', sparedBy]] as const)
+    for (const x of [...by.values()].flat())
+      if (!overlaps(x)) ctx.defaultsUsed.add(`bombardment.${what}[${x.featureId} y ${x.yMin} to ${x.yMax}] ← not applied (no garrison segment over it)`);
   const pieces = state.segments.flatMap((seg, k) => piecesOf(seg, k, wireBy.get(seg.featureId) ?? [], sparedBy.get(seg.featureId) ?? []));
   for (const seg of state.segments)
     if (seg.lengthM === 0) ctx.defaultsUsed.add(`bombardment of ${seg.id} ← no rounds (the segment has no frontage to share them by)`);
@@ -307,6 +316,8 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
   });
 
   const first = state.nextEventId;
-  const out = emit({ ...state, segments, companies, batteries: suppressAtZero(state.batteries, ctx) }, ...events);
+  // Each segment's result is the last word on fire over it until a barrage lifts off it (Task 8's emergence refs).
+  const told = segments.map((seg, k): SegmentState => ({ ...seg, barrageEventId: first + k }));
+  const out = emit({ ...state, segments: told, companies, batteries: suppressAtZero(state.batteries, ctx) }, ...events);
   return { state: out, events: out.events.filter((e) => e.id >= first), losses };
 }

@@ -16,6 +16,9 @@ describe('draft Vimy scenario run', () => {
     // 0.3.1 (Task 7): the record gains geometry.segments and snapshots[].segments (both empty for the draft,
     // which has no German garrison), and defaultsUsed lists the absent bombardment and clock offset; the
     // draft's companies, events and summary are unchanged.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.1', hash: '115f59eb' });
+    // 0.3.2 (Task 8): snapshot company rows gain a gapM column (each attacker's gap to its barrage). The draft has no
+    // artillery, garrisons or off-map fire, so no shell falls and nobody is trapped: its companies, events, summary
+    // and defaults are unchanged, and only the version and the new column move the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.2', hash: '15c97ee8' });
   });
 });
