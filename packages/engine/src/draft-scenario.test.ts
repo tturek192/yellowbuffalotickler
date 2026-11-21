@@ -46,6 +46,9 @@ describe('draft Vimy scenario run', () => {
     // 0.3.8 (Task 13 fix round 1): the defenders' picture of the attacker's lines, planned counter-attacks that re-target
     // and give up, and reserves spread along a frontage. The draft has no German companies and no reserves: with the
     // version set back to 0.3.7 its record hashes to 458e0fac, so only the version moves the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.8', hash: '2d202141' });
+    // 0.3.9 (Task 13 fix round 1 follow-up): reserve battalion headquarters move with their companies, and a division
+    // reports its planned counter-attack gone in or given up. The draft has neither: with the version set back to 0.3.8
+    // its record hashes to 2d202141, so only the version moves the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.9', hash: '037a5b1a' });
   });
 });

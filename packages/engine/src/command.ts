@@ -6,7 +6,7 @@ import { emit } from './causes';
 import type { Cause } from './causes';
 import { isHolding } from './companies';
 import type { CompanyState, Role } from './companies';
-import { send } from './comms';
+import { reportPlan, send } from './comms';
 import { lineXAt } from './geometry';
 import { adaptFactor, delayFactor, leaderOf, riskRatio } from './leaders';
 import type { Ratings } from './leaders';
@@ -538,8 +538,8 @@ const ARMY_LEVELS: ReadonlySet<FormationKind> = new Set<FormationKind>(['army', 
  * Army reserves (Task 13): an army, Gruppe or corps HQ with off-map reserves of its own (within it, and not within a
  * division that holds a front) orders them forward when its picture shows a division under it that has committed its
  * own reserves and still lost `commitReserveWhenLostFrac` of its front. Committed: every reserve of the division is at
- * its front in the army's picture (`arrivalKnown`), and the division's planned counter-attack has gone in or been given
- * up (the command model's record of the division's decision). The division rule's events, delay and plan follow
+ * its front in the army's picture (`arrivalKnown`), and the division's report that its planned counter-attack has gone in
+ * or been given up has reached the army (`picture.plans`, comms.ts `reportPlan`). The division rule's events, delay and plan follow
  * (`commitReserves`), to that division's front, the plan's force only the army's own reserves; after it has gone in or
  * been given up, another may follow as for a division.
  */
@@ -560,11 +560,9 @@ function armyReserves(w: Work): void {
       const sendable = waiting.length > 0 || free(w, h, fid, 'reserve').some((id) => ownCompanies.has(id));
       if (own.length > 0 && sendable)
         for (const dv of fronted) {
-          const hd = hqOf(w, dv);
+          // Its picture: the division's reserves at its front, and its report that its counter-attack went in or was given up.
           const committed =
-            w.state.command.divisions[dv] !== undefined &&
-            (hd === undefined || !pendingOf(hd)) &&
-            w.state.reserves.filter((x) => within(w, x.formationId, dv)).every((x) => arrivalKnown(w.state, w.ctx, h, x.formationId));
+            h.picture.plans[dv] !== undefined && w.state.reserves.filter((x) => within(w, x.formationId, dv)).every((x) => arrivalKnown(w.state, w.ctx, h, x.formationId));
           if (!committed) continue;
           const { front, lost } = frontLost(w, h, dv);
           if (lost.length / front.length < v(doctrineOf(w, dv).defence?.commitReserveWhenLostFrac ?? d.defence.commitReserveWhenLostFrac)) continue;
@@ -621,6 +619,7 @@ function goDivisional(w: Work, fid: string, d: Doctrine, onlyReserves: boolean):
       factors: { lostSegments: lostNow.length, waitedMin: round(M - since, 1), companies: force.length },
     });
     setPlan(null);
+    w.state = reportPlan(w.state, w.ctx, fid, M, w.state.nextEventId - 1);
     return;
   }
   const there = Math.max(plan.atMin, ...waited.map((x) => x.arriveMin ?? plan.atMin));
@@ -645,6 +644,7 @@ function goDivisional(w: Work, fid: string, d: Doctrine, onlyReserves: boolean):
     factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), minMen, goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
   });
   setPlan(null);
+  w.state = reportPlan(w.state, w.ctx, fid, M, eventId);
   markOrdered(w, h, force);
   // Each company to the lost segment nearest it.
   const segs = targets.map((id) => w.state.segments.find((x) => x.id === id)!);

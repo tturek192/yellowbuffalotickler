@@ -11,6 +11,7 @@ import { RESERVE_COLUMNS } from './record';
 import type { RunRecord } from './record';
 import { arrivalOf, reserveTimes } from './reserves';
 import { commandPhase } from './command';
+import { hqPositionOf } from './comms';
 import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import { quietStep, SCHEDULES } from './schedule';
@@ -153,6 +154,13 @@ describe('reserves off the map', () => {
     const ga = (minute: number) => r.states.find((x) => x.minute === minute)!.hqs.find((h) => h.formationId === 'ga')!;
     const onWay = (st: string) => st === 'off-map' || st === 'marching' || st === 'advancing';
     expect(['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4'].every((id) => !onWay(ga(army.minute).picture.units[id]!.status))).toBe(true);
+    // It learns that the division's counter-attack went in only from the division's report, over the channels: later than
+    // the decision, and it does not commit before it has it.
+    const heard = r.states.find((x) => x.hqs.find((h) => h.formationId === 'ga')!.picture.plans['gd'] !== undefined)!;
+    expect(heard.hqs.find((h) => h.formationId === 'ga')!.picture.plans['gd']).toBe(divGo.minute);
+    expect(heard.minute).toBeGreaterThan(divGo.minute);
+    expect(army.minute).toBeGreaterThanOrEqual(heard.minute);
+    expect(r.states.find((x) => x.minute === divGo.minute)!.hqs.find((h) => h.formationId === 'gd')!.picture.plans['gd']).toBe(divGo.minute);
     for (const x of r.states.filter((y) => y.minute < army.minute)) expect(x.reserves.find((y) => y.formationId === 'ares')!.status).toBe('waiting');
     // The division rule's march and plan: its leader's orderSpeed, its arrival, its counter-attack plan.
     const at = r.states.find((x) => x.minute === army.minute)!;
@@ -202,6 +210,47 @@ describe('reserves off the map', () => {
     expect(go.map((e) => e.text)).toEqual([expect.stringMatching(/^German Division orders a counter-attack by \d+ companies on ger-front-a/)]);
   });
 
+  it('a plan with no ground it can reach waits, and launches when reachable lost ground appears in its picture', () => {
+    // fixtureReserves with the Black Line as objective and a strong German trench on it (k3, 400 men, x 1150, rir262's):
+    // the trench holds, so the line is never taken; the HQ's picture is set by hand from there.
+    const f = fixtureReserves({ objective: 'black' });
+    f[0].features.push({ id: 'ger-rear-k3', kind: 'trench', side: 'central', geometry: { type: 'LineString', coordinates: [[1150, 0], [1150, 400]] }, cite: { value: 'fixture', estimate: 'test fixture' } });
+    f[0].forces[1]!.formations[0]!.children!.find((x) => x.id === 'rir262')!.companies!.push({ id: 'k3', name: 'Rear garrison k3', role: 'garrison', strength: est(400), start: [1150, 200], trenchFeatureId: 'ger-rear-k3' });
+    const run = runStates(f, { endMinute: 300 });
+    const st = run.states.at(-1)!;
+    const k3seg = st.segments.find((x) => x.featureId === 'ger-rear-k3')!.id;
+    const gres = ['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4'];
+    // The division's plan, its reserve at its front; its picture: ger-front-a lost behind the Black Line it believes taken.
+    const decide = (k3lost: boolean, blockedSinceMin?: number) => {
+      const plan = { kind: 'divisional-counter-attack' as const, atMin: 50, formationId: 'gd', segmentIds: [], reserveIds: ['gres'], eventRefs: [], frontId: 'gd', ...(blockedSinceMin !== undefined ? { blockedSinceMin } : {}) };
+      const hqs = st.hqs.map((h) =>
+        h.formationId !== 'gd'
+          ? h
+          : {
+              ...h,
+              pending: [plan],
+              picture: {
+                ...h.picture,
+                lines: { 'black|s1': 30 },
+                segments: { ...h.picture.segments, 'ger-front-a:001': 'allied' as const, 'ger-front-a:002': 'allied' as const, [k3seg]: k3lost ? ('allied' as const) : ('central' as const) },
+                segmentsAt: { [k3seg]: st.minute },
+                enemy: { [k3seg]: { men: 50, atMin: st.minute } },
+                units: { ...h.picture.units, ...Object.fromEntries(gres.map((id) => [id, { status: 'holding', men: 150, atMin: st.minute }])) },
+              },
+            },
+      );
+      const companies = st.companies.map((c) => (gres.includes(c.id) ? { ...c, status: 'holding' as const, orders: [] } : c));
+      const reserves = st.reserves.map((x) => (x.formationId === 'gres' ? { ...x, status: 'arrived' as const, arriveMin: 200 } : x));
+      return commandPhase({ ...st, minute: st.minute + 2, events: [], hqs, companies, reserves, command: { ...st.command, ordered: {} } }, run.ctx, 2);
+    };
+    const waiting = decide(false);
+    expect(waiting.events.filter((e) => e.kind === 'counter-attack-ordered')).toEqual([]);
+    expect(waiting.hqs.find((h) => h.formationId === 'gd')!.pending[0]!.blockedSinceMin).toBe(st.minute + 2);
+    // k3's trench, at the Black Line, now known lost: reachable, so the waiting plan takes it as its target and goes.
+    const go = decide(true, st.minute - 30).events.filter((e) => e.kind === 'counter-attack-ordered');
+    expect(go.map((e) => e.segmentId)).toEqual([k3seg]);
+  });
+
   it('comes on to the map spread along a frontage across its entry point, each company walking to its own place at the front', () => {
     const run = runStates(fixtureReserves(), { endMinute: 400 });
     const arrived = run.states.find((x) => x.events.some((e) => e.kind === 'reserve-arrived'))!;
@@ -215,6 +264,13 @@ describe('reserves off the map', () => {
     expect(new Set(to).size).toBe(4);
     const there = run.states.find((x) => g(x).every((c) => c.status === 'holding'))!;
     expect(new Set(g(there).map((c) => `${Math.round(c.x)}|${Math.round(c.y)}`)).size).toBe(4);
+    // Its battalion headquarters moves with them: behind their places at the front by the battalion's rear offset (600 m,
+    // +x for the German side), no longer at the map's edge.
+    const ends = g(arrived).map((c) => (c.orders.at(-1)!.target as { point: [number, number] }).point);
+    const [hx, hy] = hqPositionOf(run.ctx, 'gres')!;
+    expect(hx).toBeCloseTo(ends.reduce((a, p) => a + p[0], 0) / 4 + 600, 6);
+    expect(hy).toBeCloseTo(ends.reduce((a, p) => a + p[1], 0) / 4, 6);
+    expect(run.ctx.defaultsUsed.has('formations[gres].hqPosition ← moves with its companies to behind their places at the front by effects.hqRearOffsetBattalionM (an off-map reserve\'s battalion)')).toBe(true);
     // Held inside the frame's extent: a long line closes up along the edge.
     const f = fixtureReserves();
     f[0].frame = { origin: { lon: 2.7, lat: 50.4 }, bearingDeg: est(75), extent: { minX: -1000, maxX: 2500, minY: 0, maxY: 450 } };

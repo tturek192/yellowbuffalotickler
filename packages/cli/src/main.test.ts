@@ -48,7 +48,7 @@ describe('cli', () => {
     const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'run.json');
     expect(runCli(['run', draft, '--seed', '1', '--out', out, '--tables-dir', 'tables']).code).toBe(0);
     const rec = JSON.parse(readFileSync(out, 'utf8'));
-    expect(rec.engineVersion).toBe('0.3.8');
+    expect(rec.engineVersion).toBe('0.3.9');
     expect(rec.defaultsUsed).toContain('companies[14bn-a].officers ← bef-1917.companyDefaults.officers');
     const bad = runCli(['run', draft, '--seed', '1', '--out', out, '--tables-dir', 'no-such-dir']);
     expect(bad.code).toBe(2);

@@ -85,6 +85,11 @@ export type Report = {
   lines: Record<string, number | null>;
   /** Lines lost again (Task 12), by `lineId|sectorId`, with the minute they were lost. */
   lost?: Record<string, number>;
+  /**
+   * Planned divisional or army counter-attacks resolved (Task 13): by the planning HQ's formation id, the minute its
+   * plan went in or was given up. A headquarters above learns of it only so.
+   */
+  plans?: Record<string, number>;
   /** The minute each segment in `segments` changed hands, as the sender knows it (Task 12); absent: `atMin`. */
   segmentsAt?: Record<string, number>;
   /**
@@ -169,6 +174,8 @@ export type HqNews = {
   lines: string[];
   /** Segments whose enemy it has news of (Task 12; never urgent). */
   enemy: string[];
+  /** Planned counter-attacks it has news of having gone in or been given up (Task 13; urgent). */
+  plans: string[];
   sinceMin: number | null;
   urgent: boolean;
   aboutEventId: number | null;
@@ -189,6 +196,8 @@ export type HqState = {
     segmentsAt: Record<string, number>;
     /** Lines it knows were lost again, with the minute (Task 12); a line taken again later is taken. */
     linesLost: Record<string, number>;
+    /** The planned counter-attacks it knows have gone in or been given up, by planning HQ, with the minute (Task 13). */
+    plans: Record<string, number>;
     /**
      * The enemy it knows of on each piece of ground (Task 12): by segment id, or `place:<featureId>` for an operation's
      * target that no segment covers. At Zero it holds the pre-battle intelligence picture (`intel`: the enemy companies on

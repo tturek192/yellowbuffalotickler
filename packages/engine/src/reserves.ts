@@ -10,6 +10,7 @@ import { round } from './record';
 import type { Scheduled } from './schedule';
 import type { SimState, StepContext } from './step';
 import { distanceTo, segmentSamples } from './artillery';
+import { moveHq } from './comms';
 import type { HqState, ReserveState, SegmentState } from './types';
 
 /*
@@ -192,6 +193,13 @@ export function marchReserves(state: SimState, ctx: StepContext): SimState {
       const places = frontage(r, n, ctx);
       const ends = destinations(r, n, state, ctx);
       const k = new Map(coming.map((c, j) => [c.id, j]));
+      // Each of its battalions' headquarters moves with its companies, to behind their places at the front.
+      const byBattalion = new Map<string, Point[]>();
+      coming.forEach((c, j) => {
+        const to = ends[j] ?? places[j]!;
+        byBattalion.set(c.battalionId, [...(byBattalion.get(c.battalionId) ?? []), to]);
+      });
+      for (const b of [...byBattalion.keys()].sort()) moveHq(ctx, b, byBattalion.get(b)!);
       companies = companies.map((c) => {
         const j = k.get(c.id);
         if (j === undefined) return c;

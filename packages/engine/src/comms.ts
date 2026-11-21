@@ -148,6 +148,7 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
         units: Object.fromEntries(cs.map((c) => [c.id, { status: c.status, men: c.men, atMin: state.minute }])),
         segmentsAt: {},
         linesLost: {},
+        plans: {},
         enemy: { ...intel[f.side] },
         about: {},
       },
@@ -316,12 +317,36 @@ function hqPlace(f: { id: string; kind: FormationKind; side: Side }, cs: readonl
   return [x, y];
 }
 
+/**
+ * An off-map reserve's battalion headquarters moves with its companies when they come on to the map (Task 13): it stands
+ * behind the places they are going to at the front by the battalion's rear offset, by `hqPlace`'s rule (held inside the
+ * frame's extent), as the battalions on the map stand behind their companies. Mutates the run's comms topology (one per
+ * run), and forgets what was worked out from the old place (the shelled lines along its links).
+ */
+export function moveHq(ctx: StepContext, formationId: string, places: readonly Point[]): void {
+  const topo = topologyOf(ctx);
+  const n = topo.nodes.get(formationId);
+  if (!n || n.kind === 'company' || places.length === 0) return;
+  const key = REAR_KEY[n.kind];
+  const back = v(ctx.tables.effects[key]) * (n.side === 'allied' ? -1 : 1);
+  let x = places.reduce((a, p) => a + p[0], 0) / places.length + back;
+  let y = places.reduce((a, p) => a + p[1], 0) / places.length;
+  const e = ctx.scenario.frame?.extent;
+  if (e) {
+    x = Math.min(Math.max(x, e.minX), e.maxX);
+    y = Math.min(Math.max(y, e.minY), e.maxY);
+  }
+  n.pos = [x, y];
+  topo.along.clear();
+  ctx.defaultsUsed.add(`formations[${formationId}].hqPosition ← moves with its companies to behind their places at the front by effects.${key} (an off-map reserve's battalion)`);
+}
+
 /** Where a formation's headquarters stands for the run (`hqPlace`); null: nowhere. */
 export function hqPositionOf(ctx: StepContext, formationId: string): Point | null {
   return topologyOf(ctx).nodes.get(formationId)?.pos ?? null;
 }
 
-const emptyNews = (sentMin: number): HqNews => ({ units: [], segments: [], lines: [], enemy: [], sinceMin: null, urgent: false, aboutEventId: null, sentMin });
+const emptyNews = (sentMin: number): HqNews => ({ units: [], segments: [], lines: [], enemy: [], plans: [], sinceMin: null, urgent: false, aboutEventId: null, sentMin });
 
 function topologyOf(ctx: StepContext): Topology {
   const t = topologies.get(ctx.scenario);
@@ -606,6 +631,22 @@ export function send(
   return finish(w);
 }
 
+/**
+ * An HQ's planned counter-attack has gone in or been given up at minute t (Task 13): it notes it in its own picture and
+ * reports it at once to the headquarters above, which pass it on as urgent news, so it reaches each over the channels
+ * with their delays. `aboutEventId`: the `counter-attack-ordered` or `counter-attack-dropped` event.
+ */
+export function reportPlan(state: SimState, ctx: StepContext, hqId: string, t: number, aboutEventId: number): SimState {
+  const w = begin(state, ctx);
+  const i = w.topo.hqIndex.get(hqId)!;
+  hqForWrite(w, i, PLANS).picture.plans[hqId] = t;
+  if (w.topo.nodes.get(hqId)!.parentId !== null) {
+    const report: Report = { atMin: t, units: {}, segments: {}, lines: {}, plans: { [hqId]: t } };
+    sendOn(w, { side: w.hqs[i]!.side, kind: 'report', payload: report, aboutEventId }, hqId, t);
+  }
+  return finish(w);
+}
+
 // ---- delivery ---------------------------------------------------------------------------------------------------
 
 const nameOf = (w: Work, id: string): string => (id === ARTILLERY ? 'the artillery' : (w.topo.nodes.get(id)?.name ?? id));
@@ -644,7 +685,8 @@ const LINES = 4;
 const NEWS = 8;
 const ENEMY = 16;
 const ABOUT = 32;
-const PICTURE = UNITS | SEGMENTS | LINES | ENEMY | ABOUT;
+const PLANS = 64;
+const PICTURE = UNITS | SEGMENTS | LINES | ENEMY | ABOUT | PLANS;
 
 /** An HQ for writing the parts named (bits): each part copied once a step, the rest shared with the step before. */
 function hqForWrite(w: Work, i: number, parts: number): HqState {
@@ -663,9 +705,10 @@ function hqForWrite(w: Work, i: number, parts: number): HqState {
             units: need & UNITS ? { ...p.units } : p.units,
             enemy: need & ENEMY ? { ...p.enemy } : p.enemy,
             about: need & ABOUT ? { ...p.about } : p.about,
+            plans: need & PLANS ? { ...p.plans } : p.plans,
           }
         : p,
-      news: need & NEWS ? { ...h.news, units: [...h.news.units], segments: [...h.news.segments], lines: [...h.news.lines], enemy: [...h.news.enemy] } : h.news,
+      news: need & NEWS ? { ...h.news, units: [...h.news.units], segments: [...h.news.segments], lines: [...h.news.lines], enemy: [...h.news.enemy], plans: [...h.news.plans] } : h.news,
     };
     w.touched[i]! |= need;
   }
@@ -708,15 +751,17 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
       if (next) believed.set(id, next);
     }
   const enemy = [...believed.keys()];
-  if (units.length + segments.length + lines.length + lost.length + enemy.length === 0) return;
+  // A planned counter-attack gone in or given up (Task 13): news when newer than what it knows.
+  const plans = r.plans ? Object.keys(r.plans).sort(byStr).filter((k) => !((was.plans[k] ?? -Infinity) >= r.plans![k]!)) : [];
+  if (units.length + segments.length + lines.length + lost.length + enemy.length + plans.length === 0) return;
   const top = w.topo.nodes.get(hqId)!.parentId === null;
-  const parts = (units.length ? UNITS : 0) | (segments.length ? SEGMENTS | ENEMY : 0) | (lines.length + lost.length ? LINES : 0) | (enemy.length ? ENEMY : 0);
+  const parts = (units.length ? UNITS : 0) | (segments.length ? SEGMENTS | ENEMY : 0) | (lines.length + lost.length ? LINES : 0) | (enemy.length ? ENEMY : 0) | (plans.length ? PLANS : 0);
   const h = hqForWrite(w, i, parts | (aboutEventId !== undefined && parts & (UNITS | SEGMENTS | LINES) ? ABOUT : 0) | (top ? 0 : NEWS));
   const pic = h.picture;
   const about = (key: string): void => {
     if (aboutEventId !== undefined) pic.about[key] = aboutEventId;
   };
-  let urgent = segments.length + lines.length + lost.length > 0;
+  let urgent = segments.length + lines.length + lost.length + plans.length > 0;
   for (const id of units) {
     const u = r.units[id]!;
     if (pic.units[id]?.status !== u.status) urgent = true;
@@ -748,9 +793,13 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
     pic.enemy[id] = believed.get(id)!;
     if (!top) addKey(h.news.enemy, id);
   }
+  for (const k of plans) {
+    pic.plans[k] = r.plans![k]!;
+    if (!top) addKey(h.news.plans, k);
+  }
   if (top) return;
   // The enemy seen goes up with the HQ's next summary; on its own it is no reason to send one.
-  if (units.length + segments.length + lines.length + lost.length === 0) return;
+  if (units.length + segments.length + lines.length + lost.length + plans.length === 0) return;
   h.news.sinceMin ??= t;
   if (aboutEventId !== undefined) h.news.aboutEventId = Math.max(h.news.aboutEventId ?? -1, aboutEventId);
   if (urgent) h.news.urgent = true;
@@ -799,6 +848,7 @@ function forward(w: Work, i: number, t: number): void {
     ...(lost.length ? { lost: Object.fromEntries(lost.map((k) => [k, pic.linesLost[k]!])) } : {}),
     ...(segs.some((id) => pic.segmentsAt[id] !== undefined) ? { segmentsAt: Object.fromEntries(segs.flatMap((id) => (pic.segmentsAt[id] === undefined ? [] : [[id, pic.segmentsAt[id]!]]))) } : {}),
     // What was seen and lost goes up; each HQ forms its own belief from it with its own intelligence.
+    ...(n.plans.length ? { plans: Object.fromEntries([...n.plans].sort(byStr).map((k) => [k, pic.plans[k]!])) } : {}),
     ...(n.enemy.length
       ? { enemy: Object.fromEntries([...n.enemy].sort(byStr).map((id) => { const e = pic.enemy[id]!; return [id, { men: e.seen ?? e.men, atMin: e.atMin, ...(e.lost ? { lost: e.lost } : {}) }]; })) }
       : {}),
