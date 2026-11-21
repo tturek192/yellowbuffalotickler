@@ -7,7 +7,7 @@ import { lineXAt } from './geometry';
 import { featurePoints, pointRadiusM } from './segments';
 import type { EndReason } from './record';
 import { reservesUnderWay } from './reserves';
-import { SCHEDULES } from './schedule';
+import { scheduled } from './schedule';
 import { isBusy, onField } from './step';
 import { lineTakerOf, takerOf } from './trenches';
 import type { SimState, StepContext } from './step';
@@ -73,9 +73,9 @@ export function newsInTransit(state: SimState): boolean {
  */
 export function lullDue(state: SimState, ctx: StepContext, withinMin: number): boolean {
   if (newsInTransit(state)) return true;
-  for (const [name, source] of SCHEDULES) {
+  for (const [name, due] of scheduled(state, ctx)) {
     if (NOT_DUE.has(name)) continue;
-    for (const s of source(state, ctx)) if (s.minute > state.minute && s.minute <= state.minute + withinMin) return true;
+    for (const s of due) if (s.minute > state.minute && s.minute <= state.minute + withinMin) return true;
   }
   return false;
 }

@@ -68,3 +68,25 @@ export function lineOfSight(w: World, from: Point, to: Point, eyeM = DEFAULT_EYE
   row.set(cb, r);
   return r;
 }
+
+/**
+ * `lineOfSight` from one place (standing eyes) to many: the viewer's cell and its row of the cache looked up once, and
+ * each target's cell worked out from its coordinates without a point made for it. The same answers, from the same cache.
+ */
+export function sightFrom(w: World, from: Point): (x: number, y: number) => boolean {
+  const ca = cellOf(w, from);
+  let row = w.losCache.get(ca);
+  if (!row) w.losCache.set(ca, (row = new Map()));
+  const cache = row;
+  return (x, y) => {
+    const cx = Math.min(Math.max(Math.floor((x - w.originX) / CELL_M), 0), w.cols - 1);
+    const cy = Math.min(Math.max(Math.floor((y - w.originY) / CELL_M), 0), w.rows - 1);
+    const cb = cy * w.cols + cx;
+    if (ca === cb) return true;
+    const hit = cache.get(cb);
+    if (hit !== undefined) return hit;
+    const r = trace(w, centre(w, ca), centre(w, cb), DEFAULT_EYE_M);
+    cache.set(cb, r);
+    return r;
+  };
+}

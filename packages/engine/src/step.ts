@@ -109,6 +109,16 @@ const MOVING: ReadonlySet<string> = new Set(['advancing', 'falling-back', 'count
  * next step), or men mopping up dugouts (Task 15). Otherwise the battle is quiet.
  */
 export function isBusy(state: SimState, ctx: StepContext): boolean {
+  // Asked twice of the same state (the run end and the next step): worked out once (a state never changes once made).
+  let m = busyMemo.get(ctx);
+  if (!m) busyMemo.set(ctx, (m = new WeakMap()));
+  let hit = m.get(state);
+  if (hit === undefined) m.set(state, (hit = workBusy(state, ctx)));
+  return hit;
+}
+const busyMemo = new WeakMap<StepContext, WeakMap<SimState, boolean>>();
+
+function workBusy(state: SimState, ctx: StepContext): boolean {
   return (
     state.barrages.some((b) => b.phase === 'lifting') ||
     state.companies.some((c) => MOVING.has(c.status) || c.status === 'pinned' || c.recentFire.some((f) => f.minute === state.minute)) ||
@@ -139,14 +149,18 @@ const SETTLED: ReadonlySet<string> = new Set(['consolidating', 'pinned', 'destro
  */
 export function takeLines(state0: SimState, ctx: StepContext): SimState {
   const state = loseLines(state0, ctx);
-  const groups = new Map<string, CompanyState[]>();
+  // Grouped by line, then sector (no key string made for each company each step).
+  const byLine = new Map<string, Map<string, CompanyState[]>>();
   for (const c of state.companies) {
     if (!aimsAtLine(c)) continue;
-    const key = `${c.objectiveLineId}|${c.sectorId}`;
-    const g = groups.get(key);
+    let bySector = byLine.get(c.objectiveLineId!);
+    if (!bySector) byLine.set(c.objectiveLineId!, (bySector = new Map()));
+    const g = bySector.get(c.sectorId);
     if (g) g.push(c);
-    else groups.set(key, [c]);
+    else bySector.set(c.sectorId, [c]);
   }
+  const groups = new Map<string, CompanyState[]>();
+  for (const [lineId, bySector] of byLine) for (const [sectorId, cs] of bySector) groups.set(`${lineId}|${sectorId}`, cs);
   const uncutBelow = v(ctx.tables.effects.wireUncutBelow);
   let out = state;
   for (const key of [...groups.keys()].sort()) {

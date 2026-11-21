@@ -73,10 +73,23 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
  *   which a unit starts moving (the first whose end is at or after its minute) is a `stepMin` step.
  * With this rule, a run's movement is the same whatever `quietMin` is.
  */
+/**
+ * Every source's scheduled minutes for a state, by source in SCHEDULES order: worked out once for each state (a state
+ * never changes once made), for the quiet step and the run end both.
+ */
+export function scheduled(state: SimState, ctx: StepContext): ReadonlyArray<readonly [name: string, due: Scheduled[]]> {
+  let m = scheduleMemo.get(ctx);
+  if (!m) scheduleMemo.set(ctx, (m = new WeakMap()));
+  let hit = m.get(state);
+  if (!hit) m.set(state, (hit = SCHEDULES.map(([name, source]) => [name, source(state, ctx)] as const)));
+  return hit;
+}
+const scheduleMemo = new WeakMap<StepContext, WeakMap<SimState, ReadonlyArray<readonly [string, Scheduled[]]>>>();
+
 export function quietStep(state: SimState, ctx: StepContext, stepMin: number, quietMin: number): number {
   let dt = Math.max(stepMin, quietMin);
-  for (const [, source] of SCHEDULES)
-    for (const s of source(state, ctx)) {
+  for (const [, due] of scheduled(state, ctx))
+    for (const s of due) {
       const ahead = s.minute - state.minute;
       if (ahead <= 0) continue;
       // Movement: the last grid minute strictly before it (a start falling exactly on the grid still gets its fine step).

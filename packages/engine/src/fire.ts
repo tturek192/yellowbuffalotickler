@@ -11,7 +11,7 @@ import { groundAt } from './ground';
 import { visibility, visibilityM } from './light';
 import { round } from './record';
 import { uphillCounterAttack } from './reserves';
-import { lineOfSight } from './sight';
+import { sightFrom } from './sight';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
 import type { FireGroup, Pending, Side } from './types';
@@ -154,8 +154,8 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
       targets = last.at.map((k, i) => ({ t: state.companies[k]!, r: last.r[i]! }));
       looked[fi] = last;
     } else {
-      const from: [number, number] = [f.x, f.y];
-      targets = nearestAccepted(gridOf(foe), f.x, f.y, reach, byId, maxTargets, (t, r) => visibility(r, visM) > 0 && lineOfSight(ctx.world, from, [t.x, t.y])).map(({ item: t, d: r }) => ({ t, r }));
+      const sees = sightFrom(ctx.world, [f.x, f.y]);
+      targets = nearestAccepted(gridOf(foe), f.x, f.y, reach, byId, maxTargets, (t, r) => visibility(r, visM) > 0 && sees(t.x, t.y)).map(({ item: t, d: r }) => ({ t, r }));
       // Only enemies as near as its farthest target count once it has all it can take; else any within reach.
       const within = targets.length >= maxTargets ? targets[targets.length - 1]!.r : reach;
       looked[fi] = { x: f.x, y: f.y, reach, visM, within, at: targets.map((x) => indexOf(x.t)), r: targets.map((x) => x.r) };

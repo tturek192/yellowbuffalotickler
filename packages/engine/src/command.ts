@@ -337,6 +337,41 @@ function orderCompanies(w: Work, h: HqState, ids: readonly string[], o: Omit<Ord
 // ---- the command phase -------------------------------------------------------------------------------------------
 
 export function commandPhase(state: SimState, ctx: StepContext, dt: number): SimState {
+  // A numerical shortcut (answers never depend on it): headquarters that decided nothing last step decide nothing again
+  // while what they decide from is the same objects (their states, the command model's memory, the reserves) and no
+  // minute a decision waits for has come (`decisionDueMin`), nor an off-map attack's window.
+  const last = quietCommand.get(ctx);
+  if (last && last.command === state.command && last.reserves === state.reserves && state.minute < last.dueMin && sameRefs(last.hqs, state.hqs) && !offMapActive(ctx, state.minute, dt)) return state;
+  const out = decide(state, ctx, dt);
+  if (out === state) quietCommand.set(ctx, { hqs: state.hqs, command: state.command, reserves: state.reserves, dueMin: decisionDueMin(state, ctx) });
+  else quietCommand.delete(ctx);
+  return out;
+}
+
+/** What the command phase last saw when it decided nothing, and the first minute after it that a decision may wait for. */
+const quietCommand = new WeakMap<StepContext, { hqs: readonly HqState[]; command: CommandState; reserves: readonly ReserveState[]; dueMin: number }>();
+const sameRefs = <T>(a: readonly T[], b: readonly T[]): boolean => a === b || (a.length === b.length && a.every((x, i) => x === b[i]));
+
+/** Whether an off-map attack's window overlaps the step (M − dt, M]: it acts on companies each step it is open. */
+const offMapActive = (ctx: StepContext, M: number, dt: number): boolean => offMapAttacksOf(ctx.scenario).some((a) => M > a.fromMin - dt && M - dt < a.toMin + dt);
+
+/**
+ * The first minute after now that a decision may come due by the clock alone: a line counting as stalled, an operation's
+ * notBefore, a local counter-attack's retry, a plan's patience running out, a division's or army's next plan
+ * (`counterAttackRetryMin` after its last), an off-map attack opening.
+ */
+function decisionDueMin(state: SimState, ctx: StepContext): number {
+  const w = workOf(state, ctx);
+  const due = [...stallChecks(state, ctx), ...operationStarts(state, ctx), ...counterAttackRetries(state, ctx), ...planPatience(state, ctx)].map((x) => x.minute);
+  for (const fid of Object.keys(state.command.divisions)) {
+    const d = doctrineOf(w, fid).defence;
+    if (d) due.push(state.command.divisions[fid]! + v(d.counterAttackRetryMin));
+  }
+  for (const a of offMapAttacksOf(ctx.scenario)) due.push(a.fromMin);
+  return Math.min(Infinity, ...due.filter((m) => m > state.minute));
+}
+
+function decide(state: SimState, ctx: StepContext, dt: number): SimState {
   const topo = topologyOf(state, ctx);
   const w: Work = { state, ctx, topo, hqAt: hqIndexOf(state.hqs), memo: new Map(), reach: new Map() };
   hearBack(w);
