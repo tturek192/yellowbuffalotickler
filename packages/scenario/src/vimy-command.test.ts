@@ -80,12 +80,8 @@ describe('Vimy command, planned operations, flanks and end conditions (Plan 3 Ta
     expect(s.offMap!.attacks.map(a => a.targetFeatureId)).toContain('the-pimple');
     expect(s.air!.observedFrac.value).toBeGreaterThan(0);
     expect(v(s.end!.lullMin)).toBeGreaterThan(0);
-    // No German company was turned into an attacker by an operation: every one holds, as a garrison (the front
-    // battalions) or in reserve (the support battalions, held back to counter-attack since Task 12), with no objective.
-    for (const c of companiesOf(s, 'central')) {
-      expect(['garrison', 'reserve']).toContain(c.role);
-      expect(c.objectiveLineId).toBeUndefined();
-    }
+    // Only the German side's companies are garrisons; no German company was turned into an attacker by an operation.
+    for (const c of companiesOf(s, 'central')) expect(c.role).toBe('garrison');
   });
   it('Willerval waits for the heavy guns on the ridge (App. 29 para. 4); Vimy is the rapid-withdrawal case (para. 6)', () => {
     const ops = vimy().operations!;

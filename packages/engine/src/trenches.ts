@@ -1,6 +1,7 @@
 import { v } from '@wwi/scenario';
 import type { Point } from '@wwi/scenario';
 import { distanceTo, segmentSamples } from './artillery';
+import { counterAttackOrder } from './movement';
 import { CAUSES, emit } from './causes';
 import type { Cause, NewEvent } from './causes';
 import type { CompanyState } from './companies';
@@ -115,7 +116,8 @@ export const capturable = (b: BatteryState): boolean => !b.horses;
  *   attackers: that protection is against sorties and incidental presence only (Task 10 ruling, Task 12).
  * - `segment-lost` when its garrison's side loses it, `segment-retaken` when that side takes it back. On a retake any of
  *   its men left in the dugouts there come up and rejoin it (each a `dugout-sortie`), and it counts as manned.
- * - Causes: `defenders-trapped` (the first loss of a segment whose garrison was caught below, with a ref to the
+ * - Causes: `counter-attack` for a retake on orders (with a ref to the `counter-attack-ordered`), `defenders-trapped`
+ *   (the first loss of a segment whose garrison was caught below, with a ref to the
  *   trapping), `wire-cut` or `wire-uncut` (a lost segment with wire), `dugouts-uncleared` (attackers who came up from
  *   the dugouts, with refs to their sorties), `outnumbered` (defenders there were overpowered), and otherwise the fire
  *   that took its garrison out.
@@ -126,7 +128,6 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
   const fx = ctx.tables.effects;
   const r = v(fx.captureRadiusM);
   const ratio = v(fx.captureRatio);
-  const match = v(fx.lineFeatureMatchM);
   const uncutBelow = v(fx.wireUncutBelow);
   let out = state;
   const upOf = (cs: readonly CompanyState[]) => cs.filter((c) => onField(c) && c.posture !== 'in-dugout');
@@ -141,15 +142,14 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
     if (!(a > 0)) continue;
     // Nobody enters a trench a barrage is falling on (as with trapping, gap.ts): only the trench near them matters.
     if (barrageNear(seg, ctx, out.companies, out.minute, attackers.map((x) => at(x.c)), r)) continue;
-    const firstLoss = seg.holder === seg.garrisonSide && seg.holderEventId === null;
-    const holders = up.filter((c) => c.side === seg.holder);
-    const close = nearSegment(holders, pts, r);
-    const onLine = firstLoss ? [] : nearSegment(holders.filter((c) => c.status === 'consolidating' || c.status === 'holding'), pts, match);
-    const defenders = [...close, ...onLine.filter((x) => !close.some((y) => y.c.id === x.c.id))];
-    const d = sum(defenders, (x) => x.c.men);
+    const d = segmentDefenders(seg, pts, up.filter((c) => c.side === seg.holder), ctx).men;
     // An ORDERED counter-attack (the command model's, Task 12) is not held off by the rear rule: reaching a segment in its
     // holder's rear with nobody there to hold it, it takes it back (with defenders, it needs the 3:1 as anyone does).
-    const onOrders = attackers.some((x) => x.c.intent === 'counter-attack');
+    const onOrder = attackers.flatMap((x) => {
+      const o = x.c.intent === 'counter-attack' ? counterAttackOrder(x.c) : null;
+      return o ? [o] : [];
+    });
+    const onOrders = onOrder.length > 0;
     if (d > 0 ? a < ratio * d : !onOrders && inRear(seg, out, ctx)) continue;
 
     const lost = seg.holder === seg.garrisonSide;
@@ -169,6 +169,11 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
         causes.push('dugouts-uncleared');
         refs.push(c.sortieEventId);
       }
+    // On orders: the counter-attack explains the retake, with a ref to the decision.
+    for (const o of onOrder) {
+      causes.push('counter-attack');
+      if (o.eventId !== undefined) refs.push(o.eventId);
+    }
     if (d > 0) causes.push('outnumbered');
     else if (lost && !trappedNow) {
       // Nobody up to hold it: what took its garrison out.
@@ -227,6 +232,20 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
     if (rejoin.length) up = upOf(out.companies);
   }
   return captureGuns(out, ctx);
+}
+
+/**
+ * A segment's defenders (the capture rule's own definition; Task 12 reports use it too, so a headquarters decides on the
+ * quantity the fight is resolved on): `holders` (its holder's companies up on the field) within `captureRadiusM` of its
+ * trench, and, except on a garrison's first loss, those of them consolidating or holding within `lineFeatureMatchM`.
+ */
+export function segmentDefenders(seg: SegmentState, pts: readonly Point[], holders: readonly CompanyState[], ctx: StepContext): { men: number; ids: string[] } {
+  const fx = ctx.tables.effects;
+  const firstLoss = seg.holder === seg.garrisonSide && seg.holderEventId === null;
+  const close = nearSegment(holders, pts, v(fx.captureRadiusM));
+  const onLine = firstLoss ? [] : nearSegment(holders.filter((c) => c.status === 'consolidating' || c.status === 'holding'), pts, v(fx.lineFeatureMatchM));
+  const all = [...close, ...onLine.filter((x) => !close.some((y) => y.c.id === x.c.id))];
+  return { men: sum(all, (x) => x.c.men), ids: all.map((x) => x.c.id) };
 }
 
 /**

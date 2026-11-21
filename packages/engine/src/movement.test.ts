@@ -137,7 +137,11 @@ describe('movement', () => {
     const there = s.companies.find((c) => c.id === 'k1')!;
     expect(there.status).toBe('holding');
     expect(1150 - there.x).toBeLessThanOrEqual(50);
-    expect(there.orders).toEqual([]);
+    // Task 12 fix round: it keeps the order (intent counter-attack) through the step it arrives, so a retake that step
+    // can cite it; the order lapses at the next behaviour phase.
+    expect([there.intent, there.orders]).toEqual(['counter-attack', [order]]);
+    const after = runPipeline(s, ctx, 2).companies.find((c) => c.id === 'k1')!;
+    expect([after.status, after.intent, after.orders]).toEqual(['holding', 'hold', []]);
   });
 
   it('reaching the objective is a company-reached event with its cause, which the company keeps for the line-taken rule', () => {

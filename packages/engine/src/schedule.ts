@@ -1,5 +1,5 @@
 import { ammunitionRunsOut, batteryRecoveries, offMapWindows } from './artillery';
-import { offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
+import { counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
 import { fireMissionEnds, messageDueTimes } from './comms';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
@@ -53,6 +53,8 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['operation-starts', operationStarts],
   ['order-starts', orderStarts],
   ['off-map-attacks', offMapAttackWindows],
+  // Task 12 fix round: a failed local counter-attack may be ordered again (a decision, which moves nobody).
+  ['counter-attack-retries', counterAttackRetries],
 ];
 
 /**

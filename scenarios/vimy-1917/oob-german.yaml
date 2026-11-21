@@ -1,6 +1,6 @@
 # German order of battle, 9 April 1917, down to company (Task 9): the Sixth Army's two Gruppen opposite the Canadian
-# Corps, their three front-line divisions, every front-line company on a mapped trench (garrisons, and the support
-# battalions' companies in reserve), and the off-map reserves. Research notes, sources and every estimate's reasoning: docs/research/vimy/oob-german.md. Leaders are in
+# Corps, their three front-line divisions, every front-line company as a garrison on a mapped trench, and the off-map
+# reserves. Research notes, sources and every estimate's reasoning: docs/research/vimy/oob-german.md. Leaders are in
 # leaders.yaml.
 #
 # Conventions (oob-german.md, "Garrisons"):
@@ -9,12 +9,11 @@
 #   equally (1,034 m each); the other regiments take the same width, BIR 14 running on to the end of the mapped trench.
 # - Each regiment: a front battalion on the first position, a support battalion on the nearest mapped trench or
 #   strongpoint behind it, a resting battalion off the map. Which battalion had which role is a convention (I front,
-#   II support, III resting) except where a source names it (comments below). The front battalion's companies are
-#   garrisons; the support battalion's are role reserve (Task 12): they stand where they are, up in their trench, held back
-#   to counter-attack ground the front battalion loses (oob-german.md, Garrisons).
+#   II support, III resting) except where a source names it (comments below). The support battalion's companies are
+#   garrisons of their own trenches with `counterAttacks: true` (Task 12): the regiment's local counter-attack force,
+#   which leaves its trench only when ordered to retake ground the front battalion has lost (oob-german.md, Garrisons).
 # - Companies are numbered through the regiment (1-4 in I, 5-8 in II, 9-12 in III); start is lon/lat (the frame
-#   projects it) and lies on the feature named by trenchFeatureId (a reserve company's says where it stands). Garrison
-#   companies hold for the whole run.
+#   projects it) and lies on the feature named by trenchFeatureId. Garrison companies hold for the whole run.
 # - machineGuns and dugoutDepthM (Plan 3; docs/research/vimy/bombardment.md, "Garrisons"): the regiment's 18 machine
 #   guns spread over its 8 companies in the line; dug-outs 30 feet down, 50 on Hill 145 and at Les Tilleuls. No
 #   light machine guns (lewisGuns) are entered: no source read counts the 08/15s at Vimy, so the doctrine default holds.
@@ -92,11 +91,11 @@ forces:
                         name: "II./RIR 261"
                         kind: battalion
                         # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
-                        # its companies are role reserve (Task 12): held back to counter-attack ground the front battalion loses (oob-german.md, Garrisons)
                         companies:
                           - id: rir261-5
                             name: "5./RIR 261"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -105,7 +104,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: rir261-6
                             name: "6./RIR 261"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: hill-145
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -114,7 +114,8 @@ forces:
                             dugoutDepthM: { value: 15.2, estimate: "50 feet, the upper end of BOH p. 316's 'twenty to fifty feet down in the chalk': on Hill 145 'there were deep mine workings which secured the garrison from artillery fire' (BOH p. 327; Nicholson p. 259) (bombardment.md, Garrisons)" }
                           - id: rir261-7
                             name: "7./RIR 261"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: hill-145
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -123,7 +124,8 @@ forces:
                             dugoutDepthM: { value: 15.2, estimate: "50 feet, the upper end of BOH p. 316's 'twenty to fifty feet down in the chalk': on Hill 145 'there were deep mine workings which secured the garrison from artillery fire' (BOH p. 327; Nicholson p. 259) (bombardment.md, Garrisons)" }
                           - id: rir261-8
                             name: "8./RIR 261"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: hill-145
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -185,11 +187,11 @@ forces:
                         name: "II./RIR 262"
                         kind: battalion
                         # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
-                        # its companies are role reserve (Task 12): held back to counter-attack ground the front battalion loses (oob-german.md, Garrisons)
                         companies:
                           - id: rir262-5
                             name: "5./RIR 262"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: la-folie-farm
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -198,7 +200,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: rir262-6
                             name: "6./RIR 262"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: la-folie-farm
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -207,7 +210,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: rir262-7
                             name: "7./RIR 262"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: la-folie-farm
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -216,7 +220,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: rir262-8
                             name: "8./RIR 262"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -279,11 +284,11 @@ forces:
                         name: "II./RIR 263"
                         kind: battalion
                         # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
-                        # its companies are role reserve (Task 12): held back to counter-attack ground the front battalion loses (oob-german.md, Garrisons)
                         companies:
                           - id: rir263-5
                             name: "5./RIR 263"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -292,7 +297,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: rir263-6
                             name: "6./RIR 263"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -301,7 +307,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: rir263-7
                             name: "7./RIR 263"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -310,7 +317,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: rir263-8
                             name: "8./RIR 263"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -388,11 +396,11 @@ forces:
                         name: "II./BRIR 3"
                         kind: battalion
                         # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
-                        # its companies are role reserve (Task 12): held back to counter-attack ground the front battalion loses (oob-german.md, Garrisons)
                         companies:
                           - id: brir3-5
                             name: "5./BRIR 3"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwolfer-graben
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -401,7 +409,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: brir3-6
                             name: "6./BRIR 3"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwolfer-graben
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -410,7 +419,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: brir3-7
                             name: "7./BRIR 3"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwolfer-graben
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -419,7 +429,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: brir3-8
                             name: "8./BRIR 3"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwischen-stellung
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -481,11 +492,11 @@ forces:
                         name: "II./BRIR 1"
                         kind: battalion
                         # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
-                        # its companies are role reserve (Task 12): held back to counter-attack ground the front battalion loses (oob-german.md, Garrisons)
                         companies:
                           - id: brir1-5
                             name: "5./BRIR 1"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwolfer-graben
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -494,7 +505,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: brir1-6
                             name: "6./BRIR 1"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwolfer-graben
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -503,7 +515,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: brir1-7
                             name: "7./BRIR 1"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwolfer-graben
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -512,7 +525,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: brir1-8
                             name: "8./BRIR 1"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: zwolfer-graben
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -601,11 +615,11 @@ forces:
                         name: "II./BIR 11"
                         kind: battalion
                         # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
-                        # its companies are role reserve (Task 12): held back to counter-attack ground the front battalion loses (oob-german.md, Garrisons)
                         companies:
                           - id: bir11-5
                             name: "5./BIR 11"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -614,7 +628,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: bir11-6
                             name: "6./BIR 11"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -623,7 +638,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: bir11-7
                             name: "7./BIR 11"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -632,7 +648,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: bir11-8
                             name: "8./BIR 11"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -659,12 +676,12 @@ forces:
                         name: "II./BIR 14"
                         kind: battalion
                         # support battalion ("in support in the third trench or in immediate reserve", BOH p. 317): each company on the nearest mapped trench or strongpoint in the zone to a point 550 m behind the first position
-                        # its companies are role reserve (Task 12): held back to counter-attack ground the front battalion loses (oob-german.md, Garrisons)
                         # support battalion: wikipedia-vimy-oob (citing Sheldon p. 316: "2nd Battalion kept in reserve")
                         companies:
                           - id: bir14-5
                             name: "5./BIR 14"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: the-pimple
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -673,7 +690,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: bir14-6
                             name: "6./BIR 14"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -682,7 +700,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: bir14-7
                             name: "7./BIR 14"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }
@@ -691,7 +710,8 @@ forces:
                             dugoutDepthM: { value: 9.1, estimate: "30 feet: BOH p. 316 puts the main German dug-outs and tunnels 'twenty to fifty feet down in the chalk' (6.1-15.2 m), p. 315 deep dug-outs 'about 120 yards apart in the first and second trenches'; these were the older 'deep mined dug-outs' of the front system (p. 353), so the lower half of the range (bombardment.md, Garrisons)" }
                           - id: bir14-8
                             name: "8./BIR 14"
-                            role: reserve
+                            role: garrison
+                            counterAttacks: true
                             trenchFeatureId: ger-first-position
                             strength: { value: 125, estimate: "BOH 1917 I p. 317: the forward two battalions of the five regiments facing the Corps 'at most 5,000 men' = 125 a company (40 companies); rifle strength 'seventy or eighty' (same page; Nicholson p. 247 'about 75'); the owner's brief has about 150 (oob-german.md, Strength)" }
                             paperStrength: { value: 264, source: "vimy-brief-2026", note: "as quoted in the design spec, s. 13: 'about 150 men against 264 on paper'; the brief's own source not seen" }

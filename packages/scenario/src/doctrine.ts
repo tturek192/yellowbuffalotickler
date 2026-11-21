@@ -17,7 +17,7 @@ export const ATTACK_KEYS = [
 export const DEFENCE_KEYS = [
   'emergeMin', 'trappedSurrenderFrac',
   'localCounterAttackDelayMin', 'divisionalCounterAttackDelayMin',
-  'counterAttackMinRatio', 'commitReserveWhenLostFrac',
+  'counterAttackMinRatio', 'commitReserveWhenLostFrac', 'counterAttackMinMen', 'counterAttackRetryMin',
 ] as const;
 export const COMPANY_DEFAULT_KEYS = [
   'officers', 'lewisGuns', 'machineGuns', 'bombsPerMan', 'strength', 'companiesPerBattalion', 'dugoutDepthM',

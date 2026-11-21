@@ -5,7 +5,9 @@ import { emit } from './causes';
 import type { NewEvent } from './causes';
 import type { CompanyState } from './companies';
 import { CELL_M } from './ground';
+import { lineXAt } from './geometry';
 import { featurePoints as featurePointsOf, pointRadiusM } from './segments';
+import { segmentDefenders, segmentsOnLine } from './trenches';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import type { SimState, StepContext } from './step';
@@ -183,6 +185,55 @@ export function operationPlaces(state: Pick<SimState, 'segments'>, ctx: StepCont
   return out;
 }
 
+/**
+ * The ground of an attacked line that runs along no segment (Task 12, the fix round): the stretch of its sector between
+ * the line before it and this one, `lineFeatureMatchM` beyond each, `line:<lineId>|<sectorId>`. `side`: the side that
+ * attacks it (in the plan, or by an operation).
+ */
+export type LineZone = { key: string; lineKey: string; side: Side; sectorId: string; yMin: number; yMax: number; prev: Point[]; line: Point[] };
+const zonesCache = new WeakMap<StepContext, LineZone[]>();
+
+export function lineZones(state: Pick<SimState, 'segments' | 'companies'>, ctx: StepContext): LineZone[] {
+  let out = zonesCache.get(ctx);
+  if (out) return out;
+  // The lines attacked in each sector: by the plan's companies, and by the operations.
+  const keys = new Map<string, Side>();
+  for (const c of state.companies) if (c.objectiveLineId !== undefined && c.role !== 'garrison' && c.role !== 'reserve') keys.set(`${c.objectiveLineId}|${c.sectorId}`, c.side);
+  for (const op of ctx.scenario.operations ?? []) if ('lineId' in op.target) keys.set(`${op.target.lineId}|${op.target.sectorId}`, op.side);
+  out = [];
+  for (const lineKey of [...keys.keys()].sort(byStr)) {
+    const [lineId, sectorId] = lineKey.split('|') as [string, string];
+    const sector = ctx.scenario.sectors.find((x) => x.id === sectorId);
+    const line = ctx.lines.get(lineId);
+    if (!sector || !line || segmentsOnLine(state as SimState, ctx, lineId, sectorId).length > 0) continue;
+    // The line before it: of the sector's start line, its timetable's lines and the other lines attacked in it, the
+    // last one short of this one at the sector's middle.
+    const yMid = (sector.yMin + sector.yMax) / 2;
+    const x = lineXAt(line, yMid);
+    const candidates = [sector.startLineId, ...sector.legs.map((l) => l.toLineId), ...[...keys.keys()].filter((k) => k.endsWith(`|${sectorId}`)).map((k) => k.split('|')[0]!)];
+    let prevId = sector.startLineId;
+    let prevX = -Infinity;
+    for (const id of candidates) {
+      const pts = ctx.lines.get(id);
+      if (!pts || id === lineId) continue;
+      const px = lineXAt(pts, yMid);
+      if (px < x && px > prevX) [prevId, prevX] = [id, px];
+    }
+    const prev = ctx.lines.get(prevId);
+    if (!prev) continue;
+    out.push({ key: `line:${lineKey}`, lineKey, side: keys.get(lineKey)!, sectorId, yMin: sector.yMin, yMax: sector.yMax, prev, line });
+  }
+  zonesCache.set(ctx, out);
+  return out;
+}
+
+/** Whether a place lies in a line's ground, its x within `slack` of the zone's (inclusive). */
+export function inZone(z: LineZone, x: number, y: number, match: number, slack = 0): boolean {
+  if (y < z.yMin - slack || y > z.yMax + slack) return false;
+  const yy = Math.min(Math.max(y, z.yMin), z.yMax);
+  return x >= lineXAt(z.prev, yy) - match - slack && x <= lineXAt(z.line, yy) + match + slack;
+}
+
 /** A company's men at Zero, before the bombardment: what the other side's intelligence counted. */
 const zeroMen = (c: CompanyState): number => c.men + c.bombardment.killed + c.bombardment.wounded;
 
@@ -208,6 +259,10 @@ function intelligence(state: SimState, ctx: StepContext, side: Side): Record<str
     } else put(seg.id, enemies.reduce((a, c) => a + (c.role !== 'reserve' && c.role !== 'garrison' && c.startY >= seg.yMin && c.startY <= seg.yMax ? zeroMen(c) : 0), 0));
   }
   for (const p of operationPlaces(state, ctx)) put(p.key, enemies.reduce((a, c) => a + (Math.hypot(c.startX - p.point[0], c.startY - p.point[1]) <= p.radiusM ? zeroMen(c) : 0), 0));
+  // An objective line's ground lies in the defence system the attacker photographed: intelligence knows it, even empty.
+  const match = v(ctx.tables.effects.lineFeatureMatchM);
+  for (const z of lineZones(state, ctx))
+    if (z.side === side) out[z.key] = { men: enemies.reduce((a, c) => a + (inZone(z, c.startX, c.startY, match) ? zeroMen(c) : 0), 0), atMin: state.minute, intel: true };
   return out;
 }
 
@@ -882,15 +937,18 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
   const M = state.minute;
   const menIn = new Map<string, number>();
   const up = state.companies.filter((c) => c.men > 0 && c.posture !== 'in-dugout' && c.status !== 'surrendered' && c.status !== 'destroyed' && c.status !== 'off-map' && c.status !== 'marching');
+  const match = v(ctx.tables.effects.lineFeatureMatchM);
+  // Its defenders as the capture rule counts them (trenches.ts segmentDefenders).
   const menAt = (seg: (typeof state.segments)[number], pts: readonly Point[]): number => {
     let n = menIn.get(seg.id);
     if (n === undefined) {
-      n = 0;
-      for (const e of up) if (e.side === seg.holder && e.y >= seg.yMin - near && e.y <= seg.yMax + near && distanceTo(pts, [e.x, e.y]) <= near) n += e.men;
+      const reach = Math.max(near, match);
+      n = segmentDefenders(seg, pts, up.filter((e) => e.side === seg.holder && e.y >= seg.yMin - reach && e.y <= seg.yMax + reach), ctx).men;
       menIn.set(seg.id, n);
     }
     return n;
   };
+  const zones = lineZones(state, ctx);
   const places = operationPlaces(state, ctx);
   const placeMen = new Map<string, number>();
   return (c) => {
@@ -913,6 +971,18 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
         placeMen.set(k, n);
       }
       out[pl.key] = { men: n, atMin: M };
+    }
+    // The ground of its side's segment-less objective lines in sight: the enemy up there.
+    for (const z of zones) {
+      if (z.side !== c.side || !inZone(z, c.x, c.y, match, range)) continue;
+      const k = z.key;
+      let n = placeMen.get(k);
+      if (n === undefined) {
+        n = 0;
+        for (const e of up) if (e.side !== c.side && inZone(z, e.x, e.y, match)) n += e.men;
+        placeMen.set(k, n);
+      }
+      out[k] = { men: n, atMin: M };
     }
     return out;
   };

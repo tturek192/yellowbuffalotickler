@@ -345,3 +345,17 @@ defence:
       239-240); the reserve goes in once a quarter of a sector is lost
     description: Share of a sector's segments that must be lost before its reserve is committed.
     calibrated: true
+  counterAttackMinMen:
+    value: 35
+    estimate: 'about a platoon: each German company "is divided into 3 platoons (Züge)" (german-handbook-1917 p. 80), and at the "seventy or
+      eighty" rifles a company had at Vimy (boh-1917-1 p. 317) a platoon is 25-40 men; fewer than that cannot retake a trench, whatever the
+      odds against an empty one. A judgement, for Plan 4 to calibrate'
+    description: Fewest men a headquarters sends on a counter-attack, whatever the odds it believes it faces.
+    calibrated: true
+  counterAttackRetryMin:
+    value: 60
+    estimate: 'a counter-attack that has not retaken its trench is tried again once fresh men can be gathered and the news of the first has
+      come back; the immediate counter-attack (Gegenstoss) was "frequently carried out in the course of the battle" (boh-1917-1 p. 523
+      n.). An hour, a judgement for Plan 4 to calibrate'
+    description: Minutes after ordering a counter-attack before its headquarters may order another on the same ground, if it is still lost.
+    calibrated: true

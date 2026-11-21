@@ -651,7 +651,8 @@ export type CounterOpts = {
  * reserve company kr (300 men) at x 600, y 100. Channels: runner (failPerHour, delayMin), every other 10 minutes and
  * sure; the German side has no communications links, so every German message goes by runner. Defence values:
  * localCounterAttackDelayMin 5, divisionalCounterAttackDelayMin 30, counterAttackMinRatio 0.75,
- * commitReserveWhenLostFrac 0.25; counterAttackConsolidateMin 60, counterAttackConsolidatedFactor 2.
+ * commitReserveWhenLostFrac 0.25, counterAttackMinMen 35, counterAttackRetryMin 60; counterAttackConsolidateMin 60,
+ * counterAttackConsolidatedFactor 2.
  */
 export function fixtureCounter(o: CounterOpts = {}): [Scenario, Models] {
   const [s, m] = fixtureArtillery();
@@ -668,7 +669,10 @@ export function fixtureCounter(o: CounterOpts = {}): [Scenario, Models] {
   for (const [k, value] of Object.entries({ ...HQ_OFFSETS, runnerMinPerKm: 0, runnerDelayCoversKm: 0, counterAttackConsolidateMin: 60, counterAttackConsolidatedFactor: 2, observerRangeM: 1500 }))
     (m.tables.effects as Record<string, unknown>)[k] = param(value);
   for (const d of Object.values(m.doctrines)) {
-    d.defence = { ...d.defence!, localCounterAttackDelayMin: param(5), divisionalCounterAttackDelayMin: param(30), counterAttackMinRatio: param(0.75), commitReserveWhenLostFrac: param(0.25) };
+    d.defence = {
+      ...d.defence!, localCounterAttackDelayMin: param(5), divisionalCounterAttackDelayMin: param(30), counterAttackMinRatio: param(0.75), commitReserveWhenLostFrac: param(0.25),
+      counterAttackMinMen: param(35), counterAttackRetryMin: param(60),
+    };
     d.common.reportEveryMin = param(30);
   }
   return [s, m];

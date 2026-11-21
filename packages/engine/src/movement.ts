@@ -103,13 +103,34 @@ function intentOf(c: CompanyState, state: SimState, ctx: StepContext): Intent {
  * attack or a counter-attack with a target, once the order's minute to go has come, takes it up (`takeUp`).
  */
 export function behaviour(state: SimState, ctx: StepContext): SimState {
-  const companies = state.companies.map((c0) => {
+  const companies = state.companies.map((cIn) => {
+    // A counter-attack that got there last step is done: its order, kept for the fight for the trench, lapses now.
+    const done = cIn.status === 'holding' && cIn.intent === 'counter-attack' ? counterAttackOrder(cIn) : null;
+    const c0 = done ? { ...cIn, orders: cIn.orders.filter((x) => x !== done) } : cIn;
     const o = isHolding(c0) && onField(c0) && c0.posture !== 'in-dugout' ? dueOrder(c0, state.minute) : null;
     const c = o ? takeUp(c0, o, state.minute) : c0;
     const intent = intentOf(c, state, ctx);
-    return c === c0 && c.intent === intent ? c : { ...c, intent };
+    return c === cIn && c.intent === intent ? c : { ...c, intent };
   });
   return { ...state, companies };
+}
+
+/**
+ * A company that cannot carry out its order (its target names no place it can find): it drops the order and holds, and
+ * an `order-dropped` event says so (refs: the decision), so the order neither retries every step nor holds the run open.
+ */
+function dropOrder(c: CompanyState, order: Targeted | null, minute: number, events: NewEvent[]): CompanyState {
+  const o = order ?? c.orders.at(-1);
+  if (o)
+    events.push({
+      minute,
+      kind: 'order-dropped',
+      unitId: c.id,
+      ...(c.sectorId ? { sectorId: c.sectorId } : {}),
+      text: `${c.name} cannot find where its ${o.kind} order sends it, and holds`,
+      ...(o.eventId !== undefined ? { refs: [o.eventId] } : {}),
+    });
+  return { ...c, status: 'holding', intent: 'hold', orders: o ? c.orders.filter((x) => x !== o) : c.orders };
 }
 
 // ---- where an advancing company may go ------------------------------------------------------------------------
@@ -303,7 +324,7 @@ export function moveCompanies(state: SimState, ctx: StepContext, dt: number, pen
       // An attack on a place (Task 12): straight at it; within captureRadiusM of it, it consolidates there.
       const order = placeAttackOrder(c);
       const to = order && targetPoint(c, order.target, state, ctx);
-      if (!order || !to) next = { ...c, status: 'holding', intent: 'hold' };
+      if (!order || !to) next = dropOrder(c, order, state.minute, events);
       else {
         const r = toward(c, to, ownSpeed(c, ctx), dt, wet, ctx);
         moved = r.moved;
@@ -322,15 +343,16 @@ export function moveCompanies(state: SimState, ctx: StepContext, dt: number, pen
     } else if (c.intent === 'counter-attack') {
       const order = counterAttackOrder(c);
       const to = order && targetPoint(c, order.target, state, ctx);
-      if (!order || !to) next = { ...c, status: 'holding', intent: 'hold' };
+      if (!order || !to) next = dropOrder(c, order, state.minute, events);
       else {
         const r = toward(c, to, ownSpeed(c, ctx), dt, wet, ctx);
         moved = r.moved;
         const there = Math.hypot(to[0] - r.p[0], to[1] - r.p[1]) <= captureR;
-        // There it holds; its intent stays `counter-attack` until the next behaviour phase, so the fight for the trench
-        // this step knows it came on an order (trenches.ts: an ordered counter-attack may retake a segment in the rear).
+        // There it holds; its intent stays `counter-attack` and it keeps its order until the next behaviour phase, so the
+        // fight for the trench this step knows it came on an order and can cite it (trenches.ts: an ordered counter-attack
+        // may retake a segment in the rear, cause `counter-attack`).
         next = there
-          ? { ...c, x: r.p[0], y: r.p[1], status: 'holding', intent: 'counter-attack', posture: 'in-trench', orders: c.orders.filter((o) => o !== order) }
+          ? { ...c, x: r.p[0], y: r.p[1], status: 'holding', intent: 'counter-attack', posture: 'in-trench' }
           : { ...c, x: r.p[0], y: r.p[1], posture: 'moving' };
       }
     }

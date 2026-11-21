@@ -25,8 +25,10 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
  * 1. Off-map attacks (`offMap.attacks`): forces outside the simulated one, on a fixed schedule (spec 13.9). Inside its
  *    window an attack holds the suppression of the enemy companies on its target feature at `suppressFrac` or above,
  *    with cause `off-map-fire` (an `off-map-attack` event when it opens).
- * 2. Defender, local counter-attack. The lowest battalion, regiment or brigade over a garrison's segment that has
- *    reserve-role or support companies of its own, once its picture shows the segment lost, orders them to counter-attack it, if their men are at least
+ * 2. Defender, local counter-attack. The lowest battalion, regiment or brigade over a garrison's segment that has a force
+ *    of its own (reserve-role and support companies, and garrisons held as the counter-attack force, `counterAttacks`,
+ *    whose own trench it still holds), once its picture shows the segment lost, orders them to counter-attack it, never
+ *    with fewer than `counterAttackMinMen`, and again after `counterAttackRetryMin` if the segment is still lost, if their men are at least
  *    `counterAttackMinRatio` times the enemy it knows there — `counterAttackConsolidatedFactor` times that once the
  *    attackers have had `counterAttackConsolidateMin` to consolidate by the time it would go in. They go in
  *    `localCounterAttackDelayMin · delayFactor` after the decision (`counter-attack-ordered`, cause `ground-lost`).
@@ -38,7 +40,8 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
  *    line not taken `stallToleranceMin · adaptFactor` after its timetable minute (the barrage's arrival beyond it, or its
  *    last commitment to that line), and that is the lowest seeing it with a reserve-role battalion within its formation,
  *    commits the battalion nearest the line — and any companies of its own aimed at the line that fell back and rallied
- *    — if their men are at least `riskRatio` times the defenders it knows hold the line. It orders them to attack the
+ *    — if their men are at least `riskRatio` times the defenders it knows hold the line: on the segments it runs along,
+ *    or, with none, between the line before it and this one (`line:` ground, comms.ts `lineZones`). It orders them to attack the
  *    line and calls for a standing barrage of `stallBarrageMin` on each segment of it it knows the enemy holds:
  *    `order-issued`, causes `leader-adapted` and `leader-bold` or `leader-cautious` as the leader's risk tolerance is
  *    above or below the midpoint, refs to the events the reports that showed the stall were about.
@@ -95,6 +98,10 @@ type Topo = {
   /** Each formation's leader's ratings, and each line key's timetable minute, worked out once (looked up only). */
   ratings: Map<string, Ratings>;
   timetable: Map<string, number | null>;
+  /** The plan: each attacking company's objective line key at Zero (looked up only). */
+  planLine: Map<string, string>;
+  /** The plan: each company's role, place at Zero, battalion and own segment (looked up only). */
+  plan: Map<string, { role: Role; counterAttacks: boolean; x: number; y: number; battalionId: string; segmentId?: string }>;
 };
 const topologies = new WeakMap<StepContext, Topo>();
 
@@ -140,7 +147,9 @@ function topologyOf(state: SimState, ctx: StepContext): Topo {
     responsible.set(op.id, at);
   }
   const bottomUp = [...ids].sort((a, b) => nodes.get(b)!.depth - nodes.get(a)!.depth || byStr(a, b));
-  const t: Topo = { nodes, bottomUp, reserveBattalions, front, divisionFront, featureSegments, responsible, ratings: new Map(), timetable: new Map() };
+  const planLine = new Map(state.companies.filter((c) => c.objectiveLineId !== undefined && c.role !== 'garrison' && c.role !== 'reserve').map((c) => [c.id, `${c.objectiveLineId}|${c.sectorId}`]));
+  const plan = new Map(state.companies.map((c) => [c.id, { role: c.role, counterAttacks: c.counterAttacks, x: c.startX, y: c.startY, battalionId: c.battalionId, ...(c.segmentId !== undefined ? { segmentId: c.segmentId } : {}) }]));
+  const t: Topo = { nodes, bottomUp, reserveBattalions, front, divisionFront, featureSegments, responsible, ratings: new Map(), timetable: new Map(), planLine, plan };
   topologies.set(ctx, t);
   return t;
 }
@@ -148,7 +157,14 @@ function topologyOf(state: SimState, ctx: StepContext): Topo {
 // ---- reading a picture ---------------------------------------------------------------------------------------------
 
 /** A step's working view: the state as decisions change it, and lookups. */
-type Work = { state: SimState; ctx: StepContext; topo: Topo; company: Map<string, CompanyState>; hqAt: Map<string, number> };
+type Work = {
+  state: SimState;
+  ctx: StepContext;
+  topo: Topo;
+  hqAt: Map<string, number>;
+  /** `free` and `reservesOf` answers this step, emptied whenever the command model's memory of its orders changes. */
+  memo: Map<string, string[]>;
+};
 
 const hqOf = (w: Work, id: string): HqState | undefined => {
   const i = w.hqAt.get(id);
@@ -171,29 +187,46 @@ function menOf(h: HqState, ids: readonly string[]): number {
   return n;
 }
 
+/** Who a decision may send: the reserves of the plan; for a local counter-attack also support companies and garrisons held as its force. */
+type Pick = 'reserve' | 'local';
+const PICKS: Record<Pick, (p: { role: Role; counterAttacks: boolean }) => boolean> = {
+  reserve: (p) => p.role === 'reserve',
+  local: (p) => p.role === 'reserve' || p.role === 'support' || p.counterAttacks,
+};
+
 /**
- * Companies under a formation that the HQ can send: its picture shows them holding with men, the plan gives them one of
- * the roles, and the command model has not already ordered them forward.
+ * Companies under a formation that the HQ can send, all read from its picture and the plan: its picture shows them
+ * holding with men, the plan makes them one it may send (`PICKS`), it has not already ordered them forward, and a
+ * garrison among them still holds its own trench in its picture.
  */
-function free(w: Work, h: HqState, under: string, roles: readonly Role[]): string[] {
-  return w.topo.nodes.get(under)!.companies.filter((id) => {
+function free(w: Work, h: HqState, under: string, pick: Pick): string[] {
+  const key = `${h.formationId}|${under}|${pick}`;
+  const hit = w.memo.get(key);
+  if (hit) return hit;
+  const out = w.topo.nodes.get(under)!.companies.filter((id) => {
     const u = h.picture.units[id];
-    return u !== undefined && u.status === 'holding' && u.men > 0 && roles.includes(w.company.get(id)!.role) && w.state.command.ordered[id] === undefined;
+    const p = w.topo.plan.get(id)!;
+    if (u === undefined || u.status !== 'holding' || !(u.men > 0) || !PICKS[pick](p) || w.state.command.ordered[id] !== undefined) return false;
+    return p.segmentId === undefined || h.picture.segments[p.segmentId] === undefined || h.picture.segments[p.segmentId] === h.side;
   });
+  w.memo.set(key, out);
+  return out;
 }
 
 /**
- * The enemy the HQ believes is on this ground (segment ids, or `place:<featureId>` keys): on each segment it shows held
+ * The enemy the HQ believes is on this ground (segment ids, `place:<featureId>` or `line:<lineId>|<sectorId>` keys): on
+ * each segment it shows held
  * by the enemy, and on each place, what the last report seen there said, else its intelligence estimate. Ground it has
  * neither for is unknown, which no ratio test passes: unknown is never taken for empty. `intel`: the pieces of ground
  * whose men came from intelligence alone.
  */
 function enemyKnown(h: HqState, ground: readonly string[]): { men: number; unknown: boolean; intel: number } {
   let men = 0;
-  let unknown = false;
+  // No ground at all is no knowledge: never empty.
+  let unknown = ground.length === 0;
   let intel = 0;
   for (const id of ground) {
-    const place = id.startsWith('place:');
+    const place = id.startsWith('place:') || id.startsWith('line:');
     if (!place && (h.picture.segments[id] === undefined || h.picture.segments[id] === h.side)) continue;
     const e = h.picture.enemy[id];
     if (!e) {
@@ -219,6 +252,7 @@ const riskCause = (r: Ratings): Cause[] => (r.riskTolerance > 3 ? ['leader-bold'
 
 function setCommand(w: Work, patch: Partial<CommandState>): void {
   w.state = { ...w.state, command: { ...w.state.command, ...patch } };
+  if (patch.ordered) w.memo.clear();
 }
 
 function markOrdered(w: Work, h: HqState, ids: readonly string[], lineKey?: string): void {
@@ -250,7 +284,7 @@ function hearBack(w: Work): void {
 function orderCompanies(w: Work, h: HqState, ids: readonly string[], o: Omit<Order, 'fromFormationId' | 'issuedMin' | 'unitIds'>, each = false): void {
   const groups = new Map<string, string[]>();
   for (const id of ids) {
-    const to = each ? id : w.company.get(id)!.battalionId;
+    const to = each ? id : w.topo.plan.get(id)!.battalionId;
     groups.set(to, [...(groups.get(to) ?? []), id]);
   }
   for (const to of sorted(groups.keys())) {
@@ -263,7 +297,7 @@ function orderCompanies(w: Work, h: HqState, ids: readonly string[], o: Omit<Ord
 
 export function commandPhase(state: SimState, ctx: StepContext, dt: number): SimState {
   const topo = topologyOf(state, ctx);
-  const w: Work = { state, ctx, topo, company: new Map(state.companies.map((c) => [c.id, c])), hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])) };
+  const w: Work = { state, ctx, topo, hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map() };
   hearBack(w);
   offMapAttacks(w, dt);
   localCounterAttacks(w);
@@ -288,19 +322,14 @@ function offMapAttacksOf(s: Scenario): OffMapAttack[] {
 }
 
 /**
- * Companies of the attacked side on an off-map attack's target feature: the garrisons of its segments, and any company
- * of that side up within `captureRadiusM` of them.
+ * Companies of the attacked side on an off-map attack's target feature: those up (men down in their dugouts are left
+ * alone) within `captureRadiusM` of its segments' trench.
  */
 function onTarget(w: Work, a: OffMapAttack): CompanyState[] {
   const side = enemyOf(a.side);
   const segs = (w.topo.featureSegments.get(a.targetFeatureId) ?? []).map((id) => w.state.segments.find((x) => x.id === id)!);
   const r = v(w.ctx.tables.effects.captureRadiusM);
-  const ids = new Set(segs.map((x) => x.id));
-  return w.state.companies.filter((c) => {
-    if (c.side !== side || !onField(c)) return false;
-    if (c.segmentId !== undefined && ids.has(c.segmentId)) return true;
-    return c.posture !== 'in-dugout' && segs.some((x) => distanceTo(segmentSamples(w.ctx, x, w.state.companies), [c.x, c.y]) <= r);
-  });
+  return w.state.companies.filter((c) => c.side === side && onField(c) && c.posture !== 'in-dugout' && segs.some((x) => distanceTo(segmentSamples(w.ctx, x, w.state.companies), [c.x, c.y]) <= r));
 }
 
 function offMapAttacks(w: Work, dt: number): void {
@@ -344,7 +373,7 @@ function lowerWithForce(w: Work, fid: string, seg: string): boolean {
   for (const x of w.topo.bottomUp) {
     if (x === fid || !w.topo.nodes.get(x)!.up.includes(fid) || !w.topo.front.get(x)!.includes(seg)) continue;
     const h = hqOf(w, x);
-    if (h && free(w, h, x, ['reserve', 'support']).length > 0) return true;
+    if (h && free(w, h, x, 'local').length > 0) return true;
   }
   return false;
 }
@@ -360,15 +389,16 @@ function localCounterAttacks(w: Work): void {
     for (const seg of front) {
       const done = w.state.command.counterAttacks[seg];
       if (h.picture.segments[seg] === h.side) {
-        // Known retaken by the HQ that ordered the counter-attack: a later loss is a new decision.
-        if (done?.hqId === fid) {
+        // Known retaken (since the order) by the HQ that ordered the counter-attack: a later loss is a new decision.
+        if (done?.hqId === fid && (h.picture.segmentsAt[seg] ?? -Infinity) >= done.atMin) {
           const { [seg]: _released, ...rest } = w.state.command.counterAttacks;
           setCommand(w, { counterAttacks: rest });
         }
         continue;
       }
-      if (done !== undefined) continue;
-      const force = free(w, h, fid, ['reserve', 'support']);
+      // A counter-attack that has not retaken the segment may be followed by another after counterAttackRetryMin.
+      if (done !== undefined && M < done.atMin + v(d.defence.counterAttackRetryMin)) continue;
+      const force = free(w, h, fid, 'local');
       // The lowest HQ over the segment with companies to send decides.
       if (force.length === 0 || lowerWithForce(w, fid, seg)) continue;
       const r = ratingsOf(w, fid);
@@ -379,7 +409,9 @@ function localCounterAttacks(w: Work): void {
       const men = menOf(h, force);
       const known = enemyKnown(h, [seg]);
       const ratio = ratioOf(men, known.men);
-      if (known.unknown || ratio < need) continue;
+      // Never fewer than counterAttackMinMen, whatever the odds (an empty trench gives any force infinite odds).
+      const minMen = v(d.defence.counterAttackMinMen);
+      if (known.unknown || ratio < need || men < minMen) continue;
       const eventId = w.state.nextEventId;
       w.state = emit(w.state, {
         minute: M,
@@ -388,7 +420,7 @@ function localCounterAttacks(w: Work): void {
         text: `${w.topo.nodes.get(fid)!.name} orders ${force.length} ${force.length === 1 ? 'company' : 'companies'} to counter-attack ${seg}${consolidated ? ' (the enemy will have consolidated)' : ''}`,
         causes: ['ground-lost', ...(f > 1 ? (['leader-slow'] as const) : [])],
         refs: aboutOf(h, [`s:${seg}`]),
-        factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
+        factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), minMen, goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0, ...(done ? { again: 1 } : {}) },
       });
       setCommand(w, { counterAttacks: { ...w.state.command.counterAttacks, [seg]: { hqId: fid, atMin: M } } });
       markOrdered(w, h, force);
@@ -451,7 +483,7 @@ function goDivisional(w: Work, fid: string, d: Doctrine): void {
   const waited = w.state.reserves.filter((x) => plan.reserveIds.includes(x.formationId));
   if (waited.some((x) => x.status !== 'arrived')) return;
   const targets = plan.segmentIds.filter((x) => h.picture.segments[x] !== h.side);
-  const force = free(w, h, fid, ['reserve']);
+  const force = free(w, h, fid, 'reserve');
   if (targets.length === 0 || force.length === 0) {
     // Retaken already, or nobody to send (and no reserve on its way): nothing left to do.
     drop();
@@ -466,7 +498,8 @@ function goDivisional(w: Work, fid: string, d: Doctrine): void {
   const men = menOf(h, force);
   const known = enemyKnown(h, targets);
   const ratio = ratioOf(men, known.men);
-  if (known.unknown || ratio < need) return;
+  const minMen = v(d.defence!.counterAttackMinMen);
+  if (known.unknown || ratio < need || men < minMen) return;
   const eventId = w.state.nextEventId;
   w.state = emit(w.state, {
     minute: M,
@@ -475,24 +508,25 @@ function goDivisional(w: Work, fid: string, d: Doctrine): void {
     text: `${w.topo.nodes.get(fid)!.name} orders a counter-attack by ${force.length} companies on ${targets.join(', ')}`,
     causes: ['ground-lost', ...(f > 1 ? (['leader-slow'] as const) : [])],
     refs: plan.eventRefs,
-    factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
+    factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), minMen, goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
   });
   drop();
   markOrdered(w, h, force);
   // Each company to the lost segment nearest it.
   const segs = targets.map((id) => w.state.segments.find((x) => x.id === id)!);
-  const nearest = (c: CompanyState): SegmentState => {
+  // By where the plan placed it (its HQ does not see where it stands now).
+  const nearest = (p: { x: number; y: number }): SegmentState => {
     let best = segs[0]!;
     let bd = Infinity;
     for (const x of segs) {
-      const dd = distanceTo(segmentSamples(w.ctx, x, w.state.companies), [c.x, c.y]);
+      const dd = distanceTo(segmentSamples(w.ctx, x, w.state.companies), [p.x, p.y]);
       if (dd < bd) [best, bd] = [x, dd];
     }
     return best;
   };
   const bySeg = new Map<string, string[]>();
   for (const id of force) {
-    const seg = nearest(w.company.get(id)!).id;
+    const seg = nearest(w.topo.plan.get(id)!).id;
     bySeg.set(seg, [...(bySeg.get(seg) ?? []), id]);
   }
   for (const seg of sorted(bySeg.keys())) orderCompanies(w, h, bySeg.get(seg)!, { kind: 'counter-attack', target: { segmentId: seg }, eventId, goAtMin: goAt }, true);
@@ -527,11 +561,16 @@ const engaged = (w: Work, id: string): boolean => {
  * its fighting brigades, such as a whole brigade in reserve).
  */
 function reservesOf(w: Work, h: HqState): string[] {
-  return w.topo.reserveBattalions.get(h.formationId)!.filter((b) => {
+  const key = `reserves|${h.formationId}`;
+  const hit = w.memo.get(key);
+  if (hit) return hit;
+  const out = w.topo.reserveBattalions.get(h.formationId)!.filter((b) => {
     const between = w.topo.nodes.get(b)!.up;
     const own = between.slice(0, between.indexOf(h.formationId)).filter((x) => x !== b);
-    return !own.some((x) => engaged(w, x)) && free(w, h, b, ['reserve']).length === w.topo.nodes.get(b)!.own.length;
+    return !own.some((x) => engaged(w, x)) && free(w, h, b, 'reserve').length === w.topo.nodes.get(b)!.own.length;
   });
+  w.memo.set(key, out);
+  return out;
 }
 
 /** Statuses of an attacking company the picture shows on its way. */
@@ -554,12 +593,8 @@ function stopped(w: Work, h: HqState, ids: readonly string[], key: string): bool
   });
 }
 
-/** The companies under a formation attacking a line in a sector (as the plan, or an order taken up, aims them). */
-const lineCompanies = (w: Work, fid: string, lineId: string, sectorId: string): string[] =>
-  w.topo.nodes.get(fid)!.companies.filter((id) => {
-    const c = w.company.get(id)!;
-    return c.objectiveLineId === lineId && c.sectorId === sectorId && c.role !== 'garrison' && !(c.role === 'reserve' && isHolding(c) && c.orders.length === 0 && w.state.command.ordered[id] === undefined);
-  });
+/** The companies under a formation the plan sends at a line in a sector (those the HQ orders there since are in `command.ordered`). */
+const lineCompanies = (w: Work, fid: string, key: string): string[] => w.topo.nodes.get(fid)!.companies.filter((id) => w.topo.planLine.get(id) === key);
 
 /** HQs below this one that see the line and have a reserve battalion to send (the lowest decides). */
 const lowerWithReserve = (w: Work, h: HqState, key: string): boolean =>
@@ -578,11 +613,12 @@ function stalls(w: Work): void {
       const reserves = reservesOf(w, h);
       if (reserves.length === 0 || lowerWithReserve(w, h, key)) continue;
       const [lineId, sectorId] = key.split('|') as [string, string];
-      const attackers = lineCompanies(w, fid, lineId, sectorId);
+      const attackers = lineCompanies(w, fid, key);
       if (!stopped(w, h, attackers, key)) continue;
       const line = w.ctx.lines.get(lineId)!;
+      // The battalion the plan placed nearest the line (where it stands now, its HQ does not see).
       const far = (b: string): number => {
-        const cs = w.topo.nodes.get(b)!.own.map((id) => w.company.get(id)!);
+        const cs = w.topo.nodes.get(b)!.own.map((id) => w.topo.plan.get(id)!);
         return cs.reduce((a, c) => a + Math.abs(lineXAt(line, c.y) - c.x), 0) / cs.length;
       };
       const battalion = [...reserves].sort((a, b) => far(a) - far(b) || byStr(a, b))[0]!;
@@ -591,7 +627,7 @@ function stalls(w: Work): void {
       const force = [...w.topo.nodes.get(battalion)!.own, ...rallied].sort(byStr);
       const segs = segmentsOnLine(w.state, w.ctx, lineId, sectorId).map((x) => x.id);
       const men = menOf(h, force);
-      const known = enemyKnown(h, segs);
+      const known = enemyKnown(h, lineGround(segs, key));
       const ratio = ratioOf(men, known.men);
       const r = ratingsOf(w, fid);
       const attack = doctrineOf(w, fid).attack!;
@@ -628,9 +664,15 @@ function stalls(w: Work): void {
 
 type Operation = NonNullable<Scenario['operations']>[number];
 
-/** An operation's target ground: the segments on its line, or of its feature, else the feature as a place. */
+/**
+ * A line's ground for a force ratio: the segments it runs along (within lineFeatureMatchM); with none, the stretch of its
+ * sector between the line before it and this one (`line:<key>`, comms.ts `lineZones`).
+ */
+const lineGround = (segs: readonly string[], key: string): string[] => (segs.length > 0 ? [...segs] : [`line:${key}`]);
+
+/** An operation's target ground: its line's ground, or the segments of its feature, else the feature as a place. */
 function targetGround(w: Work, target: Operation['target']): string[] {
-  if ('lineId' in target) return segmentsOnLine(w.state, w.ctx, target.lineId, target.sectorId).map((x) => x.id);
+  if ('lineId' in target) return lineGround(segmentsOnLine(w.state, w.ctx, target.lineId, target.sectorId).map((x) => x.id), `${target.lineId}|${target.sectorId}`);
   return w.topo.featureSegments.get(target.featureId) ?? [`place:${target.featureId}`];
 }
 
@@ -640,7 +682,7 @@ function readiness(w: Work, op: Operation): { h: HqState; force: string[] } | nu
   const h = hqOf(w, w.topo.responsible.get(op.id)!);
   if (!h || !w.topo.nodes.has(op.formationId)) return null;
   if (op.prerequisite && typeof h.picture.lines[`${op.prerequisite.lineId}|${op.prerequisite.sectorId}`] !== 'number') return null;
-  const force = free(w, h, op.formationId, ['reserve']);
+  const force = free(w, h, op.formationId, 'reserve');
   return force.length ? { h, force } : null;
 }
 
@@ -683,13 +725,7 @@ function operations(w: Work): void {
 
 // ---- scheduled minutes, and whether the command model has anything in hand -----------------------------------------
 
-const workOf = (state: SimState, ctx: StepContext): Work => ({
-  state,
-  ctx,
-  topo: topologyOf(state, ctx),
-  company: new Map(state.companies.map((c) => [c.id, c])),
-  hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])),
-});
+const workOf = (state: SimState, ctx: StepContext): Work => ({ state, ctx, topo: topologyOf(state, ctx), hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map() });
 
 /** The minutes lines will count as stalled at HQs with a reserve battalion to send. A decision moves nobody (its order does, on arrival). */
 export function stallChecks(state: SimState, ctx: StepContext): Scheduled[] {
@@ -712,6 +748,19 @@ export function operationStarts(state: SimState, ctx: StepContext): Scheduled[] 
   return (ctx.scenario.operations ?? []).flatMap((op) => {
     const nb = notBeforeMin(w, op);
     return state.command.launched[op.id] === undefined && nb > state.minute ? [{ minute: nb, startsMovement: false }] : [];
+  });
+}
+
+/** The minutes a counter-attack that has not retaken its segment may be followed by another. A decision moves nobody. */
+export function counterAttackRetries(state: SimState, ctx: StepContext): Scheduled[] {
+  const w = workOf(state, ctx);
+  return sorted(Object.keys(state.command.counterAttacks)).flatMap((seg) => {
+    const c = state.command.counterAttacks[seg]!;
+    const h = hqOf(w, c.hqId);
+    const d = doctrineOf(w, c.hqId).defence;
+    if (!h || !d || h.picture.segments[seg] === h.side) return [];
+    const due = c.atMin + v(d.counterAttackRetryMin);
+    return due > state.minute ? [{ minute: due, startsMovement: false }] : [];
   });
 }
 

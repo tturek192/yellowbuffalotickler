@@ -26,6 +26,8 @@ export type CompanyState = {
   side: Side;
   /** Its part in the plan (Task 10): assault, mopup and support companies attack; garrison and reserve companies hold. */
   role: Role;
+  /** A garrison held as a local counter-attack force (the scenario's `counterAttacks`, Task 12): it may be ordered out. */
+  counterAttacks: boolean;
   doctrineId: string;
   /** The formation the company sits in (normally its battalion). */
   battalionId: string;
@@ -153,6 +155,7 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       name: c.name,
       side,
       role: c.role,
+      counterAttacks: c.counterAttacks === true,
       doctrineId,
       battalionId: path[0]!,
       formationPath: path,

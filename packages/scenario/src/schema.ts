@@ -82,6 +82,11 @@ const CompanyBase = z.strictObject({
   /** Depth of the dugouts the company shelters in (metres of cover overhead or below ground). */
   dugoutDepthM: sourced(z.number().nonnegative()).optional(),
   training: z.enum(['rehearsed', 'standard']).optional(),
+  /**
+   * A garrison company held as a local counter-attack force (Plan 3 Task 12): it holds its own trench, as every garrison
+   * does, and leaves it only when its headquarters orders it to counter-attack ground its side has lost.
+   */
+  counterAttacks: z.literal(true).optional(),
 });
 
 const Company = CompanyBase.superRefine((c, ctx) => {

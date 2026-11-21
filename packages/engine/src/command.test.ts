@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
-import { commandPending, commandPhase, offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
+import { commandPending, commandPhase, counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
 import { send } from './comms';
 import { morale } from './morale';
 import { runPipeline } from './pipeline';
@@ -178,6 +178,70 @@ describe('the command model', () => {
     expect(e.factors!.intelligence).toBeUndefined();
   });
 
+  it('a line with no segment: its ground is the intelligence between the lines, and a cautious leader does not commit at a poor ratio', () => {
+    // k3's trench 50 m short of the Black Line (beyond lineFeatureMatchM, 1 m here): the line runs along no segment. The
+    // attack never goes (c1 and c2 have rallied and hold), so the line stays untaken. Intelligence puts k1, k2 and k3,
+    // 640 men, between the German front line and the Black Line; bn2 and the rallied companies have 1,500.
+    const commit = (riskTolerance: number) => {
+      const f = fixtureStall({ riskTolerance });
+      const k3 = f[0].forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!;
+      k3.start = [1100, 200];
+      f[0].features.find((x) => x.id === 'ger-rear-k3')!.geometry = { type: 'LineString', coordinates: [[1100, 0], [1100, 400]] };
+      const rallied = (s: SimState): SimState => ({
+        ...s,
+        companies: s.companies.map((c) => (c.id === 'c1' || c.id === 'c2' ? { ...c, status: 'holding' as const, intent: 'hold' as const } : c)),
+        hqs: s.hqs.map((h) => ({ ...h, picture: { ...h.picture, units: Object.fromEntries(Object.entries(h.picture.units).map(([id, u]) => [id, id === 'c1' || id === 'c2' ? { ...u, status: 'holding' } : u])) } })),
+        lastReport: { ...s.lastReport, c1: { ...s.lastReport['c1']!, status: 'holding' }, c2: { ...s.lastReport['c2']!, status: 'holding' } },
+      });
+      const r = runStates(f, { endMinute: 200, at: rallied });
+      expect(r.states[0]!.hqs.find((h) => h.formationId === 'b1')!.picture.enemy['line:black|s1']).toEqual({ men: 640, atMin: 0, intel: true });
+      return firstOf(r, 'order-issued');
+    };
+    expect(commit(1)).toBeUndefined(); // 1,500 / 640 = 2.34, below 2.5
+    expect(commit(5)!.factors).toMatchObject({ men: 1500, enemy: 640, intelligence: 1, riskRatio: 0.5 });
+  });
+
+  it('a counter-attack needs counterAttackMinMen whatever the odds, and a failed one may be ordered again after counterAttackRetryMin', () => {
+    const { state, ctx } = initRun(...fixtureCounter(), { seed: 1 });
+    const seg = state.segments[0]!.id;
+    const decide = (minute: number, krMen: number, done?: number) => {
+      const hqs = state.hqs.map((h) =>
+        h.formationId !== 'rir262'
+          ? h
+          : { ...h, picture: { ...h.picture, segments: { ...h.picture.segments, [seg]: 'allied' as const }, segmentsAt: { [seg]: minute }, enemy: { [seg]: { men: 0, atMin: minute } }, units: { ...h.picture.units, kr: { status: 'holding', men: krMen, atMin: 0 } } } },
+      );
+      const command = done === undefined ? state.command : { ...state.command, counterAttacks: { [seg]: { hqId: 'rir262', atMin: done } } };
+      return commandPhase({ ...state, minute, events: [], hqs, command }, ctx, 2).events.find((e) => e.kind === 'counter-attack-ordered');
+    };
+    // An empty trench gives any force infinite odds; 20 men are still too few.
+    expect(decide(10, 20)).toBeUndefined();
+    expect(decide(10, 40)!.factors).toMatchObject({ men: 40, enemy: 0, minMen: 35 });
+    // Ordered at 10 and the trench still lost: not again before 70, again from then.
+    expect(decide(68, 300, 10)).toBeUndefined();
+    expect(decide(70, 300, 10)!.factors).toMatchObject({ again: 1 });
+  });
+
+  it('an off-map attack leaves men down in their dugouts alone', () => {
+    const f = fixtureComms();
+    f[0].offMap = { fire: [], attacks: [offMapAttack()] };
+    const { state, ctx } = initRun(...f, { seed: 1 });
+    const below = state.companies.map((c) => (c.id === 'k1' ? { ...c, posture: 'in-dugout' as const } : c.id === 'k2' ? { ...c, posture: 'in-trench' as const } : c));
+    const out = commandPhase({ ...state, minute: 110, events: [], companies: below }, ctx, 2);
+    expect(out.companies.find((c) => c.id === 'k1')!.suppression).toBe(0);
+    expect(out.companies.find((c) => c.id === 'k2')!.suppression).toBe(0.25);
+  });
+
+  it('an order a company cannot carry out is dropped and logged, and does not hold the run open', () => {
+    const { state, ctx } = initRun(...fixtureCounter(), { seed: 1 });
+    const order: Order = { kind: 'counter-attack', target: { segmentId: 'no-such-segment' }, fromFormationId: 'rir262', issuedMin: 0, eventId: 0 };
+    const s: SimState = { ...state, companies: state.companies.map((c) => (c.id === 'kr' ? { ...c, orders: [order] } : c)) };
+    const out = runPipeline(s, ctx, 2);
+    const kr = out.companies.find((c) => c.id === 'kr')!;
+    expect([kr.status, kr.orders]).toEqual(['holding', []]);
+    expect(out.events.find((e) => e.kind === 'order-dropped')).toMatchObject({ unitId: 'kr', refs: [0] });
+    expect(commandPending(out, ctx)).toBe(false);
+  });
+
   it('the stall commitment calls for stallBarrageMin of standing barrage on the stalled line', () => {
     const f = fixtureStall();
     (f[1].tables.effects as Record<string, unknown>)['stallBarrageMin'] = { value: 25, estimate: 'test', description: 'test' };
@@ -210,6 +274,12 @@ describe('the command model', () => {
     expect(retaken.factors!.attackers).toBeGreaterThanOrEqual(300);
     expect(r.states.some((s) => s.taken.includes('black|s1') && s.minute < there.minute && s.segments.find((x) => x.id === e.segmentId)!.holder === 'allied')).toBe(true);
     expect(eventsOf(r).filter((x) => x.kind === 'segment-retaken' && x.minute < there.minute)).toEqual([]);
+    // The retake explains itself: an ordered counter-attack, with a ref to the decision.
+    expect(retaken.causes).toContain('counter-attack');
+    expect(retaken.refs).toContain(e.id);
+    // The order lapses the step after: kr holds there.
+    const next = r.states[r.states.indexOf(there) + 1]!.companies.find((c) => c.id === 'kr')!;
+    expect([next.status, next.intent, next.orders]).toEqual(['holding', 'hold', []]);
   });
 
   it('German counter-attack odds depend on whether the attacker has consolidated', () => {
@@ -337,7 +407,7 @@ function expectSameBattle(coarse: SimState[], fine: SimState[]): void {
 describe('the command model and quiet steps', () => {
   it('registers its sources with the right startsMovement flags', () => {
     const names = SCHEDULES.map(([n]) => n);
-    for (const n of ['stall-checks', 'operation-starts', 'order-starts', 'off-map-attacks']) expect(names).toContain(n);
+    for (const n of ['stall-checks', 'operation-starts', 'order-starts', 'off-map-attacks', 'counter-attack-retries']) expect(names).toContain(n);
     // Stall checks and operations' hours are decisions (their orders set units moving when they arrive).
     const stall = quietRun(fixtureStall({ stallToleranceMin: 61 }), 10, 60);
     const { ctx } = initRun(...fixtureStall({ stallToleranceMin: 61 }), { seed: 1 });
@@ -411,6 +481,32 @@ describe('the command model and quiet steps', () => {
     }
     expect(coarse.find((s) => s.minute >= 140)!.companies.find((c) => c.id === 'k1')!.recentFire.some((x) => x.minute > 131)).toBe(false);
     expect(coarse.find((s) => s.minute === 100)!.companies.find((c) => c.id === 'k1')!.suppression).toBe(0);
+    expectSameBattle(coarse, fine);
+  });
+
+  it('a counter-attack ordered again after counterAttackRetryMin, inside a quiet stretch, is ordered at the same minute however the battle is stepped', () => {
+    // rir262 remembers counter-attacks on both its segments ordered at Zero (retry 101): the losses known by ~34 wait for it.
+    const f = () => {
+      const x = fixtureCounter();
+      x[1].doctrines['de-1917']!.defence!.counterAttackRetryMin = { value: 101, estimate: 'test', description: 'test' };
+      return x;
+    };
+    const run = (quietMin: number) => {
+      const m = withQuietStep(f()[1], quietMin);
+      const { state, ctx } = initRun(f()[0], m, { seed: 1 });
+      const mem = Object.fromEntries(state.segments.map((x) => [x.id, { hqId: 'rir262', atMin: 0 }]));
+      let s: SimState = { ...state, command: { ...state.command, counterAttacks: mem } };
+      const out = [s];
+      const due = counterAttackRetries(s, ctx);
+      expect(due).toEqual([]); // the HQ does not yet know the segment lost
+      while (s.minute < 250) out.push((s = runPipeline(s, ctx, isBusy(s, ctx) ? 2 : quietStep(s, ctx, 2, quietMin))));
+      return out;
+    };
+    const coarse = run(10);
+    const fine = run(2);
+    const e = coarse.flatMap((s) => s.events).find((x) => x.kind === 'counter-attack-ordered' && x.segmentId === coarse[0]!.segments[0]!.id)!;
+    expect(e.minute).toBe(102);
+    expect(e.factors!.again).toBe(1);
     expectSameBattle(coarse, fine);
   });
 

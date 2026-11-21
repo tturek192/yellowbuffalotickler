@@ -319,3 +319,16 @@ defence:
     estimate: a British reserve holding a captured line goes in when half the line is lost
     description: Share of a sector's segments that must be lost before its reserve is committed.
     calibrated: true
+  counterAttackMinMen:
+    value: 35
+    estimate: 'about a platoon: SS 143 gives the platoon "a minimum strength, exclusive of its headquarters, of 28 O. R." and a maximum of 44
+      (ss143-1917 p. 7), below which it "ceases to be workable"; fewer cannot retake a trench, whatever the odds against an empty one. 35,
+      a judgement for Plan 4 to calibrate'
+    description: Fewest men a headquarters sends on a counter-attack, whatever the odds it believes it faces.
+    calibrated: true
+  counterAttackRetryMin:
+    value: 60
+    estimate: 'taken as the German figure: a counter-attack that has failed is tried again once fresh men are gathered and the news of the first
+      has come back, about an hour'
+    description: Minutes after ordering a counter-attack before its headquarters may order another on the same ground, if it is still lost.
+    calibrated: true

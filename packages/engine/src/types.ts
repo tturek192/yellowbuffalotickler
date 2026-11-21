@@ -24,6 +24,8 @@ export const EVENT_KINDS = [
   'company-rallied',
   // The command model (Task 12): a taken line whose segments the enemy has taken back; an off-map attack on a flank opens
   'line-lost', 'off-map-attack',
+  // An order a company could not carry out (its target names no place), dropped (Task 12)
+  'order-dropped',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 

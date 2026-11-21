@@ -156,32 +156,21 @@ So each regiment has:
   stands within 20-60 m of a front company;
 - **a resting battalion**, off the map (Reserves).
 
-**The support battalion's companies are in reserve, not garrisons** (Task 12). The front battalion's four companies are
-`role: garrison`: they man the first position and shelter in its dug-outs. The support battalion's four are
-`role: reserve`, at the same places on the nearest trench or strongpoint behind. The engine holds them there, up in their
-trench, until their headquarters orders them to counter-attack ground the front battalion has lost. The duty is sourced
-in outline:
+**The support battalion's companies are the local counter-attack force** (Task 12). Every company on the map is a
+garrison of its own trench: it takes its share of the bombardment, it shelters in its dug-outs, and it can be caught
+below ground. The support battalion's four companies also carry `counterAttacks: true`. Their regiment's headquarters may
+order them out of their trench to retake ground the front battalion has lost; until it does, they hold. The duty is
+sourced in outline:
 
 - the Canadian intelligence had the second battalion "either in support in the third trench or in immediate reserve"
   (BOH p. 317);
-- on Hill 145, "a system of deep dug-outs (the Hangstellung) housed the reserve companies", and Watson planned barrages "to
+- on Hill 145 "a system of deep dug-outs (the Hangstellung) housed the reserve companies", and Watson planned barrages "to
   stop any counter-attacks from the Hangstellung" (Nicholson p. 259);
-- German doctrine called for "immediate counter-attacks ... to recover any ground lost" (BOH p. 316, as quoted in
-  `doctrine/de-1917.yaml`).
+- the Canadians had learnt "that immediate counter-attacks would be launched to recover any ground lost" (BOH p. 316).
 
-That every support company is a counter-attack reserve, and none a garrison of the trench it stands on, is an estimate.
-The 1918 German scheme kept "one or two companies as a counter-attack reserve" in each combat battalion and placed the
-support battalions further back (survey-german-tactics-1918 p. 32). For Vimy it is taken that the whole support battalion
-was held for the immediate counter-attack.
-
-As reserves they are not trench garrisons in the engine:
-
-- they make no segments, so Hill 145, La Folie Farm, the Pimple, the Zwölfer-Graben and the Zwischen-Stellung have no
-  segment of their own;
-- they take no garrison losses in the bombardment;
-- they cannot be caught below ground.
-
-Their `trenchFeatureId` and `dugoutDepthM` stay as the record of where they stood.
+That every support company is such a force is an estimate. The 1918 German scheme kept "one or two companies as a
+counter-attack reserve" in each combat battalion (survey-german-tactics-1918 p. 32), and the Vimy sources do not divide
+the support battalion's duties further.
 
 **Which battalion was which** is known for four: I./263 was the front battalion (BOH p. 325 n.1, its headquarters at the
 Schwaben Tunnel; it had relieved the front between 1 and 2 a.m., p. 314 n.1); III./11 Bavarian, I./14 Bavarian and I./21
@@ -437,7 +426,7 @@ Quotes are at most 25 words. "est." marks a value entered as an `estimate`.
 | Support battalion in the third trench | `boh-1917-1` | 317 | "a second battalion was either in support in the third trench or in immediate reserve" | official |
 | The same arrangement | `nicholson-1962` | 247 | "had a second battalion in the Third Line, or immediately to the rear as close support" | official |
 | Reserve companies on Hill 145, expected to counter-attack | `nicholson-1962` | 259 | "a system of deep dug-outs (the Hangstellung) housed the reserve companies" | official |
-| Support battalion's companies as counter-attack reserve (`role: reserve`) | est. | — | inferred from BOH p. 317, Nicholson p. 259 and BOH p. 316's immediate counter-attacks (Garrisons) | estimate |
+| Support battalion's companies as the local counter-attack force (`counterAttacks: true`) | est. | — | inferred from BOH pp. 316-317 and Nicholson p. 259 (Garrisons) | estimate |
 | The forward zone's depth (550 m used) | `nicholson-1962` | 246 | "The advanced field works, five to seven hundred yards deep, consisted of three lines of trench" | official |
 | The forward zone held in strength | `boh-1917-1` | 241 | "the infantry had received orders to hold the forward zone at all costs, instead of regarding it as a true outpost system" | official |
 | The Hangstellung on Hill 145 | `nicholson-1962` | 259 | "on the reverse slope a system of deep dug-outs (the Hangstellung) housed the reserve companies" | official |
