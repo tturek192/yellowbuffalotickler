@@ -984,7 +984,10 @@ export function commandPending(state: SimState, ctx: StepContext): boolean {
   // Task 13: nor while a planned counter-attack with its troops there waits for ground it can reach (at most
   // counterAttackPatienceMin, then it is given up).
   if (state.hqs.some((h) => h.pending.some((p) => p.blockedSinceMin !== undefined))) return true;
-  if (state.companies.some((c) => isHolding(c) && onField(c) && c.orders.some((o) => o.kind === 'attack' || o.kind === 'counter-attack'))) return true;
+  // A company holding an order it will take up — not one down in its dug-out, which takes up no order there (movement.ts
+  // behaviour) and may never come up (Task 12 N-3: a garrison ordered in its dug-out and then trapped kept the run open);
+  // its coming up, by emergence or sortie, is scheduled, and a run does not end in a lull while that is due (end.ts).
+  if (state.companies.some((c) => isHolding(c) && onField(c) && c.posture !== 'in-dugout' && c.orders.some((o) => o.kind === 'attack' || o.kind === 'counter-attack'))) return true;
   if (stallChecks(state, ctx).length > 0) return true;
   const w = workOf(state, ctx);
   return (ctx.scenario.operations ?? []).some((op) => notBeforeMin(w, op) > state.minute && readiness(w, op) !== null);

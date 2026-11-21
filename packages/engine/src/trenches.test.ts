@@ -202,8 +202,9 @@ describe('the fight for trenches', () => {
     const seg = state.segments[0]!;
     const s = { ...state, minute: 10, segments: [{ ...seg, dugoutPoints: [{ companyId: 'k1', point: [150, 100] as [number, number], men: 50, leftMin: 6, unguardedMin: 8, eventId: 0, cleared: 0 }] }, ...state.segments.slice(1)] };
     expect(dugoutSorties(s, ctx)).toEqual([{ minute: 38, startsMovement: false }]);
-    const coarse = runScenario(...withQuiet(fixtureDugouts({ mopUp: false, holders: 15 }), 10), { seed: 3, endMinute: 120 });
-    const fine = runScenario(...withQuiet(fixtureDugouts({ mopUp: false, holders: 15 }), 2), { seed: 3, endMinute: 120 });
+    // Both to minute 120 (Task 15: the attackers hold their final line early on, which would end the run there).
+    const coarse = runScenario(...withQuiet(fixtureDugouts({ mopUp: false, holders: 15 }), 10), { seed: 3, endMinute: 120, stopEarly: false });
+    const fine = runScenario(...withQuiet(fixtureDugouts({ mopUp: false, holders: 15 }), 2), { seed: 3, endMinute: 120, stopEarly: false });
     expect(ofKind(coarse, 'dugout-sortie').length).toBeGreaterThan(0);
     expect(ofKind(coarse, 'segment-retaken').length).toBeGreaterThan(0);
     expect(ofKind(coarse, 'ammunition-exhausted').length).toBeGreaterThan(0);

@@ -2,7 +2,7 @@ import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenar
 import type { CompanyState, CompanyStatus } from './companies';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent } from './types';
 
-export const ENGINE_VERSION = '0.3.13';
+export const ENGINE_VERSION = '0.4.0';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -86,8 +86,8 @@ export type RunRecord = {
     /** The German trench segments (Task 7), in the order snapshot segment rows index them. */
     segments: SegmentGeometry[];
   };
-  /** Every company, in ascending id order: the battalion it belongs to, its name and side. */
-  units: Array<{ id: string; battalionId: string; name: string; side: Side }>;
+  /** Every company, in ascending id order: the battalion it belongs to, its name and side; its formations, battalion up (engine 0.4.0 on). */
+  units: Array<{ id: string; battalionId: string; name: string; side: Side; formationPath?: string[] }>;
   /**
    * Every SNAPSHOT_BUSY_MIN minutes while anything is happening, otherwise every SNAPSHOT_QUIET_MIN; always the first and
    * last state. A keyframe every KEYFRAME_EVERY snapshots, the first among them, and between them deltas (`delta`).
@@ -102,7 +102,7 @@ export type RunRecord = {
     prisoners: Record<Side, number>;
     gunsCaptured: number;
     endedAt: number;
-    /** Why the run ended, and who won (Task 15); null until decided. */
+    /** Why the run ended (Task 15; null in records before engine 0.4.0). */
     endReason: EndReason | null;
     winner: Side | null;
     keyGround: Array<{ id: string; name: string; holder: Side | null }>;

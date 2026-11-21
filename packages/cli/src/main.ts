@@ -1,15 +1,16 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runBatch, runScenario } from '@wwi/engine';
 import { buildReview, ScenarioError, v } from '@wwi/scenario';
 import { loadScenario, loadTables } from '@wwi/scenario/node';
-import { formatBatch } from './format';
+import { formatBatchV2 } from './format';
+import { batchInWorkers } from './workers';
 import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-md';
 
 const USAGE = `usage:
   sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>] [--tables-dir <dir>]
-  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--doctrine-dir <dir>] [--tables-dir <dir>]
   sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
 
 class UsageError extends Error {}
@@ -24,7 +25,7 @@ function intOpt(name: string, value: string | undefined, fallback?: number): num
   return n;
 }
 
-function main(argv: string[]): void {
+async function main(argv: string[]): Promise<void> {
   let parsed;
   try {
     parsed = parseArgs({
@@ -38,6 +39,8 @@ function main(argv: string[]): void {
         'doctrine-dir': { type: 'string' },
         notes: { type: 'string', multiple: true },
         'tables-dir': { type: 'string' },
+        workers: { type: 'string' },
+        json: { type: 'boolean' },
       },
     });
   } catch (e) {
@@ -64,6 +67,8 @@ function main(argv: string[]): void {
     if (runs < 1) throw new UsageError('--runs must be at least 1');
     seedStart = intOpt('seed-start', values['seed-start'], 1);
   }
+  const workers = values.workers === undefined ? null : intOpt('workers', values.workers);
+  if (workers !== null && workers < 1) throw new UsageError('--workers must be at least 1');
   const { scenario, doctrines } = loadScenario(file, values['doctrine-dir'] ?? 'doctrine');
   const tables = loadTables(values['tables-dir'] ?? 'tables');
   if (command === 'review') {
@@ -83,12 +88,17 @@ function main(argv: string[]): void {
     writeFileSync(out, JSON.stringify(runScenario(scenario, { doctrines, tables }, { seed })));
   } else {
     const seeds = Array.from({ length: runs }, (_, i) => seedStart + i);
-    console.log(formatBatch(runBatch(scenario, { doctrines, tables }, seeds), v(scenario.zeroHour)));
+    // On worker threads with --workers (the same summary for any number of them), else in this process.
+    const b =
+      workers === null
+        ? runBatch(scenario, { doctrines, tables }, seeds)
+        : await batchInWorkers({ scenarioFile: resolve(file), doctrineDir: resolve(values['doctrine-dir'] ?? 'doctrine'), tablesDir: resolve(values['tables-dir'] ?? 'tables'), seeds, workers });
+    console.log(values.json ? JSON.stringify(b, null, 2) : formatBatchV2(b, v(scenario.zeroHour)));
   }
 }
 
 try {
-  main(process.argv.slice(2));
+  await main(process.argv.slice(2));
 } catch (e) {
   if (e instanceof ScenarioError) {
     for (const p of e.problems) console.error(p);

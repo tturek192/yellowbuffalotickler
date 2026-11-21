@@ -4,9 +4,8 @@ import { initBarrage } from './barrage';
 import { noteArtilleryDefaults } from './artillery';
 import { initBatteries, runBombardment } from './bombardment';
 import { emit } from './causes';
-import { commandPending } from './command';
 import { initComms } from './comms';
-import { initCompanies, isHolding } from './companies';
+import { initCompanies } from './companies';
 import { buildWorld } from './ground';
 import { resolveDefaults } from './defaults';
 import { noteLightDefaults } from './light';
@@ -15,10 +14,12 @@ import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
 import { snapshotWriter } from './snapshots';
+import { endCheck, endRun } from './end';
+import { summarize } from './summary';
 import { createStreams } from './rng';
-import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
-import { offMapAtZero, reservesUnderWay } from './reserves';
-import type { RunRecord } from './record';
+import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './record';
+import { offMapAtZero } from './reserves';
+import type { EndReason, RunRecord } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
 import type { ReserveState } from './types';
@@ -122,12 +123,6 @@ function quietStepMin(ctx: StepContext): number {
   return Math.min(...ids.flatMap((id) => (ctx.doctrines[id] ? [v(ctx.doctrines[id].common.quietStepMin)] : [])));
 }
 
-/**
- * Statuses of a company that has nothing more to do in the attack: at its objective, or out of the fight; or off the map
- * in a reserve nobody has ordered forward (a reserve on its way keeps the run going: `reservesUnderWay`).
- */
-const DONE: ReadonlySet<string> = new Set(['consolidating', 'surrendered', 'destroyed', 'off-map']);
-
 export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunRecord {
   const stepMin = opts.stepMin ?? 2;
   const endMinute = opts.endMinute ?? s.timeLimitMinutes;
@@ -143,27 +138,31 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
   const quietMin = quietStepMin(ctx);
   let busy = isBusy(state, ctx);
 
+  let reason: EndReason = 'time-cap';
   while (state.minute < endMinute) {
     // stepMin while busy; otherwise a quiet step, cut at whatever is scheduled next (schedule.ts).
     const dt = busy ? stepMin : quietStep(state, ctx, stepMin, quietMin);
     state = runPipeline(state, ctx, Math.min(dt, endMinute - state.minute));
+    // The run's end (end.ts): its event is the last of the step's.
+    const end = endCheck(state, ctx, { endMinute, stopEarly });
+    if (end.ended) {
+      reason = end.reason!;
+      state = endRun(state, ctx, reason);
+    }
     events.push(...state.events);
     busy = isBusy(state, ctx);
-    const finished =
-      stopEarly &&
-      state.barrages.every((b) => b.phase === 'done') &&
-      state.companies.every((c) => isHolding(c) || DONE.has(c.status)) &&
-      // Task 12: nor while a headquarters has an order on its way, a stall to act on or an operation waiting for its hour;
-      // Task 13: nor while a reserve is on its way, or arrived and not yet known to the headquarters that ordered it.
-      !reservesUnderWay(state, ctx) &&
-      !commandPending(state, ctx);
     const every = busy ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
     const due = opts.snapshotEveryStep || Math.floor(state.minute / every) > Math.floor(lastSnapshot / every);
-    if (due || state.minute >= endMinute || finished) {
+    if (due || end.ended) {
       snapshots.push(snapshot(state));
       lastSnapshot = state.minute;
     }
-    if (finished) break;
+    if (end.ended) break;
+  }
+  if (!events.some((e) => e.kind === 'run-ended')) {
+    // A run with no step (endMinute 0) ends at once, at its cap.
+    state = endRun({ ...state, events: [] }, ctx, reason);
+    events.push(...state.events);
   }
 
   const sc = ctx.scenario;
@@ -190,34 +189,11 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
         lengthM: round(x.lengthM, 1),
       })),
     },
-    units: state.companies.map((c) => ({ id: c.id, battalionId: c.battalionId, name: c.name, side: c.side })),
+    // Task 15: each company's formations, battalion up, so the batch can set formations' casualties beside targets.
+    units: state.companies.map((c) => ({ id: c.id, battalionId: c.battalionId, name: c.name, side: c.side, formationPath: c.formationPath })),
     snapshots,
     events,
-    summary: {
-      lineTaken: events
-        .filter((e) => e.kind === 'line-taken')
-        .map((e) => ({ lineId: e.lineId!, sectorId: e.sectorId!, minute: e.minute })),
-      casualties: {
-        // Men lost before Zero are in each company's totals and counted here apart from the battle.
-        bombardment: tallyCasualties(state.companies, (c) => ({ ...c.bombardment, captured: 0 })),
-        battle: tallyCasualties(state.companies, (c) => ({
-          killed: c.killed - c.bombardment.killed,
-          wounded: c.wounded - c.bombardment.wounded,
-          captured: c.captured,
-        })),
-      },
-      // Men taken prisoner by each side: the other side's captured.
-      prisoners: {
-        allied: state.companies.filter((c) => c.side === 'central').reduce((a, c) => a + c.captured, 0),
-        central: state.companies.filter((c) => c.side === 'allied').reduce((a, c) => a + c.captured, 0),
-      },
-      // Guns of batteries overrun by the enemy (Task 10).
-      gunsCaptured: state.batteries.filter((b) => b.captured).reduce((a, b) => a + b.guns, 0),
-      endedAt: state.minute,
-      endReason: null,
-      winner: null,
-      keyGround: [],
-    },
+    summary: summarize(state, ctx, events, reason),
     defaultsUsed: [...ctx.defaultsUsed].sort(),
   };
 }

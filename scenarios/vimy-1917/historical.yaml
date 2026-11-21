@@ -243,6 +243,7 @@ historical:
         note: "BOH gives both; the evening of the 10th is the division's arrival, early on the 10th its first regiment's; 06:00 and 18:00 taken for 'early' and 'evening'"
       where: "Givenchy and the Souchez valley, relieving the 16th Bavarian Division; the rest of the division east of Givenchy and between Avion and Méricourt (BOH p. 345 n.3)"
 
+  winner: { value: allied, source: nicholson-1962, page: "266", note: "'a great tactical victory had been won'; the ridge all in Canadian hands by 12 April (p. 263, under endedAt)" }
   endedAt:
     value: 1917-04-12T08:00
     range: [1917-04-12T08:00, 1917-04-14T18:00]

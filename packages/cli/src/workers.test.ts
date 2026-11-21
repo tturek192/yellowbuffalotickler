@@ -1,0 +1,33 @@
+import { createHash } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+import { runBatch, runScenario } from '@wwi/engine';
+import { loadScenario, loadTables } from '@wwi/scenario/node';
+import { batchInWorkers, runInWorker } from './workers';
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const files = (scenario: string) => ({ scenarioFile: resolve(repoRoot, scenario), doctrineDir: resolve(repoRoot, 'doctrine'), tablesDir: resolve(repoRoot, 'tables') });
+const DRAFT = 'scenarios/vimy-1917/1cdn-3bde-draft.yaml';
+const VIMY = 'scenarios/vimy-1917/scenario.yaml';
+const hash = (s: string) => createHash('sha256').update(s).digest('hex');
+const models = (scenario: string) => {
+  const { scenario: s, doctrines } = loadScenario(resolve(repoRoot, scenario), resolve(repoRoot, 'doctrine'));
+  return { s, m: { doctrines, tables: loadTables(resolve(repoRoot, 'tables')) } };
+};
+const seeds = [1, 2, 3, 4, 5, 6, 7];
+const batchWith = (workers: number) => batchInWorkers({ ...files(DRAFT), seeds, workers });
+
+describe('batches on worker threads (Task 15)', () => {
+  it('a batch gives the same summary with 1 worker and with 4, and the same as in this process', async () => {
+    const one = await batchWith(1);
+    expect(one).toEqual(await batchWith(4));
+    const { s, m } = models(DRAFT);
+    expect(one).toEqual(runBatch(s, m, seeds));
+  }, 120000);
+
+  it('a run inside a worker is byte-identical to the same seed run in-process', async () => {
+    const { s, m } = models(VIMY);
+    expect(hash(await runInWorker({ ...files(VIMY), seed: 7 }))).toBe(hash(JSON.stringify(runScenario(s, m, { seed: 7 }))));
+  }, 120000);
+});

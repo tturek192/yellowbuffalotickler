@@ -323,6 +323,8 @@ export const ScenarioSchema = z.object({
       .array(z.object({ formationId: z.string(), at: sourcedOrDisputed(LocalDateTimeSchema), where: z.string() }))
       .default([]),
     endedAt: sourcedOrDisputed(LocalDateTimeSchema).optional(),
+    /** The side that won (Task 15): the batch reports the share of runs it won. */
+    winner: sourced(Side).optional(),
   }),
 });
 export type Scenario = z.infer<typeof ScenarioSchema>;

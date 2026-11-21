@@ -105,9 +105,11 @@ describe('runScenario', () => {
 
   it('the record is columnar, rounded, and names each company\'s battalion', () => {
     const r = runScenario(s, d, { seed: 1 });
+    // Engine 0.4.0: each company's formations, battalion up.
+    expect(r.units[0]!.formationPath![0]).toBe('bn1');
     expect(r.units).toEqual([
-      { id: 'c1', battalionId: 'bn1', name: 'A Company', side: 'allied' },
-      { id: 'c2', battalionId: 'bn1', name: 'B Company', side: 'allied' },
+      { id: 'c1', battalionId: 'bn1', name: 'A Company', side: 'allied', formationPath: r.units[0]!.formationPath },
+      { id: 'c2', battalionId: 'bn1', name: 'B Company', side: 'allied', formationPath: r.units[1]!.formationPath },
     ]);
     const snap = snapshotsOf(r)[1]!.companies;
     expect(snap.columns).toEqual(['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured', 'gapM']);
@@ -116,7 +118,7 @@ describe('runScenario', () => {
       expect(row[5] * 100).toBeCloseTo(Math.round(row[5] * 100), 9);
     }
     expect(r.summary.casualties.battle.allied).toEqual({ killed: 0, wounded: 0, captured: 0, total: 0, formations: { bn1: { killed: 0, wounded: 0, captured: 0, total: 0 } } });
-    expect(r.summary).toMatchObject({ prisoners: { allied: 0, central: 0 }, gunsCaptured: 0, endedAt: r.endMinute, endReason: null, winner: null, keyGround: [] });
+    expect(r.summary).toMatchObject({ prisoners: { allied: 0, central: 0 }, gunsCaptured: 0, endedAt: r.endMinute, endReason: 'objectives-held', winner: null, keyGround: [] });
   });
 
   it('records every default the run applied', () => {

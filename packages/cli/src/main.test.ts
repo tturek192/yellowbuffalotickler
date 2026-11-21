@@ -72,6 +72,20 @@ describe('cli', () => {
     expect(r.stdout).toMatch(/\d\d:\d\d–\d\d:\d\d/);
   });
 
+  it('batch --workers N gives the same table as in one process, and --json writes the summary as JSON (Task 15)', () => {
+    const one = runCli(['batch', draft, '--runs', '3']);
+    const four = runCli(['batch', draft, '--runs', '3', '--workers', '4']);
+    expect(four.code).toBe(0);
+    expect(four.stdout).toBe(one.stdout);
+    expect(one.stdout).toMatch(/winner/i);
+    const json = runCli(['batch', draft, '--runs', '3', '--workers', '2', '--json']);
+    expect(json.code).toBe(0);
+    const b = JSON.parse(json.stdout);
+    expect(b.runs).toBe(3);
+    expect(Object.keys(b)).toEqual(['runs', 'lines', 'casualties', 'prisoners', 'gunsCaptured', 'duration', 'winner']);
+    expect(runCli(['batch', draft, '--runs', '3', '--workers', '0']).code).toBe(1);
+  });
+
   it('review writes a Markdown review with the open questions from the notes', () => {
     const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'review.md');
     const r = runCli(['review', 'scenarios/vimy-1917/scenario.yaml', '--notes', 'docs/research/vimy', '--out', out]);

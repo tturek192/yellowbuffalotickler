@@ -63,6 +63,10 @@ describe('draft Vimy scenario run', () => {
     // 0.3.13 (Task 15): the record's snapshots are keyframes every KEYFRAME_EVERY (24) snapshots and, between them, deltas
     // holding only the rows and barrages that changed (snapshots.ts; `expandSnapshots` gives them back in full). The
     // draft's battle is unchanged: expanded, its snapshots are those of 0.3.12.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.13', hash: '502c4072' });
+    // 0.4.0 (Task 15): the run end (end.ts: objectives-held, lull, time-cap) with its run-ended event, the winner and key
+    // ground in the summary, and each unit's formation path in the record. The draft's battle is unchanged up to its end: it
+    // now ends objectives-held at 440, two minutes after the Brown Line (438), with no winner (it has no key ground; both
+    // listed in defaultsUsed with its lull, the time limit).
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.0', hash: 'db49a8ad' });
   });
 });

@@ -746,3 +746,74 @@ export function fixtureReserves(o: ReserveOpts = {}): [Scenario, Models] {
   (m.tables.effects as Record<string, unknown>).mudSpeedFactor = param(0.6);
   return [s, m];
 }
+
+// ---- what-ifs (Task 15, Review Focus 1) -----------------------------------------------------------------------------
+
+export const VARIANTS = ['no-artillery', 'attackers-x0.5', 'defenders-x2', 'reserves-at-0km', 'no-mgs'] as const;
+export type Variant = (typeof VARIANTS)[number];
+
+/**
+ * A lopsided what-if of a scenario (a copy; the scenario is left as it was):
+ * - `no-artillery`: no artillery entries, no off-map fire and no preliminary bombardment;
+ * - `attackers-x0.5` / `defenders-x2`: every company of the attacking (allied) or defending (central) side at half or
+ *   twice its strength (companies the engine makes up for off-map reserves keep their doctrine strength);
+ * - `reserves-at-0km`: every off-map reserve 0 km away, so it arrives as soon as its order is out;
+ * - `no-mgs`: no company machine guns (light machine guns kept) and no machine-gun barrage.
+ */
+export function applyVariant(s0: Scenario, variant: Variant): Scenario {
+  const s = structuredClone(s0);
+  const what = (value: number) => ({ value, estimate: `what-if ${variant}` });
+  const companies = (side: 'allied' | 'central') =>
+    s.forces.filter((f) => f.side === side).flatMap((f) => {
+      const out: NonNullable<Scenario['forces'][number]['formations'][number]['companies']> = [];
+      const walk = (x: Scenario['forces'][number]['formations'][number]): void => {
+        out.push(...(x.companies ?? []));
+        for (const ch of x.children ?? []) walk(ch);
+      };
+      for (const x of f.formations) walk(x);
+      return out;
+    });
+  const scale = (side: 'allied' | 'central', k: number) => {
+    for (const c of companies(side)) c.strength = what(Math.max(1, Math.round(c.strength.value * k)));
+  };
+  switch (variant) {
+    case 'no-artillery':
+      s.artillery = [];
+      if (s.offMap) s.offMap = { ...s.offMap, fire: [] };
+      delete s.bombardment;
+      break;
+    case 'attackers-x0.5':
+      scale('allied', 0.5);
+      break;
+    case 'defenders-x2':
+      scale('central', 2);
+      break;
+    case 'reserves-at-0km':
+      for (const r of s.reserves) r.distanceKm = what(0);
+      break;
+    case 'no-mgs':
+      for (const c of [...companies('allied'), ...companies('central')]) c.machineGuns = what(0);
+      s.artillery = s.artillery.filter((a) => a.role !== 'mg-barrage');
+      break;
+  }
+  return s;
+}
+
+/** Conservation (Global Constraints): for every company at every snapshot, men + killed + wounded + captured as at Zero, none negative. */
+export function conservationHolds(r: RunRecord): boolean {
+  const snaps = snapshotsOf(r);
+  const at = (row: readonly unknown[], cols: readonly string[], n: string) => row[cols.indexOf(n)] as number;
+  const first = new Map<string, number>();
+  for (const s of snaps) {
+    const cols = s.companies.columns as readonly string[];
+    for (const row of s.companies.rows) {
+      const parts = ['men', 'killed', 'wounded', 'captured'].map((n) => at(row, cols, n));
+      if (parts.some((x) => !Number.isFinite(x) || x < 0)) return false;
+      const total = parts.reduce((a, x) => a + x, 0);
+      const id = row[0] as string;
+      if (!first.has(id)) first.set(id, total);
+      else if (first.get(id) !== total) return false;
+    }
+  }
+  return first.size === r.units.length;
+}
