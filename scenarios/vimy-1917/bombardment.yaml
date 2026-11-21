@@ -94,16 +94,24 @@ bombardment:
   spared:
     # The 87th Battalion's front on Hill 145. y -192 to -3 is the right (south) half of the 87th's frontage as
     # oob-canadian.yaml lays it out (-192 to 186, the 4th Division's sector split among five battalions): the strong
-    # point's fire kept the right of the 75th, behind the 87th, in its assembly trenches (BOH pp. 328-329), while the 87th's left went forward. An estimate
-    # of the band; the reason is sourced.
+    # point's fire kept the right of the 75th, behind the 87th, in its assembly trenches (BOH p. 329), while the 87th's
+    # left went forward. An estimate of the band; the reason is sourced.
+    #
+    # Who spared it: the heavy artillery (Nicholson p. 259; BOH p. 328, "The heavy artillery commander had desired to
+    # destroy it again"), i.e. the Corps Heavy Artillery, the entries whose weapon is of kind `heavy` (cdn-60pdr,
+    # cdn-6in-gun, cdn-6in-how, cdn-8in-how, cdn-92in-how, cdn-12in-how, cdn-15in-how). Not the 4.5-inch howitzers
+    # (kind `howitzer`, divisional field artillery), the field guns or the mortars. Intended for when the schema has the
+    # field: `onlyKinds: [heavy]`. Until then the band spares the stretch from all fire. Before setting it, see
+    # bombardment.md, Conflicts: the strong point's covering wire survived and stopped the attack (BOH pp. 328-329), and
+    # no source says whether the field guns and mortars cut wire there; it was also spared only after 7 April.
     - featureId: ger-first-position
       yMin: -192
       yMax: -3
       reason:
-        value: "A stretch of German trench (a strong point and its wire) was left undestroyed at the request of the 87th Battalion's commanding officer, who meant to use it when captured; its machine guns cut down half the 87th's leading wave"
+        value: "A stretch of German trench (a strong point and its wire) was left undestroyed by the heavy artillery at the request of the 87th Battalion's commanding officer, who meant to use it when captured; its machine guns cut down half the 87th's leading wave"
         source: nicholson-1962
         page: "259"
-        note: "'A portion of German trench had been left undestroyed by the heavy artillery at the request of the commanding officer' of the 87th; BOH p. 328: destroyed early in the bombardment, repaired by the 7th, and 'at the request of the infantry ... allowed to remain'. Only the heavy artillery spared it (bombardment.md)"
+        note: "'A portion of German trench had been left undestroyed by the heavy artillery at the request of the commanding officer' of the 87th. BOH p. 328: 'The heavy artillery commander had desired to destroy it again', but at the infantry's request 'it was allowed to remain'; it had been destroyed early in the bombardment and repaired by the 7th, with its covering wire, which then 'prevented all attempts to rush the strong point' (bombardment.md, The spared stretch)"
 
   # German wire. One belt per stretch; where the sources give two belts, their breadths are summed.
   wire:

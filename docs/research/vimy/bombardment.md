@@ -5,7 +5,7 @@ This note covers `scenarios/vimy-1917/bombardment.yaml` and the Plan 3 fields ad
 - the preliminary bombardment: when it began, and the rounds each artillery entry fired, by task;
 - the German wire belts, and the stretch left unshelled on the 87th Battalion's front;
 - each German garrison company's machine guns and dug-out depth (`oob-german.yaml`);
-- each Canadian company's officers, Lewis guns and training (`oob-canadian.yaml`);
+- each Canadian company's training (`oob-canadian.yaml`), and why its officers and Lewis guns are left to the doctrine;
 - each artillery entry's ammunition for the battle, observation, position and traction (`fireplan.yaml`).
 
 **Summary.** The bombardment ran from noon on 20 March to noon on 9 April 1917 in two phases. In the first, about half
@@ -15,7 +15,8 @@ entries. The field guns' rounds come from BOH's table, read and checked against 
 are BOH's heavy total split by estimate, because the table's heavy rows are illegible in the OCR. Four wire stretches
 cover the German first position, the Zwischen-Stellung, Thélus Trench and the Second Line. One spared stretch lies on
 the 87th's front. Every German garrison has 2.25 machine guns and a dug-out depth of 9.1 or 15.2 m. Every Canadian
-company has 5 officers and 4 Lewis guns and is `rehearsed`; so is every company of the British 13th Brigade. The field
+company is `rehearsed`, and so is every company of the British 13th Brigade. Officers and Lewis guns are not entered:
+no source gives a company-specific figure, so the doctrine defaults apply. The field
 guns carry 1,300 rounds a gun into the battle. Every artillery entry has an observation method. Positions are given
 for the Canadian Corps' guns and the German guns.
 
@@ -34,7 +35,7 @@ estimates, each with its reasoning.
 | `rca-ww1-history` | secondary | The phase I totals (85,000 heavy, 190,600 field), the 125,900 counter-battery rounds of the last week, and the 12-inch and 15-inch rounds allotted to Thélus. Also the battery classes: heavy, medium, 60-pdr and 6-inch gun batteries. |
 | `hussey-inman-1921` | secondary | The British 13th Brigade's rehearsals and the double belt of wire (p. 153). The 5th Division's artillery: its 1,300 rounds a gun and its forward positions (pp. 150, 153). The guns captured in the Bois du Goulot (p. 154). |
 | `hayes-1920`, `mcevoy-finlay-1920` | secondary | The 85th's and 72nd's rehearsals (`hayes-1920` p. 46; `mcevoy-finlay-1920` p. 45). |
-| `ss143-1917` | primary | S.S. 143, the platoon manual: an officer and a Lewis gun section in each platoon (p. 9), four platoons to the company (p. 22). Registered in the scenario here; it was already in `tables/sources.yaml`. |
+| `ss143-1917` | primary | S.S. 143, the platoon manual: an officer and a Lewis gun section in each platoon (p. 9), four platoons to the company (p. 22). The basis of the doctrine's company defaults; registered in `tables/sources.yaml`, not cited by the scenario. |
 | `german-handbook-1917` | primary | The German regiment's three machine-gun companies of 6 guns (pp. 49-50). Registered in the scenario here; it was already in `tables/sources.yaml`. |
 
 `.cache/sources/boh-1917-appendices.txt` is fetched by `scripts/fetch-sources.sh`; the entry was added here. The other
@@ -80,6 +81,15 @@ Two printed totals check this reading:
   ammunition" (p. 316 n.1);
 - phase I, 155,000 + 35,600 = **190,600**, exactly `rca-ww1-history`'s "190,600 rounds of field ammunition" in the
   first phase.
+
+**Why the 4.5-inch figures count as sourced.** They are entered as `source:` (BOH p. 315 n.2), not as estimates,
+because the reading is checked twice: the field total and the phase I total each come out exact, and a misplaced
+4.5-inch figure would break at least one of them. That is the same rule `historical.md` follows for BOH's casualty
+tables: a row whose OCR reading a printed total confirms (the 13th Brigade's 381 against Nicholson's "approximately
+380") is entered as sourced, while a row read without such a check (the 7th Brigade's interleaved row) is entered as an
+estimate. The mortar rows and the heavy split below have no such check, so they are estimates. Only the
+counter-battery column's attribution (18,500 to counter-battery, not demolition) rests on the column order alone; the
+phase I check does not reach phase II's two columns, and the field total checks their sum only.
 
 **The mortar rows are read by their pattern, an estimate.** The last six figures, 8,190 · 5,910 · .. · 244 · 606 · ..,
 are two rows of three. Each has an empty counter-battery column, as mortars would. They are taken as the 2-inch mortars
@@ -187,15 +197,18 @@ wire was mostly "torn remnants" (Nicholson p. 253). Uncut wire held up the attac
 ## The spared stretch
 
 On Hill 145 a German strong point faced the 87th Battalion (Canadian Grenadier Guards), "commanding at 400 yards range
-the exit of Tottenham Tunnel" (BOH p. 328). It had been destroyed early in the bombardment. By 7 April it was repaired.
-"At the request of the infantry, who proposed to make use of it when captured, it was allowed to remain" (BOH p. 328).
-Nicholson puts it as "a portion of German trench" left "undestroyed by the heavy artillery at the request of the
-commanding officer" of the 87th (p. 259).
+the exit of Tottenham Tunnel" (BOH p. 328). It was "destroyed early in the bombardment", but air photographs taken on
+the 7th showed "that this fortification and its covering wire had been repaired" (BOH p. 328). Then "The heavy
+artillery commander had desired to destroy it again", but "at the request of the infantry, who proposed to make use of
+it when captured, it was allowed to remain" (BOH p. 328). Nicholson puts it as "a portion of German trench" left
+"undestroyed by the heavy artillery at the request of the commanding officer" of the 87th (p. 259). Both histories say
+the heavy artillery spared it.
 
 What it cost:
 
 - "machine-gun fire cut down half the 87th's leading wave" (Nicholson p. 259);
-- the right of the 75th Battalion, in support, "was unable to leave the assembly trenches" (BOH pp. 328-329);
+- "the wire prevented all attempts to rush the strong point" (BOH p. 328);
+- the right of the 75th Battalion, in support, "was unable to leave the assembly trenches" (BOH p. 329);
 - the second trench's garrison had time to man its position, and the 11th Brigade's left broke down;
 - the 54th, its flank open, had to withdraw (Nicholson pp. 259-260).
 
@@ -206,10 +219,39 @@ The stretch is entered on `ger-first-position`, y −192 to −3. That is the ri
 as `oob-canadian.yaml` lays it out: −192 to 186, the 4th Division's sector split equally among its five first-wave
 battalions. The strong point pinned the right of the 75th, which followed the 87th, while "the left of the 87th ... had
 gone forward" (BOH p. 329). So it stood before the 87th's right. The band's edges are an estimate. The reason is
-sourced (Nicholson p. 259).
+sourced (Nicholson p. 259; BOH p. 328).
 
-Only the heavy artillery spared it. The schema's spared stretch takes no rounds at all, so in the model the field guns
-spare it too.
+### Who spared it, and what that means for the data
+
+**"The heavy artillery" is the Corps Heavy Artillery.** BOH's "heavy artillery commander" commanded the Canadian
+Corps' 245 heavy pieces (BOH p. 306 n.1, under the Br.-General Heavy Artillery, p. 306). In the data these are the
+entries whose weapon is of kind `heavy` in `tables/weapons-1917.yaml`:
+
+- `cdn-60pdr`, `cdn-6in-gun`, `cdn-6in-how`, `cdn-8in-how`, `cdn-92in-how`, `cdn-12in-how` and `cdn-15in-how`;
+- the I Corps and First Army heavy pieces, which have no allocation here.
+
+It does **not** include:
+
+- the 4.5-inch howitzers (`cdn-45in-how`, kind `howitzer`). They were divisional field artillery (BOH p. 307 counts them
+  with the 18-pdrs) and are not said to have spared anything;
+- the 18-pdrs and 13-pdrs (kind `field-gun`);
+- the trench mortars (kind `mortar`), under the divisions.
+
+So the historical sparing is heavy-only. The schema's `spared` band takes no rounds of any kind, so at present the model
+spares the stretch from every gun and mortar. The sources do not say that the field guns or mortars fired on it; nor do
+they say that they did not. A comment on the entry in `bombardment.yaml` records the intended `onlyKinds: [heavy]`, for
+when the schema has that field.
+
+**The wire is the problem with heavy-only.** The outcome the sources give is that the strong point's covering wire
+survived: it "had been repaired" by the 7th, "the wire prevented all attempts to rush the strong point" (BOH p. 328),
+and "a section of wire had escaped destruction" (p. 329). The 18-pdrs fired 323,500 wire rounds and the medium mortars
+14,100 (Allocations). If those reached this stretch in the model, its wire would be cut, against the sourced outcome.
+Whether the field guns cut wire there after 7 April is an open question (below). The choice between `onlyKinds: [heavy]`
+and sparing it from all fire belongs to whoever sets that field, with this conflict in view (Conflicts).
+
+**Timing.** The stretch was not spared for the whole bombardment: it was "destroyed early in the bombardment" and left
+alone only after the 7 April photographs showed it repaired (BOH p. 328). The schema's band spares it from 20 March.
+That is recorded under Conflicts.
 
 ## Garrisons
 
@@ -244,13 +286,15 @@ destroy the main German dug-outs and tunnels twenty to fifty feet down in the ch
 
 ## Companies
 
-- **Officers: 5, an estimate.** S.S. 143's company in the attack has an officer at the head of each platoon
-  ("Headquarters — 1 officer and 4 O. R.", p. 9). It has four platoons and a company commander (Appendix III, p. 22).
-  The CEF company's establishment (six officers, with a captain as second-in-command) was not read. That the
-  second-in-command was left out of battle is an assumption, as in the doctrine default.
-- **Lewis guns: 4, sourced.** S.S. 143 gives a Lewis gun section to each platoon (p. 9) and four platoons to the company
-  (p. 22). Nicholson notes the "liberal" supply of Lewis guns (p. 253 n.). The 72nd's companies, at 100 men, are entered
-  the same, for want of a figure.
+- **Officers and Lewis guns: not entered.** No source read gives a figure for any Canadian company on 9 April. The
+  only basis is S.S. 143's company in the attack: an officer at the head of each platoon ("Headquarters — 1 officer and
+  4 O. R.", p. 9), a Lewis gun section in each (p. 9), four platoons and a company commander (Appendix III, p. 22). That
+  is the doctrine's `companyDefaults` (`bef-1917`: 5 officers, 4 Lewis guns), with the same reasoning. Copying it onto
+  248 companies would add nothing and would not follow a change to the default, so the fields are left out. The engine
+  applies the default and lists it in `defaultsUsed`. Nicholson notes the "liberal" supply of Lewis guns (p. 253 n.),
+  which fits four a company. A value goes on a company only where a source gives that company's own figure; none was
+  found. The CEF company's war establishment of officers was not read: the figure is not given here, and whether the
+  second-in-command was left out of battle is the doctrine's assumption (Open questions).
 - **Training: `rehearsed`** for every Canadian company:
   - "While units and formations were in reserve they rehearsed repeatedly on this model from platoon to divisional
     level" (Nicholson p. 250);
@@ -260,8 +304,7 @@ destroy the main German dug-outs and tunnels twenty to fifty feet down in the ch
 
   The British 13th Brigade is also `rehearsed`. BOH says it "was not quite so fortunate" in time (p. 305), but its
   history has it "strenuously practising the attack over taped trenches" for a fortnight (`hussey-inman-1921` p. 153).
-  The British 15th and 95th Brigades, in corps reserve, have no `training` and take the doctrine's. Their officers and
-  Lewis guns are entered as for the Canadians: S.S. 143 was a British manual.
+  The British 15th and 95th Brigades, in corps reserve, have no `training` and take the doctrine's.
 
 ## Artillery
 
@@ -282,9 +325,14 @@ destroy the main German dug-outs and tunnels twenty to fifty feet down in the ch
 
 Some fields are left out:
 
-- **Ammunition for the heavy pieces, mortars, machine guns and German guns.** No per-gun stock was found. The First
-  Army's tonnage is not split by nature: "40,300 tons" in front of railheads on the day of attack, and 7,200 tons fired in
-  the 24 hours to noon on 9 April (App. 52). The German shortage is recorded only in words (BOH pp. 320, 354).
+- **Ammunition for the heavy pieces, mortars, machine guns and German guns.** No per-gun stock was found. The
+  tonnages are not split by nature or by corps:
+  - BOH p. 307: "the bulk allotment for the Canadian and I. Corps being 42,609, and the daily allotment 2,465 tons"
+    (Nicholson p. 249: "more than 42,500 tons in 'bulk', in addition to a daily quota of nearly 2500 tons");
+  - App. 52: "40,300 tons" in front of the First Army's railheads on the day of attack, and 7,200 tons fired in the 24
+    hours to noon on 9 April.
+
+  The German shortage is recorded only in words (BOH pp. 320, 354).
 - **Positions for the I Corps.** Its heavies were "on the northern slope of the Souchez valley, in and about the Bois de
   Bouvigny and de Noulette" and near Bully-Grenay (BOH p. 306), north of the frame's extent.
 - **Positions for the First Army pieces, the mortars and the barrage machine guns.** None is given. A mortar entry is
@@ -292,6 +340,15 @@ Some fields are left out:
 - **Traction for the heavy pieces.** No source read says whether they were horse- or tractor-drawn.
 
 Every position is one point for an entry of up to 320 guns. The engine reads ranges and captures from that point.
+
+**The consequence for the German guns.** Both German entries, all 197 pieces of the 79th Reserve and 1st Bavarian
+Reserve Divisions (89 heavy, 108 field; BOH p. 353), stand at two points 1.5 km apart on the eastern slope: the field
+guns by Farbus Wood and the Bois de la Ville, the heavies in the Bois du Goulot. The 79th Reserve Division held the
+northern half of the front, opposite Hill 145, so its guns are placed some 3-4 km south of the front they covered. Under
+the plan's capture rule (a battery is captured when a segment within 300 m of it is lost), taking the Second Line by
+Farbus Wood would capture all 108 field guns at once, and the Bois du Goulot all 89 heavies: 197 pieces, against the
+historical 54 guns of every calibre taken in six days (Nicholson p. 265; `historical.yaml`). Until the guns are placed
+by battery or group (Open questions), a run's captured-guns count should not be compared with that target.
 
 ## Values entered
 
@@ -320,8 +377,11 @@ Every position is one point for an entry of up to 320 guns. The engine reads ran
 | spared stretch, reason | `nicholson-1962` | 259 | "A portion of German trench had been left undestroyed by the heavy artillery at the request of the commanding officer" | official |
 | spared stretch, cost | `nicholson-1962` | 259 | "From this position machine-gun fire cut down half the 87th's leading wave" | official |
 | spared stretch, why | `boh-1917-1` | 328 | "at the request of the infantry, who proposed to make use of it when captured, it was allowed to remain" | official |
+| spared stretch, by whom | `boh-1917-1` | 328 | "The heavy artillery commander had desired to destroy it again" | official |
+| spared stretch, wire repaired | `boh-1917-1` | 328 | "this fortification and its covering wire had been repaired" | official |
+| spared stretch, wire held | `boh-1917-1` | 328 | "the wire prevented all attempts to rush the strong point" | official |
 | spared stretch, wire | `boh-1917-1` | 329 | "Only at Hill 145, where a section of wire had escaped destruction" | official |
-| spared stretch, y band | `boh-1917-1` | 328-329 | "of the 75th (Central Ontario) Battalion in support was unable to leave the assembly trenches" | estimate |
+| spared stretch, y band | `boh-1917-1` | 329 | "of the 75th (Central Ontario) Battalion in support was unable to leave the assembly trenches" | estimate |
 | machineGuns 2.25 | `german-handbook-1917` | 49 | "Every infantry regiment has three machine gun companies, numbered 1st, 2nd and 3rd. One of these companies is attached to each battalion" | estimate |
 | machineGuns 2.25 | `german-handbook-1917` | 49 | "the machine gun company of 6 guns was adopted as the standard unit" | estimate |
 | dugoutDepthM range | `boh-1917-1` | 316 | "the main German dug-outs and tunnels twenty to fifty feet down in the chalk" | estimate |
@@ -329,14 +389,12 @@ Every position is one point for an entry of up to 320 guns. The engine reads ran
 | dugoutDepthM 9.1 | `boh-1917-1` | 353 | "concrete shelters in the front system to replace deep mined dug-outs, which were now considered to be man-traps" | estimate |
 | dugoutDepthM 15.2, Hill 145 | `boh-1917-1` | 327 | "near the front line there were deep mine workings which secured the garrison from artillery fire" | estimate |
 | dugoutDepthM 15.2, Les Tilleuls | `boh-1917-1` | 310 | "the deep underground shelters of Thelus, Les Tilleuls and Givenchy" | estimate |
-| officers 5 | `ss143-1917` | 9, 22 | "Headquarters — 1 officer and 4 O. R." | estimate |
-| lewisGuns 4 | `ss143-1917` | 9 | "1 section Lewis gunners — 1 N. C. O. and 8 O. R." | primary |
-| lewisGuns 4 | `ss143-1917` | 22 | "The Company, Taking 4 Average Strength Platoons of 36 O.R. and Coy. H.Q. 14" | primary |
 | training rehearsed | `nicholson-1962` | 250 | "While units and formations were in reserve they rehearsed repeatedly on this model from platoon to divisional level" | official |
 | training rehearsed | `boh-1917-1` | 305 | "Ever since January, the 3rd and 4th Canadian Divisions had been able to rehearse their parts" | official |
 | training rehearsed (85th) | `hayes-1920` | 46 | "Back at Chateau de la Haie the German lines were all taped out to scale" | secondary |
 | training rehearsed (72nd) | `mcevoy-finlay-1920` | 45 | "the rest period was spent in practising the forthcoming attack" | secondary |
 | training rehearsed (13th Brigade) | `hussey-inman-1921` | 153 | "For the past fortnight the 13th Brigade had been strenuously practising the attack over taped trenches" | secondary |
+| ammunition, bulk allotment (not entered) | `boh-1917-1` | 307 | "the bulk allotment for the Canadian and I. Corps being 42,609, and the daily allotment 2,465 tons" | official |
 | field ammunition 1,300 a gun | `hussey-inman-1921` | 150 | "the vast quantity of ammunition required (1300 rounds per gun)" | estimate |
 | forward batteries | `hussey-inman-1921` | 153 | "whose positions were so close up that they could not with safety fire before" | secondary |
 | field position | `boh-1917-1` | 307 | "that is, a maximum distance of 6,500 yards from the guns" | estimate |
@@ -368,6 +426,16 @@ Every position is one point for an entry of up to 320 guns. The engine reads ran
   has 378 m, the 4th Division's sector split equally among five battalions (`oob-canadian.md`). The spared band follows
   the scenario's frontage.
 
+- **The spared stretch: heavy-only, or all fire.** Both sources say the heavy artillery spared it (Nicholson p. 259;
+  BOH p. 328: "The heavy artillery commander had desired to destroy it again"). Its covering wire survived and stopped
+  the attack (BOH pp. 328-329). The field guns and medium mortars cut wire elsewhere, and no source says whether they
+  fired on this stretch. The data spares it from all fire, which matches the outcome (the wire held); sparing it from the
+  heavies only (`onlyKinds: [heavy]`, the attribution) would let the 18-pdrs' and mortars' wire rounds cut it in the
+  model, against the outcome. The two readings cannot both be kept until the field guns' fire there is known.
+- **The spared stretch: from when.** It was "destroyed early in the bombardment" and left alone only after the
+  photographs of 7 April showed it repaired (BOH p. 328). The schema's band spares it for the whole bombardment, from
+  20 March, so the model's strong point takes no early damage either.
+
 ## Open questions for the historian
 
 - **BOH's ammunition table (vol. I, p. 315 n.2), row by row.** The OCR loses the heavy rows (Reading the ammunition
@@ -383,6 +451,10 @@ Every position is one point for an entry of up to 320 guns. The engine reads ran
 - **The spared stretch's extent.** How long was the stretch of trench opposite the 87th left unbombarded, and where did
   it lie in the 87th's frontage? The band entered is the right half of the frontage. The 87th's war diary or a trench
   map of Hill 145 would place it. Was any other stretch spared for the same reason?
+- **Did the field guns fire on the spared stretch, or cut its wire, after 7 April?** The heavy artillery left it alone
+  (BOH p. 328; Nicholson p. 259), and its covering wire survived and stopped the 87th (BOH pp. 328-329). Were the 18-pdrs
+  and the medium mortars also told to leave it, or did their wire-cutting simply fail there? The answer decides whether
+  the stretch is spared from the heavies only or from all fire (Conflicts).
 - **German machine guns at Vimy.** Was the resting battalions' machine-gun company in the line, as entered, or with its
   battalion? Did the 79th Reserve, 1st Bavarian Reserve and 16th Bavarian Divisions have a machine-gun marksman
   detachment on the ridge? How many 08/15 light machine guns had reached the companies by 9 April? The regimental
@@ -390,12 +462,15 @@ Every position is one point for an entry of up to 320 guns. The engine reads ran
   scholars.wlu.ca served a Cloudflare challenge in earlier checks, so the article was not read.
 - **Dug-out depths by position.** The 30 and 50 feet entered are points within BOH's "twenty to fifty feet". German
   engineer records or post-battle surveys of the captured dug-outs would give real depths.
-- **Officers in action.** How many officers did a Canadian company take into the attack on 9 April? Was the
-  second-in-command left out of battle?
+- **Officers in action.** What was the CEF infantry company's war establishment of officers in 1917, and how many
+  officers did a Canadian company take into the attack on 9 April? Was the second-in-command left out of battle? How
+  many Lewis guns did each battalion actually have? Company-specific figures would replace the doctrine defaults.
 - **Ammunition for the battle.** The heavy batteries', the mortars' and the German batteries' stocks on 9 April. The
   1,300 rounds a gun is the 5th Division's artillery, applied to every field gun.
 - **Battery positions.** Map 7 marks divisional, medium and heavy batteries and super-heavy guns with separate symbols.
   A census of them, by class, would place each artillery entry better than the one point from BOH's distances. The
   symbols are too small and too close to the map's red lettering for the colour-component method used for the frame's
-  extent. Also: where were the German batteries of Group Vimy, beyond the casemates in the eastern woods?
+  extent. Also: where were the German batteries of Group Vimy, battery by battery or by group, beyond the casemates in
+  the eastern woods? As entered, the 197 German pieces stand at two points, so a run that takes Farbus Wood and the Bois
+  du Goulot captures all of them at once, against the 54 guns actually taken in six days (Artillery).
 - **Traction of the heavy pieces.** Which heavy and siege batteries were horse-drawn and which tractor-drawn?

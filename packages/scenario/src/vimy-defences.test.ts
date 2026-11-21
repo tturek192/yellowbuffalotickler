@@ -8,10 +8,10 @@ import type { Scenario } from './schema';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
-let cached: Scenario | undefined;
+let cached: ReturnType<typeof loadScenario> | undefined;
+const loaded = () => (cached ??= loadScenario(resolve(repoRoot, 'scenarios/vimy-1917/scenario.yaml'), resolve(repoRoot, 'doctrine')));
 function vimy(): Scenario {
-  cached ??= loadScenario(resolve(repoRoot, 'scenarios/vimy-1917/scenario.yaml'), resolve(repoRoot, 'doctrine')).scenario;
-  return cached;
+  return loaded().scenario;
 }
 function feature(s: Scenario, id: string) {
   const f = s.features.find(x => x.id === id);
@@ -51,14 +51,21 @@ describe('Vimy defences and the bombardment (Plan 3 Task 3)', () => {
   it("lists the bombardment's values in the owner's review, under the fire plan", () => {
     const rows = buildReview(vimy()).sections.find(x => x.title === 'Fire plan and artillery')!.rows;
     expect(rows.filter(r => r.path.startsWith('bombardment.')).length).toBe(1 + vimy().bombardment!.allocations.length + 4 + 1);
+    // Rows are named by artillery entry, task and feature, not by index.
+    expect(rows.map(r => r.label)).toEqual(expect.arrayContaining([
+      'allocations / cdn-18pdr-creeping wire / rounds', 'wire / ger-second-position / beltDepthM', 'spared / ger-first-position / reason',
+    ]));
   });
-  it('every Canadian company has officers, Lewis guns and its training', () => {
-    const cdn = vimy().forces.find(f => f.side === 'allied')!.formations.find(f => f.id === 'cdn-corps')!;
+  it('every Canadian company is rehearsed, and no company copies the doctrine default for officers or Lewis guns', () => {
     const british = /^(1rwk|2kosb|1[456]rwarwick|1norfolk|1bedford|1cheshire|1devon|1esurrey|1dcli|12glosters)-/;
     const companies = companiesOf(vimy(), 'allied').filter(c => !british.test(c.id));
-    expect(cdn).toBeDefined(); expect(companies.length).toBeGreaterThan(150);
-    for (const c of companies) {
-      expect(c.officers, c.id).toBeDefined(); expect(c.lewisGuns, c.id).toBeDefined(); expect(c.training, c.id).toBe('rehearsed');
+    expect(companies.length).toBeGreaterThan(150);
+    for (const c of companies) expect(c.training, c.id).toBe('rehearsed');
+    // A company carries officers or lewisGuns only where a source gives its own figure; otherwise the default applies.
+    const d = loaded().doctrines['bef-1917']!.companyDefaults;
+    for (const c of companiesOf(vimy(), 'allied')) {
+      if (c.officers) expect(c.officers.value, c.id).not.toBe(d.officers.value);
+      if (c.lewisGuns) expect(c.lewisGuns.value, c.id).not.toBe(d.lewisGuns.value);
     }
   });
 });
