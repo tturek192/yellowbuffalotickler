@@ -3,13 +3,13 @@ import { fixtureWithDoctrine, withManyCompanies } from '@wwi/scenario/test-fixtu
 import { encodeTerrain } from '@wwi/scenario';
 import { lineXAt } from './geometry';
 import { runScenario } from './run';
-import { models, rowsOf } from './test-helpers';
+import { models, rowsOf, snapshotsOf } from './test-helpers';
 
 const { scenario: s, doctrines } = fixtureWithDoctrine();
 const d = models(doctrines);
 /** Each snapshot's companies as objects keyed by column. */
 const companiesOf = (r: ReturnType<typeof runScenario>, i: number) =>
-  r.snapshots[i]!.companies.rows.map((row) => Object.fromEntries(r.snapshots[i]!.companies.columns.map((c, k) => [c, row[k]!])) as Record<string, any>);
+  snapshotsOf(r)[i]!.companies.rows.map((row) => Object.fromEntries(snapshotsOf(r)[i]!.companies.columns.map((c, k) => [c, row[k]!])) as Record<string, any>);
 
 describe('runScenario', () => {
   it('copies the terrain grid into the record, and leaves the key out when there is none', () => {
@@ -30,13 +30,13 @@ describe('runScenario', () => {
     expect(JSON.stringify(runScenario(s, d, { seed: 7 }))).toBe(JSON.stringify(runScenario(s, d, { seed: 7 })));
   });
   it('different seeds differ in company timing', () => {
-    expect(JSON.stringify(runScenario(s, d, { seed: 7 }).snapshots)).not.toBe(
-      JSON.stringify(runScenario(s, d, { seed: 8 }).snapshots),
+    expect(JSON.stringify(snapshotsOf(runScenario(s, d, { seed: 7 })))).not.toBe(
+      JSON.stringify(snapshotsOf(runScenario(s, d, { seed: 8 }))),
     );
   });
   it('companies never get closer to the barrage than followDistanceM before it pauses', () => {
     const r = runScenario(s, d, { seed: 1, snapshotEveryStep: true });
-    r.snapshots.forEach((snap, i) => {
+    snapshotsOf(r).forEach((snap, i) => {
       for (const c of companiesOf(r, i)) {
         const b = snap.barrages[0]!.points;
         // Company positions are rounded to 1 m and barrage points to 0.1 m.
@@ -49,8 +49,8 @@ describe('runScenario', () => {
     const taken = r.events.filter((e) => e.kind === 'line-taken');
     expect(taken).toHaveLength(1);
     expect(taken[0]!.minute).toBeLessThanOrEqual(73);
-    const at = r.snapshots.findIndex((x) => x.minute === taken[0]!.minute);
-    const snap = r.snapshots[at]!;
+    const at = snapshotsOf(r).findIndex((x) => x.minute === taken[0]!.minute);
+    const snap = snapshotsOf(r)[at]!;
     const black = r.geometry.lines.find((l) => l.id === 'black')!.points;
     for (const c of companiesOf(r, at))
       expect(lineXAt(snap.barrages[0]!.points, c.y)).toBeGreaterThanOrEqual(lineXAt(black, c.y) + 70 - 0.1);
@@ -60,8 +60,8 @@ describe('runScenario', () => {
   it('snapshots mark each barrage done from the minute it ends', () => {
     const r = runScenario(s, d, { seed: 1, snapshotEveryStep: true, stopEarly: false, endMinute: 90 });
     const end = r.events.find((e) => e.kind === 'barrage-done')!.minute;
-    for (const snap of r.snapshots) expect(snap.barrages[0]!.done).toBe(snap.minute >= end);
-    expect(r.snapshots.some((x) => x.barrages[0]!.done)).toBe(true);
+    for (const snap of snapshotsOf(r)) expect(snap.barrages[0]!.done).toBe(snap.minute >= end);
+    expect(snapshotsOf(r).some((x) => x.barrages[0]!.done)).toBe(true);
   });
   it('the record carries the geometry and starts with zero-hour', () => {
     const r = runScenario(s, d, { seed: 1 });
@@ -72,17 +72,17 @@ describe('runScenario', () => {
     const r = runScenario(s, d, { seed: 3 });
     const mins = r.events.map((e) => e.minute);
     expect(mins).toEqual([...mins].sort((a, b) => a - b));
-    const sm = r.snapshots.map((x) => x.minute);
+    const sm = snapshotsOf(r).map((x) => x.minute);
     expect(new Set(sm).size).toBe(sm.length);
     expect(sm[0]).toBe(0);
     expect(sm[sm.length - 1]).toBe(r.endMinute);
   });
   it('a 4-day run stays under 20 MB, snapshotting hourly once the battle is quiet (Review Focus 3)', () => {
     const r = runScenario(withManyCompanies(s, 150), d, { seed: 1, endMinute: 5760, stopEarly: false });
-    const quiet = r.snapshots.filter((x) => x.minute > 120);
+    const quiet = snapshotsOf(r).filter((x) => x.minute > 120);
     for (let i = 1; i < quiet.length; i++) expect(quiet[i]!.minute - quiet[i - 1]!.minute).toBeLessThanOrEqual(60);
     expect(quiet.length).toBeLessThanOrEqual(5760 / 60);
-    expect(r.snapshots.at(-1)!.minute).toBe(5760);
+    expect(snapshotsOf(r).at(-1)!.minute).toBe(5760);
     expect(JSON.stringify(r).length).toBeLessThan(20_000_000);
   });
 
@@ -90,7 +90,7 @@ describe('runScenario', () => {
     const q = structuredClone(doctrines);
     q['bef-1917']!.common.quietStepMin = { ...q['bef-1917']!.common.quietStepMin, value: 10 };
     const r = runScenario(s, models(q), { seed: 1, snapshotEveryStep: true, stopEarly: false, endMinute: 200 });
-    const mins = r.snapshots.map((x) => x.minute);
+    const mins = snapshotsOf(r).map((x) => x.minute);
     const steps = mins.slice(1).map((m, i) => m - mins[i]!);
     const done = r.events.find((e) => e.kind === 'barrage-done')!.minute;
     // Lifting (to minute 33): every step is 2 minutes.
@@ -109,7 +109,7 @@ describe('runScenario', () => {
       { id: 'c1', battalionId: 'bn1', name: 'A Company', side: 'allied' },
       { id: 'c2', battalionId: 'bn1', name: 'B Company', side: 'allied' },
     ]);
-    const snap = r.snapshots[1]!.companies;
+    const snap = snapshotsOf(r)[1]!.companies;
     expect(snap.columns).toEqual(['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured', 'gapM']);
     for (const row of snap.rows) {
       expect(Number.isInteger(row[1]) && Number.isInteger(row[2])).toBe(true);

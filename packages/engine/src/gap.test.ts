@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { runScenario } from './run';
 import type { RunOptions } from './run';
 import type { RunRecord } from './record';
-import { companyIds, eventsOf, fixtureArtillery, fixtureBomb, ofKind, rowsOf, totalsOverTime, withQuietStep, withRearTrench } from './test-helpers';
+import { companyIds, eventsOf, fixtureArtillery, fixtureBomb, ofKind, rowsOf, totalsOverTime, withQuietStep, withRearTrench, snapshotsOf } from './test-helpers';
 import type { ArtilleryOpts } from './test-helpers';
 
 const runGap = (o: ArtilleryOpts, opts: Partial<RunOptions> = {}): RunRecord => runScenario(...fixtureArtillery(o), { seed: 1, ...opts });
@@ -50,7 +50,7 @@ describe('the gap and the dugouts', () => {
     const c1 = rowsOf(r, 'c1');
     expect(c1.some((x) => typeof x.gapM === 'number' && (x.gapM as number) >= 70)).toBe(true);
     expect(rowsOf(r, 'k1').every((x) => x.gapM === null)).toBe(true);
-    expect(r.snapshots[0]!.companies.columns).toContain('gapM');
+    expect(snapshotsOf(r)[0]!.companies.columns).toContain('gapM');
   });
 
   it('a company that keeps up never loses its barrage; one that falls behind does, with cause barrage-moved-on and its gap', () => {

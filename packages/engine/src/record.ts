@@ -2,7 +2,7 @@ import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenar
 import type { CompanyState, CompanyStatus } from './companies';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent } from './types';
 
-export const ENGINE_VERSION = '0.3.12';
+export const ENGINE_VERSION = '0.3.13';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -47,9 +47,14 @@ export type SegmentGeometry = Pick<SegmentState, 'id' | 'featureId' | 'garrisonI
 
 export type Snapshot = {
   minute: number;
-  /** One row per company, in ascending id order. */
+  /**
+   * Engine 0.3.13 on: set on a snapshot that holds only the rows (and barrages) that changed since the snapshot before;
+   * absent on a keyframe, which holds them all (snapshots.ts `expandSnapshots` gives every snapshot in full).
+   */
+  delta?: true;
+  /** One row per company, in ascending id order (in a delta, only the companies whose row changed). */
   companies: Columnar<CompanyColumn, CompanyRow>;
-  /** One row per trench segment, in `geometry.segments` order. */
+  /** One row per trench segment, in `geometry.segments` order (in a delta, only those that changed). */
   segments: Columnar<SegmentColumn, SegmentRow>;
   /** One row per off-map reserve, in the scenario's order (Task 13; absent in records before engine 0.3.7). */
   reserves?: Columnar<ReserveColumn, ReserveRow>;
@@ -83,7 +88,10 @@ export type RunRecord = {
   };
   /** Every company, in ascending id order: the battalion it belongs to, its name and side. */
   units: Array<{ id: string; battalionId: string; name: string; side: Side }>;
-  /** Every SNAPSHOT_BUSY_MIN minutes while anything is happening, otherwise every SNAPSHOT_QUIET_MIN; always the first and last state. */
+  /**
+   * Every SNAPSHOT_BUSY_MIN minutes while anything is happening, otherwise every SNAPSHOT_QUIET_MIN; always the first and
+   * last state. A keyframe every KEYFRAME_EVERY snapshots, the first among them, and between them deltas (`delta`).
+   */
   snapshots: Snapshot[];
   events: SimEvent[];
   summary: {

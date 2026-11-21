@@ -1,6 +1,6 @@
 import { decodeTerrain, ScenarioError, v } from '@wwi/scenario';
-import type { Doctrine, Point, Scenario, Tables } from '@wwi/scenario';
-import { barrageXAt, initBarrage } from './barrage';
+import type { Doctrine, Scenario, Tables } from '@wwi/scenario';
+import { initBarrage } from './barrage';
 import { noteArtilleryDefaults } from './artillery';
 import { initBatteries, runBombardment } from './bombardment';
 import { emit } from './causes';
@@ -10,15 +10,15 @@ import { initCompanies, isHolding } from './companies';
 import { buildWorld } from './ground';
 import { resolveDefaults } from './defaults';
 import { noteLightDefaults } from './light';
-import { sampleYs } from './geometry';
 import { withStartingMorale } from './morale';
 import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
+import { snapshotWriter } from './snapshots';
 import { createStreams } from './rng';
-import { COMPANY_COLUMNS, ENGINE_VERSION, RESERVE_COLUMNS, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
+import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
 import { offMapAtZero, reservesUnderWay } from './reserves';
-import type { RunRecord, Snapshot } from './record';
+import type { RunRecord } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
 import type { ReserveState } from './types';
@@ -34,6 +34,8 @@ export type RunOptions = {
   stopEarly?: boolean;
   /** Snapshot after every step instead of on the busy/quiet schedule (tests). */
   snapshotEveryStep?: boolean;
+  /** Snapshots from one keyframe to the next (default KEYFRAME_EVERY; 1: every snapshot in full, tests). */
+  keyframeEvery?: number;
 };
 
 const WEAPON_SLOTS = ['rifle', 'lightMg', 'mg'] as const;
@@ -120,47 +122,6 @@ function quietStepMin(ctx: StepContext): number {
   return Math.min(...ids.flatMap((id) => (ctx.doctrines[id] ? [v(ctx.doctrines[id].common.quietStepMin)] : [])));
 }
 
-function snapshot(state: SimState, ctx: StepContext): Snapshot {
-  return {
-    minute: state.minute,
-    companies: {
-      columns: [...COMPANY_COLUMNS],
-      rows: state.companies.map((c) => [
-        c.id,
-        round(c.x),
-        round(c.y),
-        c.men,
-        c.status,
-        round(c.morale, 2),
-        round(c.suppression, 2),
-        c.posture,
-        c.killed,
-        c.wounded,
-        c.captured,
-        c.gapM === null ? null : round(c.gapM),
-      ]),
-    },
-    segments: {
-      columns: [...SEGMENT_COLUMNS],
-      rows: state.segments.map((x, i) => [i, x.holder, round(x.wireCut, 2), x.emerged]),
-    },
-    reserves: {
-      columns: [...RESERVE_COLUMNS],
-      rows: state.reserves.map((r) => [r.formationId, r.status, r.orderedMin, r.arriveMin === null ? null : round(r.arriveMin, 1)]),
-    },
-    barrages: state.barrages.map((b) => {
-      const sector = ctx.scenario.sectors.find((x) => x.id === b.sectorId)!;
-      return {
-        sectorId: b.sectorId,
-        done: b.phase === 'done',
-        points: sampleYs(sector.yMin, sector.yMax).map(
-          (y) => [round(barrageXAt(b, sector, ctx.lines, state.minute, y), 1), round(y, 1)] as Point,
-        ),
-      };
-    }),
-  };
-}
-
 /**
  * Statuses of a company that has nothing more to do in the attack: at its objective, or out of the fight; or off the map
  * in a reserve nobody has ordered forward (a reserve on its way keeps the run going: `reservesUnderWay`).
@@ -176,7 +137,8 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
   let state = init.state;
 
   const events: RunRecord['events'] = [...state.events];
-  const snapshots = [snapshot(state, ctx)];
+  const snapshot = snapshotWriter(ctx, opts.keyframeEvery);
+  const snapshots = [snapshot(state)];
   let lastSnapshot = 0;
   const quietMin = quietStepMin(ctx);
   let busy = isBusy(state, ctx);
@@ -198,7 +160,7 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
     const every = busy ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
     const due = opts.snapshotEveryStep || Math.floor(state.minute / every) > Math.floor(lastSnapshot / every);
     if (due || state.minute >= endMinute || finished) {
-      snapshots.push(snapshot(state, ctx));
+      snapshots.push(snapshot(state));
       lastSnapshot = state.minute;
     }
     if (finished) break;

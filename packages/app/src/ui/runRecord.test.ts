@@ -82,6 +82,38 @@ describe('parseRunRecord', () => {
     expect(parseRunRecord(good()).snapshots[0]!.reserves).toBeUndefined();
   });
 
+  it('expands delta snapshots (engine 0.3.13 on) to every snapshot in full, so playback reads them as before', () => {
+    const r = withSegments(undefined, { columns: ['segment', 'holder', 'wireCut', 'emerged'], rows: [[0, 'central', 0.85, false]] });
+    const first = { ...r.snapshots[0]!, reserves: { columns: ['formationId', 'status', 'orderedMin', 'arriveMin'], rows: [['4gd', 'waiting', null, null]] } };
+    const cols = first.companies.columns;
+    const delta = {
+      minute: 10,
+      delta: true,
+      companies: { columns: cols, rows: [['c', 40, 2, 148, 'advancing', 0.9, 0.1, 'moving', 1, 1, 0]] },
+      segments: { columns: ['segment', 'holder', 'wireCut', 'emerged'], rows: [] },
+      reserves: { columns: ['formationId', 'status', 'orderedMin', 'arriveMin'], rows: [['4gd', 'marching', 5, 120]] },
+      barrages: [],
+    };
+    const quiet = { minute: 20, delta: true, companies: { columns: cols, rows: [] }, segments: { columns: ['segment', 'holder', 'wireCut', 'emerged'], rows: [[0, 'allied', 0.85, true]] }, reserves: { columns: ['formationId', 'status', 'orderedMin', 'arriveMin'], rows: [] }, barrages: [{ sectorId: 's', done: true, points: [[5, 0], [5, 10]] }] };
+    const out = parseRunRecord({ ...r, snapshots: [first, delta, quiet] });
+    expect(out.snapshots.map((x) => x.delta)).toEqual([undefined, undefined, undefined]);
+    expect(out.snapshots[1]!.companies.rows).toEqual([['c', 40, 2, 148, 'advancing', 0.9, 0.1, 'moving', 1, 1, 0], first.companies.rows[1]]);
+    expect(out.snapshots[2]!.companies.rows).toEqual(out.snapshots[1]!.companies.rows);
+    expect(out.snapshots[1]!.segments.rows).toEqual([[0, 'central', 0.85, false]]);
+    expect(out.snapshots[2]!.segments.rows).toEqual([[0, 'allied', 0.85, true]]);
+    expect(out.snapshots[1]!.reserves!.rows).toEqual([['4gd', 'marching', 5, 120]]);
+    expect(out.snapshots[2]!.reserves!.rows).toEqual([['4gd', 'marching', 5, 120]]);
+    expect(out.snapshots[1]!.barrages).toEqual(first.barrages);
+    expect(out.snapshots[2]!.barrages).toEqual([{ sectorId: 's', done: true, points: [[5, 0], [5, 10]] }]);
+  });
+
+  it('refuses a record whose first snapshot is a delta, or a delta row for a unit it does not know', () => {
+    const r = good();
+    expect(() => parseRunRecord({ ...r, snapshots: [{ ...r.snapshots[0]!, delta: true }] })).toThrow(/snapshots\[0\].*keyframe/);
+    const bad = { minute: 10, delta: true, companies: { columns: r.snapshots[0]!.companies.columns, rows: [['ghost', 0, 0, 1, 'holding', 1, 0, 'prone', 0, 0, 0]] }, barrages: [] };
+    expect(() => parseRunRecord({ ...r, snapshots: [r.snapshots[0]!, bad] })).toThrow(/snapshots\[1\]\.companies\.rows\[0\]/);
+  });
+
   it('accepts a record with a terrain grid', () => {
     expect(parseRunRecord(withTerrain(terrain())).geometry.terrain?.cols).toBe(2);
   });

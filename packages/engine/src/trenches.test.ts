@@ -10,10 +10,8 @@ import { takeLines } from './step';
 import type { SimState, StepContext } from './step';
 import { emergence } from './gap';
 import { captureSegments, dugoutSorties, sorties } from './trenches';
-import {
-  companyIds, eventsOf, fixtureArtillery, fixtureDugouts, fixtureWithDoctrineV3, lineTakenMinute, ofKind, rowsOf, runDugouts, runHoldout,
-  runOverrun, totalsOverTime, withQuietStep,
-} from './test-helpers';
+import { companyIds, eventsOf, fixtureArtillery, fixtureDugouts, fixtureWithDoctrineV3, lineTakenMinute, ofKind, rowsOf, runDugouts, runHoldout,
+  runOverrun, totalsOverTime, withQuietStep, snapshotsOf } from './test-helpers';
 
 /** Every ref of every event points to an earlier event. */
 const refsBackward = (r: RunRecord): boolean => r.events.every((e) => e.refs.every((x) => x < e.id));
@@ -98,7 +96,7 @@ describe('the fight for trenches', () => {
     const alone = runDugouts({ mopUp: false });
     expect(ofKind(alone, 'line-taken')[0]!.minute).toBeLessThan(ofKind(alone, 'dugout-sortie')[0]!.minute);
     expect(ofKind(alone, 'segment-retaken')).toHaveLength(0);
-    expect(alone.snapshots.at(-1)!.segments.rows.map((x) => x[1])).toEqual(['allied', 'allied']);
+    expect(snapshotsOf(alone).at(-1)!.segments.rows.map((x) => x[1])).toEqual(['allied', 'allied']);
     // 15 men holding the trench against about 60 from each dugout: 3 to 1, retaken.
     const held = runDugouts({ mopUp: false, holders: 15 });
     const retaken = ofKind(held, 'segment-retaken');

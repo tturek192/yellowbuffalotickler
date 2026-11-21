@@ -60,6 +60,9 @@ describe('draft Vimy scenario run', () => {
     // keep the step fine, morale thresholds are scheduled, and an off-map attack is due just after its window opens. The
     // draft has no German companies: with the version set back to 0.3.11 its record hashes to f87da6f4, so only the
     // version moves the hash. (Vimy seed 1: the same events and summary, stepped quietly where nobody can fire.)
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.12', hash: '1be3899f' });
+    // 0.3.13 (Task 15): the record's snapshots are keyframes every KEYFRAME_EVERY (24) snapshots and, between them, deltas
+    // holding only the rows and barrages that changed (snapshots.ts; `expandSnapshots` gives them back in full). The
+    // draft's battle is unchanged: expanded, its snapshots are those of 0.3.12.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.13', hash: '502c4072' });
   });
 });

@@ -16,7 +16,7 @@ import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import { quietStep, SCHEDULES } from './schedule';
 import type { SimState } from './step';
-import { fixtureFire, fixtureReserves, hash, ofKind, runStates, withQuietStep } from './test-helpers';
+import { fixtureFire, fixtureReserves, hash, ofKind, runStates, withQuietStep, snapshotsOf } from './test-helpers';
 import type { ReserveOpts } from './test-helpers';
 
 /** The minute the fixture's reserve gres would arrive if its division ordered it at minute 60. */
@@ -33,7 +33,7 @@ const runReserves = (o: ReserveOpts = {}, m?: (f: [Scenario, Models]) => [Scenar
 
 /** A snapshot's reserve rows, as objects keyed by column. */
 const reserveRows = (r: RunRecord, i: number) => {
-  const t = r.snapshots[i]!.reserves!;
+  const t = snapshotsOf(r)[i]!.reserves!;
   return t.rows.map((row) => Object.fromEntries(t.columns.map((c, j) => [c, row[j]])));
 };
 
@@ -183,11 +183,11 @@ describe('reserves off the map', () => {
     expect(arrived.refs).toEqual([ofKind(r, 'reserve-ordered')[0]!.id]);
     expect(arrived.factors).toMatchObject({ companies: 4, men: 600 });
     // On the map across the entry point once arrived (walking on to its front), and not before.
-    const i = r.snapshots.findIndex((x) => x.minute >= arrived.minute);
-    const row = r.snapshots[i]!.companies.rows.find((x) => x[0] === 'gres-g1')!;
+    const i = snapshotsOf(r).findIndex((x) => x.minute >= arrived.minute);
+    const row = snapshotsOf(r)[i]!.companies.rows.find((x) => x[0] === 'gres-g1')!;
     expect([row[3], row[4]]).toEqual([150, 'advancing']);
     expect(row[1] as number).toBeLessThanOrEqual(2500);
-    expect(r.snapshots[i - 1]!.companies.rows.find((x) => x[0] === 'gres-g1')![4]).toBe('marching');
+    expect(snapshotsOf(r)[i - 1]!.companies.rows.find((x) => x[0] === 'gres-g1')![4]).toBe('marching');
   });
 
   it('a planned counter-attack chooses its targets afresh from its picture, and gives up after counterAttackPatienceMin with none it can reach', () => {
@@ -326,7 +326,7 @@ describe('reserves off the map', () => {
     expect(r.defaultsUsed.some((d) => d.startsWith('reserves[gres]'))).toBe(false);
     expect(r.units.filter((u) => u.battalionId === 'gres').map((u) => u.id)).toEqual(['gres-1', 'gres-2']);
     expect(ofKind(r, 'reserve-arrived')[0]!.factors).toMatchObject({ companies: 2, men: 200 });
-    const last = r.snapshots.at(-1)!.companies.rows.find((x) => x[0] === 'gres-1')!;
+    const last = snapshotsOf(r).at(-1)!.companies.rows.find((x) => x[0] === 'gres-1')!;
     expect(last[4]).not.toBe('off-map');
   });
 
@@ -351,19 +351,19 @@ describe('reserves off the map', () => {
 
   it('waits off the map, is ordered, marches and arrives; each snapshot says so', () => {
     const r = runReserves();
-    expect(r.snapshots[0]!.reserves!.columns).toEqual([...RESERVE_COLUMNS]);
+    expect(snapshotsOf(r)[0]!.reserves!.columns).toEqual([...RESERVE_COLUMNS]);
     expect(reserveRows(r, 0)).toEqual([{ formationId: 'gres', status: 'waiting', orderedMin: null, arriveMin: null }]);
     const ordered = ofKind(r, 'reserve-ordered')[0]!;
     const arrived = ofKind(r, 'reserve-arrived')[0]!;
-    const last = reserveRows(r, r.snapshots.length - 1)[0]!;
+    const last = reserveRows(r, snapshotsOf(r).length - 1)[0]!;
     expect(last).toMatchObject({ status: 'arrived', orderedMin: ordered.minute });
     // Arrives at the first step end at or after arriveMin (a fine step: startsMovement).
     expect(arrived.minute).toBeGreaterThanOrEqual(last.arriveMin as number);
     expect(arrived.minute - (last.arriveMin as number)).toBeLessThan(2);
-    const statuses = r.snapshots.flatMap((_, i) => reserveRows(r, i).map((x) => x.status));
+    const statuses = snapshotsOf(r).flatMap((_, i) => reserveRows(r, i).map((x) => x.status));
     expect(statuses.filter((x, i) => statuses.indexOf(x) === i)).toEqual(['waiting', 'ordered', 'marching', 'arrived']);
     // The companies are off the map, then marching, then on it walking on to the front, then there.
-    const g1 = r.snapshots.map((x) => x.companies.rows.find((y) => y[0] === 'gres-g1')![4]);
+    const g1 = snapshotsOf(r).map((x) => x.companies.rows.find((y) => y[0] === 'gres-g1')![4]);
     expect(g1.filter((x, i) => g1.indexOf(x) === i).slice(0, 4)).toEqual(['off-map', 'marching', 'advancing', 'holding']);
   });
 
@@ -411,7 +411,7 @@ describe('reserves off the map', () => {
     const of = (r: RunRecord) => r.events.filter((e) => e.kind === 'reserve-ordered' || e.kind === 'reserve-arrived').map((e) => [e.minute, e.kind, e.text, e.factors]);
     expect(of(coarse)).toHaveLength(2);
     expect(of(coarse)).toEqual(of(fine));
-    expect(reserveRows(coarse, coarse.snapshots.length - 1)).toEqual(reserveRows(fine, fine.snapshots.length - 1));
+    expect(reserveRows(coarse, snapshotsOf(coarse).length - 1)).toEqual(reserveRows(fine, snapshotsOf(fine).length - 1));
   });
 
   it('a counter-attack up the ridge is slower and weaker than the same attack on the flat', () => {

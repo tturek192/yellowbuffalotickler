@@ -3,7 +3,7 @@ import { est, fixtureWithDoctrine, germanForce } from '@wwi/scenario/test-fixtur
 import type { Scenario } from '@wwi/scenario';
 import { runScenario } from './run';
 import type { Models } from './run';
-import { models, rowsOf } from './test-helpers';
+import { models, rowsOf, snapshotsOf } from './test-helpers';
 
 type Company = NonNullable<Scenario['forces'][number]['formations'][number]['companies']>[number];
 
@@ -40,7 +40,7 @@ function fixtureWithFeatures(): { scenario: Scenario; doctrines: Models } {
 type Rec = ReturnType<typeof runScenario>;
 const sideOf = (r: Rec) => new Map(r.units.map((u) => [u.id, u.side]));
 /** Each snapshot's company rows on one side. */
-const rows = (r: Rec, side: 'allied' | 'central') => r.snapshots.map((s) => s.companies.rows.filter((c) => sideOf(r).get(c[0]) === side));
+const rows = (r: Rec, side: 'allied' | 'central') => snapshotsOf(r).map((s) => s.companies.rows.filter((c) => sideOf(r).get(c[0]) === side));
 const allied = (r: Rec) => rows(r, 'allied');
 /** A row's x, y and status. */
 const xys = (row: readonly unknown[]) => [row[1], row[2], row[4]];

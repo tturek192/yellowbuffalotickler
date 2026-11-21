@@ -16,6 +16,7 @@ import type { Models } from './run';
 import type { SimState, StepContext } from './step';
 import type { PhaseName } from './pipeline';
 import { runPipeline } from './pipeline';
+import { expandSnapshots } from './snapshots';
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -87,6 +88,9 @@ export const vimyDoctrines = (): Models => models(load('scenarios/vimy-1917/scen
 
 export const eventsOf = (r: RunRecord): RunRecord['events'] => r.events;
 
+/** Every snapshot of a run in full (keyframes and deltas expanded, snapshots.ts). */
+export const snapshotsOf = (r: Pick<RunRecord, 'snapshots'>): RunRecord['snapshots'] => expandSnapshots(r);
+
 /** 32-bit FNV-1a over the UTF-16 code units of the record's JSON, as 8 hex digits. */
 export function hash(r: RunRecord | string): string {
   const text = typeof r === 'string' ? r : JSON.stringify(r);
@@ -131,7 +135,7 @@ export const companyIds = (r: RunRecord): string[] => r.units.map((u) => u.id);
 
 /** Each snapshot's row for a company, as an object keyed by column. */
 export function rowsOf(r: RunRecord, id: string): Array<Record<string, number | string>> {
-  return r.snapshots.flatMap((snap) => {
+  return snapshotsOf(r).flatMap((snap) => {
     const { columns, rows } = snap.companies;
     const row = rows.find((x) => x[0] === id);
     return row ? [Object.fromEntries(columns.map((c, i) => [c, row[i]!]))] : [];

@@ -14,7 +14,7 @@ import { artilleryFire } from './artillery';
 import { initRun } from './run';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Pending } from './types';
-import { doctrines, draft, fixtureArtillery, fixtureFire, fixtureWithDoctrineV3, ofKind, withQuietStep, withRearTrench } from './test-helpers';
+import { doctrines, draft, fixtureArtillery, fixtureFire, fixtureWithDoctrineV3, ofKind, withQuietStep, withRearTrench, snapshotsOf } from './test-helpers';
 
 /** What the battle did: arrivals and lines taken, by minute and unit. */
 const outcome = (r: RunRecord) =>
@@ -47,7 +47,7 @@ describe('quiet steps', () => {
     const fine = runScenario(s, withQuietStep(m, 2), { seed: 1, endMinute: 160 });
     expect(coarse.events.filter((e) => e.kind === 'direct-fire').length).toBeGreaterThan(0);
     expect(JSON.stringify(coarse.events)).toBe(JSON.stringify(fine.events));
-    expect(JSON.stringify(coarse.snapshots)).toBe(JSON.stringify(fine.snapshots));
+    expect(JSON.stringify(snapshotsOf(coarse))).toBe(JSON.stringify(snapshotsOf(fine)));
   });
 
   it('do not change what happens when a barrage ends inside a quiet step: it fires for its minutes, and was on the trench until its end (Task 10 fix round)', () => {

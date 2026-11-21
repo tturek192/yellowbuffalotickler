@@ -7,7 +7,7 @@ import { resolve } from './resolve';
 import { createRng } from './rng';
 import { initRun, runScenario } from './run';
 import type { SimState, StepContext } from './step';
-import { attackerLosses, fixtureFire, median, ofKind } from './test-helpers';
+import { attackerLosses, fixtureFire, median, ofKind, snapshotsOf } from './test-helpers';
 import type { FireOpts } from './test-helpers';
 import type { Pending } from './types';
 
@@ -139,11 +139,11 @@ describe('direct fire', () => {
       expect(e.factors!.hit).toBeGreaterThan(0);
       expect(e.causes.some((c) => c === 'mg-fire' || c === 'rifle-fire')).toBe(true);
     }
-    const last = r.snapshots.at(-1)!.companies;
+    const last = snapshotsOf(r).at(-1)!.companies;
     const col = (n: string) => last.columns.indexOf(n as never);
     for (const row of last.rows) {
       const total = (row[col('men')] as number) + (row[col('killed')] as number) + (row[col('wounded')] as number) + (row[col('captured')] as number);
-      const first = r.snapshots[0]!.companies.rows.find((x) => x[0] === row[0])!;
+      const first = snapshotsOf(r)[0]!.companies.rows.find((x) => x[0] === row[0])!;
       expect(total).toBe((first[col('men')] as number) + (first[col('killed')] as number) + (first[col('wounded')] as number) + (first[col('captured')] as number));
     }
   });

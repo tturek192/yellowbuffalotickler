@@ -3,9 +3,7 @@ import { est } from '@wwi/scenario/test-fixtures';
 import { runBombardment } from './bombardment';
 import { initRun, runScenario } from './run';
 import type { SimState } from './step';
-import {
-  companyIds, doctrines, draft, fixtureBomb, fixtureBombarded, fixtureWithDoctrineV3, runBombardmentOn, totalsOverTime, wireCutOf,
-} from './test-helpers';
+import { companyIds, doctrines, draft, fixtureBomb, fixtureBombarded, fixtureWithDoctrineV3, runBombardmentOn, totalsOverTime, wireCutOf, snapshotsOf } from './test-helpers';
 
 /** Men a fixture's garrisons lose to the same shelling (trench rounds only) with dugouts `depth` m deep. */
 const lossesAt = (depth: number): number =>
@@ -28,7 +26,7 @@ describe('the compressed bombardment', () => {
     expect(r.summary.casualties.bombardment.central.total).toBeGreaterThan(0);
     for (const id of companyIds(r)) expect(new Set(totalsOverTime(r, id))).toHaveLength(1);
     expect(totalsOverTime(r, 'k1')[0]).toBe(120);
-    const k = r.snapshots[0]!.companies.rows.find((x) => x[0] === 'k1')!;
+    const k = snapshotsOf(r)[0]!.companies.rows.find((x) => x[0] === 'k1')!;
     expect(k[3]).toBeLessThan(120);
     // Bombardment losses are not counted again in the battle (its only German losses are the garrisons the attackers
     // trapped in their dugouts, captured); they roll up by formation.
@@ -131,7 +129,7 @@ describe('the compressed bombardment', () => {
     expect(ev.factors!.trenchDamage).toBeCloseTo(1 - Math.exp((-300 * 5) / 200), 3);
     expect(ev.factors!.dugoutDamage).toBeGreaterThan(0);
     expect(ev.factors!.losses).toBeGreaterThan(0);
-    const k3 = r.snapshots[0]!.companies.rows.find((x) => x[0] === 'k3')!;
+    const k3 = snapshotsOf(r)[0]!.companies.rows.find((x) => x[0] === 'k3')!;
     expect(k3[3]).toBe(120 - ev.factors!.losses!);
     expect(r.summary.casualties.bombardment.central.formations['rir262']!.total).toBe(r.summary.casualties.bombardment.central.total);
     expect(r.defaultsUsed).toContain('features[sp].radiusM ← effects.strongpointRadiusM');
@@ -204,11 +202,11 @@ describe('the record of the bombardment', () => {
   it('lists the segments once in the geometry and their state in every snapshot', () => {
     const r = runScenario(...fixtureBomb({ wireRounds: 1000 }), { seed: 1 });
     expect(r.geometry.segments.map((x) => [x.featureId, x.yMin, x.yMax, x.garrisonIds])).toEqual([['ger-front-a', 0, 200, ['k1']], ['ger-front-a', 200, 400, ['k2']]]);
-    for (const snap of r.snapshots) {
+    for (const snap of snapshotsOf(r)) {
       expect(snap.segments.columns).toEqual(['segment', 'holder', 'wireCut', 'emerged']);
       expect(snap.segments.rows.map((x) => [x[0], x[1], x[3]])).toEqual([[0, 'central', false], [1, 'central', false]]);
     }
-    expect(r.snapshots[0]!.segments.rows[0]![2]).toBeGreaterThan(0.5);
+    expect(snapshotsOf(r)[0]!.segments.rows[0]![2]).toBeGreaterThan(0.5);
   });
 
   it('fills a garrison’s missing dugout depth from its doctrine and lists it, and lists a missing clock offset', () => {

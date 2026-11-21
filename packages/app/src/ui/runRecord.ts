@@ -90,6 +90,10 @@ export function parseRunRecord(data: unknown): RunRecord {
   if (!Array.isArray(snapshots) || snapshots.length === 0) return fail('snapshots must be a non-empty array');
   snapshots.forEach((s: unknown, i) => {
     if (!isObject(s) || !isNum(s.minute) || !isObject(s.companies) || !Array.isArray(s.barrages)) return fail(`snapshots[${i}] needs minute, companies and barrages`);
+    // Engine 0.3.13 on: a delta holds only the rows that changed since the snapshot before; the first is a keyframe.
+    const delta = s.delta === true;
+    if (s.delta !== undefined && !delta) fail(`snapshots[${i}].delta must be true when present`);
+    if (delta && i === 0) fail('snapshots[0] must be a keyframe (every row), not a delta');
     const { columns, rows } = s.companies;
     if (!Array.isArray(columns) || !Array.isArray(rows)) return fail(`snapshots[${i}].companies needs columns and rows (records from engine 0.3.0 on are columnar)`);
     const col = Object.fromEntries(NEEDED_COLUMNS.map((c) => [c, columns.indexOf(c)])) as Record<(typeof NEEDED_COLUMNS)[number], number>;
@@ -121,7 +125,7 @@ export function parseRunRecord(data: unknown): RunRecord {
       const at = Object.fromEntries(NEEDED_SEGMENT_COLUMNS.map((c) => [c, sc.indexOf(c)])) as Record<(typeof NEEDED_SEGMENT_COLUMNS)[number], number>;
       const lacking = NEEDED_SEGMENT_COLUMNS.filter((c) => at[c] < 0);
       if (lacking.length) fail(`snapshots[${i}].segments.columns lacks ${lacking.join(', ')}`);
-      if (seg.rows.length !== segmentCount) fail(`snapshots[${i}].segments needs one row per segment in geometry.segments`);
+      if (delta ? seg.rows.length > segmentCount : seg.rows.length !== segmentCount) fail(`snapshots[${i}].segments needs one row per segment in geometry.segments`);
       seg.rows.forEach((row: unknown, j) => {
         const ok =
           Array.isArray(row) &&
@@ -163,5 +167,55 @@ export function parseRunRecord(data: unknown): RunRecord {
   events.forEach((e: unknown, i) => {
     if (!isObject(e) || !isNum(e.minute) || typeof e.text !== 'string') fail(`events[${i}] needs a minute and text`);
   });
-  return data as unknown as RunRecord;
+  const record = data as unknown as RunRecord;
+  return { ...record, snapshots: expandDeltas(record.snapshots) };
+}
+
+type Table = { columns: readonly string[]; rows: readonly (readonly unknown[])[] };
+
+/** A delta's rows laid over the table before: each row by its key, in the earlier order; a new key goes last. */
+function overlay<T extends Table>(before: T, changes: T, key: string): T {
+  const k = before.columns.indexOf(key);
+  const kc = changes.columns.indexOf(key);
+  const at = new Map(changes.rows.map((row) => [row[kc], row]));
+  const rows = before.rows.map((row) => {
+    const hit = at.get(row[k]);
+    if (hit === undefined) return row;
+    at.delete(row[k]);
+    return hit;
+  });
+  for (const row of changes.rows) if (at.has(row[kc])) rows.push(row);
+  return { ...before, columns: changes.columns, rows } as T;
+}
+
+/**
+ * Every snapshot in full (the engine's snapshots.ts `expandSnapshots`, which the app may not import): a delta snapshot's
+ * rows and barrages laid over the full snapshot before it. Snapshots that are all full are given back as they are.
+ */
+export function expandDeltas(snapshots: RunRecord['snapshots']): RunRecord['snapshots'] {
+  if (!snapshots.some((s) => s.delta)) return snapshots;
+  const out: RunRecord['snapshots'] = [];
+  let prev: RunRecord['snapshots'][number] | undefined;
+  for (const s of snapshots) {
+    if (!s.delta || !prev) {
+      const { delta: _d, ...whole } = s;
+      out.push((prev = whole));
+      continue;
+    }
+    const before = prev;
+    const at = new Map(s.barrages.map((b) => [b.sectorId, b]));
+    const barrages = before.barrages.map((b) => at.get(b.sectorId) ?? b);
+    for (const b of s.barrages) if (!before.barrages.some((x) => x.sectorId === b.sectorId)) barrages.push(b);
+    const next: RunRecord['snapshots'][number] = {
+      minute: s.minute,
+      companies: overlay(before.companies, s.companies, 'id'),
+      segments: s.segments ? overlay(before.segments, s.segments, 'segment') : before.segments,
+      ...(before.reserves || s.reserves
+        ? { reserves: before.reserves && s.reserves ? overlay(before.reserves, s.reserves, 'formationId') : (s.reserves ?? before.reserves)! }
+        : {}),
+      barrages,
+    };
+    out.push((prev = next));
+  }
+  return out;
 }

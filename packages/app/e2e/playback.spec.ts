@@ -55,12 +55,14 @@ test('stops at the end and restarts from zero', async ({ page }) => {
 test('steps between events with Back and Forward', async ({ page }) => {
   await page.goto('/?run=sample');
   const clock = page.getByTestId('battle-clock');
-  await page.getByRole('button', { name: 'Next event', exact: true }).click();
-  await expect(clock).toHaveText('Mon 9 Apr · 06:00');
+  // The draft's first events: the Black Line reached and taken at 06:02, the barrage pausing at 06:03 (engine 0.3.11 on;
+  // the companies' start draws come from their own rng stream).
   await page.getByRole('button', { name: 'Next event', exact: true }).click();
   await expect(clock).toHaveText('Mon 9 Apr · 06:02');
+  await page.getByRole('button', { name: 'Next event', exact: true }).click();
+  await expect(clock).toHaveText('Mon 9 Apr · 06:03');
   await page.getByRole('button', { name: 'Previous event', exact: true }).click();
-  await expect(clock).toHaveText('Mon 9 Apr · 06:00');
+  await expect(clock).toHaveText('Mon 9 Apr · 06:02');
 });
 
 test('fits a phone-width screen', async ({ page }) => {
