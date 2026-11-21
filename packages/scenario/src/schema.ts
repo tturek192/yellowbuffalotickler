@@ -99,16 +99,19 @@ export interface Formation {
   name: string;
   kind: (typeof FORMATION_KINDS)[number];
   leaderId?: string;
+  /** Where its headquarters stands (local, or lon/lat projected by the loader); absent: behind its companies (engine default). */
+  hqPosition?: z.infer<typeof PlacedPoint>;
   children?: Formation[];
   companies?: Company[];
 }
 
 const Formation: z.ZodType<Formation> = z.lazy(() =>
-  z.object({
+  z.strictObject({
     id: z.string(),
     name: z.string(),
     kind: z.enum(FORMATION_KINDS),
     leaderId: z.string().optional(),
+    hqPosition: PlacedPoint.optional(),
     children: z.array(Formation).optional(),
     companies: z.array(Company).optional(),
   }),

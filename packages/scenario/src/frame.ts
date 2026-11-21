@@ -44,8 +44,8 @@ export const EXTENT_TOLERANCE_M = 1;
 const fmtM = (n: number) => String(Math.round(n));
 
 /**
- * Replace `{ lonLat }` company starts and reserve entry points in a raw scenario document with
- * projected local points. Returns `path: message` problems (naming the item) for any that cannot be projected
+ * Replace `{ lonLat }` company starts, headquarters positions, artillery positions and reserve entry points in a raw
+ * scenario document with projected local points. Returns `path: message` problems (naming the item) for any that cannot be projected
  * or that land outside the frame's extent, the usual sign of lon/lat swapped.
  */
 export function projectLonLatPlacements(data: unknown, frame: Frame | undefined): string[] {
@@ -76,6 +76,7 @@ export function projectLonLatPlacements(data: unknown, frame: Frame | undefined)
     fs.forEach((f, i) => {
       if (!f || typeof f !== 'object') return;
       const fo = f as Record<string, unknown>;
+      place(fo, 'hqPosition', `${base}[${i}].hqPosition`, `formation ${String(fo.id)} headquarters`);
       if (Array.isArray(fo.companies)) {
         fo.companies.forEach((c, j) => {
           if (c && typeof c === 'object') {

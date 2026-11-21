@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
-import { ARTILLERY, companyReports, messageDueTimes, send } from './comms';
+import { ARTILLERY, companyReports, hqPositionOf, messageDueTimes, send } from './comms';
 import { churn } from './ground';
 import { runPipeline } from './pipeline';
 import { initRun, runScenario } from './run';
@@ -9,7 +9,7 @@ import type { Models } from './run';
 import { quietStep } from './schedule';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
-import { fixtureComms, runStates, withAlliedFront, withQuietStep } from './test-helpers';
+import { fixtureComms, runStates, vimy, vimyDoctrines, withAlliedFront, withQuietStep } from './test-helpers';
 import type { CommsOpts } from './test-helpers';
 import type { Order, Report } from './types';
 
@@ -99,10 +99,10 @@ describe('communications', () => {
     const first = (shell: boolean) => {
       const f = withAlliedFront(fixtureComms({ links: 'runners' }), -100);
       f[0].communications = { links: [{ side: 'allied', from: 'battalion', to: 'brigade', channels: ['surface-line', 'runner'] }] };
+      f[0].forces[0]!.formations[0]!.children![0]!.children![0]!.children![0]!.hqPosition = [0, 200];
       const r = runStates(f, {
         endMinute: 120,
         at: (s, ctx) => {
-          // bn1 stands at the middle of its companies' places, (0, 200).
           if (shell) churn(ctx.world, [0, 200], 5);
           return s;
         },
@@ -126,16 +126,64 @@ describe('communications', () => {
     expect(after.every((m) => m.channel === 'runner')).toBe(true);
   });
 
-  it('a runner takes longer the farther he has to go (runnerMinPerKm)', () => {
-    const delay = (perKm: number) => {
-      const f = fixtureComms({ links: 'runners', effects: { runnerMinPerKm: perKm } });
-      // c1 starts 2 km from its battalion's headquarters (the middle of its companies' places).
-      f[0].forces[0]!.formations[0]!.children![0]!.children![0]!.children![0]!.companies![0]!.start = [-4000, 100];
+  it('a runner takes longer the farther he has to go, beyond the way his delayMin allows for (runnerDelayCoversKm)', () => {
+    const delay = (perKm: number, coversKm: number) => {
+      const f = fixtureComms({ links: 'runners', effects: { runnerMinPerKm: perKm, runnerDelayCoversKm: coversKm } });
+      // c1 starts 6 km back, so its battalion's headquarters (600 m behind the middle of its companies, at x -3,600)
+      // is 2.4 km from it.
+      f[0].forces[0]!.formations[0]!.children![0]!.children![0]!.children![0]!.companies![0]!.start = [-6000, 100];
       const r = runStates(f, { endMinute: 60 });
       const m = r.states.flatMap((s) => s.messages).find((x) => x.fromFormationId === 'c1')!;
       return m.dueMin - m.sentMin;
     };
-    expect(delay(15)).toBeGreaterThan(delay(0) + 15);
+    expect(delay(15, 0)).toBeGreaterThan(delay(15, 1.5));
+    expect(delay(15, 1.5)).toBeGreaterThan(delay(0, 0));
+    // A way no longer than what delayMin allows for adds nothing.
+    expect(delay(15, 3)).toBe(delay(0, 0));
+  });
+
+  it('a headquarters with no hqPosition stands behind its companies by its level\'s rear offset; one given stands there', () => {
+    const f = fixtureComms();
+    const { ctx } = initRun(...f, { seed: 1 });
+    // bn1's companies start at (0, 100) and (0, 300): allied headquarters stand back toward -x.
+    expect(hqPositionOf(ctx, 'bn1')).toEqual([-600, 200]);
+    expect(hqPositionOf(ctx, 'b1')).toEqual([-2000, 200]);
+    expect(hqPositionOf(ctx, 'd1')).toEqual([-6000, 200]);
+    expect(hqPositionOf(ctx, 'cc')).toEqual([-12000, 200]);
+    // The German regiment's garrisons hold x 150: its headquarters stands back toward +x.
+    expect(hqPositionOf(ctx, 'rir262')).toEqual([2150, 200]);
+    expect([...ctx.defaultsUsed]).toContain('formations[bn1].hqPosition ← behind its companies by effects.hqRearOffsetBattalionM');
+    expect([...ctx.defaultsUsed]).toContain('formations[rir262].hqPosition ← behind its companies by effects.hqRearOffsetBrigadeM');
+    const g = fixtureComms();
+    g[0].forces[0]!.formations[0]!.hqPosition = [-9000, 0];
+    expect(hqPositionOf(initRun(...g, { seed: 1 }).ctx, 'cc')).toEqual([-9000, 0]);
+  });
+
+  it('a default headquarters position is held inside the frame extent', () => {
+    const f = fixtureComms();
+    f[0].frame = { origin: { lon: 2.7, lat: 50.4 }, bearingDeg: est(75), extent: { minX: -3000, maxX: 3000, minY: -500, maxY: 500 } };
+    const { ctx } = initRun(...f, { seed: 1 });
+    expect(hqPositionOf(ctx, 'd1')).toEqual([-3000, 200]);
+    expect(hqPositionOf(ctx, 'b1')).toEqual([-2000, 200]);
+    expect([...ctx.defaultsUsed]).toContain('formations[d1].hqPosition ← behind its companies by effects.hqRearOffsetDivisionM, held inside the frame extent');
+  });
+
+  it('at Vimy no German division, group or army headquarters stands in a cell shelled before Zero', () => {
+    // At its companies' centroid Gruppe Vimy's stood in a shelled cell, which cut its surface lines from Zero.
+    const { ctx } = initRun(vimy(), vimyDoctrines(), { seed: 1 });
+    const divisions = ctx.scenario.forces.filter((f) => f.side === 'central').flatMap((f) => allFormationsOf(f)).filter((f) => f.kind === 'division' || f.kind === 'group' || f.kind === 'army');
+    const placed = divisions.flatMap((d) => {
+      const p = hqPositionOf(ctx, d.id);
+      return p ? [{ id: d.id, p }] : [];
+    });
+    expect(placed.map((x) => x.id)).toEqual(expect.arrayContaining(['79rd', '1brd', '16bd', 'gruppe-vimy', 'sixth-army']));
+    const w = ctx.world;
+    for (const { id, p } of placed) {
+      const cx = Math.floor((p[0] - w.originX) / 50);
+      const cy = Math.floor((p[1] - w.originY) / 50);
+      const inGrid = cx >= 0 && cy >= 0 && cx < w.cols && cy < w.rows;
+      expect(inGrid ? w.churn[cy * w.cols + cx] : 0, id).toBe(0);
+    }
   });
 
   it('is deterministic: the same seed sends the same messages', () => {
@@ -253,6 +301,16 @@ function allCompanies(force: Force): NonNullable<F['companies']> {
   const out: NonNullable<F['companies']> = [];
   const walk = (f: F): void => {
     out.push(...(f.companies ?? []));
+    (f.children ?? []).forEach(walk);
+  };
+  force.formations.forEach(walk);
+  return out;
+}
+
+function allFormationsOf(force: Force): F[] {
+  const out: F[] = [];
+  const walk = (f: F): void => {
+    out.push(f);
     (f.children ?? []).forEach(walk);
   };
   force.formations.forEach(walk);

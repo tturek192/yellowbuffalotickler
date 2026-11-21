@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { parse } from 'yaml';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadScenario } from './load-node';
@@ -51,3 +52,32 @@ describe('lonLat company starts', () => {
     expect((loadScenario(path, doctrineDir).scenario.reserves[0]!.entryPoint as [number, number])[1]).toBeCloseTo(6000.5, 3);
   });
 });
+
+describe('formation headquarters positions (hqPosition)', () => {
+  const withHq = (hq: unknown, extra: Record<string, unknown> = {}) => {
+    const { path, doctrineDir } = setup(true);
+    const s = loadScenarioRaw(path);
+    Object.assign(s.forces[0].formations[0], { hqPosition: hq, ...extra });
+    writeFileSync(path, toYaml(s));
+    return { path, doctrineDir };
+  };
+  it('projects a lonLat headquarters position and keeps a local one', () => {
+    const a = withHq({ lonLat: [2.7735, 50.3796] });
+    expect(loadScenario(a.path, a.doctrineDir).scenario.forces[0]!.formations[0]!.hqPosition).toEqual([0, 0]);
+    const b = withHq([-700, 200]);
+    expect(loadScenario(b.path, b.doctrineDir).scenario.forces[0]!.formations[0]!.hqPosition).toEqual([-700, 200]);
+  });
+  it('rejects one outside the extent, naming the formation', () => {
+    const { path, doctrineDir } = withHq({ lonLat: [50.3796, 2.7735] });
+    expect(() => loadScenario(path, doctrineDir)).toThrow(/s\.yaml: forces\[0\]\.formations\[0\]\.hqPosition: formation bn1 headquarters projects to .*outside the frame extent/);
+  });
+  it('a formation is a strict object: a misspelt key is rejected', () => {
+    const { path, doctrineDir } = withHq([-700, 200], { hqPostion: [0, 0] });
+    expect(() => loadScenario(path, doctrineDir)).toThrow(/hqPostion/);
+  });
+});
+
+function loadScenarioRaw(path: string): any {
+  return parse(readFileSync(path, 'utf8'));
+}
+

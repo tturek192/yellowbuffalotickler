@@ -76,7 +76,8 @@ export const EFFECT_KEYS = [
   'unobservedFireFactor', 'observerRangeM', 'batteriesRecoveredFrac', 'blockedExitFactor',
   'isolationRadiusM', 'mgUnobservedBelow', 'fireRefsMin',
   'suppressionSpeedLoss', 'fatiguePerHourUnderFire', 'bombsPerManCleared',
-  'runnerMinPerKm', 'callForFireGuns',
+  'runnerMinPerKm', 'runnerDelayCoversKm', 'callForFireGuns',
+  'hqRearOffsetBattalionM', 'hqRearOffsetBrigadeM', 'hqRearOffsetDivisionM', 'hqRearOffsetCorpsM', 'hqRearOffsetArmyM',
 ] as const;
 
 export type WeaponKind = (typeof WEAPON_KINDS)[number];

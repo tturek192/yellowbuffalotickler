@@ -309,12 +309,53 @@ effects:
     estimate: "a man on foot through trenches, shell holes and mud covers about 4 km an hour, so some 15 minutes a kilometre. The
       owner's research compendium has runners' times growing with the distance they go (a design estimate there too). A judgement,
       not fitted to Vimy"
-    description: Minutes a runner needs for each kilometre between the sender and the receiver as placed on the map, added to the
-      runner channel's delayMin (headquarters stand at the middle of their companies' places at Zero).
+    description: Minutes a runner needs for each kilometre between the sender and the receiver beyond the runnerDelayCoversKm that
+      the runner channel's delayMin already allows for; nothing is added for a shorter way.
+    calibrated: true
+  runnerDelayCoversKm:
+    value: 1.5
+    estimate: "the runner channel's delayMin (30 minutes) was reasoned as a runner covering 1-2 km between headquarters in 20-40 minutes,
+      so it already allows for about 1.5 km; only the way beyond that adds runnerMinPerKm"
+    description: Kilometres of a runner's way that the runner channel's delayMin already allows for; runnerMinPerKm applies only to
+      the distance beyond it.
     calibrated: true
   callForFireGuns:
     value: 6
     estimate: "a call for fire is taken to be answered by one battery, taken as six guns for both sides (the British field battery as
       commonly given, not checked against a source read for this project). A judgement, not fitted to Vimy"
     description: Guns that answer a call for fire, taken from the nearest batteries of the caller's side that are in action.
+    calibrated: true
+  hqRearOffsetBattalionM:
+    value: 600
+    estimate: "a battalion headquarters stood in its support or reserve trench, a dugout or a tunnel exit, some hundreds of metres behind
+      its companies at Zero. A judgement, not fitted to Vimy"
+    description: Metres behind the middle of its companies' places at Zero (away from the enemy) at which a battalion headquarters
+      stands when the scenario gives no hqPosition.
+    calibrated: true
+  hqRearOffsetBrigadeM:
+    value: 2000
+    estimate: "a brigade (or German regiment) headquarters stood a kilometre or two behind the front line, beyond field-gun reach of most
+      trench fire. A judgement, not fitted to Vimy"
+    description: Metres behind the middle of its companies' places at Zero (away from the enemy) at which a brigade or regiment
+      headquarters stands when the scenario gives no hqPosition.
+    calibrated: true
+  hqRearOffsetDivisionM:
+    value: 6000
+    estimate: "a division headquarters stood some kilometres back, in a village or chateau beyond most of the enemy's field artillery.
+      A judgement, not fitted to Vimy"
+    description: Metres behind the middle of its companies' places at Zero (away from the enemy) at which a division headquarters
+      stands when the scenario gives no hqPosition.
+    calibrated: true
+  hqRearOffsetCorpsM:
+    value: 12000
+    estimate: "a corps (or German Gruppe) headquarters stood about ten kilometres or more behind the front, beyond the reach of all but
+      the heaviest guns. A judgement, not fitted to Vimy"
+    description: Metres behind the middle of its companies' places at Zero (away from the enemy) at which a corps or group
+      headquarters stands when the scenario gives no hqPosition.
+    calibrated: true
+  hqRearOffsetArmyM:
+    value: 25000
+    estimate: "an army headquarters stood a day's march or more behind the front. A judgement, not fitted to Vimy"
+    description: Metres behind the middle of its companies' places at Zero (away from the enemy) at which an army headquarters stands
+      when the scenario gives no hqPosition.
     calibrated: true

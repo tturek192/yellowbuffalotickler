@@ -531,7 +531,8 @@ export type CommsOpts = {
 /**
  * fixtureWithDoctrineV3 with the allied battalion bn1 (companies c1 and c2) under brigade `b1`, division `d1` and corps
  * `cc`, linked up and down by one channel; channels: runner 30 min, buried cable 5, every other 10, none failing unless
- * `failPerHour` (runner). Every company fires no small arms, so nothing but the plan changes their status.
+ * `failPerHour` (runner). Every company fires no small arms, so nothing but the plan changes their status. Headquarters
+ * stand behind their companies by the repository's rear offsets; runnerMinPerKm and runnerDelayCoversKm are 0.
  */
 export function fixtureComms(o: CommsOpts = {}): [Scenario, Models] {
   const [s, m] = fixtureWithDoctrineV3();
@@ -559,12 +560,19 @@ export function fixtureComms(o: CommsOpts = {}): [Scenario, Models] {
   for (const k of Object.keys(tables.channels) as Array<keyof Tables['channels']>) tables.channels[k] = { delayMin: param(10), failPerHour: param(0) };
   tables.channels.runner = { delayMin: param(30), failPerHour: param(o.failPerHour ?? 0) };
   tables.channels['buried-cable'] = { delayMin: param(5), failPerHour: param(0) };
-  for (const [k, value] of Object.entries({ runnerMinPerKm: 0, callForFireMin: 10, callForFireGuns: 6, observerRangeM: 1500, captureRadiusM: 50, ...o.effects }))
+  const effects = {
+    runnerMinPerKm: 0, runnerDelayCoversKm: 0, callForFireMin: 10, callForFireGuns: 6, observerRangeM: 1500, captureRadiusM: 50,
+    ...HQ_OFFSETS, ...o.effects,
+  };
+  for (const [k, value] of Object.entries(effects))
     (tables.effects as Record<string, unknown>)[k] = param(value);
   for (const w of ['rifle', 'lewis', 'vickers']) tables.weapons[w] = { ...tables.weapons[w]!, rpm: param(0) };
   return [s, { ...m, tables }];
 }
 type FormationKindT = Scenario['forces'][number]['formations'][number]['kind'];
+
+/** The headquarters' rear offsets at the repository's starting values (tables/effects.yaml). */
+export const HQ_OFFSETS = { hqRearOffsetBattalionM: 600, hqRearOffsetBrigadeM: 2000, hqRearOffsetDivisionM: 6000, hqRearOffsetCorpsM: 12000, hqRearOffsetArmyM: 25000 };
 
 /** A run stepped by hand (initRun, then runPipeline every `stepMin`), keeping every state. */
 export function runStates(f: [Scenario, Models], o: { seed?: number; endMinute?: number; stepMin?: number; at?: (s: SimState, ctx: StepContext) => SimState } = {}): { states: SimState[]; ctx: StepContext } {

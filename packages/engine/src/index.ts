@@ -35,7 +35,7 @@ export type { Arms } from './fire';
 export { morale, moraleEffectOf, startingMorale, withStartingMorale } from './morale';
 export { BUCKET_M, bucketsOf, within } from './buckets';
 export type { Buckets } from './buckets';
-export { ARTILLERY, commsPhase, companyReports, fireMissionEnds, initComms, messageDueTimes, send } from './comms';
+export { ARTILLERY, commsPhase, companyReports, fireMissionEnds, hqPositionOf, initComms, messageDueTimes, send } from './comms';
 export { initRun, runScenario } from './run';
 export type { Models, RunOptions } from './run';
 export { quantiles, runBatch } from './batch';

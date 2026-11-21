@@ -28,11 +28,13 @@ describe('draft Vimy scenario run', () => {
     // that step's) and carries factors (companies, consolidating, segments). The draft has no garrisons, wire or German
     // guns, so no segment, dugout or capture changes anything.
     // 0.3.5 (Task 11): communications. The draft has no communications section, so every link is a runner (listed in
-    // defaultsUsed); its companies' reports go up to the battalion, brigade and division by runner, and one of them is
-    // lost on the way and sent again (one message-lost event, referring to the event the report was about). Nothing
-    // in the draft acts on what its headquarters know yet (Task 12), and no draw comes before a draw that changes the
-    // battle (the draft has no fire, so its only other draws are the companies' start and speed, at setup): its
-    // companies, other events and summary are unchanged.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.5', hash: '23c46997' });
+    // defaultsUsed), and its headquarters stand behind their companies by the rear offsets of their level (each listed
+    // in defaultsUsed; the draft has no frame to hold them in). Its companies' reports go up to the battalion, brigade
+    // and division by runner, the way beyond runnerDelayCoversKm adding runnerMinPerKm; two reports from the 3rd Brigade
+    // to the division (4 km back) are lost on the way and sent again (two message-lost events). Nothing in the draft
+    // acts on what its headquarters know yet (Task 12), and no draw comes before a draw that changes the battle (the
+    // draft has no fire, so its only other draws are the companies' start and speed, at setup): its companies, other
+    // events and summary are unchanged. (Re-pinned within 0.3.5 by the pre-review fix that placed headquarters.)
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.5', hash: '1f8812dc' });
   });
 });

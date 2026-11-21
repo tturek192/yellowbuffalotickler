@@ -1,5 +1,5 @@
 import { CHANNEL_KINDS, v } from '@wwi/scenario';
-import type { ChannelKind, Formation, Point, Scenario } from '@wwi/scenario';
+import type { ChannelKind, EffectKey, Formation, Point, Scenario } from '@wwi/scenario';
 import { distanceTo, segmentSamples } from './artillery';
 import { emit } from './causes';
 import type { NewEvent } from './causes';
@@ -22,10 +22,13 @@ import type { BatteryState, CallForFire, FireMission, FormationKind, HqNews, HqS
  * - Of the hop's channels the fastest not cut is taken (by its expected delay); a surface line is cut where either end
  *   stands in a shelled cell (the churn grid holds a shell), or for good once a failure draw has lost a message on it.
  *   When every channel is cut, a runner goes.
- * - Delay: (delayMin + runnerMinPerKm × km for a runner) × (0.5 + rng()), × (6 − orderSpeed) / 3 of the sending HQ's
- *   leader for orders; the chance it is lost is 1 − exp(−failPerHour · delay / 60), drawn at once. A lost message is
- *   known lost when it would have arrived (`message-lost`, cause `lost-contact`, refs to the event it was about), and the
- *   sender sends it again then by the next channel (round again to the first after the last).
+ * - Headquarters stand at their formation's `hqPosition`, else behind their companies by their level's rear offset
+ *   (`hqPlace`); a company at its own place.
+ * - Delay: (delayMin + runnerMinPerKm × the km beyond runnerDelayCoversKm, for a runner) × (0.5 + rng()), × (6 −
+ *   orderSpeed) / 3 of the sending HQ's leader for orders; the chance it is lost is 1 − exp(−failPerHour · delay / 60),
+ *   drawn at once. A lost message is known lost when it would have arrived (`message-lost`, cause `lost-contact`, refs
+ *   to the event it was about), and the sender sends it again then by the next channel (round again to the first after
+ *   the last).
  * - The comms phase delivers messages whose dueMin is at or before the step's end in (dueMin, id) order, each at its
  *   own dueMin, so a headquarters passes news on when it gets it, whatever the step.
  *
@@ -44,8 +47,8 @@ import type { BatteryState, CallForFire, FireMission, FormationKind, HqNews, HqS
  *
  * Orders are delivered to the companies of the formation they are addressed to (`orders`); deciding them is the
  * command model's (Task 12). Every number is data: the channels' delayMin and failPerHour, the effects keys
- * runnerMinPerKm, callForFireMin, callForFireGuns and observerRangeM, the doctrine's reportEveryMin and the leaders'
- * orderSpeed.
+ * runnerMinPerKm, runnerDelayCoversKm, the hqRearOffset…M keys, callForFireMin, callForFireGuns and observerRangeM, the
+ * doctrine's reportEveryMin and the leaders' orderSpeed.
  */
 
 /** The last hop of a call for fire: the artillery itself. */
@@ -77,8 +80,13 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
   const s = ctx.scenario;
   const nodes = new Map<string, Node>();
   const formations: Array<Node & { kind: FormationKind; companyIds: string[] }> = [];
+  const given = new Map<string, Point>();
   const walk = (f: Formation, side: Side, doctrineId: string, parentId: string | null): void => {
     const node: Node & { kind: FormationKind; companyIds: string[] } = { id: f.id, name: f.name, kind: f.kind, side, parentId, ...(f.leaderId !== undefined ? { leaderId: f.leaderId } : {}), doctrineId, pos: null, companyIds: [] };
+    if (f.hqPosition !== undefined) {
+      if (!Array.isArray(f.hqPosition)) throw new Error(`Formation ${f.id}: hqPosition was not projected to a local point`);
+      given.set(f.id, [f.hqPosition[0], f.hqPosition[1]]);
+    }
     formations.push(node);
     nodes.set(f.id, node);
     for (const ch of f.children ?? []) walk(ch, side, doctrineId, f.id);
@@ -90,11 +98,7 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
     for (const id of c.formationPath) formationOf.get(id)?.companyIds.push(c.id);
   }
   const byCompany = new Map(state.companies.map((c) => [c.id, c]));
-  // A headquarters stands at the middle of its companies' places at Zero (the scenario places no headquarters).
-  for (const f of formations) {
-    const cs = f.companyIds.map((id) => byCompany.get(id)!);
-    if (cs.length) f.pos = [cs.reduce((a, c) => a + c.startX, 0) / cs.length, cs.reduce((a, c) => a + c.startY, 0) / cs.length];
-  }
+  for (const f of formations) f.pos = hqPlace(f, f.companyIds.map((id) => byCompany.get(id)!), given.get(f.id), ctx);
   const comms = s.communications;
   let links: Topology['links'] = null;
   if (comms) {
@@ -139,6 +143,51 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
     fireMissions: [],
     lastReport: Object.fromEntries(state.companies.map((c) => [c.id, { status: c.status, holder: c.segmentId === undefined ? null : (segmentOf.get(c.segmentId) ?? null) }])),
   };
+}
+
+/** The tables key of a level's rear offset: a regiment counts as a brigade, a group as a corps. */
+const REAR_KEY: Record<FormationKind, EffectKey> = {
+  battalion: 'hqRearOffsetBattalionM',
+  regiment: 'hqRearOffsetBrigadeM',
+  brigade: 'hqRearOffsetBrigadeM',
+  division: 'hqRearOffsetDivisionM',
+  group: 'hqRearOffsetCorpsM',
+  corps: 'hqRearOffsetCorpsM',
+  army: 'hqRearOffsetArmyM',
+};
+
+/**
+ * Where a headquarters stands: its `hqPosition`; else behind the middle of its companies' places at Zero by its
+ * level's rear offset, straight back from the front (−x for the allied side, +x for the central, which attacks toward
+ * −x), held inside the frame's extent; with neither, nowhere (its messages then have no distance and no shelled end).
+ * The defaults are listed.
+ */
+function hqPlace(f: { id: string; kind: FormationKind; side: Side }, cs: readonly CompanyState[], given: Point | undefined, ctx: StepContext): Point | null {
+  if (given) return given;
+  if (cs.length === 0) {
+    ctx.defaultsUsed.add(`formations[${f.id}].hqPosition ← none (no hqPosition and no companies: its messages have no distance or shelled end)`);
+    return null;
+  }
+  const key = REAR_KEY[f.kind];
+  const back = v(ctx.tables.effects[key]) * (f.side === 'allied' ? -1 : 1);
+  let x = cs.reduce((a, c) => a + c.startX, 0) / cs.length + back;
+  let y = cs.reduce((a, c) => a + c.startY, 0) / cs.length;
+  const e = ctx.scenario.frame?.extent;
+  let held = '';
+  if (e) {
+    const cx = Math.min(Math.max(x, e.minX), e.maxX);
+    const cy = Math.min(Math.max(y, e.minY), e.maxY);
+    if (cx !== x || cy !== y) held = ', held inside the frame extent';
+    x = cx;
+    y = cy;
+  }
+  ctx.defaultsUsed.add(`formations[${f.id}].hqPosition ← behind its companies by effects.${key}${held}`);
+  return [x, y];
+}
+
+/** Where a formation's headquarters stands for the run (`hqPlace`); null: nowhere. */
+export function hqPositionOf(ctx: StepContext, formationId: string): Point | null {
+  return topologyOf(ctx).nodes.get(formationId)?.pos ?? null;
 }
 
 const emptyNews = (sentMin: number): HqNews => ({ units: [], segments: [], lines: [], sinceMin: null, urgent: false, aboutEventId: null, sentMin });
@@ -313,8 +362,10 @@ function sendHop(w: Work, d: Draft, fromId: string, toId: string, t: number, pre
   const a = posOf(w, fromId);
   const b = toId === ARTILLERY ? null : posOf(w, toId);
   const km = a && b ? Math.hypot(a[0] - b[0], a[1] - b[1]) / 1000 : 0;
+  // A runner's delayMin already allows for runnerDelayCoversKm of his way; only the rest adds runnerMinPerKm.
+  const beyondKm = Math.max(0, km - v(ctx.tables.effects.runnerDelayCoversKm));
   const perKm = v(ctx.tables.effects.runnerMinPerKm);
-  const base = (ch: ChannelKind): number => v(ctx.tables.channels[ch].delayMin) + (ch === 'runner' ? perKm * km : 0);
+  const base = (ch: ChannelKind): number => v(ctx.tables.channels[ch].delayMin) + (ch === 'runner' ? perKm * beyondKm : 0);
   const order = [...channelsOf(w.topo, fromId, toId)].sort((x, y) => base(x) - base(y) || CHANNEL_KINDS.indexOf(x) - CHANNEL_KINDS.indexOf(y));
   const key = lineKey(fromId, toId);
   const isCut = (ch: ChannelKind): boolean => ch === 'surface-line' && (w.cutSet.has(key) || shelled(w, a) || shelled(w, b));
