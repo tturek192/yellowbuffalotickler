@@ -1,14 +1,14 @@
 import type { Point } from '@wwi/scenario';
 import { barrageXAt } from './barrage';
 import { sampleYs } from './geometry';
-import { COMPANY_COLUMNS, RESERVE_COLUMNS, round, SEGMENT_COLUMNS } from './record';
-import type { CompanyRow, ReserveRow, RunRecord, SegmentRow, Snapshot } from './record';
+import { COMPANY_COLUMNS, RESERVE_COLUMNS, round, SEGMENT_COLUMNS, TANK_COLUMNS } from './record';
+import type { CompanyRow, ReserveRow, RunRecord, SegmentRow, Snapshot, TankRow } from './record';
 import type { SimState, StepContext } from './step';
 
 /*
  * The record's snapshots (engine 0.3.13 on): a keyframe every KEYFRAME_EVERY snapshots holds every row; the snapshots
  * between hold only the rows that changed since the snapshot before (`delta: true`), each row carrying its key (a
- * company's id, a segment's index, a reserve's formation id; a barrage its sector). `expandSnapshots` gives them all
+ * company's id, a segment's index, a reserve's formation id, a tank's id; a barrage its sector). `expandSnapshots` gives them all
  * back in full. Output encoding, not a model number.
  */
 
@@ -25,6 +25,7 @@ export function snapshotWriter(ctx: StepContext, keyframeEvery = KEYFRAME_EVERY)
   let rows: CompanyRow[] = [];
   let segRows: SegmentRow[] = [];
   let resRows: ReserveRow[] = [];
+  let tankRows: TankRow[] = [];
   let bars: string[] = [];
   const sectors = new Map(ctx.scenario.sectors.map((x) => [x.id, x]));
   return (state) => {
@@ -33,6 +34,7 @@ export function snapshotWriter(ctx: StepContext, keyframeEvery = KEYFRAME_EVERY)
     const cs = state.companies.map((c, i) => (!full && objs[i] === c ? rows[i]! : companyRow(c)));
     const ss = state.segments.map((x, i): SegmentRow => [i, x.holder, round(x.wireCut, 2), x.emerged]);
     const rs = state.reserves.map((r): ReserveRow => [r.formationId, r.status, r.orderedMin, r.arriveMin === null ? null : round(r.arriveMin, 1)]);
+    const ts = state.tanks.map((t): TankRow => [t.id, round(t.x), round(t.y), t.status]);
     const bs = state.barrages.map((b): Barrage => {
       const sector = sectors.get(b.sectorId)!;
       return {
@@ -49,12 +51,16 @@ export function snapshotWriter(ctx: StepContext, keyframeEvery = KEYFRAME_EVERY)
       companies: { columns: [...COMPANY_COLUMNS], rows: changed(cs, rows) },
       segments: { columns: [...SEGMENT_COLUMNS], rows: changed(ss, segRows) },
       reserves: { columns: [...RESERVE_COLUMNS], rows: changed(rs, resRows) },
+      // Only a run with tanks has a tanks table (Task 14), so other records are as before; a delta in which no tank's row
+      // changed leaves it out.
+      ...((tankDelta) => (ts.length && (full || tankDelta.length) ? { tanks: { columns: [...TANK_COLUMNS], rows: tankDelta } } : {}))(changed(ts, tankRows)),
       barrages: full ? bs : bs.filter((_, i) => bj[i] !== bars[i]),
     };
     objs = state.companies;
     rows = cs;
     segRows = ss;
     resRows = rs;
+    tankRows = ts;
     bars = bj;
     return snap;
   };
@@ -91,6 +97,7 @@ export function expandSnapshots(r: Pick<RunRecord, 'snapshots'>): Snapshot[] {
       companies: overlay(prev.companies, s.companies, 'id'),
       segments: overlay(prev.segments, s.segments, 'segment'),
       ...(prev.reserves || s.reserves ? { reserves: overlay(prev.reserves ?? { columns: s.reserves!.columns, rows: [] }, s.reserves ?? { columns: prev.reserves!.columns, rows: [] }, 'formationId') } : {}),
+      ...(prev.tanks || s.tanks ? { tanks: overlay(prev.tanks ?? { columns: s.tanks!.columns, rows: [] }, s.tanks ?? { columns: prev.tanks!.columns, rows: [] }, 'id') } : {}),
       barrages: overlayBarrages(prev.barrages, s.barrages),
     };
     out.push((prev = next));

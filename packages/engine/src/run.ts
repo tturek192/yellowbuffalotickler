@@ -19,6 +19,7 @@ import { summarize } from './summary';
 import { createStreams } from './rng';
 import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './record';
 import { offMapAtZero } from './reserves';
+import { initTanks } from './smaller';
 import type { EndReason, RunRecord } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
@@ -102,6 +103,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     lastReport: new Map(),
     fireMissions: [],
     reserves: initReserves(scenario),
+    tanks: initTanks(scenario),
     command: { ordered: {}, stallCommits: {}, launched: {}, counterAttacks: {}, divisions: {}, offMap: {} },
     churn: ctx.world.churn,
     nextEventId: 0,

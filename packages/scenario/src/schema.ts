@@ -172,7 +172,7 @@ const YBand = z.strictObject({ yMin: z.number(), yMax: z.number() });
 const BombardmentSchema = z.strictObject({
   from: sourced(LocalDateTimeSchema),
   allocations: z.array(
-    z.strictObject({ artilleryId: z.string(), task: z.enum(['wire', 'trench', 'battery', 'harass']), rounds: Count }),
+    z.strictObject({ artilleryId: z.string(), task: z.enum(['wire', 'trench', 'battery', 'harass', 'gas']), rounds: Count }),
   ),
   spared: z.array(
     YBand.extend({
@@ -232,6 +232,19 @@ const OffMapSchema = z.strictObject({
   ),
 });
 
+/**
+ * A tank (Task 14): it follows its sector's creeping barrage from `start` toward `objectiveLineId` and may bog in the
+ * mud; it fights no one, but suppresses the enemy close to it while it moves.
+ */
+const TankSchema = z.strictObject({
+  id: z.string(),
+  side: Side,
+  start: PlacedPoint,
+  sectorId: z.string(),
+  objectiveLineId: z.string(),
+  cite: sourced(z.string()),
+});
+
 export const ScenarioSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -285,6 +298,8 @@ export const ScenarioSchema = z.object({
   communications: CommunicationsSchema.optional(),
   operations: z.array(OperationSchema).optional(),
   offMap: OffMapSchema.optional(),
+  /** Tanks (Task 14), on the map from Zero. */
+  tanks: z.array(TankSchema).optional(),
   air: z.strictObject({ superiority: z.union([Side, z.literal('contested')]), observedFrac: sourcedOrDisputed(z.number().min(0).max(1)) }).optional(),
   end: z
     .strictObject({

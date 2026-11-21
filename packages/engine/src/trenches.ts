@@ -212,7 +212,7 @@ export const capturable = (b: BatteryState): boolean => !b.horses;
  *   the dugouts, with refs to their sorties), `outnumbered` (defenders there were overpowered), and otherwise the fire
  *   that took its garrison out.
  *
- * Then guns are overrun (`captureGuns`).
+ * Then guns are overrun (`captureGuns`): by the loss of a trench near them, or by attackers at the guns themselves.
  */
 export function captureSegments(state: SimState, ctx: StepContext): SimState {
   const fx = ctx.tables.effects;
@@ -366,18 +366,27 @@ const isSettled = (c: CompanyState): boolean => c.status === 'consolidating' || 
 /**
  * Guns overrun: every capturable battery (`capturable`) not yet taken whose position lies within `gunCaptureRadiusM`
  * of a segment of its side's that the enemy holds is captured, and fires no more. One `guns-captured` event for each
- * segment that took guns, referring to the event that lost the segment and with its causes; a battery taken later
- * than that (its horses lost after the segment fell) has the cause `horses-gassed`.
+ * segment that took guns, referring to the event that lost the segment and with its causes; guns whose horses the gas
+ * took (Task 14) add the cause `horses-gassed` and a ref to their `horses-gassed` event, and a battery taken later than
+ * the segment's loss (its horses lost after the segment fell) has that cause alone.
  */
 export function captureGuns(state: SimState, ctx: StepContext): SimState {
+  return overrunGuns(gunsWithSegments(state, ctx), ctx);
+}
+
+function gunsWithSegments(state: SimState, ctx: StepContext): SimState {
   const rad = v(ctx.tables.effects.gunCaptureRadiusM);
   const lostSegs = state.segments.filter((s) => s.holder !== s.garrisonSide);
   if (lostSegs.length === 0) return state;
   const taken = new Map<string, BatteryState[]>(); // segment id -> batteries (looked up only)
   const order: SegmentState[] = [];
+  // Batteries split from one artillery entry share its position: each position and side is looked at once (looked up only).
+  const near = new Map<string, SegmentState | undefined>();
   const batteries = state.batteries.map((b) => {
     if (b.captured || !capturable(b) || !b.position) return b;
-    const seg = lostSegs.find((s) => s.garrisonSide === b.side && distanceTo(segmentSamples(ctx, s, state.companies), b.position!) <= rad);
+    const key = `${b.side}|${b.position[0]}|${b.position[1]}`;
+    if (!near.has(key)) near.set(key, lostSegs.find((s) => s.garrisonSide === b.side && distanceTo(segmentSamples(ctx, s, state.companies), b.position!) <= rad));
+    const seg = near.get(key);
     if (!seg) return b;
     if (!taken.has(seg.id)) {
       taken.set(seg.id, []);
@@ -392,15 +401,81 @@ export function captureGuns(state: SimState, ctx: StepContext): SimState {
     const guns = sum(bs, (b) => b.guns);
     const lostNow = state.events.find((e) => e.id === seg.holderEventId);
     const ids = bs.map((b) => b.id.split('/')[0]!).filter((x, i, xs) => xs.indexOf(x) === i);
+    // Guns whose horses the gas took (Task 14): the gassing is a cause, and its event a ref.
+    const gassed = bs.flatMap((b) => (b.gassedEventId === undefined ? [] : [b.gassedEventId]));
+    const causes: Cause[] = [...(lostNow ? lostNow.causes : []), ...(gassed.length || !lostNow ? (['horses-gassed'] as const) : [])];
     return {
       minute: state.minute,
       kind: 'guns-captured',
       segmentId: seg.id,
       text: `${guns} guns (${ids.join(', ')}) are overrun with ${seg.id}`,
-      causes: lostNow ? lostNow.causes : ['horses-gassed'],
-      refs: seg.holderEventId === null ? [] : [seg.holderEventId],
+      causes: ordered(causes),
+      refs: sortedUnique([...(seg.holderEventId === null ? [] : [seg.holderEventId]), ...gassed]),
       factors: { guns },
     };
+  });
+  return emit({ ...state, batteries }, ...events);
+}
+
+/**
+ * Guns overrun where they stand (Task 14; the table's `gunCaptureRadiusM`, "within which attackers capture a battery"):
+ * every capturable battery not yet taken, far from any lost trench, is captured when the enemy's companies up on the
+ * field (not waiting or falling back) within `gunCaptureRadiusM` of its position number at least `captureRatio` times its
+ * own side's men up there (any, when none of its side is). Batteries at one position go together, positions in the
+ * order of their first battery; one `guns-captured` event for each, its `unitId` the nearest attacker, causes
+ * `horses-gassed` (refs: the gassing) for guns whose horses the gas took and `outnumbered` when men of its side stood
+ * by them (or nothing else explains it).
+ */
+function overrunGuns(state: SimState, ctx: StepContext): SimState {
+  const left = state.batteries.filter((b) => !b.captured && capturable(b) && b.position);
+  if (left.length === 0) return state;
+  const fx = ctx.tables.effects;
+  const rad = v(fx.gunCaptureRadiusM);
+  const ratio = v(fx.captureRatio);
+  const keyOf = (b: BatteryState): string => `${b.side}|${b.position![0]}|${b.position![1]}`;
+  // Batteries by position, positions in the order of their first battery (an array of keys, the map looked up only).
+  const at = new Map<string, BatteryState[]>();
+  const keys: string[] = [];
+  for (const b of left) {
+    const k = keyOf(b);
+    const bs = at.get(k);
+    if (bs) bs.push(b);
+    else (at.set(k, [b]), keys.push(k));
+  }
+  const up = state.companies.filter((c) => onField(c) && c.posture !== 'in-dugout');
+  const won = new Map<string, { lead: CompanyState; defenders: number }>(); // position key -> who took it (looked up only)
+  for (const key of keys) {
+    const b = at.get(key)![0]!;
+    const [px, py] = b.position!;
+    const within = up.filter((c) => Math.hypot(c.x - px, c.y - py) <= rad);
+    const attackers = within.filter((c) => c.side !== b.side && c.status !== 'waiting' && c.status !== 'falling-back');
+    const a = sum(attackers, (c) => c.men);
+    const d = sum(within.filter((c) => c.side === b.side), (c) => c.men);
+    if (!(a > 0) || (d > 0 && a < ratio * d)) continue;
+    const lead = [...attackers].sort((p, q) => Math.hypot(p.x - px, p.y - py) - Math.hypot(q.x - px, q.y - py) || (p.id < q.id ? -1 : 1))[0]!;
+    won.set(key, { lead, defenders: d });
+  }
+  if (won.size === 0) return state;
+  const batteries = state.batteries.map((b) => (!b.captured && capturable(b) && b.position && won.has(keyOf(b)) ? { ...b, captured: true } : b));
+  const events: NewEvent[] = keys.flatMap((key): NewEvent[] => {
+    const w = won.get(key);
+    if (!w) return [];
+    const bs = at.get(key)!;
+    const guns = sum(bs, (b) => b.guns);
+    const ids = bs.map((b) => b.id.split('/')[0]!).filter((x, i, xs) => xs.indexOf(x) === i);
+    const gassed = bs.flatMap((b) => (b.gassedEventId === undefined ? [] : [b.gassedEventId]));
+    const causes: Cause[] = gassed.length ? ['horses-gassed'] : [];
+    if (w.defenders > 0 || causes.length === 0) causes.push('outnumbered');
+    return [{
+      minute: state.minute,
+      kind: 'guns-captured',
+      unitId: w.lead.id,
+      ...(w.lead.sectorId ? { sectorId: w.lead.sectorId } : {}),
+      text: `${guns} guns (${ids.join(', ')}) are overrun by ${w.lead.name}`,
+      causes: ordered(causes),
+      refs: sortedUnique(gassed),
+      factors: { guns, defenders: w.defenders },
+    }];
   });
   return emit({ ...state, batteries }, ...events);
 }

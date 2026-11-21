@@ -206,6 +206,28 @@ Z/Z + 1. It is kept at 12 April by ruling, because spec 13.9 names "the 24th Div
 and makes off-map forces scheduled, not decided; a scheduled attack cannot follow the engine's choice of time for
 `10bde-pimple` (Conflicts; Open questions).
 
+## Tanks
+
+Added with the smaller mechanics (Plan 3 Task 14). "The plan of operations called for eight tanks to support the 2nd
+Division's assault on Thelus and its subsequent objectives" (Nicholson p. 248); they were No. 12 Company of D Battalion,
+four to support the 6th Canadian Brigade on Thelus, "two passing round either end of the village", and the other
+section the British 13th Brigade, two of them along the intermediate line to Count's Wood (BOH p. 335 n.1). "No great
+reliance could, however, be based upon their help owing to the dreadful condition of the ground" (BOH pp. 310-311).
+
+Entered in `command.yaml` as eight tanks, `tank-6bde-1` to `-4` and `tank-13bde-1` to `-4`, all in the 2nd Division's
+barrage sector (`barrage-2cdn`) making for its Blue Line (`blue-2cdn`), the Thelus and Hill 135 phase they were for
+(BOH p. 335). The engine has them follow the sector's creeping barrage from Zero at no more than its pace.
+
+- **Start points are estimates.** No source read gives them. Each stands on the Canadian front line (`cdn-front`), the
+  6th Brigade's four spread across that brigade's frontage (y -2800, -2650, -2500, -2350; its companies lie between y
+  -2920 and -2315 in `oob-canadian.yaml`) and the 13th Brigade's four across its own (y -2150, -2050, -1950, -1850;
+  -2193 to -1830). Where the tanks really started (behind the front line, or in the assembly area) is an open question.
+- **Their fate is a target, not an input.** The tanks "could not negotiate the heavily shelled ground and none got
+  beyond the German support trenches" (Nicholson p. 248); they "had been unable to negotiate the gripless mud and the
+  deep shell craters and were left behind early in the battle" (p. 254); "none of which succeeded in crossing No Man's
+  Land" (BOH p. 335). Whether they bog, and where, comes from the model's `tankBogPerKm` and `tankBogMudFactor`
+  (tables/effects.yaml), never from these.
+
 ## Air control
 
 `superiority` is **contested**. "The Flying Corps was superior to the German air service along the active front
@@ -291,6 +313,10 @@ arrivals are in `historical.yaml`.
 
 | Value | Where | Source | Page / section | Quote (≤ 25 words) | Tier |
 |---|---|---|---|---|---|
+| `tanks` eight, 2nd Division | `command.yaml` | `nicholson-1962` | 248 | "The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus" | official |
+| `tanks` four with the 6th Brigade, four with the 13th | `command.yaml` | `boh-1917-1` | 335 n.1 | "four were to have supported the 6th Canadian Brigade in the attack on Thelus" | official |
+| (target) the tanks' fate | — | `nicholson-1962` | 254 | "unable to negotiate the gripless mud and the deep shell craters and were left behind early" | official |
+| `tanks[].start` | `command.yaml` | estimate | — | on the Canadian front line across each brigade's frontage | — |
 | `utcOffsetMin` 60 | `scenario.yaml` | `boh-1917-1` | 147 n.1 | "Summer Time had come into use at midnight on the 24th." | official |
 | (check) British time | `scenario.yaml` | `boh-1917-1` | 318 n.2 | "reported at 2.30 a.m. (British time) that the assembly trenches were filling up" | official |
 | (check) Zero at first light | `scenario.yaml` | `nicholson-1962` | 253 | "zero hour, which had been set to coincide with first light" | official |
@@ -381,6 +407,9 @@ arrivals are in `historical.yaml`.
 
 ## Open questions for the historian
 
+- **Where the tanks started.** Where did No. 12 Company, D Battalion, lie up and start from on 9 April: on the
+  Canadian front line, as entered, or farther back? When were they to start, and by which routes? D Battalion's war
+  diary or Watson's *A Company of Tanks* would say.
 - **The divisions' signal schemes.** The corps scheme says each division worked out its own visual system, and the 1st,
   3rd and 4th Divisions' instructions were not read (only the 2nd's, in BOH's appendices). Did battalion headquarters
   reach the buried cable during 9 April, and how fast did reports from battalions reach brigade?

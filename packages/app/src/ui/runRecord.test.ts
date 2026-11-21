@@ -82,6 +82,18 @@ describe('parseRunRecord', () => {
     expect(parseRunRecord(good()).snapshots[0]!.reserves).toBeUndefined();
   });
 
+  it('accepts a record with tanks in its snapshots (engine 0.4.2 on), one without them, and expands tank deltas', () => {
+    const tanks = (rows: unknown[]) => ({ columns: ['id', 'x', 'y', 'status'], rows });
+    const r = good();
+    const first = { ...r.snapshots[0]!, tanks: tanks([['t1', -400, -2800, 'moving'], ['t2', -360, -2650, 'moving']]) };
+    const later = { minute: 10, delta: true, companies: { columns: first.companies.columns, rows: [] }, tanks: tanks([['t2', -300, -2650, 'bogged']]), barrages: [] };
+    const out = parseRunRecord({ ...r, snapshots: [first, later] });
+    expect(out.snapshots[1]!.tanks!.rows).toEqual([['t1', -400, -2800, 'moving'], ['t2', -300, -2650, 'bogged']]);
+    expect(parseRunRecord(good()).snapshots[0]!.tanks).toBeUndefined();
+    expect(() => parseRunRecord({ ...r, snapshots: [{ ...first, tanks: tanks([['t1', -400, -2800, 'flying']]) }] })).toThrow(/tanks\.rows\[0\]/);
+    expect(() => parseRunRecord({ ...r, snapshots: [{ ...first, tanks: { columns: ['id', 'x'], rows: [] } }] })).toThrow(/tanks\.columns lacks y, status/);
+  });
+
   it('expands delta snapshots (engine 0.3.13 on) to every snapshot in full, so playback reads them as before', () => {
     const r = withSegments(undefined, { columns: ['segment', 'holder', 'wireCut', 'emerged'], rows: [[0, 'central', 0.85, false]] });
     const first = { ...r.snapshots[0]!, reserves: { columns: ['formationId', 'status', 'orderedMin', 'arriveMin'], rows: [['4gd', 'waiting', null, null]] } };

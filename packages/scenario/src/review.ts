@@ -248,6 +248,7 @@ export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {
         ...walk(s.communications, 'communications', ['Communications']),
         ...walk(s.operations, 'operations', ['Planned operations']),
         ...walk(s.offMap, 'offMap', ['Off-map forces']),
+        ...walk(s.tanks, 'tanks', ['Tanks']),
         ...walk(s.air, 'air', ['Air control']),
         ...walk(s.end, 'end', ['End conditions']),
       ],

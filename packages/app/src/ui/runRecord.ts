@@ -32,6 +32,9 @@ const NEEDED_SEGMENT_COLUMNS = ['segment', 'holder', 'wireCut', 'emerged'] as co
 /** The reserve columns the player reads (engine 0.3.7 on); a record may carry more. */
 const NEEDED_RESERVE_COLUMNS = ['formationId', 'status', 'orderedMin', 'arriveMin'] as const;
 const RESERVE_STATUSES: readonly unknown[] = ['waiting', 'ordered', 'marching', 'arrived'];
+/** The tank columns the player reads (engine 0.4.2 on, only in runs with tanks); a record may carry more. */
+const NEEDED_TANK_COLUMNS = ['id', 'x', 'y', 'status'] as const;
+const TANK_STATUSES: readonly unknown[] = ['moving', 'halted', 'arrived', 'bogged'];
 const isMinute = (v: unknown): boolean => v === null || (isNum(v) && v >= 0);
 
 /** A trench segment in the geometry: an id, its feature, its garrisons and a y band. */
@@ -158,6 +161,19 @@ export function parseRunRecord(data: unknown): RunRecord {
         if (!ok) fail(`snapshots[${i}].reserves.rows[${j}] needs a formation id, a known status (waiting, ordered, marching or arrived), and orderedMin and arriveMin as minutes or null`);
       });
     }
+    // Tanks' state: optional (only runs with tanks have it, engine 0.4.2 on), checked when present.
+    const tk = s.tanks;
+    if (tk !== undefined) {
+      if (!isObject(tk) || !Array.isArray(tk.columns) || !Array.isArray(tk.rows)) return fail(`snapshots[${i}].tanks needs columns and rows`);
+      const tc = tk.columns as unknown[];
+      const at = Object.fromEntries(NEEDED_TANK_COLUMNS.map((c) => [c, tc.indexOf(c)])) as Record<(typeof NEEDED_TANK_COLUMNS)[number], number>;
+      const lacking = NEEDED_TANK_COLUMNS.filter((c) => at[c] < 0);
+      if (lacking.length) fail(`snapshots[${i}].tanks.columns lacks ${lacking.join(', ')}`);
+      tk.rows.forEach((row: unknown, j) => {
+        const ok = Array.isArray(row) && row.length === tc.length && typeof row[at.id] === 'string' && isNum(row[at.x]) && isNum(row[at.y]) && TANK_STATUSES.includes(row[at.status]);
+        if (!ok) fail(`snapshots[${i}].tanks.rows[${j}] needs a tank id, x, y and a known status (moving, halted, arrived or bogged)`);
+      });
+    }
     s.barrages.forEach((b: unknown, j) => {
       if (!isObject(b) || typeof b.sectorId !== 'string' || typeof b.done !== 'boolean' || !Array.isArray(b.points)) fail(`snapshots[${i}].barrages[${j}] needs sectorId, done and points`);
     });
@@ -213,6 +229,7 @@ export function expandDeltas(snapshots: RunRecord['snapshots']): RunRecord['snap
       ...(before.reserves || s.reserves
         ? { reserves: before.reserves && s.reserves ? overlay(before.reserves, s.reserves, 'formationId') : (s.reserves ?? before.reserves)! }
         : {}),
+      ...(before.tanks || s.tanks ? { tanks: before.tanks && s.tanks ? overlay(before.tanks, s.tanks, 'id') : (s.tanks ?? before.tanks)! } : {}),
       barrages,
     };
     out.push((prev = next));

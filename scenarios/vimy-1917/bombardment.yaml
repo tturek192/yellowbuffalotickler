@@ -61,7 +61,14 @@ bombardment:
     # 18,500, is 107,400 heavy rounds, shared between the two counter-battery entries by guns.
     - artilleryId: cdn-60pdr
       task: battery
-      rounds: { value: 93542, estimate: "107,400 heavy counter-battery rounds (rca-ww1-history: 'The counter battery fire - 125,900 rounds in the week before 9 April', less the 4.5-inch howitzers' 18,500, BOH p. 315 n.2) x 54/62 counter-battery guns; howitzers in the counter-battery groups (boh-1917-appendices App. 15, para. 7(b)) are not split out (bombardment.md)" }
+      rounds: { value: 90302, estimate: "107,400 heavy counter-battery rounds (rca-ww1-history: 'The counter battery fire - 125,900 rounds in the week before 9 April', less the 4.5-inch howitzers' 18,500, BOH p. 315 n.2) x 54/62 counter-battery guns, 93,542, less the 3,240 gas rounds below; howitzers in the counter-battery groups (boh-1917-appendices App. 15, para. 7(b)) are not split out (bombardment.md)" }
+    # Gas on the German battery positions at Zero (Task 14): "all the German battery positions ... were bombarded with
+    # high explosive and gas shell", and many of the German gun-teams' horses were gassed (BOH p. 320). No source read
+    # gives the gas rounds; carved out of the 60-pdrs' counter-battery rounds above so the counter-battery total is
+    # unchanged (bombardment.md, "Gas at Zero").
+    - artilleryId: cdn-60pdr
+      task: gas
+      rounds: { value: 3240, estimate: "the 54 60-pdrs (BOH p. 306 n.1) at 1 round a minute (tables/weapons-1917.yaml) for an hour: the Arras plan had the 60-pdrs 'continue to fire lethal shell against battery positions until an hour after Zero' (BOH p. 185); BOH p. 320 confirms gas on every German battery position at Zero for the Canadian Corps, not how much (bombardment.md, Gas at Zero)" }
     - artilleryId: cdn-6in-gun
       task: battery
       rounds: { value: 13858, estimate: "107,400 heavy counter-battery rounds (as for cdn-60pdr) x 8/62 counter-battery guns (bombardment.md)" }

@@ -153,7 +153,8 @@ The howitzers' rounds are all `trench`. Some 4.5-inch and 6-inch rounds cut lane
 | `cdn-18pdr-standing` | wire / trench / harass | 83,870 / 41,935 / 41,935 | estimate: 647,000 × 112/432, then ½, ¼, ¼ |
 | `cdn-45in-how` | trench | 137,100 | sourced: 35,600 + 101,500 (BOH p. 315 n.2) |
 | `cdn-45in-how` | battery | 18,500 | sourced (BOH p. 315 n.2) |
-| `cdn-60pdr` | battery | 93,542 | estimate: 107,400 × 54/62 |
+| `cdn-60pdr` | battery | 90,302 | estimate: 107,400 × 54/62 = 93,542, less the 3,240 gas rounds |
+| `cdn-60pdr` | gas | 3,240 | estimate: 54 guns × 1 round a minute × 60 minutes (Gas at Zero) |
 | `cdn-6in-gun` | battery | 13,858 | estimate: 107,400 × 8/62 |
 | `cdn-6in-how` | trench | 165,768 | estimate: 225,700 × 104/141.6, rounded so the five sum to 225,700 |
 | `cdn-8in-how` | trench | 28,691 | estimate: 225,700 × 18/141.6 |
@@ -171,6 +172,20 @@ Some entries have no allocation:
 - the 13-pdrs and the barrage machine guns, which have no row in the table;
 - the I Corps and First Army pieces. The table is the Canadian Corps'. The I Corps fired on Givenchy (BOH p. 313), but
   its rounds are not given.
+
+### Gas at Zero
+
+Added with the gassed horses (Plan 3 Task 14). At Zero "all the German battery positions and ammunition dumps were
+bombarded with high explosive and gas shell", and "many of the horses of the German gun-teams and ammunition columns
+were affected by the gas, so that the batteries could neither change their positions nor get up ammunition" (BOH p.
+320). No source read gives the gas rounds. The Arras plan (BOH p. 185, the Third Army's corps) had the 60-pdrs
+"continue to fire lethal shell against battery positions until an hour after Zero"; the same is taken for the Canadian
+Corps' 54 60-pdrs (BOH p. 306 n.1) at the tables' 1 round a minute: **3,240** gas rounds, entered as a `gas`
+allocation of `cdn-60pdr`. They are carved out of that entry's counter-battery rounds (93,542 → 90,302), so the
+counter-battery total stays rca-ww1-history's 125,900. The engine shares them over the German battery positions by
+guns, like the high explosive, and takes the horses of the batteries within `gasHorseRadiusM` of where they fall
+(tables/effects.yaml `horseLossPerGasRound`). With both German entries standing for many batteries at one point each,
+the gas reaches every gun of an entry alike (Conflicts).
 
 ## The wire
 
@@ -363,6 +378,8 @@ by battery or group (Open questions), a run's captured-guns count should not be 
 | Value | Source | Page | Quote (≤ 25 words) | Tier |
 |---|---|---|---|---|
 | bombardment.from 1917-03-20T12:00 | `boh-1917-1` | 315 n.2 | "The expenditure of ammunition during the two phases of the bombardment was" | official |
+| `cdn-60pdr` gas 3,240 (estimate) | `boh-1917-1` | 320 | "all the German battery positions and ammunition dumps were bombarded with high explosive and gas shell" | official |
+| (basis) the 60-pdrs' lethal shell to Zero + 1 h | `boh-1917-1` | 185 | "The 60-pdrs., however, would continue to fire lethal shell against battery positions until an hour after Zero." | official |
 | two phases, half the batteries | `boh-1917-1` | 313 | "during its duration of thirteen days only about half the batteries were allowed to come into action" | official |
 | start of the bombardment | `nicholson-1962` | 250 | "The preparatory bombardment began on 20 March" | official |
 | heavy and field totals | `boh-1917-1` | 316 n.1 | "333,100 rounds of heavy and 802,600 rounds of field ammunition were fired, a total of 1,135,700" | official |
@@ -445,7 +462,16 @@ by battery or group (Open questions), a run's captured-guns count should not be 
   photographs of 7 April showed it repaired (BOH p. 328). The schema's band spares it for the whole bombardment, from
   20 March, so the model's strong point takes no early damage either.
 
+- **Gas on aggregate batteries.** `horseLossPerGasRound` is per shell on one battery's horse lines, but each German
+  entry stands for many batteries at one point (all 108 field guns at Farbus Wood): every gas round shared to the entry
+  counts against all its horses, so 3,240 rounds leave almost none. The entries' single positions were already a known
+  approximation (Artillery); the gas inherits it.
+
 ## Open questions for the historian
+
+- **The gas rounds at Zero.** How many gas shells did the Canadian Corps' counter-battery fire on the German battery
+  positions at Zero on 9 April, from which pieces, and for how long? BOH p. 320 says gas was fired, not how much; the
+  Canadian Corps counter-battery records would say.
 
 - **BOH's ammunition table (vol. I, p. 315 n.2), row by row.** The OCR loses the heavy rows (Reading the ammunition
   table). A clean scan or the printed page would give each heavy piece's rounds by phase and by demolition or

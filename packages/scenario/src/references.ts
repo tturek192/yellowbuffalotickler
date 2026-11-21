@@ -85,7 +85,7 @@ export function checkReferences(
     if (b.yMin > b.yMax) problems.push(`${path}: yMin ${b.yMin} is above yMax ${b.yMax}`);
   };
   const artilleryIds = new Set(s.artillery.map((a) => a.id));
-  /** bombardment, communications, operations, offMap and end: everything the model sections point at. */
+  /** bombardment, communications, operations, offMap, tanks and end: everything the model sections point at. */
   const checkModelSections = () => {
     s.bombardment?.allocations.forEach((a, i) => {
       if (!artilleryIds.has(a.artilleryId)) problems.push(`bombardment.allocations[${i}].artilleryId: unknown artillery "${a.artilleryId}"`);
@@ -121,6 +121,13 @@ export function checkReferences(
     s.offMap?.attacks.forEach((a, i) => {
       dupAttack(`offMap.attacks[${i}].id`, a.id);
       checkFeature(`offMap.attacks[${i}].targetFeatureId`, a.targetFeatureId);
+    });
+    const dupTank = dupCheck();
+    s.tanks?.forEach((t, i) => {
+      dupTank(`tanks[${i}].id`, t.id);
+      if (!sectorIds.has(t.sectorId)) problems.push(`tanks[${i}].sectorId: unknown sector "${t.sectorId}"`);
+      if (!lineIds.has(t.objectiveLineId)) problems.push(`tanks[${i}].objectiveLineId: unknown line "${t.objectiveLineId}"`);
+      if (!Array.isArray(t.start)) problems.push(`tanks[${i}].start: lonLat needs the node loader (and a frame) to project it`);
     });
     const dupKey = dupCheck();
     s.end?.keyGround.forEach((k, i) => {

@@ -28,6 +28,8 @@ export const EVENT_KINDS = [
   'order-dropped',
   // A planned divisional or army counter-attack given up (Task 13)
   'counter-attack-dropped',
+  // Smaller mechanics (Task 14): a tank stuck in the mud, a battery's horses gassed, a company down to its ammunition reserve
+  'tank-bogged', 'horses-gassed', 'ammunition-low',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -317,6 +319,24 @@ export type BatteryState = {
   horses: boolean;
   /** Overrun by the enemy: its guns are taken and fire no more (Task 10). */
   captured: boolean;
+  /** The `horses-gassed` event that took its horses (Task 14); absent: it was never gassed. */
+  gassedEventId?: number;
+};
+
+/**
+ * A tank (Task 14): `moving` behind its sector's barrage toward its objective line, `halted` while it has caught up with
+ * the barrage (until the barrage moves on), `arrived` on the objective line, or `bogged` in the mud for the rest of the
+ * run. `metres`: how far it has driven since Zero (its bog checks fall at every 100 m of it).
+ */
+export type TankState = {
+  id: string;
+  side: Side;
+  sectorId: string;
+  objectiveLineId: string;
+  x: number;
+  y: number;
+  metres: number;
+  status: 'moving' | 'halted' | 'arrived' | 'bogged';
 };
 
 /**

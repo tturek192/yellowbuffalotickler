@@ -170,7 +170,7 @@ All 16 values are calibrated estimates; the scenario says which channels link wh
 
 ## Effects
 
-The 50 effects are estimates except `crewPerLewis`, which is sourced; 37 are calibrated coefficients, and `twilightMin`,
+The 62 effects are estimates except `crewPerLewis`, which is sourced; 48 are calibrated coefficients, and `twilightMin`, `tankMachineGuns`,
 `lineFeatureMatchM`, `gapMultiplier`, `crewPerMg`, `trenchProximityM`, `wireUncutBelow`, `batteriesRecoveredFrac`,
 `mgUnobservedBelow`, `fireRefsMin` and the village, wood and crater radii are plain estimates (a calculation, a tolerance, an explanation threshold, a count or a
 map default, not fitted). The reasoning is in each entry; the ones with sources behind them:
@@ -191,6 +191,8 @@ map default, not fitted). The reasoning is in each entry; the ones with sources 
 | mgBarrageDepthM | 400 | the plan's figure; Nicholson's "bullet-swept zone 400 yards ahead" (p. 253) gives where it lay, not its depth |
 | sortieDelayMin | 30 | Germans "emerging from dug-outs which had been passed over" during the consolidation (`boh-1917-1` p. 333) |
 | crewPerLewis | 2 | sourced: the Nos. 1 and 2 (`ss143-1917` p. 9) |
+| tankBogMudFactor | 3 | the eight Vimy tanks "unable to negotiate the gripless mud and the deep shell craters" (`nicholson-1962` p. 254); a tank's 3.7 miles an hour fell to half a mile an hour "in heavily shelled ground" (p. 168). A calibrated judgement: a day of rain trebles the chance of bogging |
+| tankMachineGuns | 5 | a male Mark I had "two six-pounder guns and four Hotchkiss machine-guns", a female "five Vickers and one Hotchkiss" (`nicholson-1962` p. 168): an even mix, 5 (a plain estimate) |
 | crewPerMg | 4 | firer, loader and two carriers; the German company had "48 machine gunners (8 per gun)" with reliefs and carriers (`german-handbook-1917` p. 50) |
 
 Four keys came with the artillery of the battle, all by judgement, with no source behind them:
@@ -254,6 +256,8 @@ p. 316). The others keep their starting values with reasoning added. Nothing was
 
 ## Open questions for the historian
 
+- **The tanks at Vimy.** Which marks (I or II) and how many male and female tanks did No. 12 Company, D Battalion, have
+  on 9 April? `tankMachineGuns` takes an even mix of the Mark I's male (four machine guns) and female (six).
 - **Hogg and Thurston, Farndale, Clarke.** Most British ranges and shell weights come from Wikipedia, which cites Hogg
   and Thurston's *British Artillery Weapons and Ammunition 1914-1918*, Farndale's *History of the Royal Regiment of
   Artillery: Western Front 1914-18* and Clarke's *British Artillery 1914-19*. None was found on the allowed hosts; the

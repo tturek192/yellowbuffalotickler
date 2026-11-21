@@ -1,8 +1,8 @@
 import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
 import type { CompanyState, CompanyStatus } from './companies';
-import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent } from './types';
+import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.1';
+export const ENGINE_VERSION = '0.4.2';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -42,6 +42,11 @@ export type ReserveColumn = (typeof RESERVE_COLUMNS)[number];
 /** An off-map reserve (Task 13): its formation, status, the minute it was ordered and the minute it arrives (to 0.1), null until ordered. */
 export type ReserveRow = [formationId: string, status: ReserveState['status'], orderedMin: number | null, arriveMin: number | null];
 
+export const TANK_COLUMNS = ['id', 'x', 'y', 'status'] as const;
+export type TankColumn = (typeof TANK_COLUMNS)[number];
+/** A tank (Task 14): its id, where it is (to 1 m) and its status (`bogged` once stuck in the mud). */
+export type TankRow = [id: string, x: number, y: number, status: TankState['status']];
+
 /** A trench segment as the record's geometry lists it: what does not change during the run (y and length to 0.1 m). */
 export type SegmentGeometry = Pick<SegmentState, 'id' | 'featureId' | 'garrisonIds' | 'yMin' | 'yMax' | 'lengthM'>;
 
@@ -58,6 +63,8 @@ export type Snapshot = {
   segments: Columnar<SegmentColumn, SegmentRow>;
   /** One row per off-map reserve, in the scenario's order (Task 13; absent in records before engine 0.3.7). */
   reserves?: Columnar<ReserveColumn, ReserveRow>;
+  /** One row per tank, in ascending id order (Task 14; only in the snapshots of a run with tanks, engine 0.4.2 on). */
+  tanks?: Columnar<TankColumn, TankRow>;
   /** `done` once the sector's barrage has ended; its points then hold where it last stood. */
   barrages: Array<{ sectorId: string; done: boolean; points: Point[] }>;
 };

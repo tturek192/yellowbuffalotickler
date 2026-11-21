@@ -71,6 +71,9 @@ describe('draft Vimy scenario run', () => {
     // `newsInTransit`), key ground is held by the men on it, else the nearest trench, else the line it lies behind, and
     // the lull's default is recorded at setup. The draft's battle is unchanged; it now ends objectives-held at 618, once the
     // 1st Brigade's last report (lost once on the way, at 526) has reached the division.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.1', hash: 'f4b5b276' });
+    // 0.4.2 (Task 14): tanks (bogging, suppression), gas on the enemy's horses (guns then captured when overrun), and the
+    // attackers' ammunition reserve. The draft has no tanks, no gas and no enemy: with the version set back to 0.4.1 its
+    // record hashes to f4b5b276, so only the version moves the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.2', hash: '7ed66c11' });
   });
 });

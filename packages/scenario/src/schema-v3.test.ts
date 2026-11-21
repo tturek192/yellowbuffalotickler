@@ -42,6 +42,21 @@ describe('scenario v3', () => {
     expect(ScenarioSchema.safeParse(withKinds(['railway-gun'])).success).toBe(false);
     expect(ScenarioSchema.safeParse(withKinds([])).success).toBe(false);
   });
+  it('tanks (Task 14): each names its side, start, sector, objective line and a citation; ids and references are checked', () => {
+    const tank = (over: Record<string, unknown> = {}) => ({ id: 't1', side: 'allied', start: [0, 100], sectorId: 's1', objectiveLineId: 'black', cite: e('x'), ...over });
+    const s = minimalScenarioV3({ tanks: [tank(), tank({ id: 't2', start: [0, 300] })] } as never);
+    expect(ScenarioSchema.parse(s).tanks!.map((t) => t.id)).toEqual(['t1', 't2']);
+    expect(refs(s)).toEqual([]);
+    expect(ScenarioSchema.safeParse(minimalScenarioV3({ tanks: [tank({ speed: 3 })] } as never)).success).toBe(false);
+    const bad = minimalScenarioV3({ tanks: [tank(), tank({ sectorId: 'nope-s', objectiveLineId: 'nope-l' })] } as never);
+    expect(refs(bad)).toEqual(expect.arrayContaining([expect.stringMatching(/tanks\[1\]\.sectorId.*nope-s/), expect.stringMatching(/tanks\[1\]\.objectiveLineId.*nope-l/), expect.stringMatching(/tanks\[1\]\.id.*duplicate id "t1"/)]));
+    expect(minimalScenarioV3().tanks).toBeUndefined();
+  });
+  it('a bombardment allocation may fire gas (Task 14)', () => {
+    const s = minimalScenarioV3({ bombardment: { ...bombWith('g1'), allocations: [{ artilleryId: 'g1', task: 'gas', rounds: est(500) }] } });
+    expect(ScenarioSchema.parse(s).bombardment!.allocations[0]!.task).toBe('gas');
+    expect(ScenarioSchema.safeParse(minimalScenarioV3({ bombardment: { ...bombWith('g1'), allocations: [{ artilleryId: 'g1', task: 'smoke', rounds: est(5) }] } as never })).success).toBe(false);
+  });
   it('rejects an operation whose prerequisite line/sector pair does not exist', () => {
     const s = minimalScenarioV3({ operations: [opWithPrereq('nope', 'barrage-x')] });
     expect(refs(s)).toContainEqual(expect.stringMatching(/operations\[0\]\.prerequisite.*nope/));
@@ -123,6 +138,16 @@ describe('scenario v3 files', () => {
     const pos = scenario.artillery[0]!.position as [number, number];
     expect(pos[0]).toBeCloseTo(0, 3);
     expect(pos[1]).toBeCloseTo(0, 3);
+  });
+  it('projects a tank\'s lonLat start through the frame (Task 14)', () => {
+    const dir = write([0, 0]);
+    const s: any = minimalScenarioV3();
+    s.frame = { origin: { lon: 2.7, lat: 50.37 }, bearingDeg: e(75), extent: { minX: -2000, maxX: 3000, minY: -1000, maxY: 1500 } };
+    s.tanks = [{ id: 't1', side: 'allied', start: { lonLat: [2.7, 50.37] }, sectorId: 's1', objectiveLineId: 'black', cite: e('x') }];
+    writeFileSync(join(dir, 'scenario.yaml'), toYaml(s));
+    const start = loadScenario(join(dir, 'scenario.yaml'), join(dir, 'doctrine')).scenario.tanks![0]!.start;
+    expect(Array.isArray(start)).toBe(true);
+    expect(Math.hypot((start as number[])[0]!, (start as number[])[1]!)).toBeLessThan(1);
   });
   it('rejects an artillery lonLat position outside the frame extent, naming the entry', () => {
     const dir = write({ lonLat: [50.37, 2.7] });

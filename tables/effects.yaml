@@ -161,6 +161,19 @@ effects:
     estimate: a tank draws and returns fire within a hundred metres; machine-gun posts that see it close up go quiet
     description: Distance in metres within which a tank suppresses machine guns and infantry.
     calibrated: true
+  tankBogMudFactor:
+    value: 3
+    estimate: 'rain-soaked ground made the cratered field far worse for tanks: at Vimy the eight tanks "had been unable to negotiate
+      the gripless mud and the deep shell craters" (nicholson-1962 p. 254), and a tank''s 3.7 miles an hour fell to half a mile an
+      hour "in heavily shelled ground" (p. 168). A day of rain is taken to treble the chance of bogging; order of magnitude'
+    description: Multiplier on a tank's chance of bogging after a whole day of rain (it applies as the factor to the power of the
+      share of the past 24 hours it rained).
+    calibrated: true
+  tankMachineGuns:
+    value: 5
+    estimate: 'a "male" tank carried two 6-pounders and four machine guns, a "female" six machine guns (nicholson-1962 p. 168, of the
+      Mark I); which marks and how many of each served at Vimy is not in the sources read, so an even mix: 5'
+    description: Machine guns a moving tank fires at the enemy near it, which suppress and (in this model) hit no one.
   gasHorseRadiusM:
     value: 200
     estimate: a gas shell's cloud spreads and drifts a couple of hundred metres before it thins; the plan's 1 km would gas whole valleys

@@ -30,6 +30,8 @@ export const CAUSES = [
   'order-delay', 'lost-contact', 'leader-slow', 'leader-adapted', 'leader-cautious', 'leader-bold',
   // Plans, reserves and the rest
   'planned-operation', 'reserve-arrived', 'ammunition-low', 'tank-bogged', 'horses-gassed',
+  // The machine guns of a tank moving close by (Task 14)
+  'tank-fire',
 ] as const;
 
 export type Cause = (typeof CAUSES)[number];

@@ -102,6 +102,30 @@ describe('Vimy command, planned operations, flanks and end conditions (Plan 3 Ta
     // Spec 12: "several times the historical length".
     expect(capMin).toBeGreaterThanOrEqual(2 * after(v(s.historical.endedAt!)));
   });
+  it("enters the 2nd Division's eight tanks (Task 14), each citing Nicholson, in the 2nd Division's barrage sector toward its Blue Line", () => {
+    const tanks = vimy().tanks!;
+    expect(tanks).toHaveLength(8);
+    for (const t of tanks) {
+      expect(t.side).toBe('allied');
+      expect(t.sectorId).toBe('barrage-2cdn');
+      expect(t.objectiveLineId).toBe('blue-2cdn');
+      expect(t.cite).toMatchObject({ source: 'nicholson-1962' });
+      const sector = vimy().sectors.find((x) => x.id === t.sectorId)!;
+      const [, y] = t.start as [number, number];
+      expect(y).toBeGreaterThanOrEqual(sector.yMin);
+      expect(y).toBeLessThanOrEqual(sector.yMax);
+    }
+    expect(new Set(tanks.map((t) => t.id)).size).toBe(8);
+    const rows = buildReview(vimy()).sections.find(x => x.title === 'Command, flanks and end conditions')!.rows;
+    expect(rows.filter(r => r.path.startsWith('tanks')).length).toBe(8);
+  });
+  it('fires gas on the German battery positions at Zero (Task 14; BOH p. 320), within the counter-battery rounds', () => {
+    const gas = vimy().bombardment!.allocations.filter((a) => a.task === 'gas');
+    expect(gas.length).toBeGreaterThan(0);
+    const cb = vimy().bombardment!.allocations.filter((a) => a.task === 'gas' || a.task === 'battery').reduce((t, a) => t + v(a.rounds), 0);
+    // rca-ww1-history's 125,900 counter-battery rounds in the last week: the gas is part of them, not on top.
+    expect(cb).toBe(125900);
+  });
   it("lists the command section's values in the owner's review", () => {
     const rows = buildReview(vimy()).sections.find(x => x.title === 'Command, flanks and end conditions')!.rows;
     for (const p of ['utcOffsetMin', 'communications.liaison', 'operations', 'offMap.fire', 'offMap.attacks', 'air.observedFrac', 'end.lullMin']) {

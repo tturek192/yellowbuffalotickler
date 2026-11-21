@@ -164,6 +164,96 @@ offMap:
         page: "343, 347-348"
         note: "'The assault, simultaneous with that against the Pimple and Bois de Givenchy spurs, was to be delivered by two battalions of the 73rd Brigade'; barrage at 5 a.m.; the window ends when the 46th 'could report the left flank secure', about 8 a.m. (Nicholson p. 263)"
 
+# The eight tanks with the 2nd Canadian Division (Task 14): No. 12 Company, D Battalion, Heavy Branch. Four were to
+# support the 6th Brigade on Thelus, two passing round either end of the village; the other section the British 13th
+# Brigade, two of them along the intermediate line to Count's Wood (BOH p. 335 n.1). The engine has them follow the
+# 2nd Division's creeping barrage toward its Blue Line, the Thelus phase they were for (BOH p. 335). Start points are
+# estimates (no source read gives them): on the Canadian front line, the 6th Brigade's four spread across its frontage
+# (y -2920 to -2315, oob-canadian.yaml) and the 13th Brigade's four across its own (y -2193 to -1830); x the front
+# line's at that y. Their fate (none got beyond the German support trenches, Nicholson p. 248; none crossed No Man's
+# Land, BOH p. 335) is a validation target, never an input (command.md, "Tanks").
+tanks:
+  - id: tank-6bde-1
+    side: allied
+    start: [-420, -2800]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the 6th Canadian Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+  - id: tank-6bde-2
+    side: allied
+    start: [-360, -2650]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the 6th Canadian Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+  - id: tank-6bde-3
+    side: allied
+    start: [-337, -2500]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the 6th Canadian Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+  - id: tank-6bde-4
+    side: allied
+    start: [-331, -2350]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the 6th Canadian Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+  - id: tank-13bde-1
+    side: allied
+    start: [-393, -2150]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the British 13th Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+  - id: tank-13bde-2
+    side: allied
+    start: [-427, -2050]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the British 13th Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+  - id: tank-13bde-3
+    side: allied
+    start: [-406, -1950]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the British 13th Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+  - id: tank-13bde-4
+    side: allied
+    start: [-396, -1850]
+    sectorId: barrage-2cdn
+    objectiveLineId: blue-2cdn
+    cite:
+      value: "one of the eight tanks attached to the 2nd Canadian Division for its assault on Thelus, with the British 13th Brigade"
+      source: nicholson-1962
+      page: "248"
+      note: "'The plan of operations called for eight tanks to support the 2nd Division's assault on Thelus and its subsequent objectives'; BOH p. 310 and p. 335 n.1 (No. 12 Coy., D Battalion; four with the 6th Brigade, four with the 13th). Start point an estimate (command.md, Tanks)"
+
 # Air control (spec 13.10): a setting, not a simulated air war.
 air:
   # "The Flying Corps was superior to the German air service along the active front numerically, but inferior

@@ -9,8 +9,9 @@ import { isHolding } from './companies';
 import type { CompanyState, CompanyStatus } from './companies';
 import type { PhaseName } from './pipeline';
 import type { Streams } from './rng';
+import { ammoReserve } from './smaller';
 import { segmentsOnLine, takerOf } from './trenches';
-import type { BatteryState, CommandState, CutLine, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
+import type { BatteryState, CommandState, CutLine, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
 export type SimState = {
   minute: number;
@@ -44,6 +45,8 @@ export type SimState = {
   fireMissions: FireMission[];
   /** Off-map formations (Task 13), in the scenario's order. */
   reserves: ReserveState[];
+  /** Tanks (Task 14), in ascending id order. */
+  tanks: TankState[];
   /** What the command model has decided (Task 12). */
   command: CommandState;
   /** Shells landed per 50 m cell (Task 6), row-major over the world's grid; the same array as `World.churn`. Not in the run record. */
@@ -89,12 +92,15 @@ export const armed = (c: CompanyState): boolean => onField(c) && c.posture !== '
  */
 export function inContact(state: SimState, ctx: StepContext): boolean {
   const field = state.companies.filter(onField);
+  // Task 14: a company down to its ammunition reserve fires it only on a counter-attack, whose companies are on the move
+  // (so the run is busy anyway); in contact it counts as unable to fire.
+  const canFire = (c: CompanyState): boolean => armed(c) && c.ammo > ammoReserve(c, ctx);
   // Each side's enemies, in buckets (buckets.ts), so contact never looks at every pair.
   const enemies = { allied: bucketsOf(field.filter((c) => c.side === 'central')), central: bucketsOf(field.filter((c) => c.side === 'allied')) };
   for (const a of field) {
     if (isHolding(a)) continue;
     const r = v(ctx.doctrines[a.doctrineId]!.common.closeRangeM);
-    if (anyWithin(enemies[a.side], a.x, a.y, r, armed(a) ? undefined : armed)) return true;
+    if (anyWithin(enemies[a.side], a.x, a.y, r, canFire(a) ? undefined : canFire)) return true;
   }
   return false;
 }
@@ -106,7 +112,7 @@ const MOVING: ReadonlySet<string> = new Set(['advancing', 'falling-back', 'count
  * Busy: something is happening that needs the fine step and close snapshots — contact, a barrage
  * lifting, a company on the move, fire coming in on a company this step, a company pinned (whose
  * recovery sets it moving again), men coming up out of their dugouts this step (whose fire starts
- * next step), or men mopping up dugouts (Task 15). Otherwise the battle is quiet.
+ * next step), men mopping up dugouts (Task 15), or a tank moving (Task 14). Otherwise the battle is quiet.
  */
 export function isBusy(state: SimState, ctx: StepContext): boolean {
   // Asked twice of the same state (the run end and the next step): worked out once (a state never changes once made).
@@ -125,6 +131,8 @@ function workBusy(state: SimState, ctx: StepContext): boolean {
     state.events.some((e) => e.kind === 'dugout-sortie') ||
     // Task 15: men clearing dugouts draw their progress each step.
     state.companies.some((c) => c.intent === 'mop-up') ||
+    // Task 14: a tank on the move (smaller.ts), whose bog checks and fire come every step.
+    state.tanks.some((t) => t.status === 'moving') ||
     inContact(state, ctx)
   );
 }

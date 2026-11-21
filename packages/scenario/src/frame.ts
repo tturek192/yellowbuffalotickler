@@ -88,10 +88,15 @@ export function projectLonLatPlacements(data: unknown, frame: Frame | undefined)
       walk(fo.children, `${base}[${i}].children`);
     });
   };
-  const d = data as { forces?: unknown; reserves?: unknown; artillery?: unknown } | null;
+  const d = data as { forces?: unknown; reserves?: unknown; artillery?: unknown; tanks?: unknown } | null;
   if (Array.isArray(d?.artillery)) {
     d.artillery.forEach((a, i) => {
       if (a && typeof a === 'object') place(a as Record<string, unknown>, 'position', `artillery[${i}].position`, `artillery ${String((a as { id?: unknown }).id)}`);
+    });
+  }
+  if (Array.isArray(d?.tanks)) {
+    d.tanks.forEach((t, i) => {
+      if (t && typeof t === 'object') place(t as Record<string, unknown>, 'start', `tanks[${i}].start`, `tank ${String((t as { id?: unknown }).id)}`);
     });
   }
   if (Array.isArray(d?.forces)) {

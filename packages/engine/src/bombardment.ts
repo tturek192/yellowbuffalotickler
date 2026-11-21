@@ -8,6 +8,8 @@ import { CELL_M, churn } from './ground';
 import type { World } from './ground';
 import { round } from './record';
 import { featurePieces, pathLength } from './segments';
+import { gasHorses } from './smaller';
+import type { GasFall } from './smaller';
 import { stochasticRound } from './stochastic';
 import type { SimState, StepContext } from './step';
 import type { BatteryState, CasualtyCount, SegmentState, Side, SimEvent } from './types';
@@ -158,13 +160,15 @@ const sum = <T>(xs: T[], f: (x: T) => number): number => xs.reduce((t, x) => t +
  *   frontage: wire-cutting over the wired stretches, trench fire (and harassing fire, where the enemy has no
  *   communication trenches) over every stretch of the enemy's segments. A stretch spared from the
  *   allocation's weapon kind gets none of it;
- * - battery rounds land on the enemy batteries' positions, harassing fire along its communication trenches;
+ * - battery rounds (high explosive or gas) land on the enemy batteries' positions, shared by their guns, harassing fire
+ *   along its communication trenches; gas takes the horses of the batteries near where it falls (smaller.ts `gasHorses`);
  * - every round churns the ground where it lands;
  * - wire cut, trench and dugout damage follow from the rounds on each stretch, and a segment's are the
  *   length-weighted mean of its stretches'; garrison losses follow from the segment's trench damage and the
  *   dugouts' depth, drawn through `stochasticRound` in ascending company id order;
  * - the German batteries are suppressed at Zero (counterBattery);
- * - one `bombardment-result` event per segment.
+ * - one `bombardment-result` event per segment, then `officers-lost` for garrisons left without officers and
+ *   `horses-gassed` for each battery the gas reached.
  * A scenario with no bombardment shells nothing, and the default is listed.
  */
 export function runBombardment(state: SimState, ctx: StepContext): { state: SimState; events: SimEvent[]; losses: CasualtyCount } {
@@ -201,6 +205,7 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
   // (A point strongpoint has its diameter as frontage, so only a garrison placed past its trench's end, or on a
   // point of a kind with no radius default, has none.)
 
+  const gasFalls: GasFall[] = [];
   const noTarget = (i: number, a: Allocation) => ctx.defaultsUsed.add(`bombardment.allocations[${i}] (${a.artilleryId} ${a.task}) ← not fired (nothing for it to hit)`);
   b.allocations.forEach((a, i) => {
     const art = s.artillery.find((x) => x.id === a.artilleryId);
@@ -209,11 +214,15 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
     if (!weapon) throw new ScenarioError([`bombardment.allocations[${i}]: artillery ${art.id} fires weapon "${art.weapon}", which the tables do not hold`]);
     const rounds = v(a.rounds);
     const enemy: Side = art.side === 'allied' ? 'central' : 'allied';
-    if (a.task === 'battery') {
+    if (a.task === 'battery' || a.task === 'gas') {
       const targets = state.batteries.filter((x) => x.side === enemy && x.position);
       const guns = sum(targets, (x) => x.guns);
       if (guns === 0) return void noTarget(i, a);
-      for (const x of targets) churn(ctx.world, x.position!, (rounds * x.guns) / guns);
+      for (const x of targets) {
+        churn(ctx.world, x.position!, (rounds * x.guns) / guns);
+        // Gas on a battery's position reaches the horses near it (smaller.ts).
+        if (a.task === 'gas') gasFalls.push({ point: x.position!, rounds: (rounds * x.guns) / guns });
+      }
       return;
     }
     if (a.task === 'harass') {
@@ -344,6 +353,8 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
     });
     return { ...c, officersLostEventId: id };
   });
-  const out = emit({ ...state, segments: told, companies: withEvents, batteries: suppressAtZero(state.batteries, ctx) }, ...events, ...officerEvents);
+  // The gas takes horses before the counter-battery state at Zero is drawn, so a silenced gun keeps its battery's teams or lack of them.
+  const gassed = gasHorses(state.batteries, gasFalls, ctx, first + events.length + officerEvents.length);
+  const out = emit({ ...state, segments: told, companies: withEvents, batteries: suppressAtZero(gassed.batteries, ctx) }, ...events, ...officerEvents, ...gassed.events);
   return { state: out, events: out.events.filter((e) => e.id >= first), losses };
 }

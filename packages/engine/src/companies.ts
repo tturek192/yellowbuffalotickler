@@ -99,6 +99,8 @@ export type CompanyState = {
   fellBackEventId: number | null;
   /** A garrison's `dugout-sortie` event, once its men left in the dugouts have come up behind the attackers (Task 10); null before. */
   sortieEventId: number | null;
+  /** Its `ammunition-low` event, once it is down to its ammunition reserve (Task 14); null before. */
+  ammoLowEventId: number | null;
 };
 
 /**
@@ -197,6 +199,7 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       reached: null,
       fellBackEventId: null,
       sortieEventId: null,
+      ammoLowEventId: null,
     };
   });
 }

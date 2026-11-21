@@ -18,9 +18,11 @@ export function createRng(seed: number): () => number {
  * - `comms`: each message's delay and whether it is lost;
  * - `gap`: the share of a trapped garrison that surrenders;
  * - `casualties`: casualties, the killed among them and officers lost (resolve);
- * - `mop-up`: men cleared from dugouts.
+ * - `mop-up`: men cleared from dugouts;
+ * - `tanks`: whether a tank bogs at each 100 m it drives (Task 14);
+ * - `gas`: the guns whose horses the bombardment's gas takes (Task 14).
  */
-export const RNG_STREAMS = ['companies', 'bombardment', 'comms', 'gap', 'casualties', 'mop-up'] as const;
+export const RNG_STREAMS = ['companies', 'bombardment', 'comms', 'gap', 'casualties', 'mop-up', 'tanks', 'gas'] as const;
 export type RngStream = (typeof RNG_STREAMS)[number];
 export type Streams = Record<RngStream, () => number>;
 
