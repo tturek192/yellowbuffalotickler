@@ -3,6 +3,7 @@ import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
 import { commandPending, commandPhase, counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
 import { send } from './comms';
+import { captureSegments } from './trenches';
 import { morale } from './morale';
 import { runPipeline } from './pipeline';
 import { initRun, runScenario } from './run';
@@ -139,7 +140,7 @@ describe('the command model', () => {
     const r = runStates(fixtureStall(), { endMinute: 120 });
     const seg = r.states[0]!.segments.find((x) => x.featureId === 'ger-rear-k3')!.id;
     const b1 = (s: SimState) => s.hqs.find((h) => h.formationId === 'b1')!.picture.enemy;
-    expect(b1(r.states[0]!)[seg]).toEqual({ men: 400, atMin: 0, intel: true });
+    expect(b1(r.states[0]!)[seg]).toEqual({ men: 400, atMin: 0, intel: true, base: 400 });
     // The German side's estimate of the attackers facing its own trench (c1 and c2, by their Zero y).
     const k = r.states[0]!.hqs.find((h) => h.formationId === 'rir262')!.picture.enemy;
     expect(Object.values(k).every((e) => e.intel)).toBe(true);
@@ -194,11 +195,52 @@ describe('the command model', () => {
         lastReport: { ...s.lastReport, c1: { ...s.lastReport['c1']!, status: 'holding' }, c2: { ...s.lastReport['c2']!, status: 'holding' } },
       });
       const r = runStates(f, { endMinute: 200, at: rallied });
-      expect(r.states[0]!.hqs.find((h) => h.formationId === 'b1')!.picture.enemy['line:black|s1']).toEqual({ men: 640, atMin: 0, intel: true });
+      expect(r.states[0]!.hqs.find((h) => h.formationId === 'b1')!.picture.enemy['line:black|s1']).toEqual({ men: 640, atMin: 0, intel: true, base: 640 });
       return firstOf(r, 'order-issued');
     };
     expect(commit(1)).toBeUndefined(); // 1,500 / 640 = 2.34, below 2.5
     expect(commit(5)!.factors).toMatchObject({ men: 1500, enemy: 640, intelligence: 1, riskRatio: 0.5 });
+  });
+
+  it('men in dug-outs are invisible, not gone: a cautious leader facing a garrison seen 0 but known 150 does not commit at a poor ratio', () => {
+    // k3 (150 men) holds a trench 100 m beyond the Black Line (inside lineFeatureMatchM, 150 here, so it is the line's
+    // segment; beyond captureRadiusM of the companies on the line, so they cannot take it) and never comes up out of its
+    // dug-outs (emergeMin 100,000): every report sees 0 men up. bn2 has 300 men: 2 to 1 on the estimate.
+    const commit = (riskTolerance: number, at?: (s: SimState) => SimState) => {
+      const f = fixtureStall({ riskTolerance, holdout: 150, reserveMen: 300 });
+      const k3 = f[0].forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!;
+      k3.start = [1250, 200];
+      f[0].features.find((x) => x.id === 'ger-rear-k3')!.geometry = { type: 'LineString', coordinates: [[1250, 0], [1250, 400]] };
+      (f[1].tables.effects as Record<string, unknown>)['lineFeatureMatchM'] = { value: 150, estimate: 'test', description: 'test' };
+      f[1].doctrines['de-1917']!.defence!.emergeMin = { value: 100000, estimate: 'test', description: 'test' };
+      const r = runStates(f, { endMinute: 200, ...(at ? { at } : {}) });
+      const seg = r.states[0]!.segments.find((x) => x.featureId === 'ger-rear-k3')!.id;
+      return { e: firstOf(r, 'order-issued'), belief: r.states.at(-1)!.hqs.find((h) => h.formationId === 'b1')!.picture.enemy[seg]! };
+    };
+    const cautious = commit(1);
+    expect(cautious.e).toBeUndefined(); // 300 / 150 = 2, below 2.5
+    expect(cautious.belief).toMatchObject({ men: 150, seen: 0, base: 150, intel: true });
+    expect(commit(5).e!.factors).toMatchObject({ men: 300, enemy: 150, ratio: 2, intelligence: 1 });
+    // Losses reported lower the estimate: with 100 of k3's men taken prisoner (as a trapping would), the brigade believes
+    // 50 are left, and even the cautious leader commits (6 to 1).
+    const taken = (s: SimState): SimState => ({ ...s, companies: s.companies.map((c) => (c.id === 'k3' ? { ...c, men: 50, captured: 100 } : c)) });
+    const after = commit(1, taken);
+    expect(after.belief).toMatchObject({ men: 50, seen: 0, lost: 100, intel: true });
+    expect(after.e!.factors).toMatchObject({ enemy: 50, ratio: 6 });
+  });
+
+  it('a retake nobody ordered of a trench nobody held says so: cause left-unheld, ref the loss it undoes', () => {
+    const { state, ctx } = initRun(...fixtureCounter(), { seed: 1 });
+    const seg = state.segments[0]!;
+    const s: SimState = {
+      ...state,
+      minute: 2,
+      events: [],
+      segments: state.segments.map((x) => (x.id === seg.id ? { ...x, holder: 'allied' as const, holderEventId: 0 } : x)),
+      companies: state.companies.map((c) => (c.id === 'k1' ? { ...c, posture: 'in-trench' as const } : c.id === 'c1' || c.id === 'c2' ? { ...c, x: -600 } : c)),
+    };
+    const e = captureSegments(s, ctx).events.find((x) => x.kind === 'segment-retaken')!;
+    expect(e).toMatchObject({ segmentId: seg.id, unitId: 'k1', causes: ['left-unheld'], refs: [0] });
   });
 
   it('a counter-attack needs counterAttackMinMen whatever the odds, and a failed one may be ordered again after counterAttackRetryMin', () => {

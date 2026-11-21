@@ -87,10 +87,20 @@ export type Report = {
   /**
    * The enemy seen (Task 12): for each segment the enemy holds within `observerRangeM` of the reporting company, the men
    * of the enemy up in it (within `captureRadiusM` of its trench), and for each operation's target place in range
-   * (`place:<featureId>`) the enemy up within its radius; and when they were seen.
+   * (`place:<featureId>`) the enemy up within its radius; and when they were seen. `lost`: on an enemy trench or a line's
+   * ground, the losses seen among the enemy companies that hold it (their casualties in battle and their men captured).
    */
-  enemy?: Record<string, { men: number; atMin: number }>;
+  enemy?: Record<string, { men: number; atMin: number; lost?: number }>;
 };
+
+/**
+ * What an HQ believes of the enemy on a piece of ground (Task 12). `men`: its belief. On an enemy trench it still shows
+ * the enemy holding, and on a line's ground, men down in dug-outs are invisible, not gone: the belief is the greater of
+ * the men last `seen` up and the intelligence estimate `base` less the losses reported there (`lost`: casualties seen,
+ * prisoners taken, garrisons trapped or surrendered). `intel`: the belief rests on intelligence (the estimate is the
+ * greater). Elsewhere the last report seen replaces it.
+ */
+export type EnemyKnown = { men: number; atMin: number; intel?: true; base?: number; seen?: number; lost?: number };
 
 /**
  * A company's call for fire on an enemy-held trench segment (Task 11). `forMin`: how long the guns are to fire (Task 12:
@@ -170,7 +180,7 @@ export type HqState = {
      * the map at their Zero places and strengths, never the off-map reserves); a report seen since replaces an entry.
      * Ground with no entry is unknown, never empty.
      */
-    enemy: Record<string, { men: number; atMin: number; intel?: true }>;
+    enemy: Record<string, EnemyKnown>;
     /**
      * The event each piece of its picture was last about, by `u:<unit>`, `s:<segment>` and `l:<line key>` (Task 12):
      * the refs of the decisions it takes on them.

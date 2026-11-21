@@ -116,7 +116,8 @@ export const capturable = (b: BatteryState): boolean => !b.horses;
  *   attackers: that protection is against sorties and incidental presence only (Task 10 ruling, Task 12).
  * - `segment-lost` when its garrison's side loses it, `segment-retaken` when that side takes it back. On a retake any of
  *   its men left in the dugouts there come up and rejoin it (each a `dugout-sortie`), and it counts as manned.
- * - Causes: `counter-attack` for a retake on orders (with a ref to the `counter-attack-ordered`), `defenders-trapped`
+ * - Causes: `counter-attack` for a retake on orders (with a ref to the `counter-attack-ordered`), `left-unheld` for a
+ *   retake of a trench nobody held (with a ref to the loss it undoes), `defenders-trapped`
  *   (the first loss of a segment whose garrison was caught below, with a ref to the
  *   trapping), `wire-cut` or `wire-uncut` (a lost segment with wire), `dugouts-uncleared` (attackers who came up from
  *   the dugouts, with refs to their sorties), `outnumbered` (defenders there were overpowered), and otherwise the fire
@@ -175,7 +176,12 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
       if (o.eventId !== undefined) refs.push(o.eventId);
     }
     if (d > 0) causes.push('outnumbered');
-    else if (lost && !trappedNow) {
+    else if (!lost) {
+      // Retaken with nobody holding it: its takers had moved on and left it (ref: the loss it undoes), as well as what
+      // brought the men back (a sortie or an order, above).
+      causes.push('left-unheld');
+      if (seg.holderEventId !== null) refs.push(seg.holderEventId);
+    } else if (lost && !trappedNow) {
       // Nobody up to hold it: what took its garrison out.
       for (const c of out.companies.filter((x) => seg.garrisonIds.includes(x.id))) {
         for (const f of c.recentFire) causes.push(...f.causes);

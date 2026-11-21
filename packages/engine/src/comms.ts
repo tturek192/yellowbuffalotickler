@@ -11,7 +11,7 @@ import { segmentDefenders, segmentsOnLine } from './trenches';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import type { SimState, StepContext } from './step';
-import type { BatteryState, CallForFire, CutLine, FireMission, FormationKind, HqNews, HqState, Message, Order, Report, Side } from './types';
+import type { BatteryState, CallForFire, CutLine, EnemyKnown, FireMission, FormationKind, HqNews, HqState, Message, Order, Report, Side } from './types';
 
 /*
  * Communications (the model, "Command"): reports, orders and calls for fire travel as messages, one hop at a time, over
@@ -245,24 +245,28 @@ const zeroMen = (c: CompanyState): number => c.men + c.bombardment.killed + c.bo
  * attackers facing it (their Zero y inside its y range), what would be there if it were lost. On an operation's target
  * place: the enemy within its radius. Ground with no enemy found gets no entry: it stays unknown.
  */
-function intelligence(state: SimState, ctx: StepContext, side: Side): Record<string, { men: number; atMin: number; intel: true }> {
+function intelligence(state: SimState, ctx: StepContext, side: Side): Record<string, EnemyKnown> {
   const r = v(ctx.tables.effects.captureRadiusM);
   const enemies = state.companies.filter((c) => c.side !== side && c.status !== 'off-map' && c.status !== 'marching');
-  const out: Record<string, { men: number; atMin: number; intel: true }> = {};
-  const put = (key: string, men: number): void => {
-    if (men > 0) out[key] = { men, atMin: state.minute, intel: true };
+  const out: Record<string, EnemyKnown> = {};
+  // `kept`: an estimate reports of men up do not override (an enemy trench, a line's ground: see EnemyKnown).
+  const put = (key: string, men: number, kept = false): void => {
+    if (men > 0) out[key] = { men, atMin: state.minute, intel: true, ...(kept ? { base: men } : {}) };
   };
   for (const seg of state.segments) {
     if (seg.garrisonSide !== side) {
       const pts = segmentSamples(ctx, seg, state.companies);
-      put(seg.id, enemies.reduce((a, c) => a + (c.segmentId === seg.id || (pts.length > 0 && distanceTo(pts, [c.startX, c.startY]) <= r) ? zeroMen(c) : 0), 0));
+      put(seg.id, enemies.reduce((a, c) => a + (c.segmentId === seg.id || (pts.length > 0 && distanceTo(pts, [c.startX, c.startY]) <= r) ? zeroMen(c) : 0), 0), true);
     } else put(seg.id, enemies.reduce((a, c) => a + (c.role !== 'reserve' && c.role !== 'garrison' && c.startY >= seg.yMin && c.startY <= seg.yMax ? zeroMen(c) : 0), 0));
   }
   for (const p of operationPlaces(state, ctx)) put(p.key, enemies.reduce((a, c) => a + (Math.hypot(c.startX - p.point[0], c.startY - p.point[1]) <= p.radiusM ? zeroMen(c) : 0), 0));
   // An objective line's ground lies in the defence system the attacker photographed: intelligence knows it, even empty.
   const match = v(ctx.tables.effects.lineFeatureMatchM);
   for (const z of lineZones(state, ctx))
-    if (z.side === side) out[z.key] = { men: enemies.reduce((a, c) => a + (inZone(z, c.startX, c.startY, match) ? zeroMen(c) : 0), 0), atMin: state.minute, intel: true };
+    if (z.side === side) {
+      const men = enemies.reduce((a, c) => a + (inZone(z, c.startX, c.startY, match) ? zeroMen(c) : 0), 0);
+      out[z.key] = { men, atMin: state.minute, intel: true, base: men };
+    }
   return out;
 }
 
@@ -686,16 +690,21 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
   });
   const lost = r.lost ? Object.keys(r.lost).sort(byStr).filter((k) => typeof was.lines[k] === 'number' && r.lost![k]! >= was.lines[k]!) : [];
   // The enemy seen: news when the men differ from what it knows (Task 12).
-  // A report replaces the intelligence estimate whatever it says.
-  const enemy = r.enemy
-    ? Object.keys(r.enemy).sort(byStr).filter((id) => {
-        const cur = was.enemy[id];
-        return (!cur || cur.intel || cur.men !== r.enemy![id]!.men) && r.enemy![id]!.atMin >= (cur?.atMin ?? -Infinity);
-      })
-    : [];
+  // What the report changes in its belief of the enemy (`believe`); nothing when it says nothing new.
+  const side = w.hqs[i]!.side;
+  const believed = new Map<string, EnemyKnown>();
+  if (r.enemy)
+    for (const id of Object.keys(r.enemy).sort(byStr)) {
+      const cur = was.enemy[id];
+      const e = r.enemy[id]!;
+      if (e.atMin < (cur?.atMin ?? -Infinity)) continue;
+      const next = believe(cur, e, keepsEstimate(w, id, side, was.segments[id]));
+      if (next) believed.set(id, next);
+    }
+  const enemy = [...believed.keys()];
   if (units.length + segments.length + lines.length + lost.length + enemy.length === 0) return;
   const top = w.topo.nodes.get(hqId)!.parentId === null;
-  const parts = (units.length ? UNITS : 0) | (segments.length ? SEGMENTS : 0) | (lines.length + lost.length ? LINES : 0) | (enemy.length ? ENEMY : 0);
+  const parts = (units.length ? UNITS : 0) | (segments.length ? SEGMENTS | ENEMY : 0) | (lines.length + lost.length ? LINES : 0) | (enemy.length ? ENEMY : 0);
   const h = hqForWrite(w, i, parts | (aboutEventId !== undefined && parts & (UNITS | SEGMENTS | LINES) ? ABOUT : 0) | (top ? 0 : NEWS));
   const pic = h.picture;
   const about = (key: string): void => {
@@ -711,6 +720,9 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
   }
   for (const id of segments) {
     pic.segments[id] = r.segments[id]!;
+    // A segment its side has taken: its belief of the enemy there drops to the defenders seen (the estimate is spent).
+    const e = pic.enemy[id];
+    if (r.segments[id] === side && e?.base !== undefined) pic.enemy[id] = { men: e.seen ?? 0, atMin: t };
     pic.segmentsAt[id] = r.segmentsAt?.[id] ?? r.atMin;
     about(`s:${id}`);
     if (!top) addKey(h.news.segments, id);
@@ -727,7 +739,7 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
     if (!top) addKey(h.news.lines, k);
   }
   for (const id of enemy) {
-    pic.enemy[id] = { men: r.enemy![id]!.men, atMin: r.enemy![id]!.atMin };
+    pic.enemy[id] = believed.get(id)!;
     if (!top) addKey(h.news.enemy, id);
   }
   if (top) return;
@@ -737,6 +749,32 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
   if (aboutEventId !== undefined) h.news.aboutEventId = Math.max(h.news.aboutEventId ?? -1, aboutEventId);
   if (urgent) h.news.urgent = true;
   if (h.news.urgent) forward(w, i, t);
+}
+
+/**
+ * Whether the HQ keeps its estimate on this ground against reports of men up: an enemy trench it still shows the enemy
+ * holding (men in dug-outs are invisible, not gone), or a line's ground.
+ */
+function keepsEstimate(w: Work, id: string, side: Side, holder: Side | undefined): boolean {
+  if (id.startsWith('line:')) return true;
+  if (id.startsWith('place:') || holder === undefined || holder === side) return false;
+  return w.state.segments.find((x) => x.id === id)?.garrisonSide !== side;
+}
+
+/**
+ * A belief from a report (EnemyKnown): where the estimate is kept, the greater of the men seen up and the estimate less
+ * the losses reported (never less than reported before); elsewhere what was seen. Null: nothing changes.
+ */
+function believe(cur: EnemyKnown | undefined, e: { men: number; atMin: number; lost?: number }, keep: boolean): EnemyKnown | null {
+  if (!keep || cur?.base === undefined) {
+    if (cur && !cur.intel && cur.men === e.men && (cur.lost ?? 0) === (e.lost ?? 0) && cur.base === undefined) return null;
+    return { men: e.men, atMin: e.atMin, seen: e.men, ...(e.lost ? { lost: e.lost } : {}), ...(cur?.base !== undefined ? { base: cur.base } : {}) };
+  }
+  const lost = Math.max(cur.lost ?? 0, e.lost ?? 0);
+  const estimate = Math.max(0, cur.base - lost);
+  const men = Math.max(e.men, estimate);
+  if (cur.seen === e.men && (cur.lost ?? 0) === lost && cur.men === men) return null;
+  return { men, atMin: e.atMin, base: cur.base, seen: e.men, ...(lost ? { lost } : {}), ...(estimate > e.men ? { intel: true as const } : {}) };
 }
 
 /** An HQ sends what is new in its picture up to the next headquarters, at t. */
@@ -754,7 +792,10 @@ function forward(w: Work, i: number, t: number): void {
     lines: Object.fromEntries(lines.filter((k) => !lost.includes(k)).map((k) => [k, pic.lines[k] ?? null])),
     ...(lost.length ? { lost: Object.fromEntries(lost.map((k) => [k, pic.linesLost[k]!])) } : {}),
     ...(segs.some((id) => pic.segmentsAt[id] !== undefined) ? { segmentsAt: Object.fromEntries(segs.flatMap((id) => (pic.segmentsAt[id] === undefined ? [] : [[id, pic.segmentsAt[id]!]]))) } : {}),
-    ...(n.enemy.length ? { enemy: Object.fromEntries([...n.enemy].sort(byStr).map((id) => [id, { men: pic.enemy[id]!.men, atMin: pic.enemy[id]!.atMin }])) } : {}),
+    // What was seen and lost goes up; each HQ forms its own belief from it with its own intelligence.
+    ...(n.enemy.length
+      ? { enemy: Object.fromEntries([...n.enemy].sort(byStr).map((id) => { const e = pic.enemy[id]!; return [id, { men: e.seen ?? e.men, atMin: e.atMin, ...(e.lost ? { lost: e.lost } : {}) }]; })) }
+      : {}),
   };
   const about = n.aboutEventId;
   h.news = emptyNews(t);
@@ -895,6 +936,11 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     const segments: Report['segments'] = {};
     for (const id of taken) segments[id] = holderOf.get(id)!.holder;
     if (segChanged) segments[own!.id] = holder!;
+    // A line lost: the report says which of its trench the enemy has taken back.
+    if (lostEvent !== undefined) {
+      const [lineId, sectorId] = aim.split('|') as [string, string];
+      for (const x of segmentsOnLine(state, ctx, lineId, sectorId)) segments[x.id] = x.holder;
+    }
     const enemy = seen(c);
     const report: Report = {
       atMin: M,
@@ -949,6 +995,32 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
     return n;
   };
   const zones = lineZones(state, ctx);
+  const byId = new Map(state.companies.map((x) => [x.id, x]));
+  // The losses seen among companies: casualties in battle and men captured (not the bombardment's, which nobody saw).
+  const boxes = new Map<string, [number, number, number, number]>();
+  const boxOf = (id: string, pts: readonly Point[]): [number, number, number, number] => {
+    let b = boxes.get(id);
+    if (!b) {
+      b = [Infinity, Infinity, -Infinity, -Infinity];
+      for (const [x, y] of pts) b = [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)];
+      boxes.set(id, b);
+    }
+    return b;
+  };
+  const lostOf = (ids: readonly string[]): { lost?: number } => {
+    let n = 0;
+    for (const id of ids) {
+      const x = byId.get(id);
+      if (x) n += x.killed - x.bombardment.killed + x.wounded - x.bombardment.wounded + x.captured;
+    }
+    return n > 0 ? { lost: n } : {};
+  };
+  const zoneIds = new Map<string, string[]>();
+  const zoneCompanies = (z: LineZone): string[] => {
+    let ids = zoneIds.get(z.key);
+    if (!ids) zoneIds.set(z.key, (ids = state.companies.filter((x) => x.side !== z.side && inZone(z, x.startX, x.startY, match)).map((x) => x.id)));
+    return ids;
+  };
   const places = operationPlaces(state, ctx);
   const placeMen = new Map<string, number>();
   return (c) => {
@@ -957,8 +1029,12 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
     for (const x of state.segments) {
       if (x.holder === c.side || x.yMin - range > c.y || x.yMax + range < c.y) continue;
       const pts = segmentSamples(ctx, x, state.companies);
-      if (pts.length === 0 || distanceTo(pts, p) > range) continue;
-      out[x.id] = { men: menAt(x, pts), atMin: M };
+      if (pts.length === 0) continue;
+      // Cheap first: the box around its trench.
+      const b = boxOf(x.id, pts);
+      if (c.x < b[0] - range || c.x > b[2] + range) continue;
+      if (distanceTo(pts, p) > range) continue;
+      out[x.id] = { men: menAt(x, pts), atMin: M, ...(x.garrisonSide !== c.side ? lostOf(x.garrisonIds) : {}) };
     }
     // An operation's target place in sight: the enemy up within its radius.
     for (const pl of places) {
@@ -982,7 +1058,7 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
         for (const e of up) if (e.side !== c.side && inZone(z, e.x, e.y, match)) n += e.men;
         placeMen.set(k, n);
       }
-      out[k] = { men: n, atMin: M };
+      out[k] = { men: n, atMin: M, ...lostOf(zoneCompanies(z)) };
     }
     return out;
   };
