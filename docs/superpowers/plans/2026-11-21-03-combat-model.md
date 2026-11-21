@@ -943,7 +943,7 @@ git commit -m "feat(engine): direct fire with sight, range and cover; casualties
 - **Produces: the `behaviour` and `movement` phases.**
   - **Intents:** `advance`, `hold`, `go-to-ground`, `fall-back`, `mop-up`, `counter-attack`, `march`.
   - **Speed:** the company's own speed × `speedFactor` × the NCO penalty × (1 − 0.5 × suppression).
-  - **Uncut wire:** inside a segment with uncut wire, speed is also × `wireSpeedFactor` × (1 − wireCut), and the company's posture stays `moving`.
+  - **Uncut wire:** inside a segment with uncut wire, speed is also × `1 − (1 − wireSpeedFactor) · (1 − wireCut)`, so fully cut wire costs nothing and fully uncut wire slows to `wireSpeedFactor`. The company's posture stays `moving`.
 - **Target rule (fixes the Plan 2 stand-off artefact).**
   - An advancing company moves toward `min(objX, barrageX − followDistanceM, legLineX)`.
   - `legLineX` is the x of the line the barrage is currently protecting, when that is not the company's own objective line.
