@@ -1,0 +1,166 @@
+effects:
+  killedFrac:
+    value: 0.3
+    estimate: "placeholder until Task 2: starting value"
+    description: "Share of casualties that are killed rather than wounded."
+    calibrated: true
+  officerExposure:
+    value: 1.5
+    estimate: "placeholder until Task 2: starting value"
+    description: "How much more likely than a rifleman an officer is to be hit (multiplies officers / men)."
+    calibrated: true
+  densityRefMen:
+    value: 30
+    estimate: "placeholder until Task 2: starting value"
+    description: "Men in a target group at which fire reaches full effect; smaller groups are hit proportionally less."
+    calibrated: true
+  suppressionHalfLifeMin:
+    value: 5
+    estimate: "placeholder until Task 2: starting value"
+    description: "Minutes for suppression to halve when no fire is coming in."
+    calibrated: true
+  cutPerRound:
+    value: 20
+    estimate: "placeholder until Task 2: starting value"
+    description: "Square metres of wire belt cut by one shell."
+    calibrated: true
+  damagePerRound:
+    value: 5
+    estimate: "placeholder until Task 2: starting value"
+    description: "Metres of trench wrecked by one shell."
+    calibrated: true
+  dugoutPerRound:
+    value: 30
+    estimate: "placeholder until Task 2: starting value"
+    description: "Square metres of dugout roof broken by one heavy shell."
+    calibrated: true
+  safeDepthM:
+    value: 5
+    estimate: "placeholder until Task 2: starting value"
+    description: "Dugout depth at which a garrison is half as likely to be killed by bombardment as one in the open."
+    calibrated: true
+  lossRate:
+    value: 0.5
+    estimate: "placeholder until Task 2: starting value"
+    description: "Share of a garrison killed in a trench that is completely wrecked and has no dugouts."
+    calibrated: true
+  batteryRecoveryHalfLifeMin:
+    value: 120
+    estimate: "placeholder until Task 2: starting value"
+    description: "Minutes for a silenced battery to recover half of its lost fire."
+    calibrated: true
+  mudSpeedFactor:
+    value: 0.6
+    estimate: "placeholder until Task 2: starting value"
+    description: "Walking-speed multiplier on mud."
+    calibrated: true
+  wireSpeedFactor:
+    value: 0.5
+    estimate: "placeholder until Task 2: starting value"
+    description: "Walking-speed multiplier through uncut wire."
+    calibrated: true
+  uphillPenaltyPer10m:
+    value: 0.02
+    estimate: "placeholder until Task 2: starting value"
+    description: "Fraction of walking speed lost per 10 metres of climb."
+    calibrated: true
+  nightVisibilityM:
+    value: 50
+    estimate: "placeholder until Task 2: starting value"
+    description: "How far men can see on a moonless night, in metres."
+    calibrated: true
+  twilightMin:
+    value: 40
+    estimate: "placeholder until Task 2: starting value"
+    description: "Minutes of twilight at dawn and dusk when visibility rises or falls."
+    calibrated: true
+  tankBogPerKm:
+    value: 0.3
+    estimate: "placeholder until Task 2: starting value"
+    description: "Chance a tank bogs or breaks down per kilometre of cratered ground."
+    calibrated: true
+  horseLossPerGasRound:
+    value: 0.01
+    estimate: "placeholder until Task 2: starting value"
+    description: "Fraction of horses within the gas radius lost per gas shell."
+    calibrated: true
+  barrageBandDepthM:
+    value: 90
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Depth in metres of the band a creeping barrage covers at any moment."
+    calibrated: true
+  mgBarrageDepthM:
+    value: 400
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Depth in metres of the zone an indirect machine-gun barrage covers."
+    calibrated: true
+  captureRadiusM:
+    value: 50
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Distance in metres within which attackers can capture a trench segment."
+    calibrated: true
+  captureRatio:
+    value: 3
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Attackers to defenders needed to capture a segment (3 means 3 to 1)."
+    calibrated: true
+  sortieDelayMin:
+    value: 20
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Minutes before defenders sortie from their dugouts after attackers have passed."
+    calibrated: true
+  lineFeatureMatchM:
+    value: 150
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Distance in metres within which a trench feature counts as belonging to a line."
+    calibrated: true
+  callForFireMin:
+    value: 10
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Minutes from a forward observer asking for fire to the guns answering."
+    calibrated: true
+  stallBarrageMin:
+    value: 10
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Minutes a stalled attack waits before calling for a standing barrage on its front."
+    calibrated: true
+  gunCaptureRadiusM:
+    value: 300
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Distance in metres within which attackers capture a battery."
+    calibrated: true
+  tankSuppressRadiusM:
+    value: 100
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Distance in metres within which a tank suppresses machine guns and infantry."
+    calibrated: true
+  gasHorseRadiusM:
+    value: 1000
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Distance in metres from the point of impact within which gas reaches horses."
+    calibrated: true
+  gapMultiplier:
+    value: 2
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Multiplier applied where the gap between the barrage and the attackers is measured (the plan's starting value is 2)."
+    calibrated: true
+  maxTargetsPerFirer:
+    value: 2
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Most targets a single firer can engage at once."
+    calibrated: true
+  crewPerLewis:
+    value: 2
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Men who serve one Lewis gun."
+    calibrated: true
+  crewPerMg:
+    value: 4
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Men who serve one machine gun."
+    calibrated: true
+  trenchProximityM:
+    value: 15
+    estimate: "placeholder until Task 2: the plan's starting value"
+    description: "Distance in metres within which a company counts as being in a trench."
+    calibrated: true

@@ -1,6 +1,7 @@
 import { parse } from 'yaml';
 import type { z } from 'zod';
-import { ScenarioSchema, DoctrineSchema, type Scenario, type Doctrine } from './schema';
+import { ScenarioSchema, type Scenario } from './schema';
+import { DoctrineSchema, type Doctrine } from './doctrine';
 import { checkReferences, collectSourceRefs } from './references';
 
 export class ScenarioError extends Error {

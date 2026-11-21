@@ -1,5 +1,8 @@
 import { stringify } from 'yaml';
-import type { Doctrine, Scenario } from './schema';
+import type { Scenario } from './schema';
+import type { Doctrine } from './doctrine';
+import { CHANNEL_KINDS, EFFECT_KEYS, GROUNDS, POSTURES, type Tables } from './tables';
+import { COMMON_KEYS, ATTACK_KEYS, DEFENCE_KEYS, COMPANY_DEFAULT_KEYS } from './doctrine';
 
 export const est = (value: number, estimate = 'test fixture') => ({ value, estimate });
 
@@ -64,17 +67,65 @@ export function toYaml(obj: unknown): string {
   return stringify(obj);
 }
 
-export function fixtureWithDoctrine(): { scenario: Scenario; doctrines: Record<string, Doctrine> } {
-  const doctrine: Doctrine = {
-    id: 'bef-1917',
+const param = (value: number) => ({ value, estimate: 'test fixture', description: 'test fixture value' });
+const params = <K extends string>(keys: readonly K[], value = 1) => Object.fromEntries(keys.map((k) => [k, param(value)])) as Record<K, ReturnType<typeof param>>;
+
+/** A doctrine with every key, all set to 1 except the four attack values the engine reads today. */
+export function minimalDoctrineV2(id = 'bef-1917'): Doctrine {
+  return {
+    id,
     title: 'Fixture doctrine',
     sources: {},
-    followDistanceM: est(70),
-    maxAdvanceMPerMin: est(50),
-    startJitterMin: est(2),
-    speedJitterFrac: est(0.1),
+    common: params(COMMON_KEYS),
+    ncoPenalty: params(['rehearsed', 'standard'] as const, 0.1),
+    companyDefaults: params(COMPANY_DEFAULT_KEYS),
+    attack: { ...params(ATTACK_KEYS), followDistanceM: param(70), maxAdvanceMPerMin: param(50), startJitterMin: param(2), speedJitterFrac: param(0.1) },
+    defence: params(DEFENCE_KEYS),
   };
-  return { scenario: minimalScenario(), doctrines: { 'bef-1917': doctrine } };
+}
+
+/** Tables holding one weapon (`18pdr`) and every posture, ground, channel and effect key. */
+export function minimalTables(): Tables {
+  return {
+    weapons: {
+      '18pdr': { kind: 'field-gun', rpm: param(4), maxRangeM: param(6000), rangeScaleM: param(3000), lethality: param(0.02), suppressPerRound: param(0.5) },
+    },
+    cover: Object.fromEntries(POSTURES.map((p) => [p, params(GROUNDS)])) as Tables['cover'],
+    channels: Object.fromEntries(CHANNEL_KINDS.map((k) => [k, { delayMin: param(10), failPerHour: param(0.1) }])) as Tables['channels'],
+    effects: params(EFFECT_KEYS),
+  };
+}
+
+export function fixtureWithDoctrine(): { scenario: Scenario; doctrines: Record<string, Doctrine> } {
+  return { scenario: minimalScenario(), doctrines: { 'bef-1917': minimalDoctrineV2() } };
+}
+
+/** The v2 minimal scenario with every v3 section filled in: artillery `g1`, feature `ger-front-a`, formation `bn1`. */
+export function minimalScenarioV3(overrides: Partial<Scenario> = {}): Scenario {
+  const s = minimalScenarioV2();
+  s.artillery = [{ id: 'g1', side: 'allied', weapon: '18pdr', count: est(18), role: 'creeping', ammunition: est(5000), observation: 'map', position: [-800, 200], horseDrawn: false }];
+  return { ...s, ...overrides };
+}
+
+export function opWithPrereq(lineId: string, sectorId: string): NonNullable<Scenario['operations']>[number] {
+  return {
+    id: 'op1',
+    side: 'allied',
+    formationId: 'bn1',
+    kind: 'attack',
+    target: { lineId: 'black', sectorId: 's1' },
+    prerequisite: { lineId, sectorId },
+    plan: est2('the written plan'),
+  };
+}
+
+export function bombWith(artilleryId: string): NonNullable<Scenario['bombardment']> {
+  return {
+    from: est2('1916-06-24T06:00'),
+    allocations: [{ artilleryId, task: 'wire', rounds: est(1000) }],
+    spared: [],
+    wire: [],
+  };
 }
 
 /** Clone the first formation's companies so the scenario holds n companies, spread across the sector. */

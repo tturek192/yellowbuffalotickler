@@ -4,18 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseDoctrine, parseScenario, ScenarioError } from './load';
 import { loadScenario } from './load-node';
-import { minimalScenario, toYaml } from './test-fixtures';
+import { minimalScenario, minimalDoctrineV2, toYaml } from './test-fixtures';
 
-const doctrine = (sources: object, source = 'd-src') =>
-  toYaml({
-    id: 'bef-1917',
-    title: 'BEF 1917',
-    sources,
-    followDistanceM: { value: 50, source },
-    maxAdvanceMPerMin: { value: 30, estimate: 'x' },
-    startJitterMin: { value: 1, estimate: 'x' },
-    speedJitterFrac: { value: 0.1, estimate: 'x' },
-  });
+const doctrine = (sources: object, source = 'd-src') => {
+  const d = minimalDoctrineV2();
+  return toYaml({ ...d, title: 'BEF 1917', sources, attack: { ...d.attack, followDistanceM: { value: 50, source, description: 'follow distance' } } });
+};
 
 describe('parseScenario', () => {
   it('parses a valid scenario', () => {
@@ -104,28 +98,21 @@ describe('values the engine cannot run are rejected at load, with their path', (
 });
 
 describe('doctrine parameters the engine cannot use are rejected, with their path', () => {
-  const base = () => ({
-    id: 'bef-1917',
-    title: 'BEF 1917',
-    sources: {},
-    followDistanceM: { value: 50, estimate: 'x' },
-    maxAdvanceMPerMin: { value: 30, estimate: 'x' },
-    startJitterMin: { value: 1, estimate: 'x' },
-    speedJitterFrac: { value: 0.1, estimate: 'x' },
-  });
+  type D = ReturnType<typeof minimalDoctrineV2> & { attack: NonNullable<ReturnType<typeof minimalDoctrineV2>['attack']> };
+  const base = () => minimalDoctrineV2() as D;
   it('accepts sensible values, including zero follow distance, jitters and fraction', () => {
     const d = base();
-    d.followDistanceM.value = 0;
-    d.startJitterMin.value = 0;
-    d.speedJitterFrac.value = 0;
+    d.attack.followDistanceM.value = 0;
+    d.attack.startJitterMin.value = 0;
+    d.attack.speedJitterFrac.value = 0;
     expect(parseDoctrine(toYaml(d)).id).toBe('bef-1917');
   });
   it.each<[string, (d: ReturnType<typeof base>) => void, RegExp]>([
-    ['a negative follow distance', (d) => (d.followDistanceM.value = -1), /followDistanceM\.value: .*greater than or equal to 0/],
-    ['a zero advance rate', (d) => (d.maxAdvanceMPerMin.value = 0), /maxAdvanceMPerMin\.value: .*greater than 0/],
-    ['a negative start jitter', (d) => (d.startJitterMin.value = -2), /startJitterMin\.value: .*greater than or equal to 0/],
-    ['a negative speed jitter', (d) => (d.speedJitterFrac.value = -0.1), /speedJitterFrac\.value: .*greater than or equal to 0/],
-    ['a speed jitter of 1', (d) => (d.speedJitterFrac.value = 1), /speedJitterFrac\.value: .*less than 1/],
+    ['a negative follow distance', (d) => (d.attack.followDistanceM.value = -1), /attack\.followDistanceM\.value: .*greater than or equal to 0/],
+    ['a zero advance rate', (d) => (d.attack.maxAdvanceMPerMin.value = 0), /attack\.maxAdvanceMPerMin\.value: .*greater than 0/],
+    ['a negative start jitter', (d) => (d.attack.startJitterMin.value = -2), /attack\.startJitterMin\.value: .*greater than or equal to 0/],
+    ['a negative speed jitter', (d) => (d.attack.speedJitterFrac.value = -0.1), /attack\.speedJitterFrac\.value: .*greater than or equal to 0/],
+    ['a speed jitter of 1', (d) => (d.attack.speedJitterFrac.value = 1), /attack\.speedJitterFrac\.value: .*less than 1/],
   ])('rejects %s', (_, mutate, message) => {
     const d = base();
     mutate(d);

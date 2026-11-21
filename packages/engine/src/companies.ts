@@ -39,8 +39,8 @@ export function initCompanies(
       if (!Array.isArray(c.start)) throw new Error(`Company ${c.id}: start was not projected to a local point`);
       const holding = c.role === 'garrison' || c.role === 'reserve';
       // Holding companies draw nothing from the rng, so adding them leaves the attackers' timing unchanged.
-      const startMin = holding ? 0 : (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.startJitterMin);
-      const speedMPerMin = holding ? 0 : v(d.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.speedJitterFrac));
+      const startMin = holding ? 0 : (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.attack!.startJitterMin);
+      const speedMPerMin = holding ? 0 : v(d.attack!.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.attack!.speedJitterFrac));
       out.push({
         id: c.id,
         name: c.name,
@@ -78,7 +78,7 @@ export function moveCompanies(
     const d = doctrines[c.doctrineId];
     if (!line || !d) throw new Error(`Company ${c.id}: unknown line or doctrine`);
     const objX = lineXAt(line.points, c.y);
-    const target = Math.min(objX, barrageX(c.sectorId, c.y) - v(d.followDistanceM));
+    const target = Math.min(objX, barrageX(c.sectorId, c.y) - v(d.attack!.followDistanceM));
     const x = Math.max(c.x, Math.min(target, c.x + c.speedMPerMin * stepMin));
     if (objX - x <= 1) {
       events.push({

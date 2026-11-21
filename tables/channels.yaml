@@ -1,0 +1,89 @@
+channels:
+  buried-cable:
+    delayMin:
+      value: 5
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over buried-cable."
+      calibrated: true
+    failPerHour:
+      value: 0.02
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that buried-cable is out of action."
+      calibrated: true
+  surface-line:
+    delayMin:
+      value: 10
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over surface-line."
+      calibrated: true
+    failPerHour:
+      value: 0.3
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that surface-line is out of action."
+      calibrated: true
+  runner:
+    delayMin:
+      value: 30
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over runner."
+      calibrated: true
+    failPerHour:
+      value: 0.1
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that runner is out of action."
+      calibrated: true
+  visual:
+    delayMin:
+      value: 15
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over visual."
+      calibrated: true
+    failPerHour:
+      value: 0.3
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that visual is out of action."
+      calibrated: true
+  pigeon:
+    delayMin:
+      value: 40
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over pigeon."
+      calibrated: true
+    failPerHour:
+      value: 0.1
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that pigeon is out of action."
+      calibrated: true
+  power-buzzer:
+    delayMin:
+      value: 8
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over power-buzzer."
+      calibrated: true
+    failPerHour:
+      value: 0.2
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that power-buzzer is out of action."
+      calibrated: true
+  wireless:
+    delayMin:
+      value: 10
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over wireless."
+      calibrated: true
+    failPerHour:
+      value: 0.3
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that wireless is out of action."
+      calibrated: true
+  contact-patrol:
+    delayMin:
+      value: 20
+      estimate: "placeholder until Task 2: starting value"
+      description: "Minutes a message takes over contact-patrol."
+      calibrated: true
+    failPerHour:
+      value: 0.1
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per hour that contact-patrol is out of action."
+      calibrated: true

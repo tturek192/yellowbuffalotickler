@@ -1,0 +1,28 @@
+weapons:
+  18pdr:
+    kind: field-gun
+    rpm:
+      value: 4
+      estimate: "placeholder until Task 2: starting value"
+      description: "Rounds a gun fires per minute."
+      calibrated: true
+    maxRangeM:
+      value: 6000
+      estimate: "placeholder until Task 2: starting value"
+      description: "Longest range in metres at which the weapon can hit."
+      calibrated: true
+    rangeScaleM:
+      value: 3000
+      estimate: "placeholder until Task 2: starting value"
+      description: "Distance in metres over which effect falls by a factor of e."
+      calibrated: true
+    lethality:
+      value: 0.02
+      estimate: "placeholder until Task 2: starting value"
+      description: "Chance per round that a man in the target group is hit."
+      calibrated: true
+    suppressPerRound:
+      value: 0.5
+      estimate: "placeholder until Task 2: starting value"
+      description: "How much one round adds to suppression."
+      calibrated: true

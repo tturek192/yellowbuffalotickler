@@ -1,11 +1,13 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 import { parse, YAMLParseError } from 'yaml';
-import type { Scenario, Doctrine } from './schema';
+import type { Scenario } from './schema';
+import type { Doctrine } from './doctrine';
 import { parseScenarioData, parseDoctrine, ScenarioError } from './load';
 import { mergeScenarioParts, locateProblem } from './include';
 import { FrameSchema, projectLonLatPlacements, type Frame } from './frame';
 import { terrainGridProblem, type TerrainGrid } from './terrain';
+import { TablesSchema, type Tables } from './tables';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
 
 const fmt = (n: number): string => String(Math.round(n * 10) / 10);
@@ -154,4 +156,60 @@ export function loadScenario(
   }
   if (problems.length || !scenario) throw new ScenarioError(problems);
   return { scenario, doctrines };
+}
+
+/**
+ * Load and merge every `*.yaml` file in a tables directory (files in name order). Each file holds any of the
+ * `weapons`, `cover`, `channels` and `effects` sections; one entry (a weapon id, a cover posture, a channel
+ * kind, an effect key) may be defined in one file only. Problems name the file that defined the entry.
+ */
+export function loadTables(dir: string): Tables {
+  let files: string[];
+  try {
+    files = readdirSync(dir).filter((f) => f.endsWith('.yaml')).sort();
+  } catch {
+    throw new ScenarioError([`cannot read tables directory ${dir}`]);
+  }
+  const problems: string[] = [];
+  const merged: Record<string, Record<string, unknown>> = {};
+  const owner = new Map<string, string>();
+  for (const file of files) {
+    let data: unknown;
+    try {
+      data = parse(readFileSync(resolve(dir, file), 'utf8'));
+    } catch (e) {
+      problems.push(e instanceof YAMLParseError ? `${file}: invalid YAML: ${e.message}` : `${file}: cannot read`);
+      continue;
+    }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      problems.push(`${file}: expected a mapping at the top level`);
+      continue;
+    }
+    for (const [section, entries] of Object.entries(data)) {
+      if (!entries || typeof entries !== 'object' || Array.isArray(entries)) {
+        problems.push(`${file}: ${section}: expected a mapping`);
+        continue;
+      }
+      const target = (merged[section] ??= {});
+      for (const [key, val] of Object.entries(entries)) {
+        const path = `${section}.${key}`;
+        const first = owner.get(path);
+        if (first !== undefined) problems.push(`${path}: "${key}" is defined in ${first} and ${file}`);
+        else {
+          owner.set(path, file);
+          target[key] = val;
+        }
+      }
+    }
+  }
+  const r = TablesSchema.safeParse(merged);
+  if (!r.success) {
+    for (const i of r.error.issues) {
+      const path = i.path.reduce<string>((a, p) => (typeof p === 'number' ? `${a}[${p}]` : a ? `${a}.${String(p)}` : String(p)), '');
+      const file = owner.get(i.path.slice(0, 2).join('.'));
+      problems.push(`${file ? `${file}: ` : ''}${path || '(root)'}: ${i.message}`);
+    }
+  }
+  if (problems.length) throw new ScenarioError(problems);
+  return r.data!;
 }

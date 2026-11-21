@@ -2,6 +2,7 @@ import type { Scenario, Formation } from './schema';
 import { historicalTierRule } from './sources';
 import { parseLocalDateTime } from './local-time';
 import { locateProblem } from './include';
+import type { Tables } from './tables';
 
 /** Collect every Sourced-looking object ({ value, source }) in a tree, with its dotted path. */
 export function collectSourceRefs(node: unknown, path: string, out: { path: string; id: string }[] = []) {
@@ -28,7 +29,12 @@ export function collectSourceRefs(node: unknown, path: string, out: { path: stri
  * Problems with ids and cross-references, each `path: message`. `locate` rewrites a merged-scenario path to
  * name its file and the index within it (see Provenance); a duplicate id names where the first copy is.
  */
-export function checkReferences(s: Scenario, doctrineIds: string[], locate: (path: string) => string = (p) => p): string[] {
+export function checkReferences(
+  s: Scenario,
+  doctrineIds: string[],
+  locate: (path: string) => string = (p) => p,
+  tables?: Pick<Tables, 'weapons'>,
+): string[] {
   const problems: string[] = [];
   /** A duplicate-id check over one id namespace, remembering where each id was first defined. */
   const dupCheck = () => {
@@ -62,6 +68,65 @@ export function checkReferences(s: Scenario, doctrineIds: string[], locate: (pat
   s.forces.forEach((force) => collectIds(force.formations));
   const checkFormation = (path: string, id: string | undefined) => {
     if (id !== undefined && !formationIds.has(id)) problems.push(`${path}: unknown formation "${id}"`);
+  };
+
+  /** Weapon ids resolve only when the tables are at hand. */
+  const checkWeapon = (path: string, id: string) => {
+    if (tables && !(id in tables.weapons)) problems.push(`${path}: unknown weapon "${id}"`);
+  };
+  const checkFeature = (path: string, id: string) => {
+    if (!featureKind.has(id)) problems.push(`${path}: unknown feature "${id}"`);
+  };
+  const checkLineSector = (path: string, p: { lineId: string; sectorId: string }) => {
+    if (!lineIds.has(p.lineId)) problems.push(`${path}.lineId: unknown line "${p.lineId}"`);
+    if (!sectorIds.has(p.sectorId)) problems.push(`${path}.sectorId: unknown sector "${p.sectorId}"`);
+  };
+  const checkBand = (path: string, b: { yMin: number; yMax: number }) => {
+    if (b.yMin > b.yMax) problems.push(`${path}: yMin ${b.yMin} is above yMax ${b.yMax}`);
+  };
+  const artilleryIds = new Set(s.artillery.map((a) => a.id));
+  /** bombardment, communications, operations, offMap and end: everything the model sections point at. */
+  const checkModelSections = () => {
+    s.bombardment?.allocations.forEach((a, i) => {
+      if (!artilleryIds.has(a.artilleryId)) problems.push(`bombardment.allocations[${i}].artilleryId: unknown artillery "${a.artilleryId}"`);
+    });
+    s.bombardment?.spared.forEach((b, i) => {
+      checkFeature(`bombardment.spared[${i}].featureId`, b.featureId);
+      checkBand(`bombardment.spared[${i}]`, b);
+    });
+    s.bombardment?.wire.forEach((b, i) => {
+      checkFeature(`bombardment.wire[${i}].featureId`, b.featureId);
+      checkBand(`bombardment.wire[${i}]`, b);
+    });
+    s.communications?.liaison?.forEach((l, i) => checkFormation(`communications.liaison[${i}].formationId`, l.formationId));
+    const dupOp = dupCheck();
+    s.operations?.forEach((o, i) => {
+      dupOp(`operations[${i}].id`, o.id);
+      checkFormation(`operations[${i}].formationId`, o.formationId);
+      if ('featureId' in o.target) checkFeature(`operations[${i}].target.featureId`, o.target.featureId);
+      else checkLineSector(`operations[${i}].target`, o.target);
+      if (o.prerequisite) checkLineSector(`operations[${i}].prerequisite`, o.prerequisite);
+    });
+    const dupFire = dupCheck();
+    s.offMap?.fire.forEach((f, i) => {
+      dupFire(`offMap.fire[${i}].id`, f.id);
+      checkWeapon(`offMap.fire[${i}].weapon`, f.weapon);
+      if ('featureId' in f.target) checkFeature(`offMap.fire[${i}].target.featureId`, f.target.featureId);
+      else {
+        checkBand(`offMap.fire[${i}].target`, f.target);
+        if (f.target.xMin > f.target.xMax) problems.push(`offMap.fire[${i}].target: xMin ${f.target.xMin} is above xMax ${f.target.xMax}`);
+      }
+    });
+    const dupAttack = dupCheck();
+    s.offMap?.attacks.forEach((a, i) => {
+      dupAttack(`offMap.attacks[${i}].id`, a.id);
+      checkFeature(`offMap.attacks[${i}].targetFeatureId`, a.targetFeatureId);
+    });
+    const dupKey = dupCheck();
+    s.end?.keyGround.forEach((k, i) => {
+      dupKey(`end.keyGround[${i}].id`, k.id);
+      checkFeature(`end.keyGround[${i}].featureId`, k.featureId);
+    });
   };
 
   const walkFormations = (fs: Formation[], base: string) =>
@@ -111,7 +176,10 @@ export function checkReferences(s: Scenario, doctrineIds: string[], locate: (pat
   s.artillery.forEach((a, i) => {
     dupArtillery(`artillery[${i}].id`, a.id);
     checkFormation(`artillery[${i}].formationId`, a.formationId);
+    checkWeapon(`artillery[${i}].weapon`, a.weapon);
+    if (a.position && !Array.isArray(a.position)) problems.push(`artillery[${i}].position: lonLat needs the node loader (and a frame) to project it`);
   });
+  checkModelSections();
   s.weather.forEach((w, i) => {
     if (i > 0 && parseLocalDateTime(w.at).getTime() <= parseLocalDateTime(s.weather[i - 1]!.at).getTime()) {
       problems.push(`weather[${i}].at: must be after weather[${i - 1}].at`);

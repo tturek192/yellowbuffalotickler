@@ -4,6 +4,7 @@ import { TIERS } from './sources';
 import { LocalDateTimeSchema } from './local-time';
 import { FrameSchema } from './frame';
 import { TerrainGridSchema } from './terrain';
+import { CHANNEL_KINDS } from './tables';
 
 const Side = z.enum(['allied', 'central']);
 
@@ -73,6 +74,12 @@ const CompanyBase = z.object({
   startAfterMin: sourced(z.number()).optional(),
   trenchFeatureId: z.string().optional(),
   role: z.enum(['assault', 'mopup', 'support', 'reserve', 'garrison']),
+  officers: sourced(z.number().nonnegative()).optional(),
+  lewisGuns: sourced(z.number().nonnegative()).optional(),
+  machineGuns: sourced(z.number().nonnegative()).optional(),
+  /** Depth of the dugouts the company shelters in (metres of cover overhead or below ground). */
+  dugoutDepthM: sourced(z.number().nonnegative()).optional(),
+  training: z.enum(['rehearsed', 'standard']).optional(),
 });
 
 const Company = CompanyBase.superRefine((c, ctx) => {
@@ -83,7 +90,7 @@ const Company = CompanyBase.superRefine((c, ctx) => {
 });
 export type Company = z.infer<typeof CompanyBase>;
 
-const FORMATION_KINDS = ['army', 'corps', 'group', 'division', 'brigade', 'regiment', 'battalion'] as const;
+export const FORMATION_KINDS = ['army', 'corps', 'group', 'division', 'brigade', 'regiment', 'battalion'] as const;
 
 export interface Formation {
   id: string;
@@ -134,6 +141,11 @@ const ArtillerySchema = z.object({
   weapon: z.string(),
   count: Count,
   role: z.enum(['creeping', 'standing', 'heavy', 'counter-battery', 'trench-mortar', 'mg-barrage', 'defensive']),
+  /** Rounds available for the battle. */
+  ammunition: Count.optional(),
+  observation: z.enum(['forward-observer', 'aircraft', 'map']).optional(),
+  position: PlacedPoint.optional(),
+  horseDrawn: z.boolean().optional(),
 });
 
 const WeatherSchema = z.object({
@@ -144,12 +156,73 @@ const WeatherSchema = z.object({
   tempC: sourced(z.number()).optional(),
 });
 
+const LineSector = z.object({ lineId: z.string(), sectorId: z.string() });
+const YBand = z.object({ yMin: z.number(), yMax: z.number() });
+
+const BombardmentSchema = z.object({
+  from: sourced(LocalDateTimeSchema),
+  allocations: z.array(
+    z.object({ artilleryId: z.string(), task: z.enum(['wire', 'trench', 'battery', 'harass']), rounds: Count }),
+  ),
+  spared: z.array(YBand.extend({ featureId: z.string(), reason: sourced(z.string()) })),
+  wire: z.array(YBand.extend({ featureId: z.string(), beltDepthM: sourced(z.number().positive()) })),
+});
+
+const CommunicationsSchema = z.object({
+  links: z.array(
+    z.object({ side: Side, from: z.enum(FORMATION_KINDS), to: z.enum(FORMATION_KINDS), channels: z.array(z.enum(CHANNEL_KINDS)) }),
+  ),
+  liaison: z.array(z.object({ side: Side, formationId: z.string(), note: sourced(z.string()) })).optional(),
+});
+
+/** The written plan's contingent phases; the engine decides whether and when they run. */
+const OperationSchema = z.object({
+  id: z.string(),
+  side: Side,
+  formationId: z.string(),
+  kind: z.enum(['attack', 'counter-attack']),
+  target: z.union([LineSector, z.object({ featureId: z.string() })]),
+  prerequisite: LineSector.optional(),
+  notBefore: LocalDateTimeSchema.optional(),
+  plan: sourced(z.string()),
+});
+
+const OffMapSchema = z.object({
+  fire: z.array(
+    z.object({
+      id: z.string(),
+      side: Side,
+      weapon: z.string(),
+      guns: Count,
+      window: Window,
+      target: z.union([
+        z.object({ featureId: z.string() }),
+        z.object({ yMin: z.number(), yMax: z.number(), xMin: z.number(), xMax: z.number() }),
+      ]),
+      cite: sourced(z.string()),
+    }),
+  ),
+  attacks: z.array(
+    z.object({
+      id: z.string(),
+      side: Side,
+      name: z.string(),
+      window: Window,
+      targetFeatureId: z.string(),
+      suppressFrac: sourced(z.number().min(0).max(1)),
+      cite: sourced(z.string()),
+    }),
+  ),
+});
+
 export const ScenarioSchema = z.object({
   id: z.string(),
   title: z.string(),
   status: z.enum(['draft', 'reviewed']),
   sources: SourcesSchema,
   zeroHour: sourced(LocalDateTimeSchema),
+  /** Minutes east of UTC that the scenario's local times are on (for sun and moon). */
+  utcOffsetMin: sourced(z.number()).optional(),
   timeLimitMinutes: z.number(),
   geometrySource: sourced(z.string()),
   frame: FrameSchema.optional(),
@@ -191,6 +264,17 @@ export const ScenarioSchema = z.object({
     .object({ side: z.literal('allied'), suppressedAtZeroFrac: sourcedOrDisputed(z.number().min(0).max(1)), note: z.string() })
     .optional(),
   weather: z.array(WeatherSchema).default([]),
+  bombardment: BombardmentSchema.optional(),
+  communications: CommunicationsSchema.optional(),
+  operations: z.array(OperationSchema).optional(),
+  offMap: OffMapSchema.optional(),
+  air: z.object({ superiority: z.union([Side, z.literal('contested')]), observedFrac: sourcedOrDisputed(z.number().min(0).max(1)) }).optional(),
+  end: z
+    .object({
+      keyGround: z.array(z.object({ id: z.string(), name: z.string(), featureId: z.string() })),
+      lullMin: sourced(z.number().positive()),
+    })
+    .optional(),
   historical: z.object({
     objectives: z.array(
       z.object({
@@ -225,15 +309,3 @@ export const ScenarioSchema = z.object({
   }),
 });
 export type Scenario = z.infer<typeof ScenarioSchema>;
-
-export const DoctrineSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  sources: SourcesSchema,
-  followDistanceM: sourced(z.number().nonnegative()),
-  maxAdvanceMPerMin: sourced(z.number().positive()),
-  startJitterMin: sourced(z.number().nonnegative()),
-  /** Each company's speed varies by up to ± this fraction; 1 or more could stop a company dead. */
-  speedJitterFrac: sourced(z.number().nonnegative().lt(1)),
-});
-export type Doctrine = z.infer<typeof DoctrineSchema>;

@@ -5,15 +5,176 @@ sources:
     title: Owner's Vimy research brief
     year: 2026
     tier: secondary
-followDistanceM:
-  value: 70
-  estimate: SS 135/SS 143 practice of keeping close to the barrage; to source in Plan 2
-maxAdvanceMPerMin:
-  value: 50
-  estimate: ~3 km/h over cratered ground; calibrated in Plan 4
-startJitterMin:
-  value: 2
-  estimate: engine-test jitter; to calibrate in Plan 4
-speedJitterFrac:
-  value: 0.1
-  estimate: engine-test jitter; to calibrate in Plan 4
+common:
+  baseMorale:
+    value: 0.8
+    estimate: "placeholder until Task 2"
+    description: "Morale a company starts the battle with, before leader and training adjustments (0 to 1)."
+  goToGround:
+    value: 0.5
+    estimate: "placeholder until Task 2"
+    description: "Morale below which a company goes to ground."
+  fallBack:
+    value: 0.35
+    estimate: "placeholder until Task 2"
+    description: "Morale below which a company falls back."
+  surrender:
+    value: 0.15
+    estimate: "placeholder until Task 2"
+    description: "Morale below which a company with an enemy close by surrenders."
+  pinSuppression:
+    value: 0.7
+    estimate: "placeholder until Task 2"
+    description: "Suppression above which a company is pinned."
+  lossShock:
+    value: 1.0
+    estimate: "placeholder until Task 2"
+    description: "Morale lost per fraction of the company that becomes a casualty in a step."
+  suppressedDrain:
+    value: 0.3
+    estimate: "placeholder until Task 2"
+    description: "Morale lost per hour at full suppression."
+  isolationDrain:
+    value: 0.1
+    estimate: "placeholder until Task 2"
+    description: "Morale lost per hour while cut off from its headquarters."
+  recoveryPerHour:
+    value: 0.2
+    estimate: "placeholder until Task 2"
+    description: "Morale regained per hour when no fire is coming in."
+  leaderMoraleStep:
+    value: 0.03
+    estimate: "placeholder until Task 2"
+    description: "Starting morale gained per point of the leader's morale rating above 3."
+  closeRangeM:
+    value: 50
+    estimate: "placeholder until Task 2"
+    description: "Distance in metres within which an enemy counts as close."
+  quietStepMin:
+    value: 10
+    estimate: "placeholder until Task 2"
+    description: "Minutes per simulation step while nothing is in contact."
+  baseOrderDelayMin:
+    value: 10
+    estimate: "placeholder until Task 2"
+    description: "Minutes a headquarters takes to turn a report into an order."
+  marchKmPerHour:
+    value: 4
+    estimate: "placeholder until Task 2"
+    description: "Marching speed of reserves in kilometres per hour."
+  deployMin:
+    value: 30
+    estimate: "placeholder until Task 2"
+    description: "Minutes a reserve needs to deploy from column into line."
+  reportEveryMin:
+    value: 30
+    estimate: "placeholder until Task 2"
+    description: "Minutes between routine reports to the next headquarters."
+  fatiguePerKm:
+    value: 0.02
+    estimate: "placeholder until Task 2"
+    description: "Fatigue gained per kilometre marched or advanced."
+  fatigueRecoveryPerHour:
+    value: 0.05
+    estimate: "placeholder until Task 2"
+    description: "Fatigue lost per hour of rest."
+ncoPenalty:
+  rehearsed:
+    value: 0.1
+    estimate: "placeholder until Task 2"
+    description: "Share of speed and fire lost by a company with no officers that had rehearsed the attack."
+  standard:
+    value: 0.3
+    estimate: "placeholder until Task 2"
+    description: "Share of speed and fire lost by a company with no officers and no special rehearsal."
+companyDefaults:
+  officers:
+    value: 4
+    estimate: "placeholder until Task 2"
+    description: "Officers in a company when the scenario does not say."
+  lewisGuns:
+    value: 4
+    estimate: "placeholder until Task 2"
+    description: "Lewis guns in a company when the scenario does not say."
+  machineGuns:
+    value: 0
+    estimate: "placeholder until Task 2"
+    description: "Machine guns in a company when the scenario does not say."
+  bombsPerMan:
+    value: 2
+    estimate: "placeholder until Task 2"
+    description: "Grenades each man carries when the scenario does not say."
+  strength:
+    value: 120
+    estimate: "placeholder until Task 2"
+    description: "Men in a company when the scenario does not say."
+  companiesPerBattalion:
+    value: 4
+    estimate: "placeholder until Task 2"
+    description: "Companies in a battalion when the scenario does not say."
+attack:
+  followDistanceM:
+    value: 70
+    estimate: "SS 135/SS 143 practice of keeping close to the barrage; to source in Plan 2"
+    description: "How many metres behind the creeping barrage the attackers stay."
+  maxAdvanceMPerMin:
+    value: 50
+    estimate: "~3 km/h over cratered ground; calibrated in Plan 4"
+    description: "Fastest walking pace of an advancing company in metres per minute."
+  startJitterMin:
+    value: 2
+    estimate: "engine-test jitter; to calibrate in Plan 4"
+    description: "Each company starts up to this many minutes late, at random."
+  speedJitterFrac:
+    value: 0.1
+    estimate: "engine-test jitter; to calibrate in Plan 4"
+    description: "Each company's speed varies at random by up to this fraction."
+  waveSpacingM:
+    value: 50
+    estimate: "placeholder until Task 2"
+    description: "Distance in metres between successive waves of an attack."
+  mopUpRateMenPerMin:
+    value: 0.5
+    estimate: "placeholder until Task 2"
+    description: "Men a mopping-up company clears out of dugouts per minute."
+  stallToleranceMin:
+    value: 30
+    estimate: "placeholder until Task 2"
+    description: "Minutes an attack can stand still before it counts as stalled."
+  minAttackRatio:
+    value: 1.5
+    estimate: "placeholder until Task 2"
+    description: "Attackers to defenders required before a commander orders a new attack."
+  trainingBonusRehearsed:
+    value: 0.1
+    estimate: "placeholder until Task 2"
+    description: "Starting morale added for a company that rehearsed the attack."
+  ammoReserveFrac:
+    value: 0.2
+    estimate: "placeholder until Task 2"
+    description: "Share of ammunition a company keeps back and will not fire away."
+defence:
+  emergeMin:
+    value: 3
+    estimate: "placeholder until Task 2"
+    description: "Minutes after a barrage lifts before the garrison is out of its dugouts and firing."
+  trappedSurrenderFrac:
+    value: 0.5
+    estimate: "placeholder until Task 2"
+    description: "Share of a garrison that surrenders when attackers reach it before it emerges."
+  localCounterAttackDelayMin:
+    value: 30
+    estimate: "placeholder until Task 2"
+    description: "Minutes before a local reserve counter-attacks."
+  divisionalCounterAttackDelayMin:
+    value: 180
+    estimate: "placeholder until Task 2"
+    description: "Minutes before a divisional counter-attack."
+  counterAttackMinRatio:
+    value: 1.0
+    estimate: "placeholder until Task 2"
+    description: "Defenders to attackers needed before a counter-attack is ordered."
+  commitReserveWhenLostFrac:
+    value: 0.5
+    estimate: "placeholder until Task 2"
+    description: "Share of a sector's segments that must be lost before its reserve is committed."

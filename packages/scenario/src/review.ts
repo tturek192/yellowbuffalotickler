@@ -1,4 +1,5 @@
-import type { Doctrine, Scenario } from './schema';
+import type { Scenario } from './schema';
+import type { Doctrine } from './doctrine';
 import { TIERS, type Tier } from './sources';
 
 export type ReviewRow = {
@@ -191,8 +192,9 @@ export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {
   const doctrineEntries = Object.entries(doctrines).flatMap(([id, d]) => {
     const r = tiersOf(s, d);
     const out: Entry[] = [];
+    // Plan 3's new doctrine keys are placeholders until Task 2 sources them; the review lists the four it has always listed
     for (const k of ['followDistanceM', 'maxAdvanceMPerMin', 'startJitterMin', 'speedJitterFrac'] as const) {
-      collect(d[k], `doctrine.${id}.${k}`, [id, k], r, out);
+      collect(d.attack?.[k], `doctrine.${id}.attack.${k}`, [id, k], r, out);
     }
     return out;
   });
