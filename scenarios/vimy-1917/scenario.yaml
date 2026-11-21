@@ -24,8 +24,11 @@ utcOffsetMin:
   source: boh-1917-1
   page: "147 n.1"
   note: "'Summer Time had come into use at midnight on the 24th' (of March 1917), so on 9 April the army's clock was GMT plus one hour; BOH gives German times converted, '2.30 a.m. (British time)' (p. 318 n.2). Check: Zero, 5:30, was 'set to coincide with first light' (Nicholson p. 253), and civil dawn at the frame origin on 9 April is 04:35 UTC, 05:35 on this clock"
-# One day of battle; a simulation setting, not a historical value.
-timeLimitMinutes: 1440
+# The run's time cap: a simulation setting, not a historical value. Spec 12 wants "several times the historical
+# length": the battle ran from Zero, 05:30 on 9 April, to the ridge all taken about 08:00 on 12 April (historical
+# endedAt, Nicholson p. 263), 4,350 minutes; three times that is 13,050 minutes, to about 11:00 on 18 April. Most runs
+# end sooner, on their objectives or on end.lullMin (command.yaml; command.md, "End conditions").
+timeLimitMinutes: 13050
 geometrySource:
   value: Nicholson 1962 Map 7, georeferenced to IGN BD TOPO road and railway junctions (geometry.md)
   source: nicholson-1962

@@ -8,6 +8,7 @@ import { buildReview } from './review';
 import type { Scenario } from './schema';
 import type { Tables } from './tables';
 import { v } from './sourced';
+import { parseLocalDateTime } from './local-time';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -81,6 +82,23 @@ describe('Vimy command, planned operations, flanks and end conditions (Plan 3 Ta
     expect(v(s.end!.lullMin)).toBeGreaterThan(0);
     // Only the German side's companies are garrisons; no German company was turned into an attacker by an operation.
     for (const c of companiesOf(s, 'central')) expect(c.role).toBe('garrison');
+  });
+  it('Willerval waits for the heavy guns on the ridge (App. 29 para. 4); Vimy is the rapid-withdrawal case (para. 6)', () => {
+    const ops = vimy().operations!;
+    const willerval = ops.find(o => o.id === '5bdiv-willerval')!, vimyOp = ops.find(o => o.id === '5bdiv-vimy')!;
+    expect(parseLocalDateTime(willerval.notBefore!).getTime()).toBeGreaterThanOrEqual(parseLocalDateTime('1917-04-12T00:00').getTime());
+    expect(willerval.plan).toMatchObject({ page: expect.stringMatching(/para\. 4/) });
+    expect(vimyOp.plan).toMatchObject({ page: expect.stringMatching(/para\. 6/) });
+  });
+  it('the time cap reaches past the lull, the off-map windows and the historical end', () => {
+    const s = vimy();
+    const zero = parseLocalDateTime(v(s.zeroHour)).getTime();
+    const capMin = s.timeLimitMinutes;
+    const after = (t: string) => (parseLocalDateTime(t).getTime() - zero) / 60000;
+    expect(capMin).toBeGreaterThan(v(s.end!.lullMin));
+    for (const w of [...s.offMap!.fire, ...s.offMap!.attacks].map(x => x.window)) expect(after(w.to)).toBeLessThan(capMin);
+    // Spec 12: "several times the historical length".
+    expect(capMin).toBeGreaterThanOrEqual(2 * after(v(s.historical.endedAt!)));
   });
   it("lists the command section's values in the owner's review", () => {
     const rows = buildReview(vimy()).sections.find(x => x.title === 'Command, flanks and end conditions')!.rows;

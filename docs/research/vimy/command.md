@@ -72,7 +72,7 @@ failure rates are the model tables' (`tables/channels.yaml`, `docs/research/mode
 | allied | brigade → division, division → brigade | buried-cable, wireless, runner | The buried pairs from brigades to divisions (App. 12 p. 39). "One trench set at each of the Brigades in the line", working back to two directing stations in touch with divisional headquarters (App. 12 p. 39). Despatch riders: motor cyclists and a troop of the Canadian Light Horse (App. 25 p. 89), entered as `runner`. |
 | allied | division → corps, corps → division | buried-cable, wireless | The buried system along the whole corps front (App. 12 p. 39; BOH p. 310); the wireless control station at Mont-St-Éloi "in touch with the Corps Signals Exchange" (App. 12 p. 39). |
 | allied | brigade ↔ group, group ↔ corps | surface-line, runner | The British 5th Division's 15th and 95th Brigades in corps reserve, bivouacked behind the front (`oob-canadian.md`). An estimate: no source read describes their links. |
-| central | battalion → regiment | surface-line, runner, visual | "The destruction of most of the German telephone lines by shellfire meant that such reports had to be relayed by runner" (Nicholson p. 252); "messages by runner took so long" (BOH p. 318 n.2). Visual: the rocket signals to the batteries (BOH pp. 320, 333 n.2), prearranged signals rather than messages. Surface lines are entered because they existed; the engine cuts them by shelling. |
+| central | battalion → regiment | surface-line, runner, visual | "The destruction of most of the German telephone lines by shellfire meant that such reports had to be relayed by runner" (Nicholson p. 252); "messages by runner took so long" (BOH p. 318 n.2). Visual is an estimate: the rockets recorded were signals to the batteries (BOH pp. 320, 333 n.2), prearranged signals rather than messages, taken to be seen at the regiment too. Surface lines are entered because they existed; the engine cuts them by shelling. |
 | central | regiment → battalion | surface-line, runner | As above, without the rockets. |
 | central | regiment ↔ division | surface-line, runner | "all telephone cables leading forward, including one buried 6 ft. deep, had been broken" (a German field artillery regiment, BOH p. 333 n.2). Buried cable is not entered: one buried line is recorded, and it was broken. |
 | central | division ↔ group, group ↔ army, division ↔ army | surface-line | An estimate: telephone behind the shelled zone. No source read describes the German rear links. The three counter-attack divisions stood directly under the army (`oob-german.yaml`), hence division ↔ army. |
@@ -101,8 +101,8 @@ Entered for 1cdn to 4cdn. Two things are not entered:
 | id | Formation | Target | Prerequisite | Not before | Plan |
 |---|---|---|---|---|---|
 | `10bde-pimple` | 10th Brigade (44th, 50th) | the-pimple | red-4cdn | 9 April 20:00 | First Army Order No. 103, 5 April (App. 42): "On the assumption that the attack on the Vimy Ridge reaches its objective on Z day", the Pimple and the Bois en Hache to be taken, "the attack to be carried out on the night of Z/Z + 1 days"; "Definite orders as to whether the attack is to take place or not will be issued from Army Headquarters on Z day". |
-| `5bdiv-willerval` | British 5th Division (15th, 95th Brigades) | willerval | brown-1cdn | — | First Army G.S. 529(a), 28 March (App. 29 para. 4): "Canadian Corps — to attack the Pimple and occupy Vimy and Willerval"; "5th Division to be first employed in the advance east". |
-| `5bdiv-vimy` | British 5th Division | vimy | brown-2cdn | — | The same, and para. 6: in a rapid withdrawal the corps was "to seize Vimy and form a defensive flank facing north". |
+| `5bdiv-willerval` | British 5th Division (15th, 95th Brigades) | willerval | brown-1cdn | 12 April 18:00 (estimate) | First Army G.S. 529(a), 28 March (App. 29 para. 4), the methodical-withdrawal case: "When our heavy guns are brought up on the Vimy Ridge", "Canadian Corps — to attack the Pimple and occupy Vimy and Willerval"; "5th Division to be first employed in the advance east". |
+| `5bdiv-vimy` | British 5th Division | vimy | brown-2cdn | — | The same appreciation, para. 6, the rapid-withdrawal case: if the enemy "withdrew without being able to hold the villages east of the ridge", the corps was "to seize Vimy and form a defensive flank facing north". |
 
 **The Pimple.** The 10th Brigade was "originally destined to capture Hill 120" (BOH p. 343); the attack "was to have
 followed within 24 hours of the 'Southern'" (p. 343), "provided the general situation on the afternoon of 9 April had
@@ -113,10 +113,25 @@ is the 10th Brigade, whose battalions in the scenario are the 44th and 50th; its
 11th Brigades, with which they fought on 9 April (`oob-canadian.md`). On 12 April the attack was made by "the 44th,
 50th and two companies of the 46th" (BOH p. 344).
 
-**Vimy and Willerval.** These are the only exploitation found in a plan written before the battle. The appreciation is
-conditional: in a methodical withdrawal the occupation was to follow "When our heavy guns are brought up on the Vimy
-Ridge" (para. 4), in a rapid one at once (para. 6). The engine's force-ratio test stands in for that condition. No
-`notBefore` is entered, because the appreciation gives none. The cavalry's role is not entered: the First Army's order
+**Vimy and Willerval.** These are the only exploitation found in a plan written before the battle. The appreciation has
+two cases, and each operation models one:
+
+- **Willerval: para. 4, the methodical withdrawal.** The occupation was to follow "When our heavy guns are brought up
+  on the Vimy Ridge". Willerval appears only in this case, so `5bdiv-willerval` carries a `notBefore` for the heavy
+  guns: **12 April 18:00, an estimate and a conservative one.** On the night of the 9th "None of the artillery was able
+  to get further forward than the original British front trenches" (BOH p. 338); the roads needed "some days" to be
+  "passable for heavy traffic" (BOH p. 349; Nicholson p. 263: "several days"). Three days from the evening of the 9th is
+  the earliest reading of "some days": late enough that the 5th Division cannot be launched on Willerval on the
+  afternoon of 9 April as a "planned" phase, but not a known date. On 14 April the Canadians were still firing captured
+  German guns, "unable to get their own artillery forward" (Nicholson pp. 264-265), so the heavy guns may have been
+  later still (Open questions). Historically Willerval was occupied by nightfall on 13 April, after the German
+  withdrawal (BOH p. 350); that is a target, not this estimate's basis.
+- **Vimy: para. 6, the rapid withdrawal.** If the enemy "withdrew without being able to hold the villages east of the
+  ridge (Vimy — Willerval — Bailleul)", the corps was "to seize Vimy and form a defensive flank facing north" with no
+  wait for the guns. That condition, the villages not held, is what the engine's force-ratio test measures, so
+  `5bdiv-vimy` has no `notBefore`. Para. 4's Vimy (after the guns) is not entered separately.
+
+The cavalry's role is not entered: the First Army's order
 placing the 1st Cavalry Division under it was cancelled on 5 April (Nicholson p. 258), and "neither the First Army
 artillery plan nor the Canadian Corps scheme made any allowance" for exploitation (BOH p. 333).
 
@@ -169,7 +184,9 @@ plan's 1:18 p.m. on the Brown Line, when the Canadians reached the wood (Nichols
 estimate. The XVII Corps' heavy artillery included "ten 60-pdr., and two 6-inch gun batteries" (BOH p. 226). At the
 Canadian Corps' sizes (54 60-pdrs, BOH p. 306 n.1, in "nine 60 Pdr batteries", `rca-ww1-history`: six a battery; 8
 6-inch guns in two batteries: four), that is 68 long guns. One-third of them, the share of its left division of three
-(BOH p. 226: the 9th, 34th and 51st), is **23**, entered as 60-pdrs.
+(BOH p. 226: the 9th, 34th and 51st), is **23**, entered as 60-pdrs. That is an upper-end guess: the guns behind the 51st
+Division served its own attack, and how many turned on Farbus Wood is not known. App. 29 para. 1 supports the target,
+the XVII Corps "with its left on Farbus Wood".
 
 **I Corps, on the left: not entered here.** The I Corps' 132 heavies and 102 field pieces that supported the Canadians
 are already in the artillery park (`fireplan.yaml`: `i-corps-*`, BOH pp. 306-307), without positions. Entering their
@@ -183,8 +200,11 @@ Givenchy spurs" (BOH p. 347), with a barrage at 5 a.m. (p. 347). Entered as an o
 05:00 to 08:00, the hour the 46th "could report the left flank secure" (Nicholson p. 263). `suppressFrac` is the
 builder's **0.25**: the attack drew fire that would otherwise have met the 10th Brigade (the Leinster "were enfiladed by
 machine-gun fire from south of the Souchez stream", BOH p. 348). No source measures it; it is for Plan 4 to calibrate.
-The window is the day the attack was made. The Order (App. 42) planned it for the same night as the Pimple's; a
-scheduled off-map attack cannot follow the engine's choice of time for `10bde-pimple` (Conflicts).
+The window is the day the attack was made, 12 April: the historical postponed date, after the Northern Attack was
+"postponed for 48 hours" (BOH p. 343). The Order (App. 42) planned it for the same night as the Pimple's, the night of
+Z/Z + 1. It is kept at 12 April by ruling, because spec 13.9 names "the 24th Division attacks the Pimple on 12 April"
+and makes off-map forces scheduled, not decided; a scheduled attack cannot follow the engine's choice of time for
+`10bde-pimple` (Conflicts; Open questions).
 
 ## Air control
 
@@ -200,7 +220,9 @@ per cent were located by various means, including aerial observation" (Nicholson
 "correctly located" (BOH p. 314). On 9 April "The greater part of the air work for the artillery ... was concerned with
 the locations of active enemy batteries" (war-in-the-air-3 p. 345), and the neutralizing fire after Zero was to be
 "controlled by air and ground observers" (App. 15 para. 7(f)). The range runs from the brief's figure to BOH's located
-share. Snow limited the air on 9 April ("visibility was low", war-in-the-air-3 p. 344); the engine's visibility factor,
+share, and its two ends are not like for like: 0.75 is a share of counter-battery shoots adjusted from the air, 0.83 and
+0.86 are shares of batteries located by every means, sound ranging and flash spotting among them. The upper end is
+context for the brief's figure, not a second measurement of it. Snow limited the air on 9 April ("visibility was low", war-in-the-air-3 p. 344); the engine's visibility factor,
 not this fraction, carries the weather.
 
 ## End conditions
@@ -214,7 +236,14 @@ strongpoint would be a new digitized feature standing for ground the two hills a
 **Lull.** **2880 minutes**, an estimate. The longest pause between attacks in the battle was from the 10th Brigade's
 attack on Hill 145 (3 p.m. on 10 April, BOH p. 342) to the Pimple (5 a.m. on 12 April, BOH p. 345): about 38 hours,
 because the Northern Attack was "postponed for 48 hours" (BOH p. 343). A shorter lull would end a run that follows the
-historical course before the Pimple. 48 hours is the postponement itself. The run's time cap is a separate setting.
+historical course before the Pimple. 48 hours is the postponement itself.
+
+**Time cap.** `timeLimitMinutes` is **13,050** (`scenario.yaml`), a simulation setting. Spec 12 wants "several times the
+historical length". The battle ran from Zero, 05:30 on 9 April, to the ridge all taken about 08:00 on 12 April
+(`historical.endedAt`'s working value, Nicholson p. 263): 4,350 minutes. Three times that is 13,050, to about 11:00 on
+18 April. Until Plan 3 the cap was 1,440, one day, which left the lull, the 12 April off-map attack and the historical
+end unreachable. Most runs should end sooner, on their objectives or on the lull. Plan 3's performance budget speaks of
+a run ending "at most 12 April 23:59"; a run that stalls to the cap is longer than that (Conflicts).
 
 ## Targets for the command model
 
@@ -286,7 +315,10 @@ arrivals are in `historical.yaml`.
 | `10bde-pimple` prerequisite | `command.yaml` | `boh-1917-appendices` | App. 42 | "On the assumption that the attack on the Vimy Ridge reaches its objective on Z day" | official |
 | `10bde-pimple` formation | `command.yaml` | `boh-1917-1` | 343 | "the 10th Canadian Brigade, originally destined to capture Hill 120" | official |
 | `10bde-pimple` notBefore 20:00 | `command.yaml` | estimate | The clock | (civil dusk 20:07 by the NOAA equations) | estimate |
-| `5bdiv-willerval`, `5bdiv-vimy` plan | `command.yaml` | `boh-1917-appendices` | App. 29, para. 4 | "Canadian Corps — to attack the Pimple and occupy Vimy and Willerval" | official |
+| `5bdiv-willerval` plan | `command.yaml` | `boh-1917-appendices` | App. 29, para. 4 | "When our heavy guns are brought up on the Vimy Ridge" | official |
+| `5bdiv-willerval` notBefore 12 April 18:00 | `command.yaml` | estimate (`boh-1917-1` p. 349) | 349 | "some days would be needed to make them passable for heavy traffic" | estimate |
+| `5bdiv-vimy` plan | `command.yaml` | `boh-1917-appendices` | App. 29, para. 6 | "to seize Vimy and form a defensive flank facing north" | official |
+| `timeLimitMinutes` 13,050 | `scenario.yaml` | estimate (spec 12) | — | "several times the historical length" | estimate |
 | `5bdiv-*` formation | `command.yaml` | `boh-1917-appendices` | App. 29, para. 4 | "5th Division to be first employed in the advance east" | official |
 | `xvii-corps-right-flank` cite | `command.yaml` | `boh-1917-1` | 313 | "for dealing with trench systems, woods, villages, and battery positions on the Canadian flanks" | official |
 | `xvii-corps-right-flank` guns 23 | `command.yaml` | estimate (`boh-1917-1` p. 226) | 226 | "ten 60-pdr., and two 6-inch gun batteries" | estimate |
@@ -316,7 +348,21 @@ arrivals are in `historical.yaml`.
 - **The Pimple's planned date.** The Order put the attack on the night of 9-10 April (App. 42), BOH "within 24 hours"
   (p. 343); it was made on 12 April. The operation carries the plan; the off-map attack on the Bois en Hache carries
   the day it was made, because a scheduled attack cannot follow the operation's timing. If the engine sends
-  `10bde-pimple` in on the night of 9-10 April, the 24th Division's attack still comes on 12 April.
+  `10bde-pimple` in on the night of 9-10 April, the 24th Division's attack still comes on 12 April. **A known
+  compromise, kept by ruling:** the 12 April window is an input that took its date from an improvised decision, the
+  48-hour postponement (BOH p. 343), which is itself listed above as not an operation. The spec names the 12 April
+  attack and makes off-map forces scheduled (s. 13.9). The alternative, the Order's planned night (9 April 20:00 to
+  10 April 05:30), would keep every scheduled input a planned time, but fits the engine no better.
+- **The time cap and the performance budget.** Plan 3's budget expects a full Vimy run to end "at most 12 April 23:59";
+  the cap is now 13,050 minutes, to 18 April, three times the historical length as spec 12 asks. A run that stalls
+  until the cap runs longer than the budget's horizon.
+- **The 46th and 47th: planned attachment or midday decision.** Nicholson p. 259 presents the attachment as the plan:
+  "Each brigade was strengthened by the addition of a battalion of the 10th Brigade (respectively the 47th and 46th
+  Battalions)". BOH p. 341 has them "placed at the disposal" of the 12th and 11th Brigades "shortly after midday". The
+  order of battle follows Nicholson and has them under those brigades from Zero; the midday decision is listed above as
+  improvised on BOH's account.
+- **The German battalions' visual channel.** The rockets recorded were signals to the batteries (BOH p. 320), not a
+  report path to the regiment. `visual` on the battalion → regiment link is an estimate that they were seen there too.
 - **The 10th Brigade's second phase.** The brief for this research called the 10th Brigade's planned phase "the Pimple
   and the east slope of Hill 145, rescheduled to 10 April". The sources' written plan has only the Pimple; the east
   slope was the 11th Brigade's objective, given to the 10th Brigade at 6 p.m. on 9 April (Nicholson p. 261; BOH p.
@@ -355,3 +401,9 @@ arrivals are in `historical.yaml`.
   (for example along La Folie Farm between them) be digitized?
 - **The 5th Division's role.** Were the British 15th and 95th Brigades ever ordered to prepare for Vimy and Willerval
   before the battle, beyond First Army's appreciation?
+- **When the heavy guns were up on the ridge.** When did the first Canadian Corps heavy batteries come into action on or
+  beyond the crest? The appreciation made the occupation of Willerval wait for them; the scenario takes the evening of
+  12 April, the earliest reading of BOH's "some days", but the Canadians were still using captured guns on 14 April.
+- **The 24th Division's date (for the owner).** The Bois en Hache attack is scheduled on 12 April, the date it was made
+  after the postponement, though the plan had it on the night of 9-10 April with the Pimple. Should a scheduled flank
+  attack keep the historical date, take the planned one, or be tied to the Pimple operation when the model allows it?

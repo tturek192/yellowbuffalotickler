@@ -40,9 +40,9 @@ communications:
     - { side: allied, from: group, to: brigade, channels: [surface-line, runner] }
     - { side: allied, from: group, to: corps, channels: [surface-line, runner] }
     - { side: allied, from: corps, to: group, channels: [surface-line, runner] }
-    # German side. Forward: telephone lines mostly cut by the bombardment, so runners, and rocket signals to the
-    # batteries (Nicholson p. 252; BOH pp. 318 n.2, 320, 333 n.2). Rear: telephone (an estimate; no source read
-    # describes the German rear links).
+    # German side. Forward: telephone lines mostly cut by the bombardment, so runners (Nicholson p. 252; BOH pp. 318
+    # n.2, 333 n.2). Visual is an estimate: the rockets recorded were signals to the batteries (BOH p. 320), taken to
+    # reach the regiment too. Rear: telephone (an estimate; no source read describes the German rear links).
     - { side: central, from: battalion, to: regiment, channels: [surface-line, runner, visual] }
     - { side: central, from: regiment, to: battalion, channels: [surface-line, runner] }
     - { side: central, from: regiment, to: division, channels: [surface-line, runner] }
@@ -93,17 +93,28 @@ operations:
   # First Army's considerations of action after the attack (28 March): the Canadian Corps "to attack the Pimple and
   # occupy Vimy and Willerval", the 5th Division "to be first employed in the advance east". An appreciation, not an
   # order, and the corps scheme left out any exploitation (Nicholson p. 258; BOH p. 333): command.md, Conflicts.
+  # Two cases. Para. 4, the enemy withdrawing methodically: Vimy and Willerval occupied "When our heavy guns are brought
+  # up on the Vimy Ridge". Para. 6, a rapid withdrawal that leaves the villages east of the ridge unheld: the corps "to
+  # seize Vimy" at once. Willerval appears only in para. 4, so its operation waits for the heavy guns (notBefore);
+  # Vimy's models para. 6, whose condition (the villages not held) is what the engine's force-ratio test measures.
   - id: 5bdiv-willerval
     side: allied
     formationId: 5bdiv
     kind: attack
     target: { featureId: willerval }
     prerequisite: { lineId: brown-1cdn, sectorId: barrage-1cdn }
+    # Para. 4's "When our heavy guns are brought up on the Vimy Ridge": an estimate, the evening of 12 April. On the night
+    # of the 9th no artillery got "further forward than the original British front trenches" (BOH p. 338); the roads
+    # needed "some days" to be "passable for heavy traffic" (BOH p. 349; Nicholson p. 263: "several days"). Three days
+    # from the evening of the 9th is the earliest reading, so conservative against an early launch, not a known date:
+    # on 14 April the Canadians were still firing captured guns, "unable to get their own artillery forward"
+    # (Nicholson pp. 264-265). command.md, Open questions.
+    notBefore: 1917-04-12T18:00
     plan:
-      value: "after the ridge is taken, the 5th Division leads the advance east and the corps occupies Willerval"
+      value: "once the heavy guns are up on the ridge, the 5th Division leads the advance east and the corps occupies Willerval"
       source: boh-1917-appendices
-      page: "App. 29 (pp. 96-98), paras. 4, 6"
-      note: "First Army G.S. 529(a), 28 March: 'Canadian Corps — to attack the Pimple and occupy Vimy and Willerval'; '5th Division to be first employed in the advance east'"
+      page: "App. 29 (pp. 96-97), para. 4"
+      note: "First Army G.S. 529(a), 28 March: 'When our heavy guns are brought up on the Vimy Ridge ... Canadian Corps — to attack the Pimple and occupy Vimy and Willerval'; '5th Division to be first employed in the advance east'"
   - id: 5bdiv-vimy
     side: allied
     formationId: 5bdiv
@@ -111,10 +122,10 @@ operations:
     target: { featureId: vimy }
     prerequisite: { lineId: brown-2cdn, sectorId: barrage-2cdn }
     plan:
-      value: "after the ridge is taken, the 5th Division leads the advance east and the corps occupies Vimy"
+      value: "if the enemy withdraws without holding the villages east of the ridge, the corps seizes Vimy and forms a defensive flank facing north"
       source: boh-1917-appendices
-      page: "App. 29 (pp. 96-98), paras. 4, 6"
-      note: "First Army G.S. 529(a), 28 March: 'occupy Vimy and Willerval'; in a rapid German withdrawal the corps was 'to seize Vimy and form a defensive flank facing north' (para. 6)"
+      page: "App. 29 (pp. 97-98), para. 6"
+      note: "First Army G.S. 529(a), 28 March, the case of a rapid withdrawal, if the enemy 'withdrew without being able to hold the villages east of the ridge (Vimy — Willerval — Bailleul)': the corps 'to seize Vimy and form a defensive flank facing north'; the 5th Division 'to be first employed in the advance east' (para. 4)"
 
 # The flanks, outside the simulated force (spec 13.9). The I Corps pieces that supported the Canadians (BOH pp. 306-307)
 # are already in the artillery park (fireplan.yaml), so they are not repeated here (command.md, Conflicts).
@@ -125,7 +136,7 @@ offMap:
       weapon: 60pdr
       guns:
         value: 23
-        estimate: "no source read says how many XVII Corps guns fired on the Canadian flank. Its heavy artillery had ten 60-pdr and two 6-inch gun batteries (BOH p. 226); at the Canadian Corps' sizes (54 60-pdrs in nine batteries, BOH p. 306 n.1 and rca-ww1-history; 8 6-inch guns in two) that is 68 long guns, and one-third, the share of its left division of three, is 23 (command.md)"
+        estimate: "no source read says how many XVII Corps guns fired on the Canadian flank. Its heavy artillery had ten 60-pdr and two 6-inch gun batteries (BOH p. 226); at the Canadian Corps' sizes (54 60-pdrs in nine batteries, BOH p. 306 n.1 and rca-ww1-history; 8 6-inch guns in two) that is 68 long guns, and one-third, the share of its left division of three, is 23. An upper-end guess: the guns behind the 51st Division served its own attack, and how many of them turned on Farbus Wood is not known; App. 29 para. 1 has the XVII Corps 'with its left on Farbus Wood' (command.md)"
       window: { from: 1917-04-09T05:30, to: 1917-04-09T13:18 }
       target: { featureId: farbus-wood }
       cite:
@@ -134,6 +145,11 @@ offMap:
         page: "313"
         note: "'Close co-operation was maintained with the artillery of the XVII. Corps, Third Army, on the right ... for dealing with ... battery positions on the Canadian flanks'; the window ends at the plan's 1:18 p.m. on the Brown Line (Nicholson p. 248)"
   attacks:
+    # The window is the day the attack was made, the historical postponed date: Order No. 103 planned it for the night
+    # of Z/Z + 1 with the Pimple (App. 42 para. 1), and it went in on 12 April because the Northern Attack was
+    # "postponed for 48 hours" (BOH p. 343). Kept by ruling: spec 13.9 names the 12 April attack and makes off-map
+    # forces scheduled, not decided. A known compromise (command.md, Conflicts): the engine may send 10bde-pimple in
+    # earlier, and this attack will still come on 12 April.
     - id: 24div-bois-en-hache
       side: allied
       name: "British 24th Division (73rd Brigade): the Bois en Hache, across the Souchez from the Pimple"
