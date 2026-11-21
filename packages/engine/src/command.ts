@@ -15,8 +15,8 @@ import { arrivalKnown, orderReserve } from './reserves';
 import type { Scheduled } from './schedule';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
-import { segmentsOnLine } from './trenches';
-import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget, SegmentState, Side } from './types';
+import { behindTakenLine, segmentsOnLine, takerOf } from './trenches';
+import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget, ReserveState, SegmentState, Side } from './types';
 
 /*
  * The command model (the model, "Command"; spec 12): each headquarters decides only from its picture of the battle (what
@@ -37,6 +37,9 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
  *    (the segments its garrisons hold) lost orders its off-map reserves forward (`reserve-ordered`; reserves.ts marches them)
  *    and plans a counter-attack for when they are there; then its reserve-role companies (those on the map, and the
  *    reserves once arrived) go in `divisionalCounterAttackDelayMin · delayFactor` after that, at the same ratio test.
+ *    An army, Gruppe or corps HQ orders its own off-map reserves the same way once its picture shows a division under
+ *    it that has committed its reserves and still lost that much of its front (`armyReserves`).
+ *    No counter-attack, local or divisional, goes for a segment behind a line the enemy has taken and still holds.
  * 4. Attacker, stall. The timetable runs itself (companies' starts, companies.ts). A headquarters whose picture shows a
  *    line not taken `stallToleranceMin · adaptFactor` after its timetable minute (the barrage's arrival beyond it, or its
  *    last commitment to that line), and that is the lowest seeing it with a reserve-role battalion within its formation,
@@ -165,6 +168,9 @@ type Work = {
   hqAt: Map<string, number>;
   /** `free` and `reservesOf` answers this step, emptied whenever the command model's memory of its orders changes. */
   memo: Map<string, string[]>;
+  /** `reachable` answers this step, by segment id, and the taker of each taken line (looked up only). */
+  reach: Map<string, boolean>;
+  takers?: Map<string, Side | null>;
 };
 
 const hqOf = (w: Work, id: string): HqState | undefined => {
@@ -298,7 +304,7 @@ function orderCompanies(w: Work, h: HqState, ids: readonly string[], o: Omit<Ord
 
 export function commandPhase(state: SimState, ctx: StepContext, dt: number): SimState {
   const topo = topologyOf(state, ctx);
-  const w: Work = { state, ctx, topo, hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map() };
+  const w: Work = { state, ctx, topo, hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map(), reach: new Map() };
   hearBack(w);
   offMapAttacks(w, dt);
   localCounterAttacks(w);
@@ -359,6 +365,23 @@ function offMapAttacks(w: Work, dt: number): void {
 
 // ---- 2. local counter-attacks ----------------------------------------------------------------------------------------
 
+/**
+ * Whether a counter-attack can get at a lost segment (Task 13 ruling, refining Task 10's): not while it lies behind a
+ * line its enemy has taken and still holds (trenches.ts `behindTakenLine`; once that line is lost, the next line back
+ * counts). This is where the enemy stands, the way the ground is, not a piece of the HQ's picture: an intact line between
+ * the counter-attack and its target is in the way whatever the HQ believes.
+ */
+function reachable(w: Work, segmentId: string): boolean {
+  // Lines are taken and lost only in the log phase: one answer a segment a step.
+  let hit = w.reach.get(segmentId);
+  if (hit === undefined) {
+    const seg = w.state.segments.find((x) => x.id === segmentId);
+    w.takers ??= new Map(w.state.taken.map((k) => [k, takerOf(w.state, k)]));
+    w.reach.set(segmentId, (hit = seg !== undefined && !behindTakenLine(seg, w.state, w.ctx, w.takers)));
+  }
+  return hit;
+}
+
 /** When the HQ believes the segment changed hands: what its picture was told, else now. */
 const lostAt = (h: HqState, segmentId: string, now: number): number => h.picture.segmentsAt[segmentId] ?? now;
 
@@ -399,6 +422,8 @@ function localCounterAttacks(w: Work): void {
       }
       // A counter-attack that has not retaken the segment may be followed by another after counterAttackRetryMin.
       if (done !== undefined && M < done.atMin + v(d.defence.counterAttackRetryMin)) continue;
+      // Nor can it pass through an intact enemy line to a segment behind it (Task 13 ruling).
+      if (!reachable(w, seg)) continue;
       const force = free(w, h, fid, 'local');
       // The lowest HQ over the segment with companies to send decides.
       if (force.length === 0 || lowerWithForce(w, fid, seg)) continue;
@@ -433,48 +458,108 @@ function localCounterAttacks(w: Work): void {
 // ---- 3. divisional counter-attacks and reserves -------------------------------------------------------------------
 
 function divisionalCounterAttacks(w: Work): void {
-  const M = w.state.minute;
   for (const fid of sorted(w.topo.divisionFront.keys())) {
     const h0 = hqOf(w, fid);
     const d = doctrineOf(w, fid);
     if (!h0 || !d.defence) continue;
     if (w.state.command.divisions[fid] === undefined) {
-      const front = w.topo.divisionFront.get(fid)!;
-      const lost = front.filter((x) => h0.picture.segments[x] !== undefined && h0.picture.segments[x] !== h0.side);
+      const { front, lost } = frontLost(w, h0, fid);
       if (front.length === 0 || lost.length / front.length < v(d.defence.commitReserveWhenLostFrac)) continue;
       // Its off-map reserves: those of formations within it.
-      const reserves = w.state.reserves.filter((x) => x.status === 'waiting' && (x.formationId === fid || (w.topo.nodes.get(x.formationId)?.up.includes(fid) ?? false)));
-      const r = ratingsOf(w, fid);
-      const refs = aboutOf(h0, lost.map((x) => `s:${x}`));
-      const ordered: number[] = [];
-      const eventOf = new Map<string, number>();
-      for (const res of reserves) {
-        eventOf.set(res.formationId, w.state.nextEventId);
-        ordered.push(w.state.nextEventId);
-        w.state = emit(w.state, {
-          minute: M,
-          kind: 'reserve-ordered',
-          text: `${w.topo.nodes.get(fid)!.name} orders ${w.topo.nodes.get(res.formationId)?.name ?? res.formationId} forward`,
-          causes: ['ground-lost', ...(delayFactor(r) > 1 ? (['leader-slow'] as const) : [])],
-          refs,
-          factors: { lostSegments: lost.length, frontSegments: front.length },
-        });
-      }
-      if (reserves.length) {
-        // Task 13 (reserves.ts) works out when each arrives, and marches it.
-        w.state = { ...w.state, reserves: w.state.reserves.map((x) => (eventOf.has(x.formationId) ? orderReserve(x, w.ctx, M, fid, eventOf.get(x.formationId)!) : x)) };
-      }
-      const plan: Decision = { kind: 'divisional-counter-attack', atMin: M, formationId: fid, segmentIds: lost, reserveIds: reserves.map((x) => x.formationId), eventRefs: unique([...refs, ...ordered]) };
-      const i = w.hqAt.get(fid)!;
-      w.state = { ...w.state, hqs: w.state.hqs.map((x, j) => (j === i ? { ...x, pending: [...x.pending, plan] } : x)) };
-      setCommand(w, { divisions: { ...w.state.command.divisions, [fid]: M } });
+      commitReserves(w, h0, w.state.reserves.filter((x) => x.status === 'waiting' && within(w, x.formationId, fid)), fid, front, lost);
     }
-    goDivisional(w, fid, d);
+    goDivisional(w, fid, d, false);
+  }
+  armyReserves(w);
+}
+
+/** A formation is the given one or lies within it. */
+const within = (w: Work, id: string, fid: string): boolean => id === fid || (w.topo.nodes.get(id)?.up.includes(fid) ?? false);
+
+/** A division's front (the segments its garrisons hold) and those of it the HQ's picture shows lost. */
+function frontLost(w: Work, h: HqState, divisionId: string): { front: string[]; lost: string[] } {
+  const front = w.topo.divisionFront.get(divisionId)!;
+  return { front, lost: front.filter((x) => h.picture.segments[x] !== undefined && h.picture.segments[x] !== h.side) };
+}
+
+/**
+ * The HQ orders these off-map reserves forward to the front of division `frontId` (`reserve-ordered` each, cause
+ * `ground-lost`, and `leader-slow` for a slow leader; refs the events its picture of the lost segments was about) and
+ * plans a counter-attack on the lost segments for when they are there. Each reserve marches (reserves.ts) to the nearest
+ * segment of that front its picture shows its side holding (any of it if none): the part of its distance on the map.
+ */
+function commitReserves(w: Work, h: HqState, reserves: readonly ReserveState[], frontId: string, front: readonly string[], lost: readonly string[]): void {
+  const M = w.state.minute;
+  const fid = h.formationId;
+  const r = ratingsOf(w, fid);
+  const refs = aboutOf(h, lost.map((x) => `s:${x}`));
+  const ordered: number[] = [];
+  const eventOf = new Map<string, number>();
+  for (const res of reserves) {
+    eventOf.set(res.formationId, w.state.nextEventId);
+    ordered.push(w.state.nextEventId);
+    w.state = emit(w.state, {
+      minute: M,
+      kind: 'reserve-ordered',
+      text: `${w.topo.nodes.get(fid)!.name} orders ${w.topo.nodes.get(res.formationId)?.name ?? res.formationId} forward${frontId === fid ? '' : ` to ${w.topo.nodes.get(frontId)!.name}`}`,
+      causes: ['ground-lost', ...(delayFactor(r) > 1 ? (['leader-slow'] as const) : [])],
+      refs,
+      factors: { lostSegments: lost.length, frontSegments: front.length },
+    });
+  }
+  if (reserves.length) {
+    const held = front.filter((x) => h.picture.segments[x] === h.side);
+    const to = (held.length ? held : front).map((id) => w.state.segments.find((x) => x.id === id)!);
+    // reserves.ts works out when each arrives, and marches it.
+    w.state = { ...w.state, reserves: w.state.reserves.map((x) => (eventOf.has(x.formationId) ? orderReserve(x, w.state, w.ctx, M, fid, eventOf.get(x.formationId)!, to) : x)) };
+  }
+  const plan: Decision = { kind: 'divisional-counter-attack', atMin: M, formationId: fid, segmentIds: [...lost], reserveIds: reserves.map((x) => x.formationId), eventRefs: unique([...refs, ...ordered]) };
+  const i = w.hqAt.get(fid)!;
+  w.state = { ...w.state, hqs: w.state.hqs.map((x, j) => (j === i ? { ...x, pending: [...x.pending, plan] } : x)) };
+  setCommand(w, { divisions: { ...w.state.command.divisions, [fid]: M } });
+}
+
+const ARMY_LEVELS: ReadonlySet<FormationKind> = new Set<FormationKind>(['army', 'group', 'corps']);
+
+/**
+ * Army reserves (Task 13 fix): an army, Gruppe or corps HQ with off-map reserves of its own (within it, and not within a
+ * division that holds a front) orders them all forward, once, when its picture shows a division under it that has
+ * committed its own reserves (none of their companies still off the map; a division with none counts as having) and has
+ * still lost `commitReserveWhenLostFrac` of its front: the division rule's events, delay and plan (`commitReserves`), to
+ * that division's front, the plan's force only those reserves.
+ */
+function armyReserves(w: Work): void {
+  for (const fid of w.topo.bottomUp) {
+    const n = w.topo.nodes.get(fid)!;
+    if (!ARMY_LEVELS.has(n.kind)) continue;
+    const h = hqOf(w, fid);
+    const d = doctrineOf(w, fid);
+    if (!h || !d.defence) continue;
+    if (w.state.command.divisions[fid] === undefined) {
+      const fronted = sorted(w.topo.divisionFront.keys()).filter((x) => w.topo.divisionFront.get(x)!.length > 0 && within(w, x, fid));
+      const own = w.state.reserves.filter((x) => x.status === 'waiting' && x.formationId !== fid && within(w, x.formationId, fid) && !fronted.some((dv) => within(w, x.formationId, dv)));
+      if (own.length === 0) continue;
+      for (const dv of fronted) {
+        const { front, lost } = frontLost(w, h, dv);
+        if (lost.length / front.length < v(doctrineOf(w, dv).defence?.commitReserveWhenLostFrac ?? d.defence.commitReserveWhenLostFrac)) continue;
+        const its = w.state.reserves.filter((x) => within(w, x.formationId, dv));
+        const committed = its.every((x) => w.topo.nodes.get(x.formationId)!.companies.every((id) => h.picture.units[id] !== undefined && h.picture.units[id]!.status !== 'off-map'));
+        if (!committed) continue;
+        commitReserves(w, h, own, dv, front, lost);
+        break;
+      }
+    }
+    goDivisional(w, fid, d, true);
   }
 }
 
-/** A division's planned counter-attack goes in once its reserves are there (all its off-map ones arrived, as its picture shows). */
-function goDivisional(w: Work, fid: string, d: Doctrine): void {
+/**
+ * A planned counter-attack goes in once its reserves are there (all its off-map ones arrived, as its picture shows): a
+ * division's with every reserve-role company of its own, an army's (`onlyReserves`) with the reserves it ordered. Its
+ * targets are the lost segments a counter-attack can reach (`reachable`); while those it cannot reach are all that is
+ * lost, it waits.
+ */
+function goDivisional(w: Work, fid: string, d: Doctrine, onlyReserves: boolean): void {
   const M = w.state.minute;
   const i = w.hqAt.get(fid)!;
   const h = w.state.hqs[i]!;
@@ -486,13 +571,16 @@ function goDivisional(w: Work, fid: string, d: Doctrine): void {
   const waited = w.state.reserves.filter((x) => plan.reserveIds.includes(x.formationId));
   // Its picture must show them there (Task 13): every company of each reserve it waits for reported on the map.
   if (waited.some((x) => x.status !== 'arrived' || !arrivalKnown(w.state, w.ctx, h, x.formationId))) return;
-  const targets = plan.segmentIds.filter((x) => h.picture.segments[x] !== h.side);
-  const force = free(w, h, fid, 'reserve');
-  if (targets.length === 0 || force.length === 0) {
+  const lostNow = plan.segmentIds.filter((x) => h.picture.segments[x] !== h.side);
+  const sent = new Set(plan.reserveIds.flatMap((x) => w.topo.nodes.get(x)!.companies));
+  const force = free(w, h, fid, 'reserve').filter((id) => !onlyReserves || sent.has(id));
+  if (lostNow.length === 0 || force.length === 0) {
     // Retaken already, or nobody to send (and no reserve on its way): nothing left to do.
     drop();
     return;
   }
+  const targets = lostNow.filter((x) => reachable(w, x));
+  if (targets.length === 0) return;
   const there = Math.max(plan.atMin, ...waited.map((x) => x.arriveMin ?? plan.atMin));
   const r = ratingsOf(w, fid);
   const f = delayFactor(r);
@@ -729,7 +817,7 @@ function operations(w: Work): void {
 
 // ---- scheduled minutes, and whether the command model has anything in hand -----------------------------------------
 
-const workOf = (state: SimState, ctx: StepContext): Work => ({ state, ctx, topo: topologyOf(state, ctx), hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map() });
+const workOf = (state: SimState, ctx: StepContext): Work => ({ state, ctx, topo: topologyOf(state, ctx), hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map(), reach: new Map() });
 
 /** The minutes lines will count as stalled at HQs with a reserve battalion to send. A decision moves nobody (its order does, on arrival). */
 export function stallChecks(state: SimState, ctx: StepContext): Scheduled[] {

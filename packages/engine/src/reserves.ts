@@ -9,7 +9,8 @@ import { delayFactor, leaderOf } from './leaders';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import type { SimState, StepContext } from './step';
-import type { HqState, ReserveState } from './types';
+import { distanceTo, segmentSamples } from './artillery';
+import type { HqState, Order, ReserveState, SegmentState } from './types';
 
 /*
  * Reserves off the map (spec 13.5): formations that start a set distance behind the front, off the map, until a
@@ -23,8 +24,11 @@ import type { HqState, ReserveState } from './types';
  *   there is no shell churn and no terrain), taken for the route as a whole as the mean of its value at the start of
  *   the march and at the arrival that value gives.
  * - `deployMin` is the time to get from column into line, before the reserve can be used.
- * At `arriveMin` its companies stand at its entry point, holding (`reserve-arrived`, cause `reserve-arrived`, refs its
- * `reserve-ordered`); from there the command model can send them like any other reserve.
+ * - The march off the map covers `distanceKm` less the part of it on the map: the distance from the entry point to the
+ *   nearest segment of the front it is sent to (`onMapKm`), which it walks on the map.
+ * At `arriveMin` its companies stand at its entry point (`reserve-arrived`, cause `reserve-arrived`, refs its
+ * `reserve-ordered`) and walk on at `marchKmPerHour` (the ground's speed factor on the map) to that segment, where they
+ * hold; from there the command model can send them like any other reserve.
  *
  * The scenario's historical order times and the historical arrival times are validation targets, never inputs: nothing
  * here, or anywhere in the engine, reads them. Every number is data: the doctrine's `common` march keys and `mudSpeedFactor`.
@@ -64,12 +68,17 @@ function ordererOf(ctx: StepContext, id: string): string {
 /** The march's weather: the mud of the past day's rain at the minute (no churn and no climb off the map). */
 const weatherAt = (w: World, minute: number): number => v(w.tables.effects.mudSpeedFactor) ** wetness(w, minute);
 
-/** When a reserve ordered at `orderedMin` starts its march and arrives, and the numbers behind it. */
-export function arrivalOf(r: Pick<ReserveState, 'formationId' | 'orderedBy'>, orderedMin: number, ctx: StepContext): { marchMin: number; arriveMin: number; factors: Record<string, number> } {
+/**
+ * When a reserve ordered at `orderedMin` starts its march and arrives at its entry point, and the numbers behind it. Its
+ * `distanceKm` runs from its billets to the front; the part of it on the map (`onMapKm`, from the entry point to the
+ * front it is sent to, set when it is ordered) it walks on the map, so the march off the map covers the rest.
+ */
+export function arrivalOf(r: Pick<ReserveState, 'formationId' | 'orderedBy' | 'onMapKm'>, orderedMin: number, ctx: StepContext): { marchMin: number; arriveMin: number; factors: Record<string, number> } {
   const k = doctrineOf(ctx, r.formationId).common;
   const delay = v(k.baseOrderDelayMin) * delayFactor(leaderOf(ctx.scenario, r.orderedBy ?? ordererOf(ctx, r.formationId), ctx.defaultsUsed));
   const marchMin = orderedMin + delay;
-  const km = v(indexOf(ctx.scenario).reserves.get(r.formationId)!.distanceKm);
+  const distanceKm = v(indexOf(ctx.scenario).reserves.get(r.formationId)!.distanceKm);
+  const km = Math.max(0, distanceKm - r.onMapKm);
   const kmh = v(k.marchKmPerHour);
   const atStart = weatherAt(ctx.world, marchMin);
   const weather = (atStart + weatherAt(ctx.world, marchMin + (km / (kmh * atStart)) * 60)) / 2;
@@ -78,13 +87,24 @@ export function arrivalOf(r: Pick<ReserveState, 'formationId' | 'orderedBy'>, or
   return {
     marchMin,
     arriveMin: marchMin + walk + deploy,
-    factors: { distanceKm: km, orderDelayMin: round(delay, 1), marchMin: round(walk, 1), deployMin: deploy, weather: round(weather, 3) },
+    factors: { distanceKm, onMapKm: round(r.onMapKm, 2), offMapKm: round(km, 2), orderDelayMin: round(delay, 1), marchMin: round(walk, 1), deployMin: deploy, weather: round(weather, 3) },
   };
 }
 
-/** A reserve ordered forward at minute M by headquarters `by` (command.ts), with its `reserve-ordered` event: when it will arrive. */
-export function orderReserve(r: ReserveState, ctx: StepContext, M: number, by: string, eventId: number): ReserveState {
-  const at = { ...r, orderedBy: by };
+/**
+ * A reserve ordered forward at minute M by headquarters `by` (command.ts), with its `reserve-ordered` event, to the front
+ * of segments `front` (the ones it may march to: the command model passes those its picture shows its side holding, or
+ * the whole front if none): it will walk on the map from its entry point to the nearest of them, and march the rest of
+ * its distance off the map; when it arrives at its entry point.
+ */
+export function orderReserve(r: ReserveState, state: SimState, ctx: StepContext, M: number, by: string, eventId: number, front: readonly SegmentState[]): ReserveState {
+  let to: SegmentState | null = null;
+  let d = Infinity;
+  for (const seg of front) {
+    const dd = distanceTo(segmentSamples(ctx, seg, state.companies), r.entryPoint);
+    if (dd < d) [to, d] = [seg, dd];
+  }
+  const at: ReserveState = { ...r, orderedBy: by, onMapKm: to ? d / 1000 : 0, toSegmentId: to ? to.id : null };
   return { ...at, status: 'ordered', orderedMin: M, orderedEventId: eventId, arriveMin: arrivalOf(at, M, ctx).arriveMin };
 }
 
@@ -111,11 +131,18 @@ function companiesOf(state: SimState, ctx: StepContext, id: string): string[] {
   return ids;
 }
 
-/** Whether an HQ's picture shows every company of a reserve formation off the march: on the map, or out of the fight there. */
+/** Statuses of a reserve's company still on its way: off the map, marching to its entry point, or walking on to the front. */
+const ON_ITS_WAY: ReadonlySet<string> = new Set(['off-map', 'marching', 'advancing']);
+
+/**
+ * Whether an HQ's picture shows every company of a reserve formation at the end of its march: at the front, or out of
+ * the fight on the way (an arrived reserve's companies walk on to the front as `advancing`, which the reserves never
+ * otherwise are).
+ */
 export function arrivalKnown(state: SimState, ctx: StepContext, h: HqState, formationId: string): boolean {
   return companiesOf(state, ctx, formationId).every((id) => {
     const u = h.picture.units[id];
-    return u !== undefined && u.status !== 'off-map' && u.status !== 'marching';
+    return u !== undefined && !ON_ITS_WAY.has(u.status);
   });
 }
 
@@ -156,16 +183,21 @@ export function marchReserves(state: SimState, ctx: StepContext): SimState {
       const [x, y] = r.entryPoint;
       let n = 0;
       let men = 0;
+      const eventId = state.nextEventId + events.length;
+      // On the map: at its entry point, deployed, walking on to the front it was sent to (movement.ts, a march order).
+      const march: Order | null =
+        r.toSegmentId === null ? null : { kind: 'march', target: { segmentId: r.toSegmentId }, fromFormationId: r.orderedBy ?? r.formationId, issuedMin: M, eventId };
       companies = companies.map((c) => {
         if ((c.status !== 'marching' && c.status !== 'off-map') || !ofReserve(c, r.formationId)) return c;
         n++;
         men += c.men;
-        return { ...c, x, y, startX: x, startY: y, status: 'holding', intent: 'hold', posture: 'prone' };
+        const placed = { ...c, x, y, startX: x, startY: y };
+        return march ? { ...placed, status: 'advancing', intent: 'march', posture: 'moving', orders: [...c.orders, march] } : { ...placed, status: 'holding', intent: 'hold', posture: 'prone' };
       });
       events.push({
         minute: M,
         kind: 'reserve-arrived',
-        text: `${infoOf(ctx, r.formationId).name} arrives: ${n} companies, ${men} men`,
+        text: `${infoOf(ctx, r.formationId).name} arrives: ${n} companies, ${men} men${r.toSegmentId ? `, marching on to ${r.toSegmentId}` : ''}`,
         causes: ['reserve-arrived'],
         refs: r.orderedEventId === null ? [] : [r.orderedEventId],
         factors: { ...a.factors, arriveMin: round(r.arriveMin!, 1), companies: n, men },

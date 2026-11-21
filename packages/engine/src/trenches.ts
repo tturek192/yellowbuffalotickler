@@ -91,6 +91,29 @@ export function inRear(seg: SegmentState, state: SimState, ctx: StepContext): bo
   return false;
 }
 
+/**
+ * Whether a segment lies behind a line its holder has taken and still holds (Task 13 ruling: a counter-attack cannot pass
+ * through an intact enemy line): all of its trench inside that line's sector is more than `lineFeatureMatchM` behind the
+ * line (on the attackers' side, lower x). A line lost again leaves `taken` (`loseLines`), and then the next line back
+ * counts. Segments at or in front of the holder's furthest taken line are not behind it. `takers`: each taken line's
+ * taker (`takerOf`), when the caller has them.
+ */
+export function behindTakenLine(seg: SegmentState, state: SimState, ctx: StepContext, takers?: ReadonlyMap<string, Side | null>): boolean {
+  if (state.taken.length === 0) return false;
+  const match = v(ctx.tables.effects.lineFeatureMatchM);
+  const pts = segmentSamples(ctx, seg, state.companies);
+  for (const key of state.taken) {
+    if ((takers ? takers.get(key) : takerOf(state, key)) !== seg.holder) continue;
+    const [lineId, sectorId] = key.split('|') as [string, string];
+    const line = ctx.lines.get(lineId);
+    const sector = ctx.scenario.sectors.find((x) => x.id === sectorId);
+    if (!line || !sector) continue;
+    const inSector = pts.filter((p) => p[1] >= sector.yMin && p[1] <= sector.yMax);
+    if (inSector.length > 0 && inSector.every((p) => p[0] < lineXAt(line, p[1]) - match)) return true;
+  }
+  return false;
+}
+
 // ---- segments changing hands --------------------------------------------------------------------------------
 
 /**

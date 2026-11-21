@@ -310,6 +310,13 @@ export type ReserveState = {
   entryPoint: Point;
   orderedBy: string | null;
   orderedEventId: number | null;
+  /**
+   * The front it is sent to (set when ordered): the segment it walks to on the map once arrived, and that walk's length
+   * in km from `entryPoint` (the part of `distanceKm` on the map, which the march off the map leaves out); null and 0
+   * until ordered, or with no front to go to.
+   */
+  toSegmentId: string | null;
+  onMapKm: number;
 };
 
 /**

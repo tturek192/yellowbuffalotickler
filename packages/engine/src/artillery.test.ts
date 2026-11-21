@@ -201,9 +201,9 @@ describe('artillery in the battle', () => {
 
   it('runs the full Vimy scenario with every fire source and ends as before', () => {
     const r = runScenario(vimy(), vimyDoctrines(), { seed: 1 });
-    // Ends on 9 April (Task 12: the command model's operations run it on to the Pimple, after 20:00, so no longer before
-    // minute 1000), well before the time cap.
-    expect(r.endMinute).toBeLessThan(1440);
+    // Ends well before the time cap (Task 12: the command model's operations run it on to the Pimple, after 20:00 on 9
+    // April; Task 13: the army's reserve divisions, arriving on 9 April, fight on into 10 April).
+    expect(r.endMinute).toBeLessThan(2880);
     expect(ofKind(r, 'shelled').some((e) => e.causes.includes('defensive-barrage'))).toBe(true);
     for (const id of companyIds(r)) expect(new Set(totalsOverTime(r, id))).toHaveLength(1);
     // A whole Vimy run (to minute ~900 since Task 12's operations) plus loading: more than vitest's 5 s default under a

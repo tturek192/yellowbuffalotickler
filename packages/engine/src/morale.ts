@@ -8,7 +8,7 @@ import { CAUSES } from './causes';
 import { byId } from './companies';
 import type { CompanyState, CompanyStatus } from './companies';
 import { lineXAt } from './geometry';
-import { counterAttackOrder } from './movement';
+import { counterAttackOrder, marchOrder } from './movement';
 import { round } from './record';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
@@ -182,6 +182,8 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
       // It goes on: a company pinned on its way to counter-attack takes it up again (Task 12, the Task 9 carry); else back
       // to its trench if it is at its objective, else on toward it.
       if (counterAttackOrder(c)) return { ...moved, status: 'counter-attacking', intent: 'counter-attack', posture: 'moving' };
+      // So does an arrived reserve pinned on its way to its front (Task 13).
+      if (marchOrder(c)) return { ...moved, status: 'advancing', intent: 'march', posture: 'moving' };
       const line = ctx.scenario.lines.find((l) => l.id === c.objectiveLineId);
       const at = line !== undefined && lineXAt(line.points, c.y) - c.x <= 1;
       return { ...moved, status: at ? 'consolidating' : 'advancing', intent: at ? 'hold' : 'advance', posture: at ? 'in-trench' : 'moving' };

@@ -110,7 +110,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
 function initReserves(s: Scenario): ReserveState[] {
   return s.reserves.map((r) => {
     if (!Array.isArray(r.entryPoint)) throw new Error(`Reserve ${r.formationId}: entryPoint was not projected to a local point`);
-    return { formationId: r.formationId, side: r.side, status: 'waiting', orderedMin: null, arriveMin: null, entryPoint: [r.entryPoint[0], r.entryPoint[1]], orderedBy: null, orderedEventId: null };
+    return { formationId: r.formationId, side: r.side, status: 'waiting', orderedMin: null, arriveMin: null, entryPoint: [r.entryPoint[0], r.entryPoint[1]], orderedBy: null, orderedEventId: null, toSegmentId: null, onMapKm: 0 };
   });
 }
 

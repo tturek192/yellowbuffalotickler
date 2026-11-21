@@ -46,6 +46,12 @@ export const placeAttackOrder = (c: Pick<CompanyState, 'orders'>): Targeted | nu
   return o?.kind === 'attack' && o.target !== undefined && !('lineId' in o.target) ? (o as Targeted) : null;
 };
 
+/** The march order a reserve's company holds on the map (Task 13: from its entry point to its front), if its latest order is one. */
+export const marchOrder = (c: Pick<CompanyState, 'orders'>): Targeted | null => {
+  const o = c.orders.at(-1);
+  return o?.kind === 'march' && o.target !== undefined ? (o as Targeted) : null;
+};
+
 /** The latest order of a company, if it is an attack or counter-attack with a target whose minute to go has come (Task 12). */
 function dueOrder(c: CompanyState, minute: number): Targeted | null {
   const o = c.orders.at(-1);
@@ -67,7 +73,8 @@ function takeUp(c: CompanyState, o: Targeted, minute: number): CompanyState {
 
 /**
  * The intent of a company this step:
- * - pinned: go to ground; falling back: fall back; counter-attacking: counter-attack; marching: march;
+ * - pinned: go to ground; falling back: fall back; counter-attacking: counter-attack; marching (off the map), or
+ *   advancing on a march order (an arrived reserve on its way to its front, Task 13): march;
  * - holding, surrendered, destroyed or off the map: hold;
  * - consolidating at its objective: mop up if it can (dugouts near it in a segment its side holds, and bombs), else hold;
  * - waiting or advancing: advance (toward its objective line; a company with none holds), except that a `mopup`
@@ -92,7 +99,7 @@ function intentOf(c: CompanyState, state: SimState, ctx: StepContext): Intent {
       return canMopUp(state, ctx, c) ? 'mop-up' : 'hold';
     case 'waiting':
     case 'advancing':
-      if (c.objectiveLineId === undefined) return placeAttackOrder(c) ? 'advance' : 'hold';
+      if (c.objectiveLineId === undefined) return placeAttackOrder(c) ? 'advance' : marchOrder(c) ? 'march' : 'hold';
       return c.role === 'mopup' && c.status === 'advancing' && canMopUp(state, ctx, c) ? 'mop-up' : 'advance';
   }
 }
@@ -282,7 +289,9 @@ function targetPoint(c: CompanyState, target: OrderTarget, state: SimState, ctx:
  *   lost its barrage); otherwise it is advancing, in the open (posture moving, wire or not);
  * - fall back: toward its start point, uncapped by the barrage and without wire; back there it is in its trench;
  * - counter-attack: toward its order's target; within `captureRadiusM` of it, it holds there, in the trench;
- * - go to ground (pinned), mop up, hold and march: no move.
+ * - march (an arrived reserve on the map, Task 13): toward its order's segment at marchKmPerHour; within
+ *   `captureRadiusM` of it, it holds there, in the trench;
+ * - go to ground (pinned), mop up, hold and march off the map: no move.
  * Then fatigue (on the field, not in dugouts): + fatiguePerKm per km moved, + fatiguePerHourUnderFire × dt/60 when fire
  * came in this step; at rest with no fire, − fatigueRecoveryPerHour × dt/60; held to 0–1.
  */
@@ -335,6 +344,20 @@ export function moveCompanies(state: SimState, ctx: StepContext, dt: number, pen
           events.push({ minute: state.minute, kind: 'company-reached', ...(c.sectorId ? { sectorId: c.sectorId } : {}), unitId: c.id, text: `${c.name} reaches ${name}`, causes });
           next = { ...c, x: r.p[0], y: r.p[1], status: 'consolidating', posture: 'in-trench', reached: { eventId, causes }, orders: c.orders.filter((o) => o !== order) };
         } else next = { ...c, x: r.p[0], y: r.p[1], status: 'advancing', posture: 'moving' };
+      }
+    } else if (c.intent === 'march' && c.status === 'advancing') {
+      // An arrived reserve walking on to its front (Task 13): at its doctrine's marchKmPerHour, slowed by the ground; at
+      // the segment (within captureRadiusM) it holds there, in the trench, its order done.
+      const order = marchOrder(c);
+      const to = order && targetPoint(c, order.target, state, ctx);
+      if (!order || !to) next = dropOrder(c, order, state.minute, events);
+      else {
+        const r = toward(c, to, (v(ctx.doctrines[c.doctrineId]!.common.marchKmPerHour) * 1000) / 60, dt, wet, ctx);
+        moved = r.moved;
+        next =
+          Math.hypot(to[0] - r.p[0], to[1] - r.p[1]) <= captureR
+            ? { ...c, x: r.p[0], y: r.p[1], status: 'holding', intent: 'hold', posture: 'in-trench', orders: c.orders.filter((o) => o !== order) }
+            : { ...c, x: r.p[0], y: r.p[1], posture: 'moving' };
       }
     } else if (c.intent === 'fall-back') {
       const r = toward(c, [c.startX, c.startY], ownSpeed(c, ctx), dt, wet, ctx);

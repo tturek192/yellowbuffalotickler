@@ -643,12 +643,19 @@ export type CounterOpts = {
   divOrderSpeed?: number;
   /** An off-map reserve battalion `gres` of the division, entering at x 2500 (with divOrderSpeed). */
   offMapReserve?: boolean;
+  /**
+   * The attackers' objective (Task 13): by default the Front Line (`frontline`, x 250, 100 m beyond the trench at x 150, so
+   * that trench lies at the line they take and a counter-attack may go for it); `black`: the Black Line (x 1150), so the
+   * trench lies behind the taken line, which no counter-attack passes while it holds.
+   */
+  objective?: 'frontline' | 'black';
 };
 
 /**
  * German counter-attacks: fixtureArtillery (the barrage traps k1 and k2 on `ger-front-a` and c1 and c2 take their
- * segments at once, then the Black Line at minute 32, so the trench at x 150 lies behind a taken line), with the German
- * reserve company kr (300 men) at x 600, y 100. Channels: runner (failPerHour, delayMin), every other 10 minutes and
+ * segments at once; then they take the Front Line `frontline` at x 250, the trench at x 150 lying at it, or with
+ * `objective: 'black'` the Black Line at minute 32, the trench then behind it), with the German
+ * reserve company kr (1,000 men, 3 to 1 over the attackers holding the Front Line; 300 with the Black Line) at x 600, y 100. Channels: runner (failPerHour, delayMin), every other 10 minutes and
  * sure; the German side has no communications links, so every German message goes by runner. Defence values:
  * localCounterAttackDelayMin 5, divisionalCounterAttackDelayMin 30, counterAttackMinRatio 0.75,
  * commitReserveWhenLostFrac 0.25, counterAttackMinMen 35, counterAttackRetryMin 60; counterAttackConsolidateMin 60,
@@ -656,7 +663,12 @@ export type CounterOpts = {
  */
 export function fixtureCounter(o: CounterOpts = {}): [Scenario, Models] {
   const [s, m] = fixtureArtillery();
-  const kr = { id: 'kr', name: 'Reserve-Kompanie', role: 'reserve' as const, strength: est(300), start: [600, 100] as [number, number] };
+  if ((o.objective ?? 'frontline') === 'frontline') {
+    s.lines.push({ id: 'frontline', name: 'Front Line', kind: 'objective', color: '#555555', points: [[250, 0], [250, 400]] });
+    for (const c of s.forces[0]!.formations[0]!.companies!) c.objectiveLineId = 'frontline';
+  }
+  // At the Front Line the attackers holding it (300 men within lineFeatureMatchM) defend the trench: kr needs 3 to 1.
+  const kr = { id: 'kr', name: 'Reserve-Kompanie', role: 'reserve' as const, strength: est(o.objective === 'black' ? 300 : 1000), start: [600, 100] as [number, number] };
   const reg = s.forces[1]!.formations[0]!;
   if (o.divOrderSpeed === undefined) reg.companies!.push(kr);
   else {
@@ -690,6 +702,13 @@ export type ReserveOpts = {
   divOrderSpeed?: number;
   /** Weather: rain over the 24 hours before Zero and all through the battle (default dry). */
   rain?: boolean;
+  /** gres's entry point x (default 2500; y 200). */
+  entryX?: number;
+  /**
+   * Put the German division gd under an army `ga` (leader `al`, this orderSpeed) with an army reserve: the division `ares`,
+   * no battalions (battalionsPerDivision 1 for it: four companies), 20 km back, entering at (2500, 300).
+   */
+  armyOrderSpeed?: number;
 };
 
 /**
@@ -709,9 +728,15 @@ export function fixtureReserves(o: ReserveOpts = {}): [Scenario, Models] {
     gres.companies = [1, 2].map((n) => ({ id: `gres-${n}`, name: `Ruhe-Kompanie ${n}`, role: 'reserve' as const, strength: est(100), start: [3000, 100 * n] as [number, number] }));
   }
   if (o.rain) s.weather = [{ at: '1916-06-30T00:00', precipitation: { value: 'rain', estimate: 'test' } }];
+  if (o.entryX !== undefined) r.entryPoint = [o.entryX, 200];
+  if (o.armyOrderSpeed !== undefined) {
+    s.forces[1]!.formations = [{ id: 'ga', name: 'German Army', kind: 'army', leaderId: 'al', children: [...s.forces[1]!.formations, { id: 'ares', name: 'Reserve Division', kind: 'division' }] }];
+    rateLeader(s, 'al', { orderSpeed: o.armyOrderSpeed });
+    s.reserves.push({ formationId: 'ares', side: 'central', distanceKm: est(20), entryPoint: [2500, 300] });
+  }
   const de = m.doctrines['de-1917']!;
   de.common = { ...de.common, baseOrderDelayMin: param(15), marchKmPerHour: param(4), deployMin: param(30) };
-  de.companyDefaults = { ...de.companyDefaults, companiesPerBattalion: param(4), battalionsPerDivision: param(9), strength: param(150), officers: param(3), lewisGuns: param(1), machineGuns: param(1.5) };
+  de.companyDefaults = { ...de.companyDefaults, companiesPerBattalion: param(4), battalionsPerDivision: param(o.armyOrderSpeed === undefined ? 9 : 1), strength: param(150), officers: param(3), lewisGuns: param(1), machineGuns: param(1.5) };
   (m.tables.effects as Record<string, unknown>).mudSpeedFactor = param(0.6);
   return [s, m];
 }

@@ -298,7 +298,7 @@ describe('the command model', () => {
     expect(missions[0]!.refs).toEqual([firstOf(r, 'order-issued')!.id]);
   });
 
-  it('a local counter-attack: the reserve company goes in localCounterAttackDelayMin after the loss is known, and retakes the trench behind the taken line', () => {
+  it('a local counter-attack: the reserve company goes in localCounterAttackDelayMin after the loss is known, and retakes the trench at the taken line', () => {
     const r = runStates(fixtureCounter(), { endMinute: 300 });
     const e = firstOf(r, 'counter-attack-ordered')!;
     expect(e.causes).toEqual(['ground-lost']);
@@ -307,14 +307,16 @@ describe('the command model', () => {
     // kr starts once formed up (and once the runner has brought it the order).
     const going = r.states.find((s) => s.companies.find((c) => c.id === 'kr')!.status === 'counter-attacking')!;
     expect(going.minute).toBeGreaterThanOrEqual(e.minute + 5);
-    // The trench was behind the attackers' taken Black Line with nobody holding it, and the men who had come up out of its
-    // dugouts behind the attackers could not retake it on their own (the rear rule): the ordered counter-attack does, when
-    // kr gets there (with them: 300 + 58 men).
+    // The trench was at the attackers' taken Front Line, held by the men on that line, and the men who had come up out of
+    // its dugouts behind the attackers could not retake it on their own (the rear rule): the ordered counter-attack does,
+    // when kr gets there (with them: 1,000 + 58 men against the 300 on the line), and the Front Line is lost.
     const there = r.states.find((s) => s.companies.find((c) => c.id === 'kr')!.intent === 'counter-attack' && s.companies.find((c) => c.id === 'kr')!.status === 'holding')!;
     const retaken = there.events.find((x) => x.kind === 'segment-retaken')!;
     expect(retaken.segmentId).toBe(e.segmentId);
-    expect(retaken.factors!.attackers).toBeGreaterThanOrEqual(300);
-    expect(r.states.some((s) => s.taken.includes('black|s1') && s.minute < there.minute && s.segments.find((x) => x.id === e.segmentId)!.holder === 'allied')).toBe(true);
+    expect(retaken.factors!.attackers).toBeGreaterThanOrEqual(1000);
+    expect(retaken.factors!.defenders).toBe(300);
+    expect(r.states.some((s) => s.taken.includes('frontline|s1') && s.minute < there.minute && s.segments.find((x) => x.id === e.segmentId)!.holder === 'allied')).toBe(true);
+    expect(there.events.find((x) => x.kind === 'line-lost')).toMatchObject({ lineId: 'frontline' });
     expect(eventsOf(r).filter((x) => x.kind === 'segment-retaken' && x.minute < there.minute)).toEqual([]);
     // The retake explains itself: an ordered counter-attack, with a ref to the decision.
     expect(retaken.causes).toContain('counter-attack');
@@ -322,6 +324,38 @@ describe('the command model', () => {
     // The order lapses the step after: kr holds there.
     const next = r.states[r.states.indexOf(there) + 1]!.companies.find((c) => c.id === 'kr')!;
     expect([next.status, next.intent, next.orders]).toEqual(['holding', 'hold', []]);
+  });
+
+  it('a counter-attack cannot pass through an intact enemy line: none goes for a trench behind the taken Black Line until the line is lost', () => {
+    // fixtureCounter with the Black Line as the attackers' objective, and a German trench on it (k3, 20 men, x 1150): c1 and c2
+    // take ger-front-a (x 150) and then the Black Line with k3's trench, so ger-front-a lies 1,000 m behind a taken line.
+    const f = withRearTrench(fixtureCounter({ objective: 'black' }), 1150, 'k3');
+    f[0].forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!.strength = est(20);
+    const r = runStates(f, { endMinute: 120 });
+    const s = r.states.find((x) => x.taken.includes('black|s1'))!;
+    expect(s).toBeDefined();
+    // Once the Black Line is taken, no counter-attack is ordered on ger-front-a (one ordered before it was is the old picture's).
+    expect(r.states.flatMap((x) => x.events).filter((e) => e.kind === 'counter-attack-ordered' && e.minute > s.minute && e.segmentId!.startsWith('ger-front-a'))).toEqual([]);
+    const front = s.segments.find((x) => x.id === 'ger-front-a:001')!.id;
+    const black = s.segments.find((x) => x.featureId === 'ger-rear-k3')!.id;
+    // rir262 knows ger-front-a:001 lost and holds k3's trench again, with kr free to send.
+    const decide = (st: SimState) => {
+      const hqs = st.hqs.map((h) =>
+        h.formationId !== 'rir262'
+          ? h
+          : { ...h, picture: { ...h.picture, segments: { ...h.picture.segments, [front]: 'allied' as const, [black]: 'central' as const }, segmentsAt: { [front]: 4 }, enemy: { [front]: { men: 0, atMin: 4 } }, units: { ...h.picture.units, kr: { status: 'holding', men: 300, atMin: st.minute } } } },
+      );
+      const free = { ...st, events: [], hqs, command: { ...st.command, ordered: {}, counterAttacks: {} }, companies: st.companies.map((c) => (c.id === 'kr' ? { ...c, status: 'holding' as const, orders: [] } : c)) };
+      return commandPhase({ ...free, minute: st.minute + 2 }, r.ctx, 2).events.filter((e) => e.kind === 'counter-attack-ordered');
+    };
+    // While the Black Line holds: nothing, though its picture shows the trench lost and kr free.
+    expect(decide(s)).toEqual([]);
+    // k3's trench back in German hands: the Black Line is lost (line-lost), and the trench behind it can be got at.
+    const retook = { ...s, events: [], segments: s.segments.map((x) => (x.id === black ? { ...x, holder: 'central' as const } : x)) };
+    const lost = takeLines(retook, r.ctx);
+    expect(lost.events.map((e) => e.kind)).toContain('line-lost');
+    expect(lost.taken).not.toContain('black|s1');
+    expect(decide(lost).map((e) => e.segmentId)).toEqual([front]);
   });
 
   it('German counter-attack odds depend on whether the attacker has consolidated', () => {
@@ -358,17 +392,19 @@ describe('the command model', () => {
     expect(after.hqs.find((h) => h.formationId === 'gd')!.pending.map((p) => p.kind)).toEqual(['divisional-counter-attack']);
     // The reserve marches (reserves.ts: 8 km at the fixture's 1 km/h); until it arrives the counter-attack waits.
     expect(firstOf(r, 'counter-attack-ordered')).toBeUndefined();
-    // With the repository's march values it arrives at 225 (60 + 15 + 120 + 30); once the division's picture shows its
-    // companies there, it sends its reserve companies in, divisionalCounterAttackDelayMin (30) after the arrival or at once.
+    // With the repository's march values it arrives at its entry point at 60 + 15 + (8 − onMapKm) / 4 · 60 + 30 and walks on
+    // to the division's front; once the division's picture shows its companies there, it sends its reserve companies in,
+    // divisionalCounterAttackDelayMin (30) after the arrival or at once.
     const run = runStates(fixtureReserves(), { endMinute: 400 });
     const ordered = firstOf(run, 'reserve-ordered')!;
     const arrived = firstOf(run, 'reserve-arrived')!;
-    expect(arrived.factors!.arriveMin).toBe(225);
+    const at = ordered.minute + 15 + ((8 - arrived.factors!.onMapKm!) / 4) * 60 + 30;
+    expect(arrived.factors!.arriveMin).toBeCloseTo(at, 0);
     const go = firstOf(run, 'counter-attack-ordered')!;
     expect(go.minute).toBeGreaterThan(arrived.minute);
     const known = run.states.find((x) => x.minute === go.minute)!.hqs.find((h) => h.formationId === 'gd')!;
     expect(['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4'].every((id) => known.picture.units[id]!.status === 'holding')).toBe(true);
-    expect(go.factors!.goAtMin).toBe(Math.max(go.minute, 225 + 30));
+    expect(go.factors!.goAtMin).toBeCloseTo(Math.max(go.minute, at + 30), 0);
     expect(go.text).toMatch(/by 5 companies/);
     expect(go.refs).toContain(ordered.id);
   });

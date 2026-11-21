@@ -44,9 +44,9 @@ describe('defaults', () => {
 
   it('the full Vimy scenario runs with the repository tables and ends early, with movement only', () => {
     const r = runScenario(vimy(), vimyDoctrines(), { seed: 1 });
-    // Ends on 9 April (Task 12: the command model's operations run it on to the Pimple, after 20:00, so no longer before
-    // minute 1000), well before the time cap.
-    expect(r.endMinute).toBeLessThan(1440);
+    // Ends well before the time cap (Task 12: the command model's operations run it on to the Pimple, after 20:00 on 9
+    // April; Task 13: the army's reserve divisions, arriving on 9 April, fight on into 10 April).
+    expect(r.endMinute).toBeLessThan(2880);
     expect(r.summary.lineTaken.length).toBeGreaterThan(0);
     // A whole Vimy run plus loading (see artillery.test.ts).
   }, 30_000);
