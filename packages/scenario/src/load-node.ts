@@ -8,6 +8,8 @@ import { mergeScenarioParts, locateProblem } from './include';
 import { FrameSchema, projectLonLatPlacements, type Frame } from './frame';
 import { terrainGridProblem, type TerrainGrid } from './terrain';
 import { TablesSchema, type Tables } from './tables';
+import { SourcesSchema } from './schema';
+import { collectSourceRefs } from './references';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
 
 const fmt = (n: number): string => String(Math.round(n * 10) / 10);
@@ -163,6 +165,8 @@ export function loadScenario(
  * `weapons`, `cover`, `channels` and `effects` sections; one entry (a weapon id, a cover posture, a channel
  * kind, an effect key) may be defined in one file only. Problems name the file that defined the entry.
  */
+const TABLE_SECTIONS = ['sources', 'weapons', 'cover', 'channels', 'effects'];
+
 export function loadTables(dir: string): Tables {
   let files: string[];
   try {
@@ -186,6 +190,10 @@ export function loadTables(dir: string): Tables {
       continue;
     }
     for (const [section, entries] of Object.entries(data)) {
+      if (!TABLE_SECTIONS.includes(section)) {
+        problems.push(`${file}: ${section}: unknown section (expected ${TABLE_SECTIONS.join(', ')})`);
+        continue;
+      }
       if (!entries || typeof entries !== 'object' || Array.isArray(entries)) {
         problems.push(`${file}: ${section}: expected a mapping`);
         continue;
@@ -202,11 +210,26 @@ export function loadTables(dir: string): Tables {
       }
     }
   }
-  const r = TablesSchema.safeParse(merged);
+  const { sources = {}, ...model } = merged;
+  const sourcesParsed = SourcesSchema.safeParse(sources);
+  if (!sourcesParsed.success) {
+    for (const i of sourcesParsed.error.issues) {
+      const file = owner.get(`sources.${String(i.path[0])}`);
+      problems.push(`${file ? `${file}: ` : ''}sources.${i.path.join('.')}: ${i.message}`);
+    }
+  }
+  for (const ref of collectSourceRefs(model, '')) {
+    if (!(ref.id in sources)) {
+      const file = owner.get(ref.path.split('.').slice(0, 2).join('.'));
+      problems.push(`${file ? `${file}: ` : ''}${ref.path}: unknown source "${ref.id}"`);
+    }
+  }
+  const r = TablesSchema.safeParse(model);
   if (!r.success) {
     for (const i of r.error.issues) {
       const path = i.path.reduce<string>((a, p) => (typeof p === 'number' ? `${a}[${p}]` : a ? `${a}.${String(p)}` : String(p)), '');
-      const file = owner.get(i.path.slice(0, 2).join('.'));
+      const keyPaths = i.code === 'unrecognized_keys' ? i.keys.map((k) => [...i.path, k].join('.')) : [i.path.slice(0, 2).join('.')];
+      const file = keyPaths.map((k) => owner.get(k)).find((f) => f !== undefined);
       problems.push(`${file ? `${file}: ` : ''}${path || '(root)'}: ${i.message}`);
     }
   }

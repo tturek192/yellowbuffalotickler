@@ -72,6 +72,33 @@ describe('scenario v3', () => {
   });
 });
 
+describe('scenario v3 strictness', () => {
+  it('a misspelled key in a v3 section fails instead of being dropped', () => {
+    const op: any = { ...opWithPrereq('black', 's1') };
+    op.prerequisit = op.prerequisite;
+    delete op.prerequisite;
+    expect(() => ScenarioSchema.parse(minimalScenarioV3({ operations: [op] }))).toThrow(/prerequisit/);
+    expect(() => ScenarioSchema.parse(minimalScenarioV3({ end: { keyGround: [], lullMin: e(1), lulMin: 1 } as any }))).toThrow(/lulMin/);
+  });
+  it('a misspelled key on a company or an artillery entry fails', () => {
+    const s: any = minimalScenarioV3();
+    s.forces[0].formations[0].companies[0].machineGun = e(1);
+    expect(() => ScenarioSchema.parse(s)).toThrow(/machineGun/);
+    const a: any = minimalScenarioV3();
+    a.artillery[0].ammo = e(1);
+    expect(() => ScenarioSchema.parse(a)).toThrow(/ammo/);
+  });
+  it('the error names the file and path through the loader', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'v3s-'));
+    mkdirSync(join(dir, 'doctrine'));
+    writeFileSync(join(dir, 'doctrine', 'bef-1917.yaml'), toYaml(minimalDoctrineV2()));
+    const s: any = minimalScenarioV3({ end: { keyGround: [], lullMin: e(1) } });
+    s.end.lulMin = 1;
+    writeFileSync(join(dir, 'scenario.yaml'), toYaml(s));
+    expect(() => loadScenario(join(dir, 'scenario.yaml'), join(dir, 'doctrine'))).toThrow(/scenario\.yaml: end: .*lulMin/);
+  });
+});
+
 describe('scenario v3 files', () => {
   const write = (artilleryPos: unknown) => {
     const dir = mkdtempSync(join(tmpdir(), 'v3-'));

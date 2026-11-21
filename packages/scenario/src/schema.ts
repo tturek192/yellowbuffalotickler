@@ -62,7 +62,7 @@ const LonLat = z.tuple([z.number(), z.number()]);
 /** A local point, or a lon/lat pair that the node loader projects with the scenario frame. */
 const PlacedPoint = z.union([PointSchema, z.object({ lonLat: LonLat })]);
 
-const CompanyBase = z.object({
+const CompanyBase = z.strictObject({
   id: z.string(),
   name: z.string(),
   /** Effective strength at Zero. */
@@ -134,7 +134,7 @@ const ReserveSchema = z.object({
   note: z.string().optional(),
 });
 
-const ArtillerySchema = z.object({
+const ArtillerySchema = z.strictObject({
   id: z.string(),
   side: Side,
   formationId: z.string().optional(),
@@ -156,54 +156,54 @@ const WeatherSchema = z.object({
   tempC: sourced(z.number()).optional(),
 });
 
-const LineSector = z.object({ lineId: z.string(), sectorId: z.string() });
-const YBand = z.object({ yMin: z.number(), yMax: z.number() });
+const LineSector = z.strictObject({ lineId: z.string(), sectorId: z.string() });
+const YBand = z.strictObject({ yMin: z.number(), yMax: z.number() });
 
-const BombardmentSchema = z.object({
+const BombardmentSchema = z.strictObject({
   from: sourced(LocalDateTimeSchema),
   allocations: z.array(
-    z.object({ artilleryId: z.string(), task: z.enum(['wire', 'trench', 'battery', 'harass']), rounds: Count }),
+    z.strictObject({ artilleryId: z.string(), task: z.enum(['wire', 'trench', 'battery', 'harass']), rounds: Count }),
   ),
   spared: z.array(YBand.extend({ featureId: z.string(), reason: sourced(z.string()) })),
   wire: z.array(YBand.extend({ featureId: z.string(), beltDepthM: sourced(z.number().positive()) })),
 });
 
-const CommunicationsSchema = z.object({
+const CommunicationsSchema = z.strictObject({
   links: z.array(
-    z.object({ side: Side, from: z.enum(FORMATION_KINDS), to: z.enum(FORMATION_KINDS), channels: z.array(z.enum(CHANNEL_KINDS)) }),
+    z.strictObject({ side: Side, from: z.enum(FORMATION_KINDS), to: z.enum(FORMATION_KINDS), channels: z.array(z.enum(CHANNEL_KINDS)) }),
   ),
-  liaison: z.array(z.object({ side: Side, formationId: z.string(), note: sourced(z.string()) })).optional(),
+  liaison: z.array(z.strictObject({ side: Side, formationId: z.string(), note: sourced(z.string()) })).optional(),
 });
 
 /** The written plan's contingent phases; the engine decides whether and when they run. */
-const OperationSchema = z.object({
+const OperationSchema = z.strictObject({
   id: z.string(),
   side: Side,
   formationId: z.string(),
   kind: z.enum(['attack', 'counter-attack']),
-  target: z.union([LineSector, z.object({ featureId: z.string() })]),
+  target: z.union([LineSector, z.strictObject({ featureId: z.string() })]),
   prerequisite: LineSector.optional(),
   notBefore: LocalDateTimeSchema.optional(),
   plan: sourced(z.string()),
 });
 
-const OffMapSchema = z.object({
+const OffMapSchema = z.strictObject({
   fire: z.array(
-    z.object({
+    z.strictObject({
       id: z.string(),
       side: Side,
       weapon: z.string(),
       guns: Count,
       window: Window,
       target: z.union([
-        z.object({ featureId: z.string() }),
-        z.object({ yMin: z.number(), yMax: z.number(), xMin: z.number(), xMax: z.number() }),
+        z.strictObject({ featureId: z.string() }),
+        z.strictObject({ yMin: z.number(), yMax: z.number(), xMin: z.number(), xMax: z.number() }),
       ]),
       cite: sourced(z.string()),
     }),
   ),
   attacks: z.array(
-    z.object({
+    z.strictObject({
       id: z.string(),
       side: Side,
       name: z.string(),
@@ -268,10 +268,10 @@ export const ScenarioSchema = z.object({
   communications: CommunicationsSchema.optional(),
   operations: z.array(OperationSchema).optional(),
   offMap: OffMapSchema.optional(),
-  air: z.object({ superiority: z.union([Side, z.literal('contested')]), observedFrac: sourcedOrDisputed(z.number().min(0).max(1)) }).optional(),
+  air: z.strictObject({ superiority: z.union([Side, z.literal('contested')]), observedFrac: sourcedOrDisputed(z.number().min(0).max(1)) }).optional(),
   end: z
-    .object({
-      keyGround: z.array(z.object({ id: z.string(), name: z.string(), featureId: z.string() })),
+    .strictObject({
+      keyGround: z.array(z.strictObject({ id: z.string(), name: z.string(), featureId: z.string() })),
       lullMin: sourced(z.number().positive()),
     })
     .optional(),

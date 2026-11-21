@@ -39,6 +39,7 @@ export function initCompanies(
       if (!Array.isArray(c.start)) throw new Error(`Company ${c.id}: start was not projected to a local point`);
       const holding = c.role === 'garrison' || c.role === 'reserve';
       // Holding companies draw nothing from the rng, so adding them leaves the attackers' timing unchanged.
+      if (!holding && !d.attack) throw new Error(`Doctrine "${doctrineId}" has no attack block, but company ${c.id} attacks`);
       const startMin = holding ? 0 : (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.attack!.startJitterMin);
       const speedMPerMin = holding ? 0 : v(d.attack!.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.attack!.speedJitterFrac));
       out.push({

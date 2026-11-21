@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Sourced } from './sourced';
+import type { Sourced, Disputed } from './sourced';
 
 /**
  * A model number held as data: sourced, or an estimate, always with a plain-language description.
@@ -29,8 +29,8 @@ export function paramOf<S extends z.ZodTypeAny>(inner: S) {
       }
     });
 }
-/** A model number: sourced or an estimate, with a description; `calibrated` only with an estimate. */
-export type Param = Sourced<number> & { description: string; calibrated?: true };
+/** A model number: sourced or an estimate (never disputed), with a description; `calibrated` only with an estimate. */
+export type Param = Exclude<Sourced<number>, Disputed<number>> & { description: string; calibrated?: true };
 export const ParamSchema = paramOf(z.number()) as unknown as z.ZodType<Param>;
 
 /**
@@ -96,7 +96,7 @@ export type Weapon = z.infer<typeof WeaponSchema>;
 const keyed = <K extends string, V extends z.ZodTypeAny>(keys: readonly K[], value: V) =>
   z.object(Object.fromEntries(keys.map((k) => [k, value]))).strict() as unknown as z.ZodType<Record<K, z.infer<V>>>;
 
-export const TablesSchema = z.object({
+export const TablesSchema = z.strictObject({
   weapons: z.record(z.string(), WeaponSchema),
   cover: keyed(POSTURES, keyed(GROUNDS, ParamSchema)),
   channels: keyed(CHANNEL_KINDS, z.object({ delayMin: ParamSchema, failPerHour: ParamSchema }).strict()),

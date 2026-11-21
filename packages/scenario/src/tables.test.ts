@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, expectTypeOf } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { stringify } from 'yaml';
-import { ParamSchema, TablesSchema, EFFECT_KEYS } from './tables';
+import { ParamSchema, type Param, TablesSchema, EFFECT_KEYS } from './tables';
 import { loadTables } from './load-node';
 import { minimalTables } from './test-fixtures';
 
@@ -52,5 +52,36 @@ describe('tables', () => {
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, 'w.yaml'), stringify({ weapons: { x: { kind: 'laser' } } }));
     expect(() => loadTables(dir)).toThrow(/w\.yaml: weapons\.x/);
+  });
+  const dirWith = (files: Record<string, unknown>) => {
+    const dir = mkdtempSync(join(tmpdir(), 'tables-x-'));
+    for (const [f, data] of Object.entries(files)) writeFileSync(join(dir, f), stringify(data));
+    return dir;
+  };
+  it('rejects an unknown section, naming the file', () => {
+    expect(() => loadTables(dirWith({ 'effects.yaml': { effcts: {} } }))).toThrow(/effects\.yaml: effcts: unknown section/);
+  });
+  it('rejects an unknown entry in a section, naming the file', () => {
+    expect(() => loadTables(dirWith({ 'e.yaml': { effects: { captureRatioo: minimalTables().effects.captureRatio } } }))).toThrow(/e\.yaml: effects: .*captureRatioo/);
+  });
+  it('merges sources blocks, and a duplicate source id names both files', () => {
+    const src = { 'nich': { title: 'Nicholson', tier: 'official' } };
+    expect(() => loadTables(dirWith({ 'a.yaml': { sources: src }, 'b.yaml': { sources: src } }))).toThrow(/sources\.nich.*a\.yaml.*b\.yaml/);
+  });
+  it('rejects a param whose source id is not registered, naming file and path', () => {
+    const { rpm, ...rest } = minimalTables().weapons['18pdr'];
+    const w = { ...rest, rpm: { value: 4, source: 'ghost', description: 'd' } };
+    expect(() => loadTables(dirWith({ 'w.yaml': { weapons: { '18pdr': w } } }))).toThrow(/w\.yaml: weapons\.18pdr\.rpm\.source: unknown source "ghost"/);
+  });
+  it('accepts a registered source in another file', () => {
+    const { rpm, ...rest } = minimalTables().weapons['18pdr'];
+    const w = { ...rest, rpm: { value: 4, source: 'nich', description: 'd' } };
+    const dir = dirWith({ 'a.yaml': { sources: { nich: { title: 'N', tier: 'official' } } }, 'w.yaml': { weapons: { '18pdr': w } } });
+    expect(() => loadTables(dir)).toThrow(/cover|channels|effects/); // only the other sections are missing, not the source
+    expect(() => loadTables(dir)).not.toThrow(/unknown source/);
+  });
+  it('Param does not admit disputed values', () => {
+    expectTypeOf<Param>().not.toMatchTypeOf<{ range: [number, number] }>();
+    expect(() => ParamSchema.parse({ value: 1, range: [0, 2], sources: [{ source: 'a' }, { source: 'b' }], note: 'n', description: 'd' })).toThrow();
   });
 });
