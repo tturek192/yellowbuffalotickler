@@ -414,12 +414,20 @@ export function captureGuns(state: SimState, ctx: StepContext): SimState {
 export function dugoutsNear(state: SimState, ctx: StepContext, c: CompanyState): Array<{ seg: SegmentState; point: DugoutPoint }> {
   const r = v(ctx.tables.effects.captureRadiusM);
   const out: Array<{ seg: SegmentState; point: DugoutPoint }> = [];
-  for (const seg of state.segments) {
-    if (seg.holder !== c.side || seg.dugoutPoints.length === 0) continue;
+  for (const seg of withDugouts(state.segments)) {
+    if (seg.holder !== c.side) continue;
     for (const point of seg.dugoutPoints)
       if (point.men > 0 && Math.hypot(point.point[0] - c.x, point.point[1] - c.y) <= r) out.push({ seg, point });
   }
   return out;
+}
+
+/** The segments with men left in their dug-outs, in segment order (worked out once for each segments array, never changed once made). */
+const dugoutMemo = new WeakMap<readonly SegmentState[], SegmentState[]>();
+function withDugouts(segments: readonly SegmentState[]): SegmentState[] {
+  let hit = dugoutMemo.get(segments);
+  if (!hit) dugoutMemo.set(segments, (hit = segments.filter((x) => x.dugoutPoints.length > 0)));
+  return hit;
 }
 
 /** Whether a company can mop up: men standing, bombs for at least one man (or none needed), and dugouts near it to clear. */

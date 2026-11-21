@@ -73,6 +73,13 @@ const sortedKeys = (o: object): string[] => {
   if (!hit) keysMemo.set(o, (hit = sorted(Object.keys(o))));
   return hit;
 };
+/** An array's strings in code-unit order, worked out once for each array (the memoised lists are never changed). */
+const sortedMemo = new WeakMap<readonly string[], string[]>();
+const sortedOf = (xs: readonly string[]): string[] => {
+  let hit = sortedMemo.get(xs);
+  if (!hit) sortedMemo.set(xs, (hit = sorted(xs)));
+  return hit;
+};
 const unique = (xs: number[]): number[] => xs.filter((x, i) => xs.indexOf(x) === i).sort((a, b) => a - b);
 /** Statuses an HQ's picture shows for a unit out of the fight. */
 const OUT: ReadonlySet<string> = new Set(['destroyed', 'surrendered', 'off-map', 'marching']);
@@ -792,7 +799,7 @@ function stalls(w: Work): void {
   for (const fid of w.topo.bottomUp) {
     const h0 = hqOf(w, fid);
     if (!h0) continue;
-    for (const key of sorted(ownLines(w, h0))) {
+    for (const key of sortedOf(ownLines(w, h0))) {
       const h = hqOf(w, fid)!;
       if (h.picture.lines[key] !== null) continue;
       const due = stallDue(w, h, key);
