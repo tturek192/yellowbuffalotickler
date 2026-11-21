@@ -25,8 +25,8 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
  * 1. Off-map attacks (`offMap.attacks`): forces outside the simulated one, on a fixed schedule (spec 13.9). Inside its
  *    window an attack holds the suppression of the enemy companies on its target feature at `suppressFrac` or above,
  *    with cause `off-map-fire` (an `off-map-attack` event when it opens).
- * 2. Defender, local counter-attack. A headquarters that holds garrison companies (a battalion) whose picture shows one
- *    of their segments lost orders its reserve-role and support companies to counter-attack it, if their men are at least
+ * 2. Defender, local counter-attack. The lowest battalion, regiment or brigade over a garrison's segment that has
+ *    reserve-role or support companies of its own, once its picture shows the segment lost, orders them to counter-attack it, if their men are at least
  *    `counterAttackMinRatio` times the enemy it knows there — `counterAttackConsolidatedFactor` times that once the
  *    attackers have had `counterAttackConsolidateMin` to consolidate by the time it would go in. They go in
  *    `localCounterAttackDelayMin · delayFactor` after the decision (`counter-attack-ordered`, cause `ground-lost`).
@@ -39,7 +39,7 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
  *    last commitment to that line), and that is the lowest seeing it with a reserve-role battalion within its formation,
  *    commits the battalion nearest the line — and any companies of its own aimed at the line that fell back and rallied
  *    — if their men are at least `riskRatio` times the defenders it knows hold the line. It orders them to attack the
- *    line and calls for fire on each segment of it it knows the enemy holds (`callForFireMin`, the standing barrage):
+ *    line and calls for a standing barrage of `stallBarrageMin` on each segment of it it knows the enemy holds:
  *    `order-issued`, causes `leader-adapted` and `leader-bold` or `leader-cautious` as the leader's risk tolerance is
  *    above or below the midpoint, refs to the events the reports that showed the stall were about.
  * 5. Planned operations (`Scenario.operations`): one launches when the headquarters responsible for it (the lowest that
@@ -47,8 +47,12 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
  *    `notBefore` has passed, and the operation's formation's reserve-role companies are at least `riskRatio` times the
  *    enemy it knows at the target: `operation-launched`, cause `planned-operation`; those companies attack the target.
  *
+ * What an HQ knows of the enemy: its pre-battle intelligence picture at Zero (comms.ts), replaced piece by piece by what
+ * reports have seen since. Ground it knows nothing of is unknown, and no ratio test passes on unknown ground; a decision
+ * that rested on intelligence alone says so (factor `intelligence`).
+ *
  * Orders are delivered only to the companies a decision concerns (`Order.unitIds`). Every number is data: the doctrine's
- * attack and defence keys named above, the effects keys counterAttackConsolidateMin and counterAttackConsolidatedFactor,
+ * attack and defence keys named above, the effects keys stallBarrageMin, counterAttackConsolidateMin and counterAttackConsolidatedFactor,
  * the leaders' ratings, and the scenario's operations and off-map attacks.
  */
 
@@ -118,7 +122,9 @@ function topologyOf(state: SimState, ctx: StepContext): Topo {
   const garrisonOf = new Map<string, string[]>();
   for (const seg of state.segments) for (const g of seg.garrisonIds) garrisonOf.set(g, [...(garrisonOf.get(g) ?? []), seg.id]);
   const segsOf = (cs: string[]): string[] => sorted(new Set(cs.flatMap((c) => garrisonOf.get(c) ?? [])));
-  const front = new Map(ids.map((id) => [id, segsOf(nodes.get(id)!.own)]));
+  // A local counter-attack is a battalion's, a regiment's or a brigade's: their front is every garrison segment under them.
+  const LOCAL: ReadonlySet<FormationKind> = new Set<FormationKind>(['battalion', 'regiment', 'brigade']);
+  const front = new Map(ids.map((id) => [id, LOCAL.has(nodes.get(id)!.kind) ? segsOf(nodes.get(id)!.companies) : []]));
   const divisionFront = new Map(ids.filter((id) => nodes.get(id)!.kind === 'division').map((id) => [id, segsOf(nodes.get(id)!.companies)]));
   const featureSegments = new Map<string, string[]>();
   for (const seg of state.segments) featureSegments.set(seg.featureId, [...(featureSegments.get(seg.featureId) ?? []), seg.id]);
@@ -176,12 +182,32 @@ function free(w: Work, h: HqState, under: string, roles: readonly Role[]): strin
   });
 }
 
-/** The enemy the HQ knows holds these segments: the men last seen in each it shows held by the enemy. */
-function enemyKnown(h: HqState, segmentIds: readonly string[]): number {
-  let n = 0;
-  for (const id of segmentIds) if (h.picture.segments[id] !== undefined && h.picture.segments[id] !== h.side) n += h.picture.enemy[id]?.men ?? 0;
-  return n;
+/**
+ * The enemy the HQ believes is on this ground (segment ids, or `place:<featureId>` keys): on each segment it shows held
+ * by the enemy, and on each place, what the last report seen there said, else its intelligence estimate. Ground it has
+ * neither for is unknown, which no ratio test passes: unknown is never taken for empty. `intel`: the pieces of ground
+ * whose men came from intelligence alone.
+ */
+function enemyKnown(h: HqState, ground: readonly string[]): { men: number; unknown: boolean; intel: number } {
+  let men = 0;
+  let unknown = false;
+  let intel = 0;
+  for (const id of ground) {
+    const place = id.startsWith('place:');
+    if (!place && (h.picture.segments[id] === undefined || h.picture.segments[id] === h.side)) continue;
+    const e = h.picture.enemy[id];
+    if (!e) {
+      unknown = true;
+      continue;
+    }
+    men += e.men;
+    if (e.intel) intel++;
+  }
+  return { men, unknown, intel };
 }
+
+/** The factors a decision's event carries about the enemy: its men, and how many pieces of ground intelligence alone gave. */
+const enemyFactors = (k: { men: number; intel: number }): Record<string, number> => ({ enemy: k.men, ...(k.intel ? { intelligence: k.intel } : {}) });
 
 /** The refs of a decision: the events its picture's pieces were about. */
 const aboutOf = (h: HqState, keys: readonly string[]): number[] => unique(keys.flatMap((k) => (h.picture.about[k] === undefined ? [] : [h.picture.about[k]!])));
@@ -313,6 +339,16 @@ function counterAttackNeed(w: Work, d: Doctrine, since: number, goAt: number): {
   return { need: v(d.defence!.counterAttackMinRatio) * (consolidated ? v(fx.counterAttackConsolidatedFactor) : 1), consolidated };
 }
 
+/** Whether an HQ below this one, whose front holds the segment, has reserve or support companies of its own to send. */
+function lowerWithForce(w: Work, fid: string, seg: string): boolean {
+  for (const x of w.topo.bottomUp) {
+    if (x === fid || !w.topo.nodes.get(x)!.up.includes(fid) || !w.topo.front.get(x)!.includes(seg)) continue;
+    const h = hqOf(w, x);
+    if (h && free(w, h, x, ['reserve', 'support']).length > 0) return true;
+  }
+  return false;
+}
+
 function localCounterAttacks(w: Work): void {
   const M = w.state.minute;
   for (const fid of w.topo.bottomUp) {
@@ -322,28 +358,28 @@ function localCounterAttacks(w: Work): void {
     const d = doctrineOf(w, fid);
     if (!h || !d.defence) continue;
     for (const seg of front) {
-      const key = `${fid}|${seg}`;
-      const done = w.state.command.counterAttacks[key];
+      const done = w.state.command.counterAttacks[seg];
       if (h.picture.segments[seg] === h.side) {
-        // Known retaken: a later loss is a new decision.
-        if (done !== undefined) {
-          const { [key]: _released, ...rest } = w.state.command.counterAttacks;
+        // Known retaken by the HQ that ordered the counter-attack: a later loss is a new decision.
+        if (done?.hqId === fid) {
+          const { [seg]: _released, ...rest } = w.state.command.counterAttacks;
           setCommand(w, { counterAttacks: rest });
         }
         continue;
       }
       if (done !== undefined) continue;
       const force = free(w, h, fid, ['reserve', 'support']);
-      if (force.length === 0) continue;
+      // The lowest HQ over the segment with companies to send decides.
+      if (force.length === 0 || lowerWithForce(w, fid, seg)) continue;
       const r = ratingsOf(w, fid);
       const f = delayFactor(r);
       const goAt = M + v(d.defence.localCounterAttackDelayMin) * f;
       const since = lostAt(h, seg, M);
       const { need, consolidated } = counterAttackNeed(w, d, since, goAt);
       const men = menOf(h, force);
-      const enemy = enemyKnown(h, [seg]);
-      const ratio = ratioOf(men, enemy);
-      if (ratio < need) continue;
+      const known = enemyKnown(h, [seg]);
+      const ratio = ratioOf(men, known.men);
+      if (known.unknown || ratio < need) continue;
       const eventId = w.state.nextEventId;
       w.state = emit(w.state, {
         minute: M,
@@ -352,9 +388,9 @@ function localCounterAttacks(w: Work): void {
         text: `${w.topo.nodes.get(fid)!.name} orders ${force.length} ${force.length === 1 ? 'company' : 'companies'} to counter-attack ${seg}${consolidated ? ' (the enemy will have consolidated)' : ''}`,
         causes: ['ground-lost', ...(f > 1 ? (['leader-slow'] as const) : [])],
         refs: aboutOf(h, [`s:${seg}`]),
-        factors: { men, enemy, ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
+        factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
       });
-      setCommand(w, { counterAttacks: { ...w.state.command.counterAttacks, [key]: M } });
+      setCommand(w, { counterAttacks: { ...w.state.command.counterAttacks, [seg]: { hqId: fid, atMin: M } } });
       markOrdered(w, h, force);
       orderCompanies(w, h, force, { kind: 'counter-attack', target: { segmentId: seg }, eventId, goAtMin: goAt }, true);
     }
@@ -428,9 +464,9 @@ function goDivisional(w: Work, fid: string, d: Doctrine): void {
   const since = Math.min(...targets.map((x) => lostAt(h, x, M)));
   const { need, consolidated } = counterAttackNeed(w, d, since, goAt);
   const men = menOf(h, force);
-  const enemy = enemyKnown(h, targets);
-  const ratio = ratioOf(men, enemy);
-  if (ratio < need) return;
+  const known = enemyKnown(h, targets);
+  const ratio = ratioOf(men, known.men);
+  if (known.unknown || ratio < need) return;
   const eventId = w.state.nextEventId;
   w.state = emit(w.state, {
     minute: M,
@@ -439,7 +475,7 @@ function goDivisional(w: Work, fid: string, d: Doctrine): void {
     text: `${w.topo.nodes.get(fid)!.name} orders a counter-attack by ${force.length} companies on ${targets.join(', ')}`,
     causes: ['ground-lost', ...(f > 1 ? (['leader-slow'] as const) : [])],
     refs: plan.eventRefs,
-    factors: { men, enemy, ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
+    factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), need: round(need, 2), goAtMin: round(goAt, 1), consolidated: consolidated ? 1 : 0 },
   });
   drop();
   markOrdered(w, h, force);
@@ -555,12 +591,12 @@ function stalls(w: Work): void {
       const force = [...w.topo.nodes.get(battalion)!.own, ...rallied].sort(byStr);
       const segs = segmentsOnLine(w.state, w.ctx, lineId, sectorId).map((x) => x.id);
       const men = menOf(h, force);
-      const enemy = enemyKnown(h, segs);
-      const ratio = ratioOf(men, enemy);
+      const known = enemyKnown(h, segs);
+      const ratio = ratioOf(men, known.men);
       const r = ratingsOf(w, fid);
       const attack = doctrineOf(w, fid).attack!;
       const accept = riskRatio(v(attack.minAttackRatio), r);
-      if (ratio < accept) continue;
+      if (known.unknown || ratio < accept) continue;
       const lineName = w.ctx.scenario.lines.find((l) => l.id === lineId)?.name ?? lineId;
       const eventId = w.state.nextEventId;
       w.state = emit(w.state, {
@@ -571,17 +607,18 @@ function stalls(w: Work): void {
         text: `${w.topo.nodes.get(fid)!.name} commits ${w.topo.nodes.get(battalion)!.name}${rallied.length ? ` and ${rallied.length} rallied ${rallied.length === 1 ? 'company' : 'companies'}` : ''} to the stalled ${lineName}`,
         causes: ['leader-adapted', ...riskCause(r)],
         refs: aboutOf(h, [`l:${key}`, ...attackers.map((id) => `u:${id}`), ...segs.map((x) => `s:${x}`)]),
-        factors: { men, enemy, ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), riskRatio: round(accept, 2), lateMin: round(M - (due - v(attack.stallToleranceMin) * adaptFactor(r)), 1) },
+        factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), riskRatio: round(accept, 2), lateMin: round(M - (due - v(attack.stallToleranceMin) * adaptFactor(r)), 1) },
       });
       const commits = { ...w.state.command.stallCommits };
       for (const x of [fid, ...w.topo.nodes.get(fid)!.up]) commits[`${x}|${key}`] = M;
       setCommand(w, { stallCommits: commits });
       markOrdered(w, h, force, key);
       orderCompanies(w, h, force, { kind: 'attack', target: { lineId, sectorId }, eventId });
-      // The standing barrage: a call for fire on each segment of the line it knows the enemy holds.
+      // The standing barrage: a call for fire on each segment of the line it knows the enemy holds, for stallBarrageMin.
+      const forMin = v(w.ctx.tables.effects.stallBarrageMin);
       for (const seg of segs) {
         if (h.picture.segments[seg] === undefined || h.picture.segments[seg] === h.side) continue;
-        w.state = send(w.state, w.ctx, { side: h.side, kind: 'call-for-fire', fromFormationId: fid, toFormationId: fid, sentMin: M, payload: { segmentId: seg, byUnitId: fid, atMin: M }, aboutEventId: eventId });
+        w.state = send(w.state, w.ctx, { side: h.side, kind: 'call-for-fire', fromFormationId: fid, toFormationId: fid, sentMin: M, payload: { segmentId: seg, byUnitId: fid, atMin: M, forMin }, aboutEventId: eventId });
       }
     }
   }
@@ -591,10 +628,10 @@ function stalls(w: Work): void {
 
 type Operation = NonNullable<Scenario['operations']>[number];
 
-/** The segments at an operation's target: on its line, or of its feature. */
-function targetSegments(w: Work, target: Operation['target']): string[] {
+/** An operation's target ground: the segments on its line, or of its feature, else the feature as a place. */
+function targetGround(w: Work, target: Operation['target']): string[] {
   if ('lineId' in target) return segmentsOnLine(w.state, w.ctx, target.lineId, target.sectorId).map((x) => x.id);
-  return w.topo.featureSegments.get(target.featureId) ?? [];
+  return w.topo.featureSegments.get(target.featureId) ?? [`place:${target.featureId}`];
 }
 
 /** Whether an operation is ready but for `notBefore`, and its responsible HQ; null when it is not ready. */
@@ -620,11 +657,11 @@ function operations(w: Work): void {
     const attack = doctrineOf(w, fid).attack;
     if (!attack) continue;
     const men = menOf(h, force);
-    const enemy = enemyKnown(h, targetSegments(w, op.target));
-    const ratio = ratioOf(men, enemy);
+    const known = enemyKnown(h, targetGround(w, op.target));
+    const ratio = ratioOf(men, known.men);
     const r = ratingsOf(w, fid);
     const accept = riskRatio(v(attack.minAttackRatio), r);
-    if (ratio < accept) continue;
+    if (known.unknown || ratio < accept) continue;
     const key = op.prerequisite ? `${op.prerequisite.lineId}|${op.prerequisite.sectorId}` : '';
     const eventId = w.state.nextEventId;
     const where = 'lineId' in op.target ? (w.ctx.scenario.lines.find((l) => l.id === (op.target as { lineId: string }).lineId)?.name ?? op.target.lineId) : op.target.featureId;
@@ -635,7 +672,7 @@ function operations(w: Work): void {
       text: `${w.topo.nodes.get(fid)!.name} launches ${op.id}: ${force.length} companies of ${w.topo.nodes.get(op.formationId)!.name} on ${where}`,
       causes: ['planned-operation', ...riskCause(r)],
       refs: key ? aboutOf(h, [`l:${key}`]) : [],
-      factors: { men, enemy, ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), riskRatio: round(accept, 2) },
+      factors: { men, ...enemyFactors(known), ...(Number.isFinite(ratio) ? { ratio: round(ratio, 2) } : {}), riskRatio: round(accept, 2) },
     });
     setCommand(w, { launched: { ...w.state.command.launched, [op.id]: M } });
     markOrdered(w, h, force, 'lineId' in op.target ? `${op.target.lineId}|${op.target.sectorId}` : undefined);

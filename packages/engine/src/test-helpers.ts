@@ -631,7 +631,7 @@ export function fixtureStall(o: CommandOpts = {}): [Scenario, Models] {
   const bef = m.doctrines['bef-1917']!;
   bef.attack!.stallToleranceMin = param(o.stallToleranceMin ?? 30);
   bef.attack!.minAttackRatio = param(o.minAttackRatio ?? 1.5);
-  for (const k of ['counterAttackConsolidateMin', 'counterAttackConsolidatedFactor'] as const) (m.tables.effects as Record<string, unknown>)[k] = param(k === 'counterAttackConsolidateMin' ? 60 : 2);
+  for (const [k, value] of Object.entries({ counterAttackConsolidateMin: 60, counterAttackConsolidatedFactor: 2, stallBarrageMin: 10 })) (m.tables.effects as Record<string, unknown>)[k] = param(value);
   return f;
 }
 

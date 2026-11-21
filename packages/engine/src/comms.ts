@@ -5,6 +5,7 @@ import { emit } from './causes';
 import type { NewEvent } from './causes';
 import type { CompanyState } from './companies';
 import { CELL_M } from './ground';
+import { featurePoints as featurePointsOf, pointRadiusM } from './segments';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import type { SimState, StepContext } from './step';
@@ -124,6 +125,7 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
   for (const id of ids) if (nodes.get(id)!.parentId !== null) hopToward(topo, ctx, id, rootOf(topo, id));
 
   const segments = Object.fromEntries(state.segments.map((x) => [x.id, x.holder]));
+  const intel = { allied: intelligence(state, ctx, 'allied'), central: intelligence(state, ctx, 'central') };
   const hqs = sorted.map((f): HqState => {
     const cs = f.companyIds.map((id) => byCompany.get(id)!).sort((a, b) => byStr(a.id, b.id));
     const lines = cs.filter((c) => c.role !== 'garrison' && c.role !== 'reserve' && c.objectiveLineId !== undefined).map((c) => `${c.objectiveLineId}|${c.sectorId}`);
@@ -138,7 +140,7 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
         units: Object.fromEntries(cs.map((c) => [c.id, { status: c.status, men: c.men, atMin: state.minute }])),
         segmentsAt: {},
         linesLost: {},
-        enemy: {},
+        enemy: { ...intel[f.side] },
         about: {},
       },
       pending: [],
@@ -157,6 +159,56 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
       state.companies.map((c) => [c.id, { status: c.status, men: c.men, holder: c.segmentId === undefined ? null : (segmentOf.get(c.segmentId) ?? null), atMin: state.minute }]),
     ),
   };
+}
+
+/** An operation's target place that no segment of its own covers: its ground is the place itself (Task 12). */
+export type Place = { key: string; featureId: string; point: Point; radiusM: number };
+const placesCache = new WeakMap<StepContext, Place[]>();
+
+/** The target places of the scenario's operations whose feature has no segment, in feature-id order (worked out once). */
+export function operationPlaces(state: Pick<SimState, 'segments'>, ctx: StepContext): Place[] {
+  let out = placesCache.get(ctx);
+  if (out) return out;
+  const ids = new Set<string>();
+  for (const op of ctx.scenario.operations ?? []) if ('featureId' in op.target && !state.segments.some((x) => x.featureId === (op.target as { featureId: string }).featureId)) ids.add(op.target.featureId);
+  out = [...ids].sort(byStr).flatMap((id): Place[] => {
+    const f = ctx.scenario.features.find((x) => x.id === id);
+    if (!f) return [];
+    const pts = featurePointsOf(f);
+    if (pts.length === 0) return [];
+    const point: Point = [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
+    return [{ key: `place:${id}`, featureId: id, point, radiusM: Math.max(pointRadiusM(f, ctx.tables, ctx.defaultsUsed), v(ctx.tables.effects.captureRadiusM)) }];
+  });
+  placesCache.set(ctx, out);
+  return out;
+}
+
+/** A company's men at Zero, before the bombardment: what the other side's intelligence counted. */
+const zeroMen = (c: CompanyState): number => c.men + c.bombardment.killed + c.bombardment.wounded;
+
+/**
+ * The pre-battle intelligence picture of a side (Task 12; spec 13: aerial photography and raids gave the Canadians a
+ * detailed picture of the defences, and the Germans knew the Canadian front line): the enemy companies on the map at
+ * their Zero places and strengths (never the off-map reserves), by ground. On an enemy trench segment: the enemy within
+ * `captureRadiusM` of it (its garrison and those who stand on it). On a segment of its own side's trench: the enemy
+ * attackers facing it (their Zero y inside its y range), what would be there if it were lost. On an operation's target
+ * place: the enemy within its radius. Ground with no enemy found gets no entry: it stays unknown.
+ */
+function intelligence(state: SimState, ctx: StepContext, side: Side): Record<string, { men: number; atMin: number; intel: true }> {
+  const r = v(ctx.tables.effects.captureRadiusM);
+  const enemies = state.companies.filter((c) => c.side !== side && c.status !== 'off-map' && c.status !== 'marching');
+  const out: Record<string, { men: number; atMin: number; intel: true }> = {};
+  const put = (key: string, men: number): void => {
+    if (men > 0) out[key] = { men, atMin: state.minute, intel: true };
+  };
+  for (const seg of state.segments) {
+    if (seg.garrisonSide !== side) {
+      const pts = segmentSamples(ctx, seg, state.companies);
+      put(seg.id, enemies.reduce((a, c) => a + (c.segmentId === seg.id || (pts.length > 0 && distanceTo(pts, [c.startX, c.startY]) <= r) ? zeroMen(c) : 0), 0));
+    } else put(seg.id, enemies.reduce((a, c) => a + (c.role !== 'reserve' && c.role !== 'garrison' && c.startY >= seg.yMin && c.startY <= seg.yMax ? zeroMen(c) : 0), 0));
+  }
+  for (const p of operationPlaces(state, ctx)) put(p.key, enemies.reduce((a, c) => a + (Math.hypot(c.startX - p.point[0], c.startY - p.point[1]) <= p.radiusM ? zeroMen(c) : 0), 0));
+  return out;
 }
 
 /** The tables key of a level's rear offset: a regiment counts as a brigade, a group as a corps. */
@@ -579,7 +631,13 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
   });
   const lost = r.lost ? Object.keys(r.lost).sort(byStr).filter((k) => typeof was.lines[k] === 'number' && r.lost![k]! >= was.lines[k]!) : [];
   // The enemy seen: news when the men differ from what it knows (Task 12).
-  const enemy = r.enemy ? Object.keys(r.enemy).sort(byStr).filter((id) => was.enemy[id]?.men !== r.enemy![id]!.men && r.enemy![id]!.atMin >= (was.enemy[id]?.atMin ?? -Infinity)) : [];
+  // A report replaces the intelligence estimate whatever it says.
+  const enemy = r.enemy
+    ? Object.keys(r.enemy).sort(byStr).filter((id) => {
+        const cur = was.enemy[id];
+        return (!cur || cur.intel || cur.men !== r.enemy![id]!.men) && r.enemy![id]!.atMin >= (cur?.atMin ?? -Infinity);
+      })
+    : [];
   if (units.length + segments.length + lines.length + lost.length + enemy.length === 0) return;
   const top = w.topo.nodes.get(hqId)!.parentId === null;
   const parts = (units.length ? UNITS : 0) | (segments.length ? SEGMENTS : 0) | (lines.length + lost.length ? LINES : 0) | (enemy.length ? ENEMY : 0);
@@ -614,7 +672,7 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
     if (!top) addKey(h.news.lines, k);
   }
   for (const id of enemy) {
-    pic.enemy[id] = { ...r.enemy![id]! };
+    pic.enemy[id] = { men: r.enemy![id]!.men, atMin: r.enemy![id]!.atMin };
     if (!top) addKey(h.news.enemy, id);
   }
   if (top) return;
@@ -641,7 +699,7 @@ function forward(w: Work, i: number, t: number): void {
     lines: Object.fromEntries(lines.filter((k) => !lost.includes(k)).map((k) => [k, pic.lines[k] ?? null])),
     ...(lost.length ? { lost: Object.fromEntries(lost.map((k) => [k, pic.linesLost[k]!])) } : {}),
     ...(segs.some((id) => pic.segmentsAt[id] !== undefined) ? { segmentsAt: Object.fromEntries(segs.flatMap((id) => (pic.segmentsAt[id] === undefined ? [] : [[id, pic.segmentsAt[id]!]]))) } : {}),
-    ...(n.enemy.length ? { enemy: Object.fromEntries([...n.enemy].sort(byStr).map((id) => [id, { ...pic.enemy[id]! }])) } : {}),
+    ...(n.enemy.length ? { enemy: Object.fromEntries([...n.enemy].sort(byStr).map((id) => [id, { men: pic.enemy[id]!.men, atMin: pic.enemy[id]!.atMin }])) } : {}),
   };
   const about = n.aboutEventId;
   h.news = emptyNews(t);
@@ -678,7 +736,7 @@ function answerCall(w: Work, d: Draft, t: number): void {
   // A segment with no trench to aim at (no samples) cannot be fired on: the call goes unanswered.
   if (pts.length === 0) return;
   const centre: Point = [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
-  const dur = v(ctx.tables.effects.callForFireMin);
+  const dur = call.forMin ?? v(ctx.tables.effects.callForFireMin);
   const busy = (b: BatteryState): number =>
     w.missions.filter((m) => m.toMin > t && m.fromMin < t + dur).reduce((a, m) => a + m.guns.filter((g) => g.batteryId === b.id).reduce((x, g) => x + g.guns, 0), 0);
   const ready = w.state.batteries
@@ -833,6 +891,8 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
     }
     return n;
   };
+  const places = operationPlaces(state, ctx);
+  const placeMen = new Map<string, number>();
   return (c) => {
     const out: Record<string, { men: number; atMin: number }> = {};
     const p: Point = [c.x, c.y];
@@ -841,6 +901,18 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
       const pts = segmentSamples(ctx, x, state.companies);
       if (pts.length === 0 || distanceTo(pts, p) > range) continue;
       out[x.id] = { men: menAt(x, pts), atMin: M };
+    }
+    // An operation's target place in sight: the enemy up within its radius.
+    for (const pl of places) {
+      if (Math.hypot(pl.point[0] - c.x, pl.point[1] - c.y) > range + pl.radiusM) continue;
+      const k = `${c.side}|${pl.key}`;
+      let n = placeMen.get(k);
+      if (n === undefined) {
+        n = 0;
+        for (const e of up) if (e.side !== c.side && Math.hypot(e.x - pl.point[0], e.y - pl.point[1]) <= pl.radiusM) n += e.men;
+        placeMen.set(k, n);
+      }
+      out[pl.key] = { men: n, atMin: M };
     }
     return out;
   };

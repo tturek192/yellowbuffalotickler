@@ -84,13 +84,17 @@ export type Report = {
   segmentsAt?: Record<string, number>;
   /**
    * The enemy seen (Task 12): for each segment the enemy holds within `observerRangeM` of the reporting company, the men
-   * of the enemy up in it (within `captureRadiusM` of its trench), and when they were seen.
+   * of the enemy up in it (within `captureRadiusM` of its trench), and for each operation's target place in range
+   * (`place:<featureId>`) the enemy up within its radius; and when they were seen.
    */
   enemy?: Record<string, { men: number; atMin: number }>;
 };
 
-/** A company's call for fire on an enemy-held trench segment (Task 11). */
-export type CallForFire = { segmentId: string; byUnitId: string; atMin: number };
+/**
+ * A company's call for fire on an enemy-held trench segment (Task 11). `forMin`: how long the guns are to fire (Task 12:
+ * a headquarters' standing barrage on a stalled line, `stallBarrageMin`); absent: `callForFireMin`.
+ */
+export type CallForFire = { segmentId: string; byUnitId: string; atMin: number; forMin?: number };
 
 /**
  * A message in transit over a channel (Task 11), one hop of its journey: `fromFormationId` sends it to
@@ -158,8 +162,13 @@ export type HqState = {
     segmentsAt: Record<string, number>;
     /** Lines it knows were lost again, with the minute (Task 12); a line taken again later is taken. */
     linesLost: Record<string, number>;
-    /** The enemy it knows of in each segment the enemy holds (Task 12). */
-    enemy: Record<string, { men: number; atMin: number }>;
+    /**
+     * The enemy it knows of on each piece of ground (Task 12): by segment id, or `place:<featureId>` for an operation's
+     * target that no segment covers. At Zero it holds the pre-battle intelligence picture (`intel`: the enemy companies on
+     * the map at their Zero places and strengths, never the off-map reserves); a report seen since replaces an entry.
+     * Ground with no entry is unknown, never empty.
+     */
+    enemy: Record<string, { men: number; atMin: number; intel?: true }>;
     /**
      * The event each piece of its picture was last about, by `u:<unit>`, `s:<segment>` and `l:<line key>` (Task 12):
      * the refs of the decisions it takes on them.
@@ -346,8 +355,8 @@ export type CommandState = {
   stallCommits: Record<string, number>;
   /** Operations launched, by id, with the minute. */
   launched: Record<string, number>;
-  /** Local counter-attacks ordered on a lost segment, by `hqId|segmentId`, until the HQ knows the segment is its own again. */
-  counterAttacks: Record<string, number>;
+  /** Local counter-attacks ordered on a lost segment, by segment id: the HQ that ordered it and when, until that HQ knows the segment is its own again. */
+  counterAttacks: Record<string, { hqId: string; atMin: number }>;
   /** Divisions that have ordered their reserves forward and planned their counter-attack, with the minute. */
   divisions: Record<string, number>;
   /** The `off-map-attack` event of each off-map attack under way or done, by its id. */

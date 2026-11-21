@@ -10,7 +10,7 @@ import type { Models } from './run';
 import { quietStep, SCHEDULES } from './schedule';
 import { isBusy, takeLines } from './step';
 import type { SimState, StepContext } from './step';
-import { fixtureComms, fixtureCounter, fixtureStall, runStates, withQuietStep } from './test-helpers';
+import { fixtureComms, fixtureCounter, fixtureStall, runStates, withQuietStep, withRearTrench } from './test-helpers';
 import type { CommandOpts, CounterOpts } from './test-helpers';
 import type { Order, SimEvent } from './types';
 
@@ -133,6 +133,63 @@ describe('the command model', () => {
     const f = fixtureOperation();
     f[1].tables.channels.runner = { delayMin: { value: 6, estimate: 'test' }, failPerHour: { value: 1e6, estimate: 'test' } };
     expect(launchMinute(runStates(f, { endMinute: 300 }))).toBe(Infinity);
+  });
+
+  it('each headquarters starts with the pre-battle intelligence picture, marked as such; reports replace it', () => {
+    const r = runStates(fixtureStall(), { endMinute: 120 });
+    const seg = r.states[0]!.segments.find((x) => x.featureId === 'ger-rear-k3')!.id;
+    const b1 = (s: SimState) => s.hqs.find((h) => h.formationId === 'b1')!.picture.enemy;
+    expect(b1(r.states[0]!)[seg]).toEqual({ men: 400, atMin: 0, intel: true });
+    // The German side's estimate of the attackers facing its own trench (c1 and c2, by their Zero y).
+    const k = r.states[0]!.hqs.find((h) => h.formationId === 'rir262')!.picture.enemy;
+    expect(Object.values(k).every((e) => e.intel)).toBe(true);
+    expect(Object.values(k).map((e) => e.men).sort((a, b) => a - b)).toEqual([150, 150, 300]); // k3's trench faces both
+    // Once the companies on the line have reported, the brigade's picture holds what they saw.
+    const later = b1(r.states.at(-1)!)[seg]!;
+    expect(later.intel).toBeUndefined();
+    expect(later.men).toBe(400);
+  });
+
+  it('an operation into ground where intelligence shows defenders does not launch at a poor ratio', () => {
+    // A German trench on the Brown Line (x 1600) that no report reaches (observerRangeM 100 from the Black Line, 450 m
+    // off): only the intelligence picture tells the brigade who holds it.
+    const run = (men: number) => {
+      const f = withRearTrench(fixtureOperation(), 1600, 'k4');
+      f[0].forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k4')!.strength = est(men);
+      (f[1].tables.effects as Record<string, unknown>)['observerRangeM'] = { value: 100, estimate: 'test', description: 'test' };
+      return firstOf(runStates(f, { endMinute: 300 }), 'operation-launched');
+    };
+    expect(run(2000)).toBeUndefined(); // 1,200 men against 2,000 by intelligence: 0.6, below 1.5
+    expect(run(100)!.factors).toMatchObject({ enemy: 100, ratio: 12, intelligence: 1 });
+  });
+
+  it('a target place nobody has seen is unknown, not empty: the operation waits for a report showing it clear', () => {
+    // op1 on the Old Wood (x 500, no trench, no enemy): with nobody in sight of it, it never launches; once the companies
+    // passing it report it empty, it does, on what they saw.
+    const run = (range: number) => {
+      const f = fixtureOperation();
+      f[0].operations![0]!.target = { featureId: 'old-wood' };
+      (f[1].tables.effects as Record<string, unknown>)['observerRangeM'] = { value: range, estimate: 'test', description: 'test' };
+      return firstOf(runStates(f, { endMinute: 300 }), 'operation-launched');
+    };
+    expect(run(0)).toBeUndefined();
+    const e = run(1500)!;
+    expect(e.factors).toMatchObject({ enemy: 0 });
+    expect(e.factors!.intelligence).toBeUndefined();
+  });
+
+  it('the stall commitment calls for stallBarrageMin of standing barrage on the stalled line', () => {
+    const f = fixtureStall();
+    (f[1].tables.effects as Record<string, unknown>)['stallBarrageMin'] = { value: 25, estimate: 'test', description: 'test' };
+    // A battery to answer it that fires nothing of its own here (defensive fire falls only on its side's lost trench;
+    // the fixture's creeping guns keep to the timetable).
+    f[0].artillery.push({ id: 'st', side: 'allied', weapon: '18pdr', count: est(6), role: 'defensive', ammunition: est(20000), observation: 'map', position: [-800, 200], horseDrawn: false });
+    const r = runStates(f, { endMinute: 300 });
+    const missions = r.states.flatMap((s) => s.fireMissions).filter((m, i, xs) => m.byUnitId === 'b1' && xs.findIndex((x) => x.id === m.id) === i);
+    expect(missions).toHaveLength(1);
+    expect(missions[0]!.toMin - missions[0]!.fromMin).toBe(25);
+    expect(missions[0]!.guns.reduce((a, g) => a + g.guns, 0)).toBeGreaterThan(0);
+    expect(missions[0]!.refs).toEqual([firstOf(r, 'order-issued')!.id]);
   });
 
   it('a local counter-attack: the reserve company goes in localCounterAttackDelayMin after the loss is known, and retakes the trench behind the taken line', () => {

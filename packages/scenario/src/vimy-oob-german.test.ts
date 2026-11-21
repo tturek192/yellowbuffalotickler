@@ -31,8 +31,10 @@ describe('Vimy German order of battle (Task 9)', () => {
     expect(formationIds(s, 'central')).toEqual(expect.arrayContaining(['gruppe-vimy', 'gruppe-souchez', '79rd', '1brd']));
     expect(regimentsOf(s, '79rd').map(r => r.id)).toEqual(['rir261', 'rir262', 'rir263']);
   });
-  it('every front-line company is a garrison on a German trench feature, with paper and actual strength', () => {
-    for (const c of companiesOf(s, 'central').filter(c => c.role === 'garrison')) {
+  // Task 12 (pre-review): the support battalions' companies are role reserve, held back to counter-attack; they stand on
+  // their trenches as before, so the checks below cover every German company on the map, garrison or reserve.
+  it('every front-line company is on a German trench feature, with paper and actual strength', () => {
+    for (const c of companiesOf(s, 'central')) {
       const f = s.features.find(x => x.id === c.trenchFeatureId)!;
       expect(f.side).toBe('central'); expect(c.paperStrength).toBeDefined();
       expect(v(c.strength)).toBeLessThanOrEqual(v(c.paperStrength!));
@@ -45,10 +47,17 @@ describe('Vimy German order of battle (Task 9)', () => {
   it('has at least one central garrison, so the garrison test above is not vacuous', () => {
     expect(companiesOf(s, 'central').filter(c => c.role === 'garrison').length).toBeGreaterThan(0);
   });
-  it('places every garrison on its feature: within 1 m of a trench line, within the 40 m spread of a strongpoint', () => {
+  it('front battalions are garrisons and support battalions are in reserve to counter-attack (Task 12): 28 and 28', () => {
+    const cs = companiesOf(s, 'central');
+    expect(cs.filter(c => c.role === 'garrison')).toHaveLength(28);
+    expect(cs.filter(c => c.role === 'reserve')).toHaveLength(28);
+    // Companies are numbered through the regiment, 5-8 in its support battalion (II) everywhere.
+    for (const c of cs) expect(c.role, c.id).toBe(/-[5-8]$/.test(c.id) ? 'reserve' : 'garrison');
+  });
+  it('places every company on its feature: within 1 m of a trench line, within the 40 m spread of a strongpoint', () => {
     // oob-german.md, Garrisons: starts lie on the trench (lon/lat rounded to 6 decimals, about 0.1 m); companies sharing
     // a strongpoint are spread 40 m apart in y around it, so at most 40 m from the point.
-    for (const c of companiesOf(s, 'central').filter(c => c.role === 'garrison')) {
+    for (const c of companiesOf(s, 'central')) {
       const f = s.features.find(x => x.id === c.trenchFeatureId)!;
       const bound = f.geometry.type === 'Point' ? 40.5 : 1;
       expect(distanceToGeometry(f.geometry, c.start as Point), c.id).toBeLessThanOrEqual(bound);

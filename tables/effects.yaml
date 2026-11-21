@@ -145,9 +145,10 @@ effects:
     calibrated: true
   stallBarrageMin:
     value: 10
-    estimate: a stalled attack has lost its barrage (which moves 100 yards every 3 minutes, nicholson-1962 p. 253, so 300 m in 10 minutes)
-      and asks for a standing barrage on its front
-    description: Minutes a stalled attack waits before calling for a standing barrage on its front.
+    estimate: a stalled attack has lost its barrage (which moves 100 yards every 3 minutes, nicholson-1962 p. 253, so 300 m in 10 minutes);
+      the fresh attack its headquarters sends in asks for that much standing barrage on the stalled line's trench to cover it
+    description: Minutes of standing barrage a headquarters calls for on each enemy-held trench of a stalled line when it commits its
+      reserve to it.
     calibrated: true
   gunCaptureRadiusM:
     value: 300
