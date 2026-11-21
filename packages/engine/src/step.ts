@@ -8,8 +8,8 @@ import { bucketsOf, within } from './buckets';
 import { byId, isHolding } from './companies';
 import type { CompanyState, CompanyStatus } from './companies';
 import type { PhaseName } from './pipeline';
-import { segmentsOnLine } from './trenches';
-import type { BatteryState, CutLine, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
+import { segmentsOnLine, takerOf } from './trenches';
+import type { BatteryState, CommandState, CutLine, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
 
 export type SimState = {
   minute: number;
@@ -18,6 +18,8 @@ export type SimState = {
   companies: CompanyState[];
   /** "lineId|sectorId" keys of lines already taken. */
   taken: string[];
+  /** The `line-taken` event of each line in `taken`, by key (Task 12: a `line-lost` refers to it). Looked up only. */
+  takenEventIds: Record<string, number>;
   /** Events emitted by the most recent step, in order. */
   events: SimEvent[];
   /** Trench segments (Task 7). */
@@ -39,8 +41,10 @@ export type SimState = {
   lastReport: Record<string, { status: CompanyStatus; men: number; holder: Side | null; atMin: number }>;
   /** Batteries answering calls for fire (Task 11), in id order. */
   fireMissions: FireMission[];
-  /** Off-map formations (Task 13). */
+  /** Off-map formations (Task 13), in the scenario's order. */
   reserves: ReserveState[];
+  /** What the command model has decided (Task 12). */
+  command: CommandState;
   /** Shells landed per 50 m cell (Task 6), row-major over the world's grid; the same array as `World.churn`. Not in the run record. */
   churn: Float32Array;
   /** The id the next emitted event gets. */
@@ -123,7 +127,8 @@ const SETTLED: ReadonlySet<string> = new Set(['consolidating', 'pinned', 'destro
  * dugouts, and `wire-cut` when the wire in front of one of them was cut (at least `wireUncutBelow`). Refs: the
  * arrivals, and the segments' trapping and loss.
  */
-export function takeLines(state: SimState, ctx: StepContext): SimState {
+export function takeLines(state0: SimState, ctx: StepContext): SimState {
+  const state = loseLines(state0, ctx);
   const groups = new Map<string, CompanyState[]>();
   for (const c of state.companies) {
     if (!aimsAtLine(c)) continue;
@@ -149,7 +154,7 @@ export function takeLines(state: SimState, ctx: StepContext): SimState {
       ...there.flatMap((c) => (c.reached ? [c.reached.eventId] : [])),
       ...segs.flatMap((x) => [x.trappedEventId, x.holderEventId].filter((id): id is number => id !== null)),
     ];
-    out = emit({ ...out, taken: [...out.taken, key] }, {
+    out = emit({ ...out, taken: [...out.taken, key], takenEventIds: { ...out.takenEventIds, [key]: out.nextEventId } }, {
       minute: out.minute,
       kind: 'line-taken',
       sectorId,
@@ -158,6 +163,37 @@ export function takeLines(state: SimState, ctx: StepContext): SimState {
       causes: CAUSES.filter((x) => causes.includes(x)),
       refs: refs.filter((x, i) => refs.indexOf(x) === i).sort((a, b) => a - b),
       factors: { companies: cs.length, consolidating: there.length, segments: segs.length },
+    });
+  }
+  return out;
+}
+
+/**
+ * A taken line is lost again (Task 10 ruling, Task 12) when its taker no longer holds every segment that made it taken
+ * (`segmentsOnLine`): it leaves `taken`, so the line-taken rule can take it again once those segments are back, and
+ * `line-lost` (cause `ground-lost`) refers to its `line-taken` and to the events that took the segments back. A line
+ * that runs along no segment is never lost this way.
+ */
+export function loseLines(state: SimState, ctx: StepContext): SimState {
+  let out = state;
+  for (const key of state.taken) {
+    const [lineId, sectorId] = key.split('|') as [string, string];
+    const side = takerOf(state, key);
+    const gone = segmentsOnLine(out, ctx, lineId, sectorId).filter((x) => x.holder !== side);
+    if (side === null || gone.length === 0) continue;
+    const line = ctx.scenario.lines.find((l) => l.id === lineId)!;
+    const takenId = out.takenEventIds[key];
+    const refs = [...(takenId === undefined ? [] : [takenId]), ...gone.flatMap((x) => (x.holderEventId === null ? [] : [x.holderEventId]))];
+    const { [key]: _gone, ...takenEventIds } = out.takenEventIds;
+    out = emit({ ...out, taken: out.taken.filter((k) => k !== key), takenEventIds }, {
+      minute: out.minute,
+      kind: 'line-lost',
+      sectorId,
+      lineId,
+      text: `${line.name} lost: ${gone.map((x) => x.id).join(', ')} taken back`,
+      causes: ['ground-lost'],
+      refs: refs.filter((x, i) => refs.indexOf(x) === i).sort((a, b) => a - b),
+      factors: { segments: gone.length },
     });
   }
   return out;

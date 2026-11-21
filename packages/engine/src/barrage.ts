@@ -123,3 +123,18 @@ export function bandAt(b: BarrageState, sector: Sector, lines: Lines, minute: nu
 export function planReachX(sector: Sector, lines: Lines, y: number): number {
   return lineXAt(linePoints(lines, sector.legs[sector.legs.length - 1]!.toLineId), y) + sector.standOffM.value;
 }
+
+/**
+ * The minute the sector's timetable has its barrage arrive beyond a line (the end of the lift of the leg to it): when the
+ * attackers following it are due there (Task 12, the stall rule). Null when no leg of the sector goes to the line.
+ */
+export function lineTimetableMin(sector: Sector, lines: Lines, lineId: string): number | null {
+  let t = 0;
+  for (let i = 0; i < sector.legs.length; i++) {
+    const g = legGeometry(sector, lines, i);
+    t += g.legMin;
+    if (g.toId === lineId) return t;
+    t += g.leg.pauseMin.value;
+  }
+  return null;
+}

@@ -22,6 +22,8 @@ export const EVENT_KINDS = [
   'guns-captured',
   // A company that fell back rallies and holds (Task 10)
   'company-rallied',
+  // The command model (Task 12): a taken line whose segments the enemy has taken back; an off-map attack on a flank opens
+  'line-lost', 'off-map-attack',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -57,8 +59,12 @@ export type Order = {
   target?: OrderTarget;
   fromFormationId: string;
   issuedMin: number;
-  /** The `order-issued` event, for refs. */
+  /** The `order-issued`, `operation-launched` or `counter-attack-ordered` event, for refs. */
   eventId?: number;
+  /** The companies the order is for (Task 12): only these, under the formation it reaches, hold it. Absent: every one. */
+  unitIds?: string[];
+  /** The minute the companies go (Task 12: a counter-attack once formed up); absent: when the order reaches them. */
+  goAtMin?: number;
 };
 
 /**
@@ -72,6 +78,15 @@ export type Report = {
   segments: Record<string, Side>;
   /** Lines taken, by `lineId|sectorId`, with the minute they were taken. */
   lines: Record<string, number | null>;
+  /** Lines lost again (Task 12), by `lineId|sectorId`, with the minute they were lost. */
+  lost?: Record<string, number>;
+  /** The minute each segment in `segments` changed hands, as the sender knows it (Task 12); absent: `atMin`. */
+  segmentsAt?: Record<string, number>;
+  /**
+   * The enemy seen (Task 12): for each segment the enemy holds within `observerRangeM` of the reporting company, the men
+   * of the enemy up in it (within `captureRadiusM` of its trench), and when they were seen.
+   */
+  enemy?: Record<string, { men: number; atMin: number }>;
 };
 
 /** A company's call for fire on an enemy-held trench segment (Task 11). */
@@ -105,8 +120,12 @@ export type Message = {
 /** A surface line between two headquarters cut for the rest of the run (both directions): its `a|b` pair, sorted. */
 export type CutLine = { pair: string; by: 'shelling' | 'failure'; atMin: number };
 
-/** A decision an HQ has taken but not yet acted on (Task 12). */
-export type Decision = { kind: string; atMin: number; formationId: string; eventRefs: number[] };
+/**
+ * A decision an HQ has taken but not yet acted on (Task 12): a divisional counter-attack, planned when the division
+ * ordered its reserves forward (`atMin`), to go in once they are there. `segmentIds`: the lost segments it is to retake;
+ * `reserveIds`: the off-map reserves it waits for; `eventRefs`: the `reserve-ordered` events and what led to them.
+ */
+export type Decision = { kind: 'divisional-counter-attack'; atMin: number; formationId: string; segmentIds: string[]; reserveIds: string[]; eventRefs: number[] };
 
 /**
  * What an HQ has learnt and not yet passed up (Task 11): the keys of its picture that changed, from when, whether any
@@ -117,6 +136,8 @@ export type HqNews = {
   units: string[];
   segments: string[];
   lines: string[];
+  /** Segments whose enemy it has news of (Task 12; never urgent). */
+  enemy: string[];
   sinceMin: number | null;
   urgent: boolean;
   aboutEventId: number | null;
@@ -133,6 +154,17 @@ export type HqState = {
     segments: Record<string, Side>;
     lines: Record<string, number | null>;
     units: Record<string, { status: string; men: number; atMin: number }>;
+    /** When each segment last changed hands, as far as it knows (Task 12); absent: not since Zero. */
+    segmentsAt: Record<string, number>;
+    /** Lines it knows were lost again, with the minute (Task 12); a line taken again later is taken. */
+    linesLost: Record<string, number>;
+    /** The enemy it knows of in each segment the enemy holds (Task 12). */
+    enemy: Record<string, { men: number; atMin: number }>;
+    /**
+     * The event each piece of its picture was last about, by `u:<unit>`, `s:<segment>` and `l:<line key>` (Task 12):
+     * the refs of the decisions it takes on them.
+     */
+    about: Record<string, number>;
   };
   pending: Decision[];
   news: HqNews;
@@ -297,4 +329,27 @@ export type Pending = {
   damage: PendingDamage[];
   /** Filled by `resolve`, by company id (looked up only, never iterated): companies some fire came in on. */
   applied?: Map<string, Applied>;
+};
+
+/**
+ * What the command model has done, so that no decision is taken twice (Task 12). Looked up only, never iterated in
+ * insertion order.
+ */
+export type CommandState = {
+  /**
+   * Companies the command model has ordered forward, by id: the HQ that ordered them, when, and to which line (for an
+   * attack on one), and whether its picture has since shown them take the order up (`started`). A company the HQ then
+   * sees holding again (it rallied, or its counter-attack is in) is released: it may be ordered again.
+   */
+  ordered: Record<string, { hqId: string; atMin: number; lineKey?: string; started: boolean }>;
+  /** The minute each HQ last committed a reserve to a stalled line, by `hqId|lineId|sectorId` (also set on its HQs above). */
+  stallCommits: Record<string, number>;
+  /** Operations launched, by id, with the minute. */
+  launched: Record<string, number>;
+  /** Local counter-attacks ordered on a lost segment, by `hqId|segmentId`, until the HQ knows the segment is its own again. */
+  counterAttacks: Record<string, number>;
+  /** Divisions that have ordered their reserves forward and planned their counter-attack, with the minute. */
+  divisions: Record<string, number>;
+  /** The `off-map-attack` event of each off-map attack under way or done, by its id. */
+  offMap: Record<string, number>;
 };

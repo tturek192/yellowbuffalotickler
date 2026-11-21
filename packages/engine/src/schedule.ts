@@ -1,4 +1,5 @@
 import { ammunitionRunsOut, batteryRecoveries, offMapWindows } from './artillery';
+import { offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
 import { fireMissionEnds, messageDueTimes } from './comms';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
@@ -45,13 +46,20 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   // moving), and fire on call stopping (moves nobody).
   ['messages', messageDueTimes],
   ['fire-missions', fireMissionEnds],
+  // Task 12: lines due to count as stalled and operations' notBefore (decisions, which move nobody: their orders do, on
+  // arrival); counter-attacks formed up and going in (they set companies moving); off-map attacks opening (their first
+  // step a fine one) and closing.
+  ['stall-checks', stallChecks],
+  ['operation-starts', operationStarts],
+  ['order-starts', orderStarts],
+  ['off-map-attacks', offMapAttackWindows],
 ];
 
 /**
  * A quiet step's length, at most `quietMin`, in whole steps of `stepMin`, cut so that:
  * - it ends at or after the first grid minute past an event that moves nobody (rounded up), and
- * - it ends on the last grid minute before anything that starts movement (rounded down, at least one step),
- *   so the step in which a unit starts moving is a `stepMin` step.
+ * - it ends on the last grid minute strictly before anything that starts movement (at least one step), so the step in
+ *   which a unit starts moving (the first whose end is at or after its minute) is a `stepMin` step.
  * With this rule, a run's movement is the same whatever `quietMin` is.
  */
 export function quietStep(state: SimState, ctx: StepContext, stepMin: number, quietMin: number): number {
@@ -60,7 +68,8 @@ export function quietStep(state: SimState, ctx: StepContext, stepMin: number, qu
     for (const s of source(state, ctx)) {
       const ahead = s.minute - state.minute;
       if (ahead <= 0) continue;
-      const steps = s.startsMovement ? Math.floor(ahead / stepMin) : Math.ceil(ahead / stepMin);
+      // Movement: the last grid minute strictly before it (a start falling exactly on the grid still gets its fine step).
+      const steps = s.startsMovement ? Math.ceil(ahead / stepMin) - 1 : Math.ceil(ahead / stepMin);
       dt = Math.min(dt, Math.max(stepMin, steps * stepMin));
     }
   return dt;

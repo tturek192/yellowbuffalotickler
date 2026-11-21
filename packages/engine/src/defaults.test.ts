@@ -46,5 +46,6 @@ describe('defaults', () => {
     const r = runScenario(vimy(), vimyDoctrines(), { seed: 1 });
     expect(r.endMinute).toBeLessThan(1000);
     expect(r.summary.lineTaken.length).toBeGreaterThan(0);
-  });
+    // A whole Vimy run plus loading (see artillery.test.ts).
+  }, 30_000);
 });

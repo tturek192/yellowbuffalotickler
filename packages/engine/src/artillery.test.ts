@@ -204,7 +204,9 @@ describe('artillery in the battle', () => {
     expect(r.endMinute).toBeLessThan(1000);
     expect(ofKind(r, 'shelled').some((e) => e.causes.includes('defensive-barrage'))).toBe(true);
     for (const id of companyIds(r)) expect(new Set(totalsOverTime(r, id))).toHaveLength(1);
-  });
+    // A whole Vimy run (to minute ~900 since Task 12's operations) plus loading: more than vitest's 5 s default under a
+    // parallel suite. The run's own budget is measured on its own (Task 15).
+  }, 30_000);
   it('defensive fire falls on a segment its side has lost, on the enemies in it', () => {
     // No allied trench line, so no no man's land: only the lost segment can draw the fire.
     const { state, ctx } = initRun(...withGermanGuns(fixtureArtillery()), { seed: 1 });

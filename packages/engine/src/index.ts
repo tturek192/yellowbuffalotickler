@@ -1,22 +1,25 @@
 export { createRng } from './rng';
 export { stochasticRound } from './stochastic';
 export { lineXAt, sampleYs } from './geometry';
-export { initBarrage, advanceBarrage, bandAt, barrageXAt, planReachX } from './barrage';
+export { initBarrage, advanceBarrage, bandAt, barrageXAt, lineTimetableMin, planReachX } from './barrage';
 export type { BarrageState } from './barrage';
 export { CAUSES } from './causes';
 export type { Cause } from './causes';
 export { EVENT_KINDS } from './types';
 export type {
-  BatteryState, CallForFire, CasualtyCount, CutLine, Decision, EventKind, FireMission, FormationKind, HqNews, HqState, Intent, Message, Order, OrderTarget,
+  BatteryState, CallForFire, CasualtyCount, CommandState, CutLine, Decision, EventKind, FireMission, FormationKind, HqNews, HqState, Intent, Message, Order, OrderTarget,
   Applied, DugoutPoint, FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
 } from './types';
 export { initCompanies, leadFactor } from './companies';
 export type { CompanyState, CompanyStatus, Role } from './companies';
-export { advanceThrough, behaviour, moveCompanies, targetX } from './movement';
-export { canMopUp, capturable, captureGuns, captureSegments, dugoutSorties, dugoutsNear, mopUp, segmentsOnLine, sorties } from './trenches';
+export { advanceThrough, behaviour, counterAttackOrder, moveCompanies, placeAttackOrder, targetX } from './movement';
+export { canMopUp, capturable, captureGuns, captureSegments, dugoutSorties, dugoutsNear, inRear, mopUp, segmentsOnLine, sorties, takerOf } from './trenches';
 export { PHASES, runPipeline } from './pipeline';
 export type { Phase, PhaseName } from './pipeline';
-export { inContact, isBusy } from './step';
+export { inContact, isBusy, loseLines, takeLines } from './step';
+export { adaptFactor, companyLeaderOf, delayFactor, leaderOf, MIDPOINT, riskRatio, timetableJitter } from './leaders';
+export type { Ratings } from './leaders';
+export { commandPending, commandPhase, offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
 export { SCHEDULES, quietStep } from './schedule';
 export type { Scheduled, ScheduleSource } from './schedule';
 export type { SimState, StepContext } from './step';

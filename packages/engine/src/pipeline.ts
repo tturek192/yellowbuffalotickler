@@ -1,6 +1,7 @@
 import { artilleryFire } from './artillery';
 import { emergence, trackGaps } from './gap';
 import { advanceBarrage } from './barrage';
+import { commandPhase } from './command';
 import { commsPhase, companyReports } from './comms';
 import { emit } from './causes';
 import type { NewEvent } from './causes';
@@ -19,8 +20,6 @@ import type { Pending } from './types';
  * yet returns the state unchanged.
  */
 export type Phase = (state: SimState, ctx: StepContext, dt: number, pending: Pending) => SimState;
-
-const none: Phase = (state) => state;
 
 /** Each company picks its intent (movement.ts). */
 const behaviourPhase: Phase = (state, ctx) => behaviour(state, ctx);
@@ -48,6 +47,9 @@ const movement: Phase = (state, ctx, dt, pending) => {
   return sorties(mopUp(captureSegments(gaps, ctx), ctx, dt), ctx);
 };
 
+/** Headquarters decide from their pictures and send their orders; off-map attacks apply (command.ts). */
+const command: Phase = (state, ctx, dt) => commandPhase(state, ctx, dt);
+
 /** Deliver the messages due and update each HQ's picture (comms.ts). */
 const comms: Phase = (state, ctx) => commsPhase(state, ctx);
 
@@ -57,7 +59,7 @@ const log: Phase = (state, ctx) => companyReports(takeLines(state, ctx), ctx);
 /** The nine phases of a step, in the spec's order (the model, "Step pipeline"). */
 export const PHASES = [
   ['comms', comms],
-  ['command', none],
+  ['command', command],
   ['behaviour', behaviourPhase],
   ['artillery', artillery],
   ['directFire', directFire],

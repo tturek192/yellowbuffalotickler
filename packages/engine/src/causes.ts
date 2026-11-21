@@ -9,8 +9,9 @@ export const CAUSES = [
   'wire-uncut', 'wire-cut', 'spared-by-bombardment',
   // Fire
   'mg-fire', 'rifle-fire', 'mg-unobserved', 'artillery-fire', 'defensive-barrage', 'batteries-recovered', 'counter-battery', 'off-map-fire',
-  // Dugouts and the fight for trenches
-  'dugouts-uncleared', 'defenders-trapped', 'outnumbered',
+  // Dugouts and the fight for trenches; ground-lost: trench its side held was taken from it (Task 12: why a counter-attack
+  // was ordered, why a taken line was lost)
+  'dugouts-uncleared', 'defenders-trapped', 'outnumbered', 'ground-lost',
   // Leadership and morale
   'officers-lost', 'led-by-ncos', 'morale-broke', 'suppressed', 'isolated',
   // No fire came in long enough for morale to recover (a company that fell back rallies, Task 10)

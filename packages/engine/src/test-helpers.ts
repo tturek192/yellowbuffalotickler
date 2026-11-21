@@ -585,3 +585,91 @@ export function runStates(f: [Scenario, Models], o: { seed?: number; endMinute?:
   while (s.minute < (o.endMinute ?? 120)) states.push((s = runPipeline(s, ctx, o.stepMin ?? 2)));
   return { states, ctx };
 }
+
+// ---- the command model (Task 12) ----------------------------------------------------------------------------------
+
+export type CommandOpts = {
+  /** Ratings of the leader `gen` of every allied headquarters (each default 3). */
+  adaptiveness?: number;
+  riskTolerance?: number;
+  orderSpeed?: number;
+  /** Men of the reserve battalion bn2 (four companies r1–r4 at x -600), default 1200. */
+  reserveMen?: number;
+  /** Men of the German company k3 holding the Black Line's trench (x 1150), default 400: c1 and c2 (300) cannot take it. */
+  holdout?: number;
+  /** The allied doctrine's stallToleranceMin (default 30) and minAttackRatio (default 1.5). */
+  stallToleranceMin?: number;
+  minAttackRatio?: number;
+};
+
+/** Rate one leader (`id`) on every rating, 3 unless given. */
+export function rateLeader(s: Scenario, id: string, r: { planning?: number; orderSpeed?: number; adaptiveness?: number; riskTolerance?: number; moraleEffect?: number }): void {
+  const e = (x: number | undefined) => est(x ?? 3);
+  s.leaders = s.leaders.filter((l) => l.id !== id);
+  s.leaders.push({ id, name: { value: `Leader ${id}`, estimate: 'test' }, rank: { value: 'General', estimate: 'test' }, ratings: { planning: e(r.planning), orderSpeed: e(r.orderSpeed), adaptiveness: e(r.adaptiveness), riskTolerance: e(r.riskTolerance), moraleEffect: e(r.moraleEffect) } });
+}
+
+/**
+ * A stalled attack (fixtureComms with buried cable between headquarters and a 6-minute runner from the companies): c1
+ * and c2 of bn1 reach the Black Line (x 1150) but cannot take its trench from k3; brigade b1 holds the reserve
+ * battalion bn2 (companies r1–r4, reserve role, at x -600). Every allied headquarters is led by `gen`. Nobody fires.
+ */
+export function fixtureStall(o: CommandOpts = {}): [Scenario, Models] {
+  const f = withRearTrench(fixtureComms({ links: 'buried-cable', orderSpeed: o.orderSpeed ?? 3 }), 1150, 'k3');
+  const [s, m] = f;
+  rateLeader(s, 'gen', { orderSpeed: o.orderSpeed, adaptiveness: o.adaptiveness, riskTolerance: o.riskTolerance });
+  s.forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!.strength = est(o.holdout ?? 400);
+  const b1 = s.forces[0]!.formations[0]!.children![0]!.children![0]!;
+  const men = (o.reserveMen ?? 1200) / 4;
+  b1.children!.push({
+    id: 'bn2',
+    name: '2nd Battalion',
+    kind: 'battalion',
+    companies: [50, 150, 250, 350].map((y, i) => ({ id: `r${i + 1}`, name: `Reserve ${i + 1}`, role: 'reserve' as const, strength: est(men), start: [-600, y] as [number, number] })),
+  });
+  m.tables.channels.runner = { delayMin: param(6), failPerHour: param(0) };
+  const bef = m.doctrines['bef-1917']!;
+  bef.attack!.stallToleranceMin = param(o.stallToleranceMin ?? 30);
+  bef.attack!.minAttackRatio = param(o.minAttackRatio ?? 1.5);
+  for (const k of ['counterAttackConsolidateMin', 'counterAttackConsolidatedFactor'] as const) (m.tables.effects as Record<string, unknown>)[k] = param(k === 'counterAttackConsolidateMin' ? 60 : 2);
+  return f;
+}
+
+export type CounterOpts = {
+  /** The runner's failPerHour (default 0) and delayMin (default 30). */
+  failPerHour?: number;
+  runnerMin?: number;
+  /** Put the German regiment under a division `gd`, led by `gl` with this orderSpeed, and its reserve kr in a battalion of the division's (a divisional counter-attack). Absent: kr is the regiment's own (a local one). */
+  divOrderSpeed?: number;
+  /** An off-map reserve battalion `gres` of the division, entering at x 2500 (with divOrderSpeed). */
+  offMapReserve?: boolean;
+};
+
+/**
+ * German counter-attacks: fixtureArtillery (the barrage traps k1 and k2 on `ger-front-a` and c1 and c2 take their
+ * segments at once, then the Black Line at minute 32, so the trench at x 150 lies behind a taken line), with the German
+ * reserve company kr (300 men) at x 600, y 100. Channels: runner (failPerHour, delayMin), every other 10 minutes and
+ * sure; the German side has no communications links, so every German message goes by runner. Defence values:
+ * localCounterAttackDelayMin 5, divisionalCounterAttackDelayMin 30, counterAttackMinRatio 0.75,
+ * commitReserveWhenLostFrac 0.25; counterAttackConsolidateMin 60, counterAttackConsolidatedFactor 2.
+ */
+export function fixtureCounter(o: CounterOpts = {}): [Scenario, Models] {
+  const [s, m] = fixtureArtillery();
+  const kr = { id: 'kr', name: 'Reserve-Kompanie', role: 'reserve' as const, strength: est(300), start: [600, 100] as [number, number] };
+  const reg = s.forces[1]!.formations[0]!;
+  if (o.divOrderSpeed === undefined) reg.companies!.push(kr);
+  else {
+    s.forces[1]!.formations = [{ id: 'gd', name: 'German Division', kind: 'division', leaderId: 'gl', children: [reg, { id: 'grb', name: 'Reserve Battalion', kind: 'battalion', companies: [kr] }, ...(o.offMapReserve ? [{ id: 'gres', name: 'Resting Battalion', kind: 'battalion' as const }] : [])] }];
+    rateLeader(s, 'gl', { orderSpeed: o.divOrderSpeed });
+    if (o.offMapReserve) s.reserves.push({ formationId: 'gres', side: 'central', distanceKm: est(8), entryPoint: [2500, 200] });
+  }
+  for (const k of Object.keys(m.tables.channels) as Array<keyof Tables['channels']>) m.tables.channels[k] = { delayMin: param(10), failPerHour: param(0) };
+  m.tables.channels.runner = { delayMin: param(o.runnerMin ?? 30), failPerHour: param(o.failPerHour ?? 0) };
+  for (const [k, value] of Object.entries({ ...HQ_OFFSETS, runnerMinPerKm: 0, runnerDelayCoversKm: 0, counterAttackConsolidateMin: 60, counterAttackConsolidatedFactor: 2, observerRangeM: 1500 }))
+    (m.tables.effects as Record<string, unknown>)[k] = param(value);
+  for (const d of Object.values(m.doctrines)) {
+    d.defence = { ...d.defence!, localCounterAttackDelayMin: param(5), divisionalCounterAttackDelayMin: param(30), counterAttackMinRatio: param(0.75), commitReserveWhenLostFrac: param(0.25) };
+    d.common.reportEveryMin = param(30);
+  }
+  return [s, m];
+}

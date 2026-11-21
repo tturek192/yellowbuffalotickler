@@ -35,6 +35,11 @@ describe('draft Vimy scenario run', () => {
     // acts on what its headquarters know yet (Task 12), and no draw comes before a draw that changes the battle (the
     // draft has no fire, so its only other draws are the companies' start and speed, at setup): its companies, other
     // events and summary are unchanged. (Re-pinned within 0.3.5 by the pre-review fix that placed headquarters.)
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.5', hash: '1f8812dc' });
+    // 0.3.6 (Task 12): the command model. The draft's battle is unchanged (the same events, lines at the same minutes, the
+    // same summary): it has no reserve-role battalion to commit to a stall, no operations, no German garrisons to
+    // counter-attack and no off-map attacks; its companies' start jitter is scaled by their leaders' planning, which counts as 3 for the draft's
+    // unrated leaders. The hash moves with the version and with defaultsUsed, which now lists the leaders the command
+    // model and the timetable read as 3 (formations with no leader, leaders with no ratings).
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.6', hash: 'e95e2f6f' });
   });
 });

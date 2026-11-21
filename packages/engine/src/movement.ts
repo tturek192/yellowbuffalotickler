@@ -32,11 +32,38 @@ const at = (c: Pick<CompanyState, 'x' | 'y'>): Point => [c.x, c.y];
 
 // ---- behaviour ----------------------------------------------------------------------------------------------
 
+type Targeted = Order & { target: OrderTarget };
+
 /** The counter-attack order a company holds, if its latest order is one with a target. */
-const counterAttackOrder = (c: CompanyState): (Order & { target: OrderTarget }) | null => {
+export const counterAttackOrder = (c: Pick<CompanyState, 'orders'>): Targeted | null => {
   const o = c.orders.at(-1);
-  return o?.kind === 'counter-attack' && o.target !== undefined ? (o as Order & { target: OrderTarget }) : null;
+  return o?.kind === 'counter-attack' && o.target !== undefined ? (o as Targeted) : null;
 };
+
+/** The attack order on a place (a feature or a segment, not a line) a company holds, if its latest order is one (Task 12). */
+export const placeAttackOrder = (c: Pick<CompanyState, 'orders'>): Targeted | null => {
+  const o = c.orders.at(-1);
+  return o?.kind === 'attack' && o.target !== undefined && !('lineId' in o.target) ? (o as Targeted) : null;
+};
+
+/** The latest order of a company, if it is an attack or counter-attack with a target whose minute to go has come (Task 12). */
+function dueOrder(c: CompanyState, minute: number): Targeted | null {
+  const o = c.orders.at(-1);
+  if (!o || (o.kind !== 'attack' && o.kind !== 'counter-attack') || o.target === undefined) return null;
+  return (o.goAtMin ?? -Infinity) <= minute ? (o as Targeted) : null;
+}
+
+/**
+ * A holding company on the field and up acting on its order (Task 12): a counter-attack sets it counter-attacking; an
+ * attack on a line makes the line its objective (in the order's sector) and sets it advancing from now, the order done;
+ * an attack on a place sets it advancing on that place (it has no objective line while it does).
+ */
+function takeUp(c: CompanyState, o: Targeted, minute: number): CompanyState {
+  if (o.kind === 'counter-attack') return { ...c, status: 'counter-attacking' };
+  if ('lineId' in o.target)
+    return { ...c, status: 'advancing', objectiveLineId: o.target.lineId, sectorId: o.target.sectorId, startMin: minute, orders: c.orders.filter((x) => x !== o) };
+  return { ...c, status: 'advancing', objectiveLineId: undefined, startMin: minute };
+}
 
 /**
  * The intent of a company this step:
@@ -65,19 +92,20 @@ function intentOf(c: CompanyState, state: SimState, ctx: StepContext): Intent {
       return canMopUp(state, ctx, c) ? 'mop-up' : 'hold';
     case 'waiting':
     case 'advancing':
-      if (c.objectiveLineId === undefined) return 'hold';
+      if (c.objectiveLineId === undefined) return placeAttackOrder(c) ? 'advance' : 'hold';
       return c.role === 'mopup' && c.status === 'advancing' && canMopUp(state, ctx, c) ? 'mop-up' : 'advance';
   }
 }
 
 /**
  * The behaviour phase: each company picks its intent (`intentOf`). A holding company changes status only by
- * surrendering (the morale phase) or by being ordered to counter-attack: one up on the field whose latest order is a
- * counter-attack with a target starts counter-attacking.
+ * surrendering (the morale phase) or by being ordered forward (Task 12): one up on the field whose latest order is an
+ * attack or a counter-attack with a target, once the order's minute to go has come, takes it up (`takeUp`).
  */
 export function behaviour(state: SimState, ctx: StepContext): SimState {
   const companies = state.companies.map((c0) => {
-    const c = isHolding(c0) && onField(c0) && c0.posture !== 'in-dugout' && counterAttackOrder(c0) ? { ...c0, status: 'counter-attacking' as const } : c0;
+    const o = isHolding(c0) && onField(c0) && c0.posture !== 'in-dugout' ? dueOrder(c0, state.minute) : null;
+    const c = o ? takeUp(c0, o, state.minute) : c0;
     const intent = intentOf(c, state, ctx);
     return c === c0 && c.intent === intent ? c : { ...c, intent };
   });
@@ -271,6 +299,22 @@ export function moveCompanies(state: SimState, ctx: StepContext, dt: number, pen
         });
         next = { ...c, x, status: 'consolidating', posture: 'in-trench', reached: { eventId, causes } };
       } else next = { ...c, x, status: 'advancing', posture: 'moving' };
+    } else if (c.intent === 'advance' && c.status !== 'consolidating' && state.minute >= c.startMin && c.objectiveLineId === undefined) {
+      // An attack on a place (Task 12): straight at it; within captureRadiusM of it, it consolidates there.
+      const order = placeAttackOrder(c);
+      const to = order && targetPoint(c, order.target, state, ctx);
+      if (!order || !to) next = { ...c, status: 'holding', intent: 'hold' };
+      else {
+        const r = toward(c, to, ownSpeed(c, ctx), dt, wet, ctx);
+        moved = r.moved;
+        if (Math.hypot(to[0] - r.p[0], to[1] - r.p[1]) <= captureR) {
+          const causes: Cause[] = [c.barrageLost ? 'barrage-moved-on' : 'followed-barrage'];
+          const eventId = state.nextEventId + events.length;
+          const name = 'featureId' in order.target ? order.target.featureId : 'segmentId' in order.target ? order.target.segmentId : '';
+          events.push({ minute: state.minute, kind: 'company-reached', ...(c.sectorId ? { sectorId: c.sectorId } : {}), unitId: c.id, text: `${c.name} reaches ${name}`, causes });
+          next = { ...c, x: r.p[0], y: r.p[1], status: 'consolidating', posture: 'in-trench', reached: { eventId, causes }, orders: c.orders.filter((o) => o !== order) };
+        } else next = { ...c, x: r.p[0], y: r.p[1], status: 'advancing', posture: 'moving' };
+      }
     } else if (c.intent === 'fall-back') {
       const r = toward(c, [c.startX, c.startY], ownSpeed(c, ctx), dt, wet, ctx);
       moved = r.moved;
@@ -283,8 +327,10 @@ export function moveCompanies(state: SimState, ctx: StepContext, dt: number, pen
         const r = toward(c, to, ownSpeed(c, ctx), dt, wet, ctx);
         moved = r.moved;
         const there = Math.hypot(to[0] - r.p[0], to[1] - r.p[1]) <= captureR;
+        // There it holds; its intent stays `counter-attack` until the next behaviour phase, so the fight for the trench
+        // this step knows it came on an order (trenches.ts: an ordered counter-attack may retake a segment in the rear).
         next = there
-          ? { ...c, x: r.p[0], y: r.p[1], status: 'holding', intent: 'hold', posture: 'in-trench', orders: c.orders.filter((o) => o !== order) }
+          ? { ...c, x: r.p[0], y: r.p[1], status: 'holding', intent: 'counter-attack', posture: 'in-trench', orders: c.orders.filter((o) => o !== order) }
           : { ...c, x: r.p[0], y: r.p[1], posture: 'moving' };
       }
     }

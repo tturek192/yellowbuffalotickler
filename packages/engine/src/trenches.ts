@@ -67,7 +67,7 @@ export function barrageNear(seg: SegmentState, ctx: StepContext, companies: read
 }
 
 /** The side whose companies aim at a taken line ("lineId|sectorId"), by the first company that does; null if none. */
-function takerOf(state: SimState, key: string): Side | null {
+export function takerOf(state: SimState, key: string): Side | null {
   const c = state.companies.find((x) => x.objectiveLineId !== undefined && `${x.objectiveLineId}|${x.sectorId}` === key);
   return c ? c.side : null;
 }
@@ -110,7 +110,9 @@ export const capturable = (b: BatteryState): boolean => !b.horses;
  *   hold the trench they stand on, at the distance the line-taken rule ties a trench to a line.
  * - It changes holder when there are attackers and at least `captureRatio` times as many attacking men as defending.
  *   With no defenders, the defenders are gone and it changes holder, except in its holder's rear (`inRear`: at or behind
- *   a line its holder has taken): there it changes hands only by the 3:1 clause, so with no defenders at all it stays.
+ *   a line its holder has taken): there it changes hands only by the 3:1 clause, so with no defenders at all it stays —
+ *   unless an ordered counter-attack (a company whose intent is `counter-attack`, from the command model) is among the
+ *   attackers: that protection is against sorties and incidental presence only (Task 10 ruling, Task 12).
  * - `segment-lost` when its garrison's side loses it, `segment-retaken` when that side takes it back. On a retake any of
  *   its men left in the dugouts there come up and rejoin it (each a `dugout-sortie`), and it counts as manned.
  * - Causes: `defenders-trapped` (the first loss of a segment whose garrison was caught below, with a ref to the
@@ -145,7 +147,10 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
     const onLine = firstLoss ? [] : nearSegment(holders.filter((c) => c.status === 'consolidating' || c.status === 'holding'), pts, match);
     const defenders = [...close, ...onLine.filter((x) => !close.some((y) => y.c.id === x.c.id))];
     const d = sum(defenders, (x) => x.c.men);
-    if (d > 0 ? a < ratio * d : inRear(seg, out, ctx)) continue;
+    // An ORDERED counter-attack (the command model's, Task 12) is not held off by the rear rule: reaching a segment in its
+    // holder's rear with nobody there to hold it, it takes it back (with defenders, it needs the 3:1 as anyone does).
+    const onOrders = attackers.some((x) => x.c.intent === 'counter-attack');
+    if (d > 0 ? a < ratio * d : !onOrders && inRear(seg, out, ctx)) continue;
 
     const lost = seg.holder === seg.garrisonSide;
     // The trapping explains the first loss only: a segment retaken and lost again was not lost over men below.

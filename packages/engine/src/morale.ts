@@ -8,6 +8,7 @@ import { CAUSES } from './causes';
 import { byId } from './companies';
 import type { CompanyState, CompanyStatus } from './companies';
 import { lineXAt } from './geometry';
+import { counterAttackOrder } from './movement';
 import { round } from './record';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
@@ -101,9 +102,10 @@ const STATE_EVENT = { pinned: 'company-pinned', 'falling-back': 'company-fell-ba
  *   standing captured (`company-surrendered`);
  * - an attacking company that has started: `m < fallBack` falls back (`company-fell-back`); one falling back whose
  *   morale is back at `fallBack` or above rallies where it has got to and holds (`company-rallied`, ref to its
- *   `company-fell-back`; Task 10: it does not take up the attack again unless ordered); else `m < goToGround` or `s > pinSuppression` pins it (`company-pinned`, posture prone unless
- *   it is in a trench), else it goes on (advancing, or consolidating once at its objective). Holding and waiting
- *   companies change state only by surrendering.
+ *   `company-fell-back`; Task 10: it does not take up the attack again unless ordered, and its orders lapse); else
+ *   `m < goToGround` or `s > pinSuppression` pins it (`company-pinned`, posture prone unless it is in a trench), else it
+ *   goes on (counter-attacking again if it holds a counter-attack order, Task 12; advancing, or consolidating once at its
+ *   objective). Holding and waiting companies change state only by surrendering.
  * Men down in their dugouts are left alone: no fire reaches them, and the gap and mopping up decide their fate.
  * Each state event carries the causes of the fire of the last `fireRefsMin` minutes, `suppressed`, `isolated`,
  * `officers-lost` and `morale-broke` as they apply, and refs to that fire's events (and to `officers-lost`).
@@ -162,7 +164,8 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
         refs: c.fellBackEventId === null ? [] : [c.fellBackEventId],
         factors: { morale: round(m, 3), men: c.men },
       });
-      return { ...moved, status: 'holding', intent: 'hold', posture: c.posture === 'moving' ? 'prone' : c.posture };
+      // Its orders lapse with its attack: going forward again is a new decision of its headquarters (Task 12).
+      return { ...moved, status: 'holding', intent: 'hold', posture: c.posture === 'moving' ? 'prone' : c.posture, orders: [] };
     }
     const pin = !fall && (m < v(k.goToGround) || c.suppression > v(k.pinSuppression));
     if (fall || pin) {
@@ -176,7 +179,9 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
       return c.status === status && c.intent === intent && c.posture === posture ? moved : { ...moved, status, intent, posture, ...fellBack };
     }
     if (c.status === 'pinned') {
-      // It goes on: back to its trench if it is at its objective, else on toward it.
+      // It goes on: a company pinned on its way to counter-attack takes it up again (Task 12, the Task 9 carry); else back
+      // to its trench if it is at its objective, else on toward it.
+      if (counterAttackOrder(c)) return { ...moved, status: 'counter-attacking', intent: 'counter-attack', posture: 'moving' };
       const line = ctx.scenario.lines.find((l) => l.id === c.objectiveLineId);
       const at = line !== undefined && lineXAt(line.points, c.y) - c.x <= 1;
       return { ...moved, status: at ? 'consolidating' : 'advancing', intent: at ? 'hold' : 'advance', posture: at ? 'in-trench' : 'moving' };

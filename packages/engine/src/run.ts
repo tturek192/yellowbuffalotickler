@@ -4,6 +4,7 @@ import { barrageXAt, initBarrage } from './barrage';
 import { noteArtilleryDefaults } from './artillery';
 import { initBatteries, runBombardment } from './bombardment';
 import { emit } from './causes';
+import { commandPending } from './command';
 import { initComms } from './comms';
 import { initCompanies, isHolding } from './companies';
 import { buildWorld } from './ground';
@@ -19,6 +20,7 @@ import { COMPANY_COLUMNS, ENGINE_VERSION, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_
 import type { RunRecord, Snapshot } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
+import type { ReserveState } from './types';
 
 /** What the model runs on besides the scenario: the doctrines its forces name, and the weapon and effect tables. */
 export type Models = { doctrines: Record<string, Doctrine>; tables: Tables };
@@ -77,11 +79,12 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
   const state: SimState = {
     minute: 0,
     barrages: scenario.sectors.map(initBarrage),
-    companies: withStartingMorale(initCompanies(scenario, models.doctrines, rng), ctx).map((c) => {
+    companies: withStartingMorale(initCompanies(scenario, models.doctrines, rng, ctx.defaultsUsed), ctx).map((c) => {
       const seg = segmentOf.get(c.id);
       return seg === undefined ? c : { ...c, segmentId: seg };
     }),
     taken: [],
+    takenEventIds: {},
     events: [],
     segments,
     batteries: initBatteries(scenario, ctx.defaultsUsed),
@@ -91,13 +94,22 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     cutLines: [],
     lastReport: {},
     fireMissions: [],
-    reserves: [],
+    reserves: initReserves(scenario),
+    command: { ordered: {}, stallCommits: {}, launched: {}, counterAttacks: {}, divisions: {}, offMap: {} },
     churn: ctx.world.churn,
     nextEventId: 0,
   };
   const atZero = emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' });
   // Headquarters start knowing their companies and the trenches as they stand once the bombardment is over (comms.ts).
   return { state: initComms(runBombardment(atZero, ctx).state, ctx), ctx };
+}
+
+/** The off-map reserves, waiting where the scenario puts them until a headquarters orders them forward (Tasks 12–13). */
+function initReserves(s: Scenario): ReserveState[] {
+  return s.reserves.map((r) => {
+    if (!Array.isArray(r.entryPoint)) throw new Error(`Reserve ${r.formationId}: entryPoint was not projected to a local point`);
+    return { formationId: r.formationId, side: r.side, status: 'waiting', orderedMin: null, arriveMin: null, entryPoint: [r.entryPoint[0], r.entryPoint[1]] };
+  });
 }
 
 /** The quiet step: the smallest `common.quietStepMin` among the forces' doctrines. */
@@ -169,7 +181,9 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
     const finished =
       stopEarly &&
       state.barrages.every((b) => b.phase === 'done') &&
-      state.companies.every((c) => isHolding(c) || DONE.has(c.status));
+      state.companies.every((c) => isHolding(c) || DONE.has(c.status)) &&
+      // Task 12: nor while a headquarters has an order on its way, a stall to act on or an operation waiting for its hour.
+      !commandPending(state, ctx);
     const every = busy ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
     const due = opts.snapshotEveryStep || Math.floor(state.minute / every) > Math.floor(lastSnapshot / every);
     if (due || state.minute >= endMinute || finished) {

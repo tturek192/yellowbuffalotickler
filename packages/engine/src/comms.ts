@@ -34,9 +34,12 @@ import type { BatteryState, CallForFire, CutLine, FireMission, FormationKind, Hq
  *   own dueMin, so a headquarters passes news on when it gets it, whatever the step.
  *
  * Reports. A company reports to its battalion when its status changes, it takes a segment, its own segment changes
- * hands or its line is taken (`companyReports`, at the end of the step). A headquarters merges a report into its
- * picture and passes a summary of what is new up to the next headquarters: at once when a unit's status, a segment's
- * holder or a line changed, otherwise `reportEveryMin` (doctrine) after its last summary.
+ * hands or its line is taken or lost again (`companyReports`, at the end of the step). Each report also tells of the
+ * enemy it sees: for each segment the enemy holds within `observerRangeM`, the enemy's men up in it (Task 12, for the
+ * command model's force ratios). A headquarters merges a report into its picture (with when each segment changed hands,
+ * the lines lost again, the enemy seen, and the event each piece was about) and passes a summary of what is new up to
+ * the next headquarters: at once when a unit's status, a segment's holder or a line changed, otherwise
+ * `reportEveryMin` (doctrine) after its last summary; news of the enemy alone goes up with the next summary.
  *
  * Calls for fire. A company that is pinned calls for fire on the nearest segment held by the enemy within
  * `observerRangeM`. The call goes up the chain until it reaches a formation the scenario's `liaison` covers, which
@@ -46,8 +49,8 @@ import type { BatteryState, CallForFire, CutLine, FireMission, FormationKind, Hq
  * segment for `callForFireMin`, taken off their own task (artillery.ts); it falls on the enemy there, never on the
  * caller's side, even if the segment has changed hands by then.
  *
- * Orders are delivered to the companies of the formation they are addressed to (`orders`); deciding them is the
- * command model's (Task 12). Every number is data: the channels' delayMin and failPerHour, the effects keys
+ * Orders are delivered to the companies of the formation (or the company) they are addressed to that the order names
+ * (`Order.unitIds`; every one when it names none); deciding them is the command model's (Task 12, command.ts). Every number is data: the channels' delayMin and failPerHour, the effects keys
  * runnerMinPerKm, runnerDelayCoversKm, the hqRearOffset…M keys, callForFireMin, callForFireGuns and observerRangeM, the
  * doctrine's reportEveryMin and the leaders' orderSpeed.
  */
@@ -133,6 +136,10 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
         segments: { ...segments },
         lines: Object.fromEntries(lines.filter((k, j) => lines.indexOf(k) === j).sort(byStr).map((k) => [k, null])),
         units: Object.fromEntries(cs.map((c) => [c.id, { status: c.status, men: c.men, atMin: state.minute }])),
+        segmentsAt: {},
+        linesLost: {},
+        enemy: {},
+        about: {},
       },
       pending: [],
       news: emptyNews(state.minute),
@@ -197,7 +204,7 @@ export function hqPositionOf(ctx: StepContext, formationId: string): Point | nul
   return topologyOf(ctx).nodes.get(formationId)?.pos ?? null;
 }
 
-const emptyNews = (sentMin: number): HqNews => ({ units: [], segments: [], lines: [], sinceMin: null, urgent: false, aboutEventId: null, sentMin });
+const emptyNews = (sentMin: number): HqNews => ({ units: [], segments: [], lines: [], enemy: [], sinceMin: null, urgent: false, aboutEventId: null, sentMin });
 
 function topologyOf(ctx: StepContext): Topology {
   const t = topologies.get(ctx.scenario);
@@ -513,11 +520,14 @@ function deliver(w: Work, m: Message): void {
   merge(w, m.toFormationId, m.payload as Report, t, m.aboutEventId);
 }
 
-/** The parts of an HQ a step has copied for writing (bits). */
+/** The parts of an HQ a step has copied for writing (bits): segments with their minutes, lines with those lost. */
 const UNITS = 1;
 const SEGMENTS = 2;
 const LINES = 4;
 const NEWS = 8;
+const ENEMY = 16;
+const ABOUT = 32;
+const PICTURE = UNITS | SEGMENTS | LINES | ENEMY | ABOUT;
 
 /** An HQ for writing the parts named (bits): each part copied once a step, the rest shared with the step before. */
 function hqForWrite(w: Work, i: number, parts: number): HqState {
@@ -527,8 +537,18 @@ function hqForWrite(w: Work, i: number, parts: number): HqState {
     const p = h.picture;
     w.hqs[i] = {
       ...h,
-      picture: need & (UNITS | SEGMENTS | LINES) ? { segments: need & SEGMENTS ? { ...p.segments } : p.segments, lines: need & LINES ? { ...p.lines } : p.lines, units: need & UNITS ? { ...p.units } : p.units } : p,
-      news: need & NEWS ? { ...h.news, units: [...h.news.units], segments: [...h.news.segments], lines: [...h.news.lines] } : h.news,
+      picture: need & PICTURE
+        ? {
+            segments: need & SEGMENTS ? { ...p.segments } : p.segments,
+            segmentsAt: need & SEGMENTS ? { ...p.segmentsAt } : p.segmentsAt,
+            lines: need & LINES ? { ...p.lines } : p.lines,
+            linesLost: need & LINES ? { ...p.linesLost } : p.linesLost,
+            units: need & UNITS ? { ...p.units } : p.units,
+            enemy: need & ENEMY ? { ...p.enemy } : p.enemy,
+            about: need & ABOUT ? { ...p.about } : p.about,
+          }
+        : p,
+      news: need & NEWS ? { ...h.news, units: [...h.news.units], segments: [...h.news.segments], lines: [...h.news.lines], enemy: [...h.news.enemy] } : h.news,
     };
     w.touched[i]! |= need;
   }
@@ -551,27 +571,55 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
     return !cur || (u.atMin >= cur.atMin && (cur.status !== u.status || cur.men !== u.men || cur.atMin !== u.atMin));
   });
   const segments = Object.keys(r.segments).sort(byStr).filter((id) => was.segments[id] !== r.segments[id]);
-  const lines = Object.keys(r.lines).sort(byStr).filter((k) => r.lines[k] !== null && r.lines[k] !== undefined && (was.lines[k] === null || was.lines[k] === undefined));
-  if (units.length + segments.length + lines.length === 0) return;
+  // A line taken: news unless it is known taken, or known lost since (a stale report). A line lost: news if it is known
+  // taken before then (Task 12).
+  const lines = Object.keys(r.lines).sort(byStr).filter((k) => {
+    const x = r.lines[k];
+    return x !== null && x !== undefined && (was.lines[k] === null || was.lines[k] === undefined) && !((was.linesLost[k] ?? -Infinity) >= x);
+  });
+  const lost = r.lost ? Object.keys(r.lost).sort(byStr).filter((k) => typeof was.lines[k] === 'number' && r.lost![k]! >= was.lines[k]!) : [];
+  // The enemy seen: news when the men differ from what it knows (Task 12).
+  const enemy = r.enemy ? Object.keys(r.enemy).sort(byStr).filter((id) => was.enemy[id]?.men !== r.enemy![id]!.men && r.enemy![id]!.atMin >= (was.enemy[id]?.atMin ?? -Infinity)) : [];
+  if (units.length + segments.length + lines.length + lost.length + enemy.length === 0) return;
   const top = w.topo.nodes.get(hqId)!.parentId === null;
-  const h = hqForWrite(w, i, (units.length ? UNITS : 0) | (segments.length ? SEGMENTS : 0) | (lines.length ? LINES : 0) | (top ? 0 : NEWS));
+  const parts = (units.length ? UNITS : 0) | (segments.length ? SEGMENTS : 0) | (lines.length + lost.length ? LINES : 0) | (enemy.length ? ENEMY : 0);
+  const h = hqForWrite(w, i, parts | (aboutEventId !== undefined && parts & (UNITS | SEGMENTS | LINES) ? ABOUT : 0) | (top ? 0 : NEWS));
   const pic = h.picture;
-  let urgent = segments.length + lines.length > 0;
+  const about = (key: string): void => {
+    if (aboutEventId !== undefined) pic.about[key] = aboutEventId;
+  };
+  let urgent = segments.length + lines.length + lost.length > 0;
   for (const id of units) {
     const u = r.units[id]!;
     if (pic.units[id]?.status !== u.status) urgent = true;
     pic.units[id] = { status: u.status, men: u.men, atMin: u.atMin };
+    about(`u:${id}`);
     if (!top) addKey(h.news.units, id);
   }
   for (const id of segments) {
     pic.segments[id] = r.segments[id]!;
+    pic.segmentsAt[id] = r.segmentsAt?.[id] ?? r.atMin;
+    about(`s:${id}`);
     if (!top) addKey(h.news.segments, id);
   }
   for (const k of lines) {
     pic.lines[k] = r.lines[k]!;
+    about(`l:${k}`);
     if (!top) addKey(h.news.lines, k);
   }
+  for (const k of lost) {
+    pic.lines[k] = null;
+    pic.linesLost[k] = r.lost![k]!;
+    about(`l:${k}`);
+    if (!top) addKey(h.news.lines, k);
+  }
+  for (const id of enemy) {
+    pic.enemy[id] = { ...r.enemy![id]! };
+    if (!top) addKey(h.news.enemy, id);
+  }
   if (top) return;
+  // The enemy seen goes up with the HQ's next summary; on its own it is no reason to send one.
+  if (units.length + segments.length + lines.length + lost.length === 0) return;
   h.news.sinceMin ??= t;
   if (aboutEventId !== undefined) h.news.aboutEventId = Math.max(h.news.aboutEventId ?? -1, aboutEventId);
   if (urgent) h.news.urgent = true;
@@ -583,11 +631,17 @@ function forward(w: Work, i: number, t: number): void {
   const h = hqForWrite(w, i, NEWS);
   const n = h.news;
   const pic = h.picture;
+  const segs = [...n.segments].sort(byStr);
+  const lines = [...n.lines].sort(byStr);
+  const lost = lines.filter((k) => (pic.lines[k] === null || pic.lines[k] === undefined) && pic.linesLost[k] !== undefined);
   const report: Report = {
     atMin: t,
     units: Object.fromEntries([...n.units].sort(byStr).map((id) => [id, { ...pic.units[id]! }])),
-    segments: Object.fromEntries([...n.segments].sort(byStr).map((id) => [id, pic.segments[id]!])),
-    lines: Object.fromEntries([...n.lines].sort(byStr).map((k) => [k, pic.lines[k] ?? null])),
+    segments: Object.fromEntries(segs.map((id) => [id, pic.segments[id]!])),
+    lines: Object.fromEntries(lines.filter((k) => !lost.includes(k)).map((k) => [k, pic.lines[k] ?? null])),
+    ...(lost.length ? { lost: Object.fromEntries(lost.map((k) => [k, pic.linesLost[k]!])) } : {}),
+    ...(segs.some((id) => pic.segmentsAt[id] !== undefined) ? { segmentsAt: Object.fromEntries(segs.flatMap((id) => (pic.segmentsAt[id] === undefined ? [] : [[id, pic.segmentsAt[id]!]]))) } : {}),
+    ...(n.enemy.length ? { enemy: Object.fromEntries([...n.enemy].sort(byStr).map((id) => [id, { ...pic.enemy[id]! }])) } : {}),
   };
   const about = n.aboutEventId;
   h.news = emptyNews(t);
@@ -598,10 +652,14 @@ function forward(w: Work, i: number, t: number): void {
 const cadenceDue = (topo: Topology, h: HqState, i: number): number =>
   h.news.sinceMin === null ? Infinity : Math.max(h.news.sentMin + topo.everyMin[i]!, h.news.sinceMin);
 
-/** An order reaches the formation it is for: every company under it holds it. */
+/**
+ * An order reaches the formation (or the company) it is for: the companies under it that it names (`unitIds`; absent:
+ * every one) hold it (Task 12 narrows delivery to the companies a decision concerns).
+ */
 function deliverOrder(w: Work, formationId: string, o: Order): void {
   const cs = w.companies ?? w.state.companies;
-  w.companies = cs.map((c) => (c.formationPath.includes(formationId) ? { ...c, orders: [...c.orders, o] } : c));
+  const named = o.unitIds;
+  w.companies = cs.map((c) => ((c.id === formationId || c.formationPath.includes(formationId)) && (named === undefined || named.includes(c.id)) ? { ...c, orders: [...c.orders, o] } : c));
   w.companyAt = null;
 }
 
@@ -689,11 +747,14 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
   const took = new Map<string, string[]>();
   const lastEvent = new Map<string, number>();
   const linesTaken = new Map<string, number>();
+  const linesLost = new Map<string, number>();
   for (const e of state.events) {
     if (e.unitId !== undefined && e.kind !== 'message-lost') lastEvent.set(e.unitId, e.id);
     if ((e.kind === 'segment-lost' || e.kind === 'segment-retaken') && e.unitId !== undefined && e.segmentId !== undefined) took.set(e.unitId, [...(took.get(e.unitId) ?? []), e.segmentId]);
     if (e.kind === 'line-taken') linesTaken.set(`${e.lineId}|${e.sectorId}`, e.id);
+    if (e.kind === 'line-lost') linesLost.set(`${e.lineId}|${e.sectorId}`, e.id);
   }
+  const seen = enemySeen(state, ctx);
   let w: Work | null = null;
   let last: SimState['lastReport'] | null = null;
   const range = v(ctx.tables.effects.observerRangeM);
@@ -704,7 +765,9 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     if (c.status === 'off-map') continue;
     const before = state.lastReport[c.id] ?? { status: c.status, men: c.men, holder: null, atMin: M };
     const routine = c.men !== before.men && M >= before.atMin + every(c);
-    if (!anySeg && !routine && before.status === c.status && !(c.status === 'consolidating' && linesTaken.size)) continue;
+    const aim = c.objectiveLineId === undefined ? '' : `${c.objectiveLineId}|${c.sectorId}`;
+    const lostEvent = aim && linesLost.size ? linesLost.get(aim) : undefined;
+    if (!anySeg && !routine && before.status === c.status && !(c.status === 'consolidating' && linesTaken.size) && lostEvent === undefined) continue;
     const own = c.segmentId === undefined ? undefined : holderOf.get(c.segmentId);
     const holder = own ? own.holder : null;
     const taken = took.get(c.id) ?? [];
@@ -712,17 +775,25 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     const lineEvent = key ? linesTaken.get(key) : undefined;
     const statusChanged = before.status !== c.status;
     const segChanged = own !== undefined && before.holder !== holder;
-    if (!routine && !statusChanged && !segChanged && taken.length === 0 && lineEvent === undefined) continue;
+    if (!routine && !statusChanged && !segChanged && taken.length === 0 && lineEvent === undefined && lostEvent === undefined) continue;
     w ??= begin(state, ctx);
     last ??= { ...state.lastReport };
     last[c.id] = { status: c.status, men: c.men, holder, atMin: M };
     const segments: Report['segments'] = {};
     for (const id of taken) segments[id] = holderOf.get(id)!.holder;
     if (segChanged) segments[own!.id] = holder!;
-    const report: Report = { atMin: M, units: { [c.id]: { status: c.status, men: c.men, atMin: M } }, segments, lines: lineEvent !== undefined ? { [key]: M } : {} };
+    const enemy = seen(c);
+    const report: Report = {
+      atMin: M,
+      units: { [c.id]: { status: c.status, men: c.men, atMin: M } },
+      segments,
+      lines: lineEvent !== undefined ? { [key]: M } : {},
+      ...(lostEvent !== undefined ? { lost: { [aim]: M } } : {}),
+      ...(Object.keys(enemy).length ? { enemy } : {}),
+    };
     const segEvent = segChanged && own!.holderEventId !== null ? own!.holderEventId : undefined;
     const fireEvent = c.recentFire.at(-1)?.eventId;
-    const about = lastEvent.get(c.id) ?? lineEvent ?? segEvent ?? (fireEvent === null ? undefined : fireEvent);
+    const about = lastEvent.get(c.id) ?? lineEvent ?? lostEvent ?? segEvent ?? (fireEvent === null ? undefined : fireEvent);
     sendOn(w, { side: c.side, kind: 'report', payload: report, ...(about !== undefined ? { aboutEventId: about } : {}) }, c.id, M);
     if (statusChanged && c.status === 'pinned') {
       const p: Point = [c.x, c.y];
@@ -740,6 +811,39 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
   }
   if (!w) return state;
   return { ...finish(w), lastReport: last! };
+}
+
+/**
+ * What a company sees of the enemy when it reports (Task 12): each segment the enemy holds whose trench lies within
+ * `observerRangeM` of it, with the men of the enemy up there (on the field, not down in dugouts, within `captureRadiusM`
+ * of its trench), segments in order. Each segment's men are counted once a step.
+ */
+function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Record<string, { men: number; atMin: number }> {
+  const range = v(ctx.tables.effects.observerRangeM);
+  const near = v(ctx.tables.effects.captureRadiusM);
+  const M = state.minute;
+  const menIn = new Map<string, number>();
+  const up = state.companies.filter((c) => c.men > 0 && c.posture !== 'in-dugout' && c.status !== 'surrendered' && c.status !== 'destroyed' && c.status !== 'off-map' && c.status !== 'marching');
+  const menAt = (seg: (typeof state.segments)[number], pts: readonly Point[]): number => {
+    let n = menIn.get(seg.id);
+    if (n === undefined) {
+      n = 0;
+      for (const e of up) if (e.side === seg.holder && e.y >= seg.yMin - near && e.y <= seg.yMax + near && distanceTo(pts, [e.x, e.y]) <= near) n += e.men;
+      menIn.set(seg.id, n);
+    }
+    return n;
+  };
+  return (c) => {
+    const out: Record<string, { men: number; atMin: number }> = {};
+    const p: Point = [c.x, c.y];
+    for (const x of state.segments) {
+      if (x.holder === c.side || x.yMin - range > c.y || x.yMax + range < c.y) continue;
+      const pts = segmentSamples(ctx, x, state.companies);
+      if (pts.length === 0 || distanceTo(pts, p) > range) continue;
+      out[x.id] = { men: menAt(x, pts), atMin: M };
+    }
+    return out;
+  };
 }
 
 // ---- scheduled minutes ------------------------------------------------------------------------------------------

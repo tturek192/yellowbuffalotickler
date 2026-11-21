@@ -359,3 +359,17 @@ effects:
     description: Metres behind the middle of its companies' places at Zero (away from the enemy) at which an army headquarters stands
       when the scenario gives no hqPosition.
     calibrated: true
+  counterAttackConsolidateMin:
+    value: 60
+    estimate: "German doctrine wanted the immediate counter-attack in before the enemy could \"rest or install himself\" (survey-german-tactics-1918
+      p. 35, as quoted in doctrine/de-1917.yaml); taking a captured trench in hand (fire steps turned, Lewis guns and bombing blocks posted,
+      wire put out) is taken to need about an hour. A judgement, not fitted to Vimy"
+    description: Minutes after a trench changes hands by which its new holders count as consolidated, when a counter-attack on it would go in.
+    calibrated: true
+  counterAttackConsolidatedFactor:
+    value: 2
+    estimate: "a counter-attack that comes before the attackers have consolidated meets tired, disorganised men; once they hold the trench
+      as a position it is an attack on a defended trench like any other. Twice the men is the builder's figure for that difference, for
+      Plan 4 to calibrate"
+    description: How many times counterAttackMinRatio a counter-attack needs once the attackers have consolidated the trench.
+    calibrated: true

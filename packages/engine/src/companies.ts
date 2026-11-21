@@ -1,6 +1,7 @@
 import { v } from '@wwi/scenario';
 import type { Company, Doctrine, Formation, Posture, Scenario } from '@wwi/scenario';
 import type { Cause } from './causes';
+import { companyLeaderOf, timetableJitter } from './leaders';
 import type { Intent, Order, Side } from './types';
 
 export type CompanyStatus =
@@ -117,9 +118,11 @@ type Placed = { c: Company; side: Side; doctrineId: string; path: string[] };
 /**
  * The companies of a scenario whose defaults are resolved (`resolveDefaults`), in ascending id order.
  * Attacking companies draw their start delay and speed from rng in that order, so the order of companies
- * in the scenario file never changes a run. Holding companies draw nothing.
+ * in the scenario file never changes a run. Holding companies draw nothing. An attacker's start is its
+ * `startAfterMin` plus up to `timetableJitter` (its leader's planning, leaders.ts; a leader-less chain counts as 3,
+ * listed in `defaultsUsed` when given).
  */
-export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, rng: () => number): CompanyState[] {
+export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, rng: () => number, defaultsUsed?: Set<string>): CompanyState[] {
   const placed: Placed[] = [];
   const visit = (f: Formation, side: Side, doctrineId: string, above: string[]) => {
     const path = [f.id, ...above];
@@ -135,7 +138,8 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
     if (!Array.isArray(c.start)) throw new Error(`Company ${c.id}: start was not projected to a local point`);
     const holding = c.role === 'garrison' || c.role === 'reserve';
     if (!holding && !d.attack) throw new Error(`Doctrine "${doctrineId}" has no attack block, but company ${c.id} attacks`);
-    const startMin = holding ? 0 : (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.attack!.startJitterMin);
+    // The timetable runs itself (Task 12): its start, late by up to timetableJitter, the startJitterMin its leader's planning scales.
+    const startMin = holding ? 0 : (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * timetableJitter(v(d.attack!.startJitterMin), companyLeaderOf(s, path, defaultsUsed));
     // A holding company draws nothing; it moves only if ordered to counter-attack, at its doctrine's pace (none without an attack block).
     const speedMPerMin = holding ? (d.attack ? v(d.attack.maxAdvanceMPerMin) : 0) : v(d.attack!.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.attack!.speedJitterFrac));
     const need = <T>(x: { value: T } | undefined, k: string): T => {
