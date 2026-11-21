@@ -48,10 +48,10 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
     if (!ps) return null;
     const r: Done = { men: c.men, killed: 0, wounded: 0, officers: c.officers, gain: 0, hit: 0, keys: [] };
     for (const p of ps) {
-      const n = Math.min(r.men, stochasticRound(Math.min(p.hits, r.men), ctx.rng));
-      const k = Math.min(n, stochasticRound(n * killedFrac, ctx.rng));
+      const n = Math.min(r.men, stochasticRound(Math.min(p.hits, r.men), ctx.rngs.casualties));
+      const k = Math.min(n, stochasticRound(n * killedFrac, ctx.rngs.casualties));
       const share = Math.min(1, (exposure * r.officers) / Math.max(r.men, 1));
-      const o = Math.min(r.officers, n, stochasticRound(Math.min(r.officers, n * share), ctx.rng));
+      const o = Math.min(r.officers, n, stochasticRound(Math.min(r.officers, n * share), ctx.rngs.casualties));
       r.men -= n;
       // Officers are among the men: never more of them than men standing.
       r.officers = Math.min(r.officers - o, r.men);

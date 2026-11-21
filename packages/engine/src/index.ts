@@ -1,4 +1,5 @@
-export { createRng } from './rng';
+export { createRng, createStreams, RNG_STREAMS } from './rng';
+export type { RngStream, Streams } from './rng';
 export { stochasticRound } from './stochastic';
 export { lineXAt, sampleYs } from './geometry';
 export { initBarrage, advanceBarrage, bandAt, barrageXAt, lineTimetableMin, planReachX } from './barrage';

@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ENGINE_VERSION } from '@wwi/engine';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -48,7 +49,7 @@ describe('cli', () => {
     const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'run.json');
     expect(runCli(['run', draft, '--seed', '1', '--out', out, '--tables-dir', 'tables']).code).toBe(0);
     const rec = JSON.parse(readFileSync(out, 'utf8'));
-    expect(rec.engineVersion).toBe('0.3.10');
+    expect(rec.engineVersion).toBe(ENGINE_VERSION);
     expect(rec.defaultsUsed).toContain('companies[14bn-a].officers ← bef-1917.companyDefaults.officers');
     const bad = runCli(['run', draft, '--seed', '1', '--out', out, '--tables-dir', 'no-such-dir']);
     expect(bad.code).toBe(2);

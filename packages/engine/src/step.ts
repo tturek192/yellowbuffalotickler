@@ -8,6 +8,7 @@ import { anyWithin, bucketsOf } from './buckets';
 import { isHolding } from './companies';
 import type { CompanyState, CompanyStatus } from './companies';
 import type { PhaseName } from './pipeline';
+import type { Streams } from './rng';
 import { segmentsOnLine, takerOf } from './trenches';
 import type { BatteryState, CommandState, CutLine, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
 
@@ -59,8 +60,8 @@ export type StepContext = {
   lines: Map<string, Point[]>;
   doctrines: Record<string, Doctrine>;
   tables: Tables;
-  /** The run's only source of randomness: createRng(seed), drawn in a fixed order. */
-  rng: () => number;
+  /** The run's only sources of randomness: one stream per subsystem, derived from the seed (rng.ts), each drawn in a fixed order. */
+  rngs: Streams;
   terrain?: Terrain;
   /** Ground, sight and light for the run (Task 6). */
   world: World;

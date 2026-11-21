@@ -582,9 +582,9 @@ function sendHop(w: Work, d: Draft, fromId: string, toId: string, t: number, pre
   // A hop that would rather have used its surface line (no slower than the channel taken) and could not says why.
   const cutBy = channel !== 'surface-line' && order.includes('surface-line') && base('surface-line') <= base(channel) ? w.cutSet.get(key) : undefined;
   const factor = d.kind === 'order' ? orderFactor(w, fromId) : 1;
-  const delay = base(channel) * (0.5 + ctx.rng()) * factor;
+  const delay = base(channel) * (0.5 + ctx.rngs.comms()) * factor;
   const pLost = 1 - Math.exp((-v(ctx.tables.channels[channel].failPerHour) * delay) / 60);
-  const lost = ctx.rng() < pLost;
+  const lost = ctx.rngs.comms() < pLost;
   enqueue(w.queue, {
     id: w.nextId++,
     side: d.side,

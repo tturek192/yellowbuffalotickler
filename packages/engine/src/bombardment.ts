@@ -79,7 +79,7 @@ function suppressAtZero(batteries: BatteryState[], ctx: StepContext): BatterySta
       out.push(b);
       continue;
     }
-    const down = Math.min(b.guns, stochasticRound(b.guns * frac, ctx.rng));
+    const down = Math.min(b.guns, stochasticRound(b.guns * frac, ctx.rngs.bombardment));
     if (b.guns - down > 0) out.push({ ...b, guns: b.guns - down, ammoLeft: (b.ammoLeft * (b.guns - down)) / b.guns });
     const width = Math.max(3, String(down).length);
     for (let i = 1; i <= down; i++)
@@ -88,7 +88,7 @@ function suppressAtZero(batteries: BatteryState[], ctx: StepContext): BatterySta
         id: `${b.id}/s${String(i).padStart(width, '0')}`,
         guns: 1,
         ammoLeft: b.ammoLeft / b.guns,
-        suppressedUntilMin: -halfLife * Math.log2(1 - ctx.rng()),
+        suppressedUntilMin: -halfLife * Math.log2(1 - ctx.rngs.bombardment()),
       });
   }
   return out.sort(byId);
@@ -278,9 +278,9 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
     const seg = segments[k]!;
     const d = c.dugoutDepthM ?? seg.dugoutDepthM;
     const exposed = d + safeDepthM > 0 ? 1 - d / (d + safeDepthM) : 1;
-    const n = Math.min(c.men, stochasticRound(Math.min(c.men, c.men * lossRate * seg.trenchDamage * exposed), ctx.rng));
-    const killed = Math.min(n, stochasticRound(n * killedFrac, ctx.rng));
-    const officers = Math.min(c.officers, n, stochasticRound(Math.min(c.officers, n * Math.min(1, (exposure * c.officers) / Math.max(c.men, 1))), ctx.rng));
+    const n = Math.min(c.men, stochasticRound(Math.min(c.men, c.men * lossRate * seg.trenchDamage * exposed), ctx.rngs.bombardment));
+    const killed = Math.min(n, stochasticRound(n * killedFrac, ctx.rngs.bombardment));
+    const officers = Math.min(c.officers, n, stochasticRound(Math.min(c.officers, n * Math.min(1, (exposure * c.officers) / Math.max(c.men, 1))), ctx.rngs.bombardment));
     const wounded = n - killed;
     lostIn[k]! += n;
     losses.killed += killed;

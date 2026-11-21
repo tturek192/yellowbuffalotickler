@@ -62,7 +62,8 @@ describe('communications', () => {
   });
 
   it('a lost message is sent again and still arrives; its message-lost refers back to the event it was about', () => {
-    const r = runReports({ links: 'runners', failPerHour: 3 });
+    // Runners lost at 3 an hour: the report gets through to corps in the end (the run long enough for the draws to allow it).
+    const r = runStates(fixtureComms({ links: 'runners', failPerHour: 3 }), { endMinute: 900 });
     const lost = eventsOf(r).filter((e) => e.kind === 'message-lost');
     expect(lost.length).toBeGreaterThan(0);
     for (const e of lost) for (const ref of e.refs) expect(ref).toBeLessThan(e.id);

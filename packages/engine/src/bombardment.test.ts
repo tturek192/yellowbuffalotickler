@@ -106,7 +106,8 @@ describe('the compressed bombardment', () => {
     const [s, m] = fixtureBombarded();
     const { state, ctx } = initRun(...fixtureWithDoctrineV3(), { seed: 3 });
     const r = runBombardment(state, { ...ctx, scenario: { ...ctx.scenario, artillery: s.artillery, bombardment: s.bombardment! }, tables: m.tables });
-    expect(r.events.map((e) => e.kind)).toEqual(['bombardment-result', 'bombardment-result']);
+    // One result per segment (a company that lost its last officers also has an officers-lost, as the draws fall).
+    expect(r.events.filter((e) => e.kind === 'bombardment-result').map((e) => e.segmentId)).toEqual(['ger-front-a:001', 'ger-front-a:002']);
     const lost = r.state.companies.reduce((a, c) => a + c.bombardment.killed + c.bombardment.wounded, 0);
     expect(r.losses.total).toBe(lost);
     expect(r.losses.killed + r.losses.wounded).toBe(lost);

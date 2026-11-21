@@ -153,7 +153,7 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
       const trapped: CompanyState[] = [];
       const eventId = out.nextEventId;
       for (const c of g.companies) {
-        const n = Math.min(c.men, stochasticRound(c.men * frac, ctx.rng));
+        const n = Math.min(c.men, stochasticRound(c.men * frac, ctx.rngs.gap));
         captured += n;
         below += c.men - n;
         if (c.men - n > 0) points.push({ companyId: c.id, point: at(c), men: c.men - n, leftMin: out.minute, unguardedMin: out.minute, eventId, cleared: 0 });

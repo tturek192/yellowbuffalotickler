@@ -16,8 +16,9 @@ describe('quiet steps', () => {
     const coarse = runScenario(draft(), withQuietStep(doctrines(), 10), { seed: 1 });
     const fine = runScenario(draft(), withQuietStep(doctrines(), 2), { seed: 1 });
     expect(outcome(coarse)).toEqual(outcome(fine));
-    // Task 10: fatigue (fatiguePerKm) slows the companies that walk on to the Blue Line, which they take 2 minutes later.
-    expect(coarse.summary.lineTaken.map((t) => t.minute)).toEqual([32, 92, 318, 438]);
+    // Task 10: fatigue (fatiguePerKm) slows the companies that walk on to the Blue Line. Task 15: with one rng stream per
+    // subsystem the companies' start and speed draws differ, and the Blue Line falls at 316 (it was 318).
+    expect(coarse.summary.lineTaken.map((t) => t.minute)).toEqual([32, 92, 316, 438]);
   });
 
   it.each([1, 2, 3, 4, 5])('do not change what happens on the v3 fixture (seed %i)', (seed) => {

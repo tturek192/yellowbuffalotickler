@@ -15,7 +15,7 @@ import { withStartingMorale } from './morale';
 import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
-import { createRng } from './rng';
+import { createStreams } from './rng';
 import { COMPANY_COLUMNS, ENGINE_VERSION, RESERVE_COLUMNS, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
 import { offMapAtZero, reservesUnderWay } from './reserves';
 import type { RunRecord, Snapshot } from './record';
@@ -60,14 +60,14 @@ function checkCompanyWeapons(s: Scenario, models: Models): void {
 export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'seed'>): { state: SimState; ctx: StepContext } {
   checkCompanyWeapons(s, models);
   const { scenario, used } = resolveDefaults(s, models.doctrines, models.tables);
-  const rng = createRng(opts.seed);
+  const rngs = createStreams(opts.seed);
   const terrain = scenario.terrainGrid ? decodeTerrain(scenario.terrainGrid) : undefined;
   const ctx: StepContext = {
     scenario,
     lines: new Map(scenario.lines.map((l) => [l.id, l.points])),
     doctrines: models.doctrines,
     tables: models.tables,
-    rng,
+    rngs,
     ...(terrain ? { terrain } : {}),
     world: buildWorld(scenario, models.tables, terrain),
     defaultsUsed: new Set(used),
@@ -81,7 +81,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     minute: 0,
     barrages: scenario.sectors.map(initBarrage),
     // The companies of off-map reserves wait off the map until they are ordered forward and arrive (reserves.ts).
-    companies: offMapAtZero(withStartingMorale(initCompanies(scenario, models.doctrines, rng, ctx.defaultsUsed), ctx), scenario).map((c) => {
+    companies: offMapAtZero(withStartingMorale(initCompanies(scenario, models.doctrines, rngs.companies, ctx.defaultsUsed), ctx), scenario).map((c) => {
       const seg = segmentOf.get(c.id);
       return seg === undefined ? c : { ...c, segmentId: seg };
     }),

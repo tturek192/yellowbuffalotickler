@@ -52,6 +52,10 @@ describe('draft Vimy scenario run', () => {
     // 0.3.10 (Task 13 fix round 2): reserves sent to one front take distinct places, and every end of a planned
     // counter-attack is reported. The draft has neither: with the version set back to 0.3.9 its record hashes to
     // 037a5b1a, so only the version moves the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.10', hash: '3d846106' });
+    // 0.3.11 (Task 15): one rng stream per subsystem (rng.ts createStreams: companies, bombardment, comms, gap, casualties,
+    // mop-up), each seeded from the run's seed and its name, so drawing more in one never moves another's draws. The draft's
+    // companies draw their start jitter and speed from their own stream now: the Blue Line falls at 316 (318 before), the
+    // other lines at the same minutes.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.11', hash: 'f87da6f4' });
   });
 });

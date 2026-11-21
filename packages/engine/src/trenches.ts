@@ -407,7 +407,7 @@ export function mopUp(state: SimState, ctx: StepContext, dt: number): SimState {
     if (m0.intent !== 'mop-up') continue;
     const attack = ctx.doctrines[m0.doctrineId]!.attack;
     if (!attack) continue;
-    let cap = stochasticRound(v(attack.mopUpRateMenPerMin) * dt, ctx.rng);
+    let cap = stochasticRound(v(attack.mopUpRateMenPerMin) * dt, ctx.rngs['mop-up']);
     const m = companies.find((c) => c.id === m0.id)!;
     if (perMan > 0) cap = Math.min(cap, Math.floor(m.bombs / perMan + 1e-9));
     let used = 0;
