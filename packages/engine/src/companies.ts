@@ -1,7 +1,6 @@
 import { v } from '@wwi/scenario';
-import type { Doctrine, Formation, Posture, Scenario } from '@wwi/scenario';
-import { lineXAt } from './geometry';
-import type { Cause, NewEvent } from './causes';
+import type { Company, Doctrine, Formation, Posture, Scenario } from '@wwi/scenario';
+import type { Cause } from './causes';
 import type { Intent, Order, Side } from './types';
 
 export type CompanyStatus =
@@ -17,10 +16,15 @@ export type CompanyStatus =
   | 'marching'
   | 'off-map';
 
+/** What a company is for in the plan (the scenario's role): it never changes during the run. */
+export type Role = Company['role'];
+
 export type CompanyState = {
   id: string;
   name: string;
   side: Side;
+  /** Its part in the plan (Task 10): assault, mopup and support companies attack; garrison and reserve companies hold. */
+  role: Role;
   doctrineId: string;
   /** The formation the company sits in (normally its battalion). */
   battalionId: string;
@@ -31,6 +35,9 @@ export type CompanyState = {
   objectiveLineId: string | undefined;
   x: number;
   y: number;
+  /** Where it stood at Zero: a company falling back makes for it (Task 10). */
+  startX: number;
+  startY: number;
   /** Men standing. `men + killed + wounded + captured` is the company's men at Zero for the whole run. */
   men: number;
   killed: number;
@@ -83,6 +90,10 @@ export type CompanyState = {
    * and refs from it.
    */
   recentFire: Array<{ minute: number; eventId: number | null; causes: Cause[] }>;
+  /** Its `company-reached` event and that event's causes, once it has reached its objective line (Task 10); null before. */
+  reached: { eventId: number; causes: Cause[] } | null;
+  /** A garrison's `dugout-sortie` event, once its men left in the dugouts have come up behind the attackers (Task 10); null before. */
+  sortieEventId: number | null;
 };
 
 /**
@@ -93,13 +104,12 @@ export function leadFactor(c: Pick<CompanyState, 'officers' | 'training'>, d: Do
   return c.officers > 0 ? 1 : 1 - v(d.ncoPenalty[c.training]);
 }
 
-/** Garrison and reserve companies hold; only the others attack. */
+/** Garrison and reserve companies hold, and so do attackers that rallied after falling back (Task 10); only the others attack. */
 export const isHolding = (c: Pick<CompanyState, 'status'>): boolean => c.status === 'holding';
 
 /** Ascending by id (code-unit order, never locale order): the order every phase processes units in. */
 export const byId = <T extends { id: string }>(a: T, b: T): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
-type Company = NonNullable<Formation['companies']>[number];
 type Placed = { c: Company; side: Side; doctrineId: string; path: string[] };
 
 /**
@@ -124,7 +134,8 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
     const holding = c.role === 'garrison' || c.role === 'reserve';
     if (!holding && !d.attack) throw new Error(`Doctrine "${doctrineId}" has no attack block, but company ${c.id} attacks`);
     const startMin = holding ? 0 : (c.startAfterMin ? v(c.startAfterMin) : 0) + rng() * v(d.attack!.startJitterMin);
-    const speedMPerMin = holding ? 0 : v(d.attack!.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.attack!.speedJitterFrac));
+    // A holding company draws nothing; it moves only if ordered to counter-attack, at its doctrine's pace (none without an attack block).
+    const speedMPerMin = holding ? (d.attack ? v(d.attack.maxAdvanceMPerMin) : 0) : v(d.attack!.maxAdvanceMPerMin) * (1 + (rng() * 2 - 1) * v(d.attack!.speedJitterFrac));
     const need = <T>(x: { value: T } | undefined, k: string): T => {
       if (x === undefined) throw new Error(`Company ${c.id}: ${k} has no value (defaults were not resolved)`);
       return x.value;
@@ -135,6 +146,7 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       id: c.id,
       name: c.name,
       side,
+      role: c.role,
       doctrineId,
       battalionId: path[0]!,
       formationPath: path,
@@ -142,6 +154,8 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       objectiveLineId: c.objectiveLineId,
       x: c.start[0],
       y: c.start[1],
+      startX: c.start[0],
+      startY: c.start[1],
       men,
       killed: 0,
       wounded: 0,
@@ -171,44 +185,8 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       mgOpenedEventId: null,
       officersLostEventId: null,
       recentFire: [],
+      reached: null,
+      sortieEventId: null,
     };
   });
-}
-
-/**
- * Plan 2's barrage-following: each attacker moves toward its objective, never closer than followDistanceM to the
- * barrage, at its speed × `leadFactor` (slower once its officers are down).
- */
-export function moveCompanies(
-  cs: CompanyState[],
-  barrageX: (sectorId: string, y: number) => number,
-  lines: Scenario['lines'],
-  doctrines: Record<string, Doctrine>,
-  minute: number,
-  stepMin: number,
-): { companies: CompanyState[]; events: NewEvent[] } {
-  const events: NewEvent[] = [];
-  const companies = cs.map((c) => {
-    if (c.intent !== 'advance' || c.status === 'consolidating' || isHolding(c) || minute < c.startMin) return c;
-    const line = lines.find((l) => l.id === c.objectiveLineId);
-    const d = doctrines[c.doctrineId];
-    if (!line || !d) throw new Error(`Company ${c.id}: unknown line or doctrine`);
-    const objX = lineXAt(line.points, c.y);
-    const target = Math.min(objX, barrageX(c.sectorId, c.y) - v(d.attack!.followDistanceM));
-    const x = Math.max(c.x, Math.min(target, c.x + c.speedMPerMin * leadFactor(c, d) * stepMin));
-    if (objX - x <= 1) {
-      events.push({
-        minute,
-        kind: 'company-reached',
-        sectorId: c.sectorId,
-        lineId: line.id,
-        unitId: c.id,
-        text: `${c.name} reaches ${line.name}`,
-        causes: ['followed-barrage'],
-      });
-      return { ...c, x, status: 'consolidating' as const, posture: 'in-trench' as const };
-    }
-    return { ...c, x, status: 'advancing' as const, posture: 'moving' as const };
-  });
-  return { companies, events };
 }

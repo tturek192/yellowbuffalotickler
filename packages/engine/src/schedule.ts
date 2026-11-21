@@ -1,6 +1,7 @@
 import { batteryRecoveries, offMapWindows } from './artillery';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
+import { dugoutSorties } from './trenches';
 import type { SimState, StepContext } from './step';
 
 /**
@@ -35,6 +36,8 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['battery-recovery', batteryRecoveries],
   ['garrison-emergence', garrisonEmergences],
   ['off-map-fire', offMapWindows],
+  // Task 10: men left in dugouts coming up behind the attackers; they fire from their trench and move nobody.
+  ['dugout-sorties', dugoutSorties],
 ];
 
 /**

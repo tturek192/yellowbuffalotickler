@@ -35,12 +35,13 @@ describe('the gap and the dugouts', () => {
       expect(e.factors!.captured).toBeGreaterThan(40);
       expect(e.factors!.captured).toBeLessThan(80);
     }
+    // Below until its men sortie, sortieDelayMin after the trapping (Task 10).
+    expect(rowsOf(r, 'k1').some((x) => x.posture === 'in-dugout')).toBe(true);
     const k1 = rowsOf(r, 'k1').at(-1)!;
-    expect(k1.posture).toBe('in-dugout');
     expect((k1.captured as number) + (k1.men as number)).toBe(120);
     expect(r.summary.prisoners.allied).toBe(trapped.reduce((a, e) => a + e.factors!.captured, 0));
     for (const id of companyIds(r)) expect(new Set(totalsOverTime(r, id))).toHaveLength(1);
-    // A trapped garrison never comes up.
+    // A trapped garrison never comes up by emerging (its men left below sortie instead).
     expect(ofKind(r, 'garrison-emerged')).toHaveLength(0);
   });
 

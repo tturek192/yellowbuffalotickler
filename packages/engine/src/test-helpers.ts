@@ -15,6 +15,7 @@ import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import type { SimState, StepContext } from './step';
 import type { PhaseName } from './pipeline';
+import { runPipeline } from './pipeline';
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -52,8 +53,8 @@ function fixtureDoctrine(id: string): Doctrine {
     lossShock: param(1), suppressedDrain: param(0.3), isolationDrain: param(0.1), recoveryPerHour: param(0.2), leaderMoraleStep: param(0.03),
   };
   d.ncoPenalty = { rehearsed: param(0.1), standard: param(0.3) };
-  d.companyDefaults = { ...d.companyDefaults, roundsPerRifle: param(1e6), roundsPerLightMg: param(1e6), roundsPerMg: param(1e6) };
-  d.attack = { ...d.attack!, trainingBonusRehearsed: param(0.1) };
+  d.companyDefaults = { ...d.companyDefaults, roundsPerRifle: param(1e6), roundsPerLightMg: param(1e6), roundsPerMg: param(1e6), bombsPerMan: param(2) };
+  d.attack = { ...d.attack!, trainingBonusRehearsed: param(0.1), mopUpRateMenPerMin: param(3) };
   return d;
 }
 
@@ -152,10 +153,16 @@ export function ctxWithPhaseSpy(seen: string[]): StepContext {
 
 const cite = { value: 'fixture', estimate: 'test fixture' };
 
-/** Fixture tables with ground, mud, uphill and light values set. */
+/** Movement's and the fight for trenches' effect keys at the repository's starting values (tables/effects.yaml), for fixtures (Task 10). */
+export const TRENCH_EFFECTS = {
+  captureRatio: 3, sortieDelayMin: 30, gunCaptureRadiusM: 300, lineFeatureMatchM: 150, wireSpeedFactor: 0.5,
+  suppressionSpeedLoss: 0.5, fatiguePerHourUnderFire: 0.1, bombsPerManCleared: 0.5,
+};
+
+/** Fixture tables with ground, mud, uphill, light, movement and trench-fighting values set. */
 export function tablesWith(over: Record<string, number> = {}) {
   const t = fixtureTables();
-  const set = { mudSpeedFactor: 0.6, uphillPenaltyPer10m: 0.02, trenchProximityM: 15, churnAreaPerShellM2: 30, crateredShare: 0.5, nightVisibilityM: 50, twilightMin: 35, ...over };
+  const set = { mudSpeedFactor: 0.6, uphillPenaltyPer10m: 0.02, trenchProximityM: 15, churnAreaPerShellM2: 30, crateredShare: 0.5, nightVisibilityM: 50, twilightMin: 35, ...TRENCH_EFFECTS, ...over };
   for (const [k, value] of Object.entries(set)) (t.effects as Record<string, unknown>)[k] = { value, estimate: 'test', description: 'test', calibrated: true };
   return t;
 }
@@ -413,3 +420,89 @@ export function fixtureCrush(): [Scenario, Models] {
 }
 
 export const runCrush = (seed = 1): RunRecord => runScenario(...fixtureCrush(), { seed, endMinute: 90 });
+
+// ---- movement and the fight for trenches (Task 10) ------------------------------------------------------------
+
+/**
+ * The minute c1 of fixtureArtillery (starting 30 minutes late, so the barrage never holds it back) reaches the Black
+ * Line, with a wire belt 200 m deep, cut by `wireCut`, in front of both segments of `ger-front-a` (x -50 to 150).
+ */
+export function timeToObjective(o: { wireCut: number }): number {
+  const f = fixtureArtillery({ lagMin: 30 });
+  const { state, ctx } = initRun(f[0], f[1], { seed: 1 });
+  let s: SimState = { ...state, segments: state.segments.map((x) => ({ ...x, wireBeltDepthM: 200, wireCut: o.wireCut })) };
+  while (s.minute < 300) {
+    s = runPipeline(s, ctx, 2);
+    const e = s.events.find((x) => x.kind === 'company-reached' && x.unitId === 'c1');
+    if (e) return e.minute;
+  }
+  return Infinity;
+}
+
+/**
+ * fixtureArtillery with a Blue Line at x 600 and a Brown Line only 30 m beyond it (the barrage stands 180 m beyond
+ * each, 110 m past the follow distance): legs gfront → blue (pause 30) → brown; c1 aims at brown, c2 at blue.
+ */
+export function runBrownCloseToBlue(): RunRecord {
+  const [s, m] = fixtureArtillery();
+  s.lines = [
+    s.lines[0]!,
+    { id: 'blue', name: 'Blue Line', kind: 'objective', color: '#2255cc', points: [[600, 0], [600, 400]] },
+    { id: 'brown', name: 'Brown Line', kind: 'objective', color: '#885522', points: [[630, 0], [630, 400]] },
+  ];
+  s.sectors[0]!.legs = [
+    { toLineId: 'blue', liftM: est(91), liftMin: est(3), pauseMin: est(30) },
+    { toLineId: 'brown', liftM: est(91), liftMin: est(3), pauseMin: est(30) },
+  ];
+  const [c1, c2] = s.forces[0]!.formations[0]!.companies!;
+  c1!.objectiveLineId = 'brown';
+  c2!.objectiveLineId = 'blue';
+  s.historical.objectives = [];
+  return runScenario(s, m, { seed: 1, endMinute: 150 });
+}
+
+/** The first minute a company reaches the line. */
+export const reachedMinute = (r: RunRecord, lineId: string): number => Math.min(...ofKind(r, 'company-reached').filter((e) => e.lineId === lineId).map((e) => e.minute));
+/** The minute the barrage resumes toward the line. */
+export const barrageResumeMinute = (r: RunRecord, lineId: string): number => ofKind(r, 'barrage-resume').find((e) => e.lineId === lineId)!.minute;
+
+/**
+ * fixtureArtillery (c1 and c2 trap the garrisons k1 and k2, leaving about 60 men of each in the dugouts at x 150), and
+ * with `mopUp` two mopping-up companies m1 (y 100) and m2 (y 300), 100 men each, following 4 minutes behind.
+ */
+export function fixtureDugouts(o: { mopUp: boolean }): [Scenario, Models] {
+  const f = fixtureArtillery();
+  if (o.mopUp)
+    f[0].forces[0]!.formations[0]!.companies!.push(
+      ...[100, 300].map((y, i) => ({
+        id: `m${i + 1}`, name: `Moppers ${i + 1}`, role: 'mopup' as const, strength: est(100), start: [0, y] as [number, number],
+        sectorId: 's1', objectiveLineId: 'black', startAfterMin: est(4),
+      })),
+    );
+  return f;
+}
+export const runDugouts = (o: { mopUp: boolean }, seed = 1): RunRecord => runScenario(...fixtureDugouts(o), { seed, endMinute: 120 });
+
+/**
+ * fixtureArtillery with the attackers 30 minutes late and a German trench on the Black Line itself (x 1150) held by
+ * k3, up and manning it before they arrive: 400 men (a holdout: 300 attackers do not outnumber them 3 to 1) or 20.
+ */
+export function runHoldout(o: { holdout: boolean }): RunRecord {
+  const f = withRearTrench(fixtureArtillery({ lagMin: 30 }), 1150, 'k3');
+  f[0].forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!.strength = est(o.holdout ? 400 : 20);
+  return runScenario(...f, { seed: 1, endMinute: 150 });
+}
+
+/** The minute of the first line taken, or null. */
+export const lineTakenMinute = (r: RunRecord): number | null => r.summary.lineTaken[0]?.minute ?? null;
+
+/**
+ * fixtureArtillery (the garrisons on `ger-front-a` trapped and their segments taken) with a German battery of 6 guns
+ * 250 m behind that trench. `horsesLost` stands in for Task 14's gassed horses: the battery has none to pull its guns
+ * away (horseDrawn false); otherwise it is horse-drawn and gets away.
+ */
+export function runOverrun(o: { horsesLost: boolean }): RunRecord {
+  const [s, m] = fixtureArtillery();
+  s.artillery.push({ id: 'gb', side: 'central', weapon: '18pdr', count: est(6), role: 'defensive', position: [400, 200], horseDrawn: !o.horsesLost });
+  return runScenario(s, m, { seed: 1, endMinute: 120 });
+}

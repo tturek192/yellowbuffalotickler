@@ -70,13 +70,16 @@ export function toYaml(obj: unknown): string {
 const param = (value: number) => ({ value, estimate: 'test fixture', description: 'test fixture value' });
 const params = <K extends string>(keys: readonly K[], value = 1) => Object.fromEntries(keys.map((k) => [k, param(value)])) as Record<K, ReturnType<typeof param>>;
 
-/** A doctrine with every key, all set to 1 except the four attack values the engine reads today. */
+/**
+ * A doctrine with every key, all set to 1 except the four attack values the engine reads today and the fatigue rates
+ * (the repository's: fatigue 1 after a kilometre would stop every fixture company dead).
+ */
 export function minimalDoctrineV2(id = 'bef-1917'): Doctrine {
   return {
     id,
     title: 'Fixture doctrine',
     sources: {},
-    common: params(COMMON_KEYS),
+    common: { ...params(COMMON_KEYS), fatiguePerKm: param(0.02), fatigueRecoveryPerHour: param(0.05) },
     ncoPenalty: params(['rehearsed', 'standard'] as const, 0.1),
     companyDefaults: params(COMPANY_DEFAULT_KEYS),
     companyWeapons: { rifle: 'rifle', lightMg: 'lewis', mg: 'vickers' },

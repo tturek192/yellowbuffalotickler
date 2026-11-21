@@ -218,7 +218,8 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
         allied: state.companies.filter((c) => c.side === 'central').reduce((a, c) => a + c.captured, 0),
         central: state.companies.filter((c) => c.side === 'allied').reduce((a, c) => a + c.captured, 0),
       },
-      gunsCaptured: 0,
+      // Guns of batteries overrun by the enemy (Task 10).
+      gunsCaptured: state.batteries.filter((b) => b.captured).reduce((a, b) => a + b.guns, 0),
       endedAt: state.minute,
       endReason: null,
       winner: null,

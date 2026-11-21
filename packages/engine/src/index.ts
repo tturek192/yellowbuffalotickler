@@ -8,10 +8,12 @@ export type { Cause } from './causes';
 export { EVENT_KINDS } from './types';
 export type {
   BatteryState, CasualtyCount, Decision, EventKind, FormationKind, HqState, Intent, Message, Order, OrderTarget,
-  Applied, FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
+  Applied, DugoutPoint, FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
 } from './types';
-export { initCompanies, leadFactor, moveCompanies } from './companies';
-export type { CompanyState, CompanyStatus } from './companies';
+export { initCompanies, leadFactor } from './companies';
+export type { CompanyState, CompanyStatus, Role } from './companies';
+export { advanceThrough, behaviour, moveCompanies, targetX } from './movement';
+export { canMopUp, capturable, captureGuns, captureSegments, dugoutSorties, dugoutsNear, mopUp, segmentsOnLine, sorties } from './trenches';
 export { PHASES, runPipeline } from './pipeline';
 export type { Phase, PhaseName } from './pipeline';
 export { inContact, isBusy } from './step';

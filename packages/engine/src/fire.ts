@@ -20,7 +20,7 @@ import type { FireGroup, Pending, Side } from './types';
  * it can see within its weapons' reach, at most `maxTargetsPerFirer` of them, splitting its fire evenly. For each
  * weapon w of the firer and target T at range r:
  *
- *   rounds = n_w · rpm_w · dt · share · (1 − F.suppression) · leadFactor(F) · ammo
+ *   rounds = n_w · rpm_w · dt · share · (1 − F.suppression) · leadFactor(F) · (1 − F.fatigue) · ammo
  *   hits   = rounds · lethality_w · exp(−r / rangeScale_w) · [r ≤ maxRange_w]
  *            · cover[T.posture][ground at T] · min(1, T.men / densityRefMen) · visibility(r)
  *
@@ -123,7 +123,7 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
 
     // Rounds each weapon would fire at each target at the firer's rate; then as many as its ammunition allows.
     const share = 1 / targets.length;
-    const rate = (1 - f.suppression) * leadFactor(f, d) * share * dt;
+    const rate = (1 - f.suppression) * leadFactor(f, d) * (1 - f.fatigue) * share * dt;
     const plan = targets.map(({ t, r }) => ({ t, r, by: slots.map((s) => (r <= v(s.w.maxRangeM) ? s.n * v(s.w.rpm) * rate : 0)) }));
     const want = plan.reduce((a, p) => a + p.by.reduce((x, y) => x + y, 0), 0);
     const load = ammoLoad(f, d, ctx.tables);

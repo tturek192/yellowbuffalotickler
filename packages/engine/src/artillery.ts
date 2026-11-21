@@ -279,7 +279,8 @@ function firesOf(spent: Spent[], frontageM: number, obsOf: (o: Observation) => n
   return out;
 }
 
-const inAction = (b: BatteryState): boolean => b.suppressedUntilMin === null && b.ammoLeft > 0;
+/** A battery fires while it is not silenced, has rounds left and has not been overrun (Task 10). */
+const inAction = (b: BatteryState): boolean => b.suppressedUntilMin === null && b.ammoLeft > 0 && !b.captured;
 const gunsIn = (bs: readonly BatteryState[], side: Side, pred: (b: BatteryState) => boolean = () => true): number =>
   sum(bs.filter((b) => b.side === side && pred(b)), (b) => b.guns);
 
@@ -324,7 +325,7 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   const thr = v(fx.batteriesRecoveredFrac);
   const shareOf = (side: Side) => {
     const all = gunsIn(bats, side);
-    return all > 0 ? gunsIn(bats, side, (b) => b.suppressedUntilMin === null) / all : 1;
+    return all > 0 ? gunsIn(bats, side, (b) => b.suppressedUntilMin === null && !b.captured) / all : 1;
   };
   const before = SIDES.map(shareOf);
   for (const b of bats) if (b.suppressedUntilMin !== null && b.suppressedUntilMin <= minute) b.suppressedUntilMin = null;
@@ -340,7 +341,7 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
         kind: 'batteries-recovered',
         text: `${pctText(recovered[i]!)} of the ${side === 'central' ? 'German' : 'Allied'} guns are back in action`,
         causes: ['batteries-recovered'],
-        factors: { inActionFrac: round(recovered[i]!, 3), guns: gunsIn(bats, side, (b) => b.suppressedUntilMin === null) },
+        factors: { inActionFrac: round(recovered[i]!, 3), guns: gunsIn(bats, side, (b) => b.suppressedUntilMin === null && !b.captured) },
       });
     }
   });

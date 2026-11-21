@@ -168,7 +168,7 @@ describe('batteries at Zero', () => {
   it('every artillery entry becomes batteries with its guns, position, ammunition and horses', () => {
     const { state } = initRun(...fixtureBomb(), { seed: 1 });
     const g1 = state.batteries.find((b) => b.id === 'g1')!;
-    expect(g1).toEqual({ id: 'g1', side: 'allied', weapon: '18pdr', role: 'creeping', observation: 'map', guns: 18, suppressedUntilMin: null, ammoLeft: 5000, position: [-800, 200], horses: false });
+    expect(g1).toEqual({ id: 'g1', side: 'allied', weapon: '18pdr', role: 'creeping', observation: 'map', guns: 18, suppressedUntilMin: null, ammoLeft: 5000, position: [-800, 200], horses: false, captured: false });
     expect(state.batteries.map((b) => b.id)).toEqual([...state.batteries.map((b) => b.id)].sort());
   });
 

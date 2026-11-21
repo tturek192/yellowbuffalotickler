@@ -18,6 +18,8 @@ export const EVENT_KINDS = [
   'shelled', 'barrage-passed', 'barrage-lost', 'batteries-recovered', 'ammunition-exhausted',
   // Plan 3, direct fire (Task 9): rifle and machine-gun fire on one company in one step
   'direct-fire',
+  // Plan 3, the fight for trenches (Task 10): batteries overrun when a segment near them is lost
+  'guns-captured',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -96,6 +98,9 @@ export type HqState = {
   pending: Decision[];
 };
 
+/** Men of one garrison company left in the dugouts of a segment (Tasks 8, 10). */
+export type DugoutPoint = { companyId: string; point: Point; men: number; leftMin: number; eventId: number; cleared: number };
+
 /**
  * A stretch of German trench held by one garrison company (Task 7): the stretch of its feature between the
  * midpoints to the neighbouring garrisons on the same feature (garrisons at the same place share one).
@@ -123,6 +128,12 @@ export type SegmentState = {
   /** Whether any part of it was spared by the bombardment, by any weapon kind. */
   spared: boolean;
   holder: Side;
+  /** The side its garrison belongs to (central at Vimy): it is lost while the other side holds it, and retaken when it holds it again (Task 10). */
+  garrisonSide: Side;
+  /** Its last `segment-lost` or `segment-retaken` event; null while it has never changed holder (Task 10). */
+  holderEventId: number | null;
+  /** The `defenders-trapped` event that caught its garrison below; null if none did (Task 10). */
+  trappedEventId: number | null;
   /** The last minute a barrage (creeping or standing) was on it; null: none since Zero (Task 8). */
   barrageLastOverMin: number | null;
   /**
@@ -134,8 +145,12 @@ export type SegmentState = {
   emerged: boolean;
   /** Attackers reached it before its garrison emerged: part surrendered, the rest are left in its dugouts (Task 8). */
   trapped: boolean;
-  /** Men of a garrison company left below ground when the segment was taken over them, to be cleared (Tasks 8, 10). */
-  dugoutPoints: Array<{ companyId: string; point: Point; men: number }>;
+  /**
+   * Men of a garrison company left below ground when the attackers reached the segment over them, to be cleared by
+   * mopping up or to sortie (Tasks 8, 10): the company, where, how many are still below, the minute the leading wave
+   * left them behind (`leftMin`), its `defenders-trapped` event, and how many have been cleared out so far.
+   */
+  dugoutPoints: DugoutPoint[];
 };
 
 /**
@@ -157,8 +172,10 @@ export type BatteryState = {
   /** Rounds left for the battle; Infinity when the scenario gives no ammunition. */
   ammoLeft: number;
   position?: Point;
-  /** Whether it has draught horses (the artillery entry's horseDrawn). */
+  /** Whether it has draught horses (the artillery entry's horseDrawn; Task 14 takes them away when they are gassed). */
   horses: boolean;
+  /** Overrun by the enemy: its guns are taken and fire no more (Task 10). */
+  captured: boolean;
 };
 
 /** An off-map formation (Task 13). */

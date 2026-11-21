@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
-import { leadFactor, moveCompanies } from './companies';
+import { leadFactor } from './companies';
+import { moveCompanies } from './movement';
 import { directFire } from './fire';
 import { resolve } from './resolve';
 import { initRun, runScenario } from './run';
@@ -12,8 +13,9 @@ function speedAfterOfficersLost(training: 'rehearsed' | 'standard'): number {
   const f = fixtureFire();
   for (const c of f[0].forces[0]!.formations[0]!.companies!) c.training = training;
   const { state, ctx } = initRun(f[0], f[1], { seed: 1 });
-  const c1 = { ...state.companies.find((c) => c.id === 'c1')!, officers: 0, startMin: 0 };
-  const moved = moveCompanies([c1], () => 1e6, ctx.scenario.lines, ctx.doctrines, 10, 2).companies[0]!;
+  const c1 = { ...state.companies.find((c) => c.id === 'c1')!, officers: 0, startMin: 0, intent: 'advance' as const };
+  // No barrage to hold it back.
+  const moved = moveCompanies({ ...state, minute: 10, barrages: [], companies: [c1] }, ctx, 2, { damage: [] }).companies[0]!;
   return (moved.x - c1.x) / 2;
 }
 

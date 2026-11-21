@@ -9,8 +9,8 @@ export const CAUSES = [
   'wire-uncut', 'wire-cut', 'spared-by-bombardment',
   // Fire
   'mg-fire', 'rifle-fire', 'mg-unobserved', 'artillery-fire', 'defensive-barrage', 'batteries-recovered', 'counter-battery', 'off-map-fire',
-  // Dugouts
-  'dugouts-uncleared', 'defenders-trapped',
+  // Dugouts and the fight for trenches
+  'dugouts-uncleared', 'defenders-trapped', 'outnumbered',
   // Leadership and morale
   'officers-lost', 'led-by-ncos', 'morale-broke', 'suppressed', 'isolated',
   // Ground, weather and light

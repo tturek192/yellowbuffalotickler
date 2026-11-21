@@ -170,7 +170,7 @@ All 16 values are calibrated estimates; the scenario says which channels link wh
 
 ## Effects
 
-The 47 effects are estimates except `crewPerLewis`, which is sourced; 34 are calibrated coefficients, and `twilightMin`,
+The 50 effects are estimates except `crewPerLewis`, which is sourced; 37 are calibrated coefficients, and `twilightMin`,
 `lineFeatureMatchM`, `gapMultiplier`, `crewPerMg`, `trenchProximityM`, `wireUncutBelow`, `batteriesRecoveredFrac`,
 `mgUnobservedBelow`, `fireRefsMin` and the village, wood and crater radii are plain estimates (a calculation, a tolerance, an explanation threshold, a count or a
 map default, not fitted). The reasoning is in each entry; the ones with sources behind them:
@@ -204,6 +204,14 @@ its side that close, while the enemy is, counts as isolated and loses morale by 
 company holds about 200 m of front), `mgUnobservedBelow` 0.2 (an explanation threshold: a garrison's machine guns opening
 fire from a segment the bombardment spared, or wrecked less than a fifth of, carry the cause `mg-unobserved`) and
 `fireRefsMin` 10 (an explanation window: a company's morale events refer to the fire of the last 10 minutes on it).
+
+Three came with movement and the fight for trenches, all calibrated judgements with no source for the number:
+`suppressionSpeedLoss` 0.5 (the plan's starting value: a fully suppressed company that is not pinned keeps half its
+pace, moving in rushes from cover to cover), `fatiguePerHourUnderFire` 0.1 (an hour under fire tires men like 5 km of
+advance with a full load, beside the doctrine's `fatiguePerKm` 0.02) and `bombsPerManCleared` 0.5 (moppers-up bomb a
+dugout's entrances and call its men up, SS 143's "guard the entrances to dugouts" (`ss143-1917` p. 16): some 10 to 20
+bombs for a party of 20 to 40). Fatigue, on the doctrine's 0 to 1 scale, multiplies a company's speed and its fire by
+1 − fatigue; it needs no number of its own.
 
 **Changed from the plan's starting values** (the pre-flight ruling seeded the 16 later keys with the plan's numbers for
 review here): `gasHorseRadiusM` 1,000 → 200 m (a gas shell's cloud spreads a couple of hundred metres, not a kilometre),

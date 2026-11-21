@@ -53,6 +53,7 @@ export function initBatteries(s: Scenario, defaultsUsed: Set<string>): BatterySt
       ammoLeft: a.ammunition === undefined ? Infinity : v(a.ammunition),
       ...(Array.isArray(a.position) ? { position: a.position as Point } : {}),
       horses: a.horseDrawn ?? false,
+      captured: false,
     };
   });
 }

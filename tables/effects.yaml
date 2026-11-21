@@ -283,3 +283,23 @@ effects:
     estimate: an explanation window, not behaviour. A company pinned, falling back, surrendering or destroyed is said to have been brought
       to it by the fire of the last 10 minutes, about three barrage lifts; earlier fire is reached through the refs of that fire
     description: Minutes of earlier fire on a company that its morale events refer to (refs) and take their fire causes from.
+  suppressionSpeedLoss:
+    value: 0.5
+    estimate: "the plan's starting value: men under fire move from cover to cover in short rushes and stop to return fire, so a company
+      fully suppressed but not pinned keeps about half its pace. A judgement, not fitted to Vimy"
+    description: Share of its walking speed a fully suppressed company loses; its speed is multiplied by 1 - suppressionSpeedLoss x
+      suppression.
+    calibrated: true
+  fatiguePerHourUnderFire:
+    value: 0.1
+    estimate: "time under fire tires men as marching does: crouching, digging in and the strain of shelling. An hour of it is taken to
+      tire like 5 km of advance with a full load (doctrine fatiguePerKm 0.02 a km), so 0.1 an hour. A judgement, not fitted to Vimy"
+    description: Fatigue a company gains for each hour that fire comes in on it (on the doctrine's 0 to 1 scale, beside fatiguePerKm).
+    calibrated: true
+  bombsPerManCleared:
+    value: 0.5
+    estimate: "moppers-up bomb a dugout's entrances and call on the men below to come up (ss143-1917 p. 16: they 'guard the entrances
+      to dugouts'); a party of 20 to 40 men is taken to come up after some 10 to 20 bombs down its stairways, about one bomb for every
+      two men. A judgement, not fitted to Vimy"
+    description: Bombs (grenades) a mopping-up company uses for each man it clears out of the dugouts.
+    calibrated: true

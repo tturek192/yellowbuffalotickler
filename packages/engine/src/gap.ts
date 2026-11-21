@@ -6,7 +6,7 @@ import { emit } from './causes';
 import type { Cause } from './causes';
 import { isHolding } from './companies';
 import type { CompanyState } from './companies';
-import { lineXAt } from './geometry';
+import { targetX } from './movement';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import { stochasticRound } from './stochastic';
@@ -36,8 +36,7 @@ function barrageRate(b: SimState['barrages'][number], sector: StepContext['scena
  * Each attacking company's gap to its sector's barrage, `barrageX − x` (null once the barrage has ended, and for
  * holding companies), and whether it has lost the barrage:
  * - it is behind when it lags more than `followDistanceM × (gapMultiplier − 1)` behind the place the barrage lets
- *   it be (`barrageX − followDistanceM`, or its objective if nearer): more than `gapMultiplier × followDistanceM`
- *   behind the barrage;
+ *   it be (`targetX`: `barrageX − followDistanceM`, or its objective or the line the barrage protects if nearer);
  * - it is losing ground when it advanced less this step than the barrage's mean rate × dt. The mean rate, not the
  *   barrage's last jump, so that a company keeping pace on average is not flagged on the steps a lift falls in (its
  *   own movement is smooth while it is behind: nothing caps it);
@@ -62,8 +61,8 @@ export function trackGaps(state: SimState, ctx: StepContext, dt: number, before:
     let lostEvent = c.barrageLostEventId;
     if (c.status === 'advancing') {
       const follow = v(ctx.doctrines[c.doctrineId]!.attack!.followDistanceM);
-      const line = ctx.scenario.lines.find((l) => l.id === c.objectiveLineId);
-      const target = Math.min(line ? lineXAt(line.points, c.y) : Infinity, bx - follow);
+      // Where the barrage lets it be: the movement phase's target rule (its objective, the barrage, the line the barrage protects).
+      const target = c.objectiveLineId === undefined ? bx - follow : targetX(c, state, ctx);
       const behind = target - c.x > follow * (mult - 1);
       const prev = before[i];
       if (prev?.id !== c.id) throw new Error(`trackGaps: companies out of order at ${c.id}`);
@@ -146,18 +145,19 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
       let below = 0;
       const points: SegmentState['dugoutPoints'] = [];
       const trapped: CompanyState[] = [];
+      const eventId = out.nextEventId;
       for (const c of g.companies) {
         const n = Math.min(c.men, stochasticRound(c.men * frac, ctx.rng));
         captured += n;
         below += c.men - n;
-        if (c.men - n > 0) points.push({ companyId: c.id, point: at(c), men: c.men - n });
+        if (c.men - n > 0) points.push({ companyId: c.id, point: at(c), men: c.men - n, leftMin: out.minute, eventId, cleared: 0 });
         trapped.push({ ...c, men: c.men - n, captured: c.captured + n });
       }
       out = emit(
         {
           ...out,
           companies: out.companies.map((c) => trapped.find((x) => x.id === c.id) ?? c),
-          segments: out.segments.map((x) => (x.id === seg.id ? { ...x, trapped: true, dugoutPoints: [...x.dugoutPoints, ...points] } : x)),
+          segments: out.segments.map((x) => (x.id === seg.id ? { ...x, trapped: true, trappedEventId: eventId, dugoutPoints: [...x.dugoutPoints, ...points] } : x)),
         },
         {
           minute: out.minute,

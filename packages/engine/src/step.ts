@@ -2,11 +2,13 @@ import { v } from '@wwi/scenario';
 import type { Doctrine, Point, Scenario, Tables, Terrain } from '@wwi/scenario';
 import type { World } from './ground';
 import type { BarrageState } from './barrage';
-import { emit } from './causes';
+import { CAUSES, emit } from './causes';
+import type { Cause } from './causes';
 import { bucketsOf, within } from './buckets';
 import { byId, isHolding } from './companies';
 import type { CompanyState } from './companies';
 import type { PhaseName } from './pipeline';
+import { segmentsOnLine } from './trenches';
 import type { BatteryState, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
 
 export type SimState = {
@@ -79,45 +81,72 @@ const MOVING: ReadonlySet<string> = new Set(['advancing', 'falling-back', 'count
 
 /**
  * Busy: something is happening that needs the fine step and close snapshots — contact, a barrage
- * lifting, a company on the move, fire coming in on a company this step, or a company pinned (whose
- * recovery sets it moving again). Otherwise the battle is quiet.
+ * lifting, a company on the move, fire coming in on a company this step, a company pinned (whose
+ * recovery sets it moving again), or men coming up out of their dugouts this step (whose fire starts
+ * next step). Otherwise the battle is quiet.
  */
 export function isBusy(state: SimState, ctx: StepContext): boolean {
   return (
     state.barrages.some((b) => b.phase === 'lifting') ||
     state.companies.some((c) => MOVING.has(c.status) || c.status === 'pinned' || c.recentFire.some((f) => f.minute === state.minute)) ||
+    state.events.some((e) => e.kind === 'dugout-sortie') ||
     inContact(state, ctx)
   );
 }
 
+/** A company aimed at its objective line for the line-taken rule: an attacker (not a garrison, nor a reserve still held back) with an objective. */
+const aimsAtLine = (c: CompanyState): boolean =>
+  c.objectiveLineId !== undefined && c.role !== 'garrison' && !isHolding(c) && c.status !== 'marching' && c.status !== 'off-map';
+
+/** Statuses of an attacking company that leave its line free to be taken: there, or out of the attack. */
+const SETTLED: ReadonlySet<string> = new Set(['consolidating', 'pinned', 'destroyed', 'surrendered']);
+
 /**
- * The line-taken check (the log phase): a line is taken in a sector once every attacking company aimed
- * at it is consolidating. The event refers to the arrivals of this step that completed it.
+ * The line-taken rule (the log phase). A line is taken in a sector when:
+ * - every attacking company aimed at it there is consolidating, pinned, destroyed or surrendered, and at least one
+ *   is consolidating; and
+ * - its side holds every trench segment the line runs along in the sector (`segmentsOnLine`: within
+ *   `lineFeatureMatchM`), so a segment still held by its defenders keeps the line from being taken.
+ * Its causes come from what happened: the arrivals' causes (`followed-barrage`, or `barrage-moved-on` for a company
+ * that had lost its barrage), `defenders-trapped` when a garrison of one of those segments was caught in its
+ * dugouts, and `wire-cut` when the wire in front of one of them was cut (at least `wireUncutBelow`). Refs: the
+ * arrivals, and the segments' trapping and loss.
  */
 export function takeLines(state: SimState, ctx: StepContext): SimState {
   const groups = new Map<string, CompanyState[]>();
   for (const c of state.companies) {
-    // Garrisons and reserves (and a garrison that has given up, which no longer holds) aim at no line.
-    if (isHolding(c) || c.objectiveLineId === undefined) continue;
+    if (!aimsAtLine(c)) continue;
     const key = `${c.objectiveLineId}|${c.sectorId}`;
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }
+  const uncutBelow = v(ctx.tables.effects.wireUncutBelow);
   let out = state;
   for (const key of [...groups.keys()].sort()) {
     const cs = groups.get(key)!;
-    if (out.taken.includes(key) || !cs.every((c) => c.status === 'consolidating')) continue;
+    if (out.taken.includes(key) || !cs.every((c) => SETTLED.has(c.status)) || !cs.some((c) => c.status === 'consolidating')) continue;
     const [lineId, sectorId] = key.split('|') as [string, string];
+    const side = cs[0]!.side;
+    const segs = segmentsOnLine(out, ctx, lineId, sectorId);
+    if (!segs.every((x) => x.holder === side)) continue;
     const line = ctx.scenario.lines.find((l) => l.id === lineId)!;
-    const ids = new Set(cs.map((c) => c.id));
-    const refs = out.events.filter((e) => e.kind === 'company-reached' && e.unitId !== undefined && ids.has(e.unitId)).map((e) => e.id);
+    const there = cs.filter((c) => c.status === 'consolidating');
+    const causes: Cause[] = there.flatMap((c) => c.reached?.causes ?? []);
+    if (segs.some((x) => x.trapped)) causes.push('defenders-trapped');
+    if (segs.some((x) => x.wireBeltDepthM > 0 && x.wireCut >= uncutBelow)) causes.push('wire-cut');
+    if (causes.length === 0) causes.push('followed-barrage');
+    const refs = [
+      ...there.flatMap((c) => (c.reached ? [c.reached.eventId] : [])),
+      ...segs.flatMap((x) => [x.trappedEventId, x.holderEventId].filter((id): id is number => id !== null)),
+    ];
     out = emit({ ...out, taken: [...out.taken, key] }, {
       minute: out.minute,
       kind: 'line-taken',
       sectorId,
       lineId,
       text: `${line.name} taken`,
-      causes: ['followed-barrage'],
-      refs,
+      causes: CAUSES.filter((x) => causes.includes(x)),
+      refs: refs.filter((x, i) => refs.indexOf(x) === i).sort((a, b) => a - b),
+      factors: { companies: cs.length, consolidating: there.length, segments: segs.length },
     });
   }
   return out;

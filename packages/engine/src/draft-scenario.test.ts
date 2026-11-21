@@ -22,6 +22,11 @@ describe('draft Vimy scenario run', () => {
     // 0.3.3 (Task 9): direct fire, the full resolve (officers, ammunition) and morale. The draft has no German
     // companies, so nobody fires and its companies, events and summary are unchanged; starting morale now comes from the
     // leaders' moraleEffect, and its two leaders without ratings count as 3 (morale stays 0.8), listed in defaultsUsed.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.3', hash: '06798835' });
+    // 0.3.4 (Task 10): movement with fatigue, the barrage-safe target rule and the new line-taken rule. Fatigue
+    // (fatiguePerKm) slows the two companies that walk on to the Blue Line, which they reach 2 minutes later (Blue taken
+    // at 318, not 316; the other lines' minutes are unchanged); each line-taken now refers to all its arrivals (not only
+    // that step's) and carries factors (companies, consolidating, segments). The draft has no garrisons, wire or German
+    // guns, so no segment, dugout or capture changes anything.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.4', hash: 'd78c0a8f' });
   });
 });
