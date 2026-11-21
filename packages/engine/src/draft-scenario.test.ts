@@ -49,6 +49,9 @@ describe('draft Vimy scenario run', () => {
     // 0.3.9 (Task 13 fix round 1 follow-up): reserve battalion headquarters move with their companies, and a division
     // reports its planned counter-attack gone in or given up. The draft has neither: with the version set back to 0.3.8
     // its record hashes to 2d202141, so only the version moves the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.9', hash: '037a5b1a' });
+    // 0.3.10 (Task 13 fix round 2): reserves sent to one front take distinct places, and every end of a planned
+    // counter-attack is reported. The draft has neither: with the version set back to 0.3.9 its record hashes to
+    // 037a5b1a, so only the version moves the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.10', hash: '3d846106' });
   });
 });

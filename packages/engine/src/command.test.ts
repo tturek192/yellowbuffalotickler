@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
-import { commandPending, commandPhase, counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
+import { commandPending, commandPhase, counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, planPatience, stallChecks } from './command';
 import { send } from './comms';
 import { captureSegments } from './trenches';
 import { morale } from './morale';
@@ -565,6 +565,22 @@ describe('the command model and quiet steps', () => {
     expect(coarse.find((s) => s.minute >= 140)!.companies.find((c) => c.id === 'k1')!.recentFire.some((x) => x.minute > 131)).toBe(false);
     expect(coarse.find((s) => s.minute === 100)!.companies.find((c) => c.id === 'k1')!.suppression).toBe(0);
     expectSameBattle(coarse, fine);
+  });
+
+  it('a planned counter-attack given up for want of ground it can reach: the plan-patience source, its flag, and the same give-up minute however the battle is stepped', () => {
+    expect(SCHEDULES.some(([name, source]) => name === 'plan-patience' && source === planPatience)).toBe(true);
+    const coarse = quietRun(fixtureReserves({ objective: 'black' }), 10, 600);
+    const fine = quietRun(fixtureReserves({ objective: 'black' }), 2, 600);
+    const blocked = coarse.find((x) => x.hqs.find((h) => h.formationId === 'gd')!.pending[0]?.blockedSinceMin !== undefined)!;
+    const since = blocked.hqs.find((h) => h.formationId === 'gd')!.pending[0]!.blockedSinceMin!;
+    const { ctx } = initRun(...fixtureReserves({ objective: 'black' }), { seed: 1 });
+    expect(planPatience(blocked, ctx)).toEqual([{ minute: since + 120, startsMovement: false }]);
+    // The give-up is a decision: the quiet step does not end before it, but at the first grid minute at or after it.
+    expect(quietStep({ ...blocked, minute: since + 112 }, ctx, 2, 10)).toBe(8);
+    const of = (r: SimState[]) => r.flatMap((x) => x.events).filter((e) => ['reserve-ordered', 'reserve-arrived', 'counter-attack-dropped'].includes(e.kind)).map((e) => [e.minute, e.kind, e.text]);
+    const dropped = of(coarse).find((e) => e[1] === 'counter-attack-dropped')!;
+    expect(dropped[0]).toBe(since + 120);
+    expect(of(coarse)).toEqual(of(fine));
   });
 
   it('a counter-attack ordered again after counterAttackRetryMin, inside a quiet stretch, is ordered at the same minute however the battle is stepped', () => {

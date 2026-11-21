@@ -174,8 +174,11 @@ export function marchReserves(state: SimState, ctx: StepContext): SimState {
   let reserves = state.reserves;
   let companies = state.companies;
   const events: NewEvent[] = [];
-  state.reserves.forEach((r0, i) => {
-    if (r0.status !== 'ordered' && r0.status !== 'marching') return;
+  // In ascending reserve id, so reserves arriving together take their places in a fixed order.
+  const order = state.reserves.map((_, i) => i).sort((a, b) => (state.reserves[a]!.formationId < state.reserves[b]!.formationId ? -1 : state.reserves[a]!.formationId > state.reserves[b]!.formationId ? 1 : 0));
+  for (const i of order) {
+    const r0 = state.reserves[i]!;
+    if (r0.status !== 'ordered' && r0.status !== 'marching') continue;
     let r = r0;
     const a = arrivalOf(r, r.orderedMin!, ctx);
     if (r.status === 'ordered' && M >= a.marchMin) {
@@ -190,8 +193,10 @@ export function marchReserves(state: SimState, ctx: StepContext): SimState {
       const men = coming.reduce((acc, c) => acc + c.men, 0);
       // On the map: spread along a frontage across its entry point, deployed, each company walking on to its own place
       // along the front it was sent to (movement.ts, a march order).
-      const places = frontage(r, n, ctx);
-      const ends = destinations(r, n, state, ctx);
+      // Its places, clear of those other reserves' companies have taken (on the map, and at the front).
+      const places = startSlots(r, n, reserves.flatMap((x) => x.starts), ctx);
+      const ends = endSlots(r, n, reserves.flatMap((x) => x.ends), state, ctx);
+      r = { ...r, starts: places, ends: ends.filter((p): p is Point => p !== undefined) };
       const k = new Map(coming.map((c, j) => [c.id, j]));
       // Each of its battalions' headquarters moves with its companies, to behind their places at the front.
       const byBattalion = new Map<string, Point[]>();
@@ -220,38 +225,63 @@ export function marchReserves(state: SimState, ctx: StepContext): SimState {
       });
     }
     if (r !== r0) reserves = reserves.map((x, j) => (j === i ? r : x));
-  });
+  }
   if (reserves === state.reserves) return state;
   return emit({ ...state, reserves, companies }, ...events);
 }
 
+/** Whether a point is free of every point taken: none within half a gap of it, across or along. */
+const freeOf = (taken: readonly Point[], gap: number) => (p: Point): boolean => !taken.some((q) => Math.abs(q[0] - p[0]) < gap / 2 && Math.abs(q[1] - p[1]) < gap / 2);
+
 /**
- * Where a reserve's `n` companies come on to the map: in a line across its entry point (along y, the frame's edge),
- * `companyFrontageM` apart (its doctrine), centred on the entry point; held inside the frame's extent, the line shifted
- * along the edge, and closed up if it is longer than the edge.
+ * Where a reserve's `n` companies come on to the map (Task 13): along the frame's edge at its entry point, `companyFrontageM`
+ * apart (its doctrine), outward from the entry point both ways, skipping places other reserves' companies came on at
+ * (`taken`) and places outside the frame's extent; when the edge is full, a row further in. South to north.
  */
-function frontage(r: ReserveState, n: number, ctx: StepContext): Point[] {
-  const [x, y0] = r.entryPoint;
-  let gap = v(doctrineOf(ctx, r.formationId).common.companyFrontageM);
-  let y = y0;
+function startSlots(r: ReserveState, n: number, taken: readonly Point[], ctx: StepContext): Point[] {
+  const [x0, y0] = r.entryPoint;
+  const gap = v(doctrineOf(ctx, r.formationId).common.companyFrontageM);
   const e = ctx.scenario.frame?.extent;
-  if (e && n > 1) {
-    gap = Math.min(gap, (e.maxY - e.minY) / (n - 1));
-    const half = (gap * (n - 1)) / 2;
-    y = Math.min(Math.max(y0, e.minY + half), e.maxY - half);
+  const inward = r.side === 'central' ? -1 : 1;
+  const free = freeOf(taken, gap);
+  const out: Point[] = [];
+  for (let row = 0; out.length < n && row <= n; row++) {
+    const x = x0 + inward * row * gap;
+    for (let k = 0; out.length < n && k <= 2 * n + 2; k++) {
+      const y = y0 + (k % 2 === 0 ? 1 : -1) * Math.ceil(k / 2) * gap;
+      if (e && (y < e.minY || y > e.maxY)) continue;
+      const p: Point = [x, y];
+      if (free(p) && !out.some((q) => q[0] === p[0] && q[1] === p[1])) out.push(p);
+    }
   }
-  return Array.from({ length: n }, (_, j) => [x, y + (j - (n - 1) / 2) * gap] as Point);
+  return out.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
 }
 
 /**
- * Each of a reserve's `n` companies' own place at its front (in the same order as `frontage`): along the trench of the
- * front segments it was sent to, south to north, spread evenly by company; none when it has no front to go to.
+ * Each of a reserve's `n` companies' own place at its front (in the same order as its companies, south to north): along
+ * the trench of the front segments it was sent to, `companyFrontageM` apart, the places nearest its entry point first,
+ * skipping places other reserves' companies were given (`taken`), so reserves sent to one front fill it in turn; when the
+ * front is full, a row behind it (on its side of the trench). None when it has no front to go to.
  */
-function destinations(r: ReserveState, n: number, state: SimState, ctx: StepContext): Array<Point | undefined> {
+function endSlots(r: ReserveState, n: number, taken: readonly Point[], state: SimState, ctx: StepContext): Array<Point | undefined> {
   const segs = r.frontSegmentIds.flatMap((id) => state.segments.filter((x) => x.id === id));
   const pts = segs.flatMap((x) => [...segmentSamples(ctx, x, state.companies)].sort((a, b) => a[1] - b[1]));
   if (pts.length === 0) return Array.from({ length: n }, () => undefined);
-  return Array.from({ length: n }, (_, j) => pts[Math.min(pts.length - 1, Math.floor(((j + 0.5) * pts.length) / n))]);
+  const gap = v(doctrineOf(ctx, r.formationId).common.companyFrontageM);
+  // Places along the trench a frontage apart.
+  const line: Point[] = [];
+  for (const p of pts) if (line.length === 0 || Math.hypot(p[0] - line.at(-1)![0], p[1] - line.at(-1)![1]) >= gap) line.push(p);
+  const back = r.side === 'central' ? 1 : -1;
+  const free = freeOf(taken, gap);
+  const [ex, ey] = r.entryPoint;
+  const out: Point[] = [];
+  for (let row = 0; out.length < n && row <= n; row++) {
+    // This row's free places, nearest the entry point first (the shortest walks); ties south first.
+    const places = line.map(([x, y]): Point => [x + back * row * gap, y]).filter(free);
+    places.sort((a, b) => Math.hypot(a[0] - ex, a[1] - ey) - Math.hypot(b[0] - ex, b[1] - ey) || a[1] - b[1]);
+    out.push(...places.slice(0, n - out.length));
+  }
+  return out.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
 }
 
 /**

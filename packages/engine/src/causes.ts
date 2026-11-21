@@ -17,6 +17,9 @@ export const CAUSES = [
   'counter-attack', 'left-unheld',
   // A planned counter-attack given up: all the lost ground it could retake lies behind a line the enemy holds (Task 13)
   'out-of-reach',
+  // A planned counter-attack given up because the ground it was to retake is all held again, or because none of the troops
+  // it would send is free to go (pinned, or already sent elsewhere) when they are there (Task 13)
+  'ground-regained', 'no-troops',
   // Leadership and morale
   'officers-lost', 'led-by-ncos', 'morale-broke', 'suppressed', 'isolated',
   // No fire came in long enough for morale to recover (a company that fell back rallies, Task 10)

@@ -579,8 +579,9 @@ function armyReserves(w: Work): void {
  * A planned counter-attack goes in once its reserves are there (all its off-map ones at the front, as its picture shows): a
  * division's with every reserve-role company of its own, an army's (`onlyReserves`) with the reserves it ordered. Its
  * targets are chosen afresh each time from the HQ's picture: the segments of its front it knows lost and can reach
- * (`reachable`). With none lost, or nobody to send, it is dropped; with lost ground but none it can reach, it waits, and
- * after `counterAttackPatienceMin` of that it is given up (`counter-attack-dropped`, cause `out-of-reach`).
+ * (`reachable`). With none lost, or nobody to send, it is given up (`counter-attack-dropped`, cause `ground-regained` or
+ * `no-troops`); with lost ground but none it can reach, it waits, and after `counterAttackPatienceMin` of that it is given
+ * up (cause `out-of-reach`). Every end of a plan, gone in or given up, is reported up (comms.ts `reportPlan`).
  */
 function goDivisional(w: Work, fid: string, d: Doctrine, onlyReserves: boolean): void {
   const M = w.state.minute;
@@ -598,8 +599,18 @@ function goDivisional(w: Work, fid: string, d: Doctrine, onlyReserves: boolean):
   const sent = new Set(plan.reserveIds.flatMap((x) => w.topo.nodes.get(x)!.companies));
   const force = free(w, h, fid, 'reserve').filter((id) => !onlyReserves || sent.has(id));
   if (lostNow.length === 0 || force.length === 0) {
-    // Retaken already, or nobody to send (and no reserve on its way): nothing left to do.
+    // Retaken already, or nobody to send (and no reserve on its way): given up, and reported up like any end of a plan.
+    w.state = emit(w.state, {
+      minute: M,
+      kind: 'counter-attack-dropped',
+      ...(lostNow.length ? { segmentId: lostNow[0]! } : {}),
+      text: `${w.topo.nodes.get(fid)!.name} gives up its planned counter-attack: ${lostNow.length === 0 ? 'its front is all held again' : 'none of the troops it would send is free to go'}`,
+      causes: [lostNow.length === 0 ? 'ground-regained' : 'no-troops'],
+      refs: plan.eventRefs,
+      factors: { lostSegments: lostNow.length, companies: force.length },
+    });
     setPlan(null);
+    w.state = reportPlan(w.state, w.ctx, fid, M, w.state.nextEventId - 1);
     return;
   }
   const targets = lostNow.filter((x) => reachable(w, h, x));

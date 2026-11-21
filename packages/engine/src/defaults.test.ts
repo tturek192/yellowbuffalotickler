@@ -44,9 +44,10 @@ describe('defaults', () => {
 
   it('the full Vimy scenario runs with the repository tables and ends early, with movement only', () => {
     const r = runScenario(vimy(), vimyDoctrines(), { seed: 1 });
-    // Ends well before the time cap (Task 12: the command model's operations run it on to the Pimple, after 20:00 on 9
-    // April; Task 13: the army's reserve divisions, arriving on 9 April, fight on into 10 April).
-    expect(r.endMinute).toBeLessThan(2880);
+    // Ends before the time cap (Task 12: the command model's operations run it on to the Pimple, after 20:00 on 9 April;
+    // Task 13: the reserves' counter-attacks, the army's divisions among them, can run it on to a later operation's hour,
+    // 12 April at seed 1).
+    expect(r.endMinute).toBeLessThan(vimy().timeLimitMinutes);
     // Task 13 fix round 1: every division and army that planned a counter-attack has it go in or give it up (none waits
     // to the end on ground it cannot reach).
     const planners = [...new Set(r.events.filter((e) => e.kind === 'reserve-ordered').map((e) => e.text.split(' orders ')[0]!))];

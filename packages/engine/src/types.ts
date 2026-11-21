@@ -343,6 +343,9 @@ export type ReserveState = {
   onMapKm: number;
   /** The front segments it is sent to (set when ordered), south to north: its companies' places at the front spread along them. */
   frontSegmentIds: string[];
+  /** Where its companies came on to the map and the places at the front they were given (on arrival; empty before). */
+  starts: Point[];
+  ends: Point[];
 };
 
 /**

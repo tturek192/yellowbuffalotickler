@@ -251,12 +251,54 @@ describe('reserves off the map', () => {
     expect(go.map((e) => e.segmentId)).toEqual([k3seg]);
   });
 
+  it('a plan given up because none of its troops is free (its reserve pinned) is reported, and the army commits after the report', () => {
+    const natural = runStates(fixtureReserves({ armyOrderSpeed: 3 }), { endMinute: 400 });
+    const divGo = natural.states.flatMap((x) => x.events).find((e) => e.kind === 'counter-attack-ordered' && /German Division/.test(e.text))!;
+    // The step before the division's counter-attack would go: its picture shows gres and kr pinned instead.
+    const s0 = natural.states.find((x) => x.minute === divGo.minute - 2)!;
+    const pinned = ['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4', 'kr'];
+    // (Each as of the report its picture holds, so later reports still come in over it.)
+    const hqs = s0.hqs.map((h) => (h.formationId === 'gd' ? { ...h, picture: { ...h.picture, units: { ...h.picture.units, ...Object.fromEntries(pinned.map((id) => [id, { ...h.picture.units[id]!, status: 'pinned' }])) } } } : h));
+    let st = commandPhase({ ...s0, minute: s0.minute + 2, events: [], hqs }, natural.ctx, 2);
+    const drop = st.events.find((e) => e.kind === 'counter-attack-dropped')!;
+    expect(drop).toMatchObject({ causes: ['no-troops'], minute: s0.minute + 2 });
+    expect(drop.refs).toContain(natural.states.flatMap((x) => x.events).find((e) => e.kind === 'reserve-ordered')!.id);
+    expect(st.events.filter((e) => e.kind === 'counter-attack-ordered')).toEqual([]);
+    expect(st.hqs.find((h) => h.formationId === 'gd')!.picture.plans['gd']).toBe(drop.minute);
+    expect(st.messages.some((m) => m.kind === 'report' && m.fromFormationId === 'gd' && (m.payload as { plans?: Record<string, number> }).plans?.['gd'] === drop.minute)).toBe(true);
+    // The rest of the run from there: the report reaches the army over the channels, and only then does it commit.
+    const states = [st];
+    while (st.minute < 700) states.push((st = runPipeline(st, natural.ctx, 2)));
+    const heard = states.find((x) => x.hqs.find((h) => h.formationId === 'ga')!.picture.plans['gd'] !== undefined)!;
+    expect(heard.minute).toBeGreaterThan(drop.minute);
+    const army = states.flatMap((x) => x.events).find((e) => e.kind === 'reserve-ordered' && /German Army/.test(e.text))!;
+    expect(army).toBeDefined();
+    expect(army.minute).toBeGreaterThanOrEqual(heard.minute);
+  });
+
+  it('reserves ordered together by one HQ come on and go to their front on places none of them shares', () => {
+    // A second resting battalion gres2 of the division, entering where gres does and as far back: both are ordered together.
+    const f = fixtureReserves();
+    f[0].forces[1]!.formations[0]!.children!.push({ id: 'gres2', name: 'Second Resting Battalion', kind: 'battalion' });
+    f[0].reserves.push({ formationId: 'gres2', side: 'central', distanceKm: est(8), entryPoint: [2500, 200] });
+    const run = runStates(f, { endMinute: 400 });
+    const ordered = run.states.flatMap((x) => x.events).filter((e) => e.kind === 'reserve-ordered');
+    expect(ordered.map((e) => e.minute)).toEqual([ordered[0]!.minute, ordered[0]!.minute]);
+    const arrived = run.states.find((x) => x.events.filter((e) => e.kind === 'reserve-arrived').length === 2)!;
+    const both = arrived.companies.filter((c) => c.battalionId === 'gres' || c.battalionId === 'gres2');
+    expect(both).toHaveLength(8);
+    expect(new Set(both.map((c) => `${c.startX}|${c.startY}`)).size).toBe(8);
+    expect(new Set(both.map((c) => JSON.stringify(c.orders.at(-1)!.target))).size).toBe(8);
+    const there = run.states.find((x) => x.companies.filter((c) => c.battalionId === 'gres' || c.battalionId === 'gres2').every((c) => c.status === 'holding'))!;
+    expect(new Set(there.companies.filter((c) => c.battalionId === 'gres' || c.battalionId === 'gres2').map((c) => `${Math.round(c.x)}|${Math.round(c.y)}`)).size).toBe(8);
+  });
+
   it('comes on to the map spread along a frontage across its entry point, each company walking to its own place at the front', () => {
     const run = runStates(fixtureReserves(), { endMinute: 400 });
     const arrived = run.states.find((x) => x.events.some((e) => e.kind === 'reserve-arrived'))!;
     const g = (st: SimState) => st.companies.filter((c) => c.battalionId === 'gres');
-    // companyFrontageM (200) apart along y, centred on the entry point (2500, 200); no two on one point.
-    expect(g(arrived).map((c) => [c.startX, c.startY])).toEqual([[2500, -100], [2500, 100], [2500, 300], [2500, 500]]);
+    // companyFrontageM (200) apart along y, outward from the entry point (2500, 200); no two on one point.
+    expect(g(arrived).map((c) => [c.startX, c.startY])).toEqual([[2500, -200], [2500, 0], [2500, 200], [2500, 400]]);
     const keys = g(arrived).map((c) => `${c.x}|${c.y}`);
     expect(new Set(keys).size).toBe(4);
     // Each to its own place along the front it was sent to, and there they stand apart.
@@ -271,12 +313,12 @@ describe('reserves off the map', () => {
     expect(hx).toBeCloseTo(ends.reduce((a, p) => a + p[0], 0) / 4 + 600, 6);
     expect(hy).toBeCloseTo(ends.reduce((a, p) => a + p[1], 0) / 4, 6);
     expect(run.ctx.defaultsUsed.has('formations[gres].hqPosition ← moves with its companies to behind their places at the front by effects.hqRearOffsetBattalionM (an off-map reserve\'s battalion)')).toBe(true);
-    // Held inside the frame's extent: a long line closes up along the edge.
+    // Held inside the frame's extent: when the edge is full, a row further in.
     const f = fixtureReserves();
     f[0].frame = { origin: { lon: 2.7, lat: 50.4 }, bearingDeg: est(75), extent: { minX: -1000, maxX: 2500, minY: 0, maxY: 450 } };
     const inFrame = runStates(f, { endMinute: 400 });
     const a2 = inFrame.states.find((x) => x.events.some((e) => e.kind === 'reserve-arrived'))!;
-    expect(g(a2).map((c) => c.startY)).toEqual([0, 150, 300, 450]);
+    expect(g(a2).map((c) => [c.startX, c.startY])).toEqual([[2500, 0], [2300, 200], [2500, 200], [2500, 400]]);
   });
 
   it('a reserve with companies of its own brings them, to its entry point; nothing is made up', () => {
