@@ -1702,6 +1702,27 @@ git commit -m "feat(app): period map style: Clegg frame, insignia blocks, territ
 - No calibrated parameter has moved from its documented starting value.
 - `scenario.yaml` still says `status: draft`.
 
+### Task 21: Data-oriented hot phases (the 3 s budget)
+
+Added during execution, as a provisional ruling flagged to the owner. Task 15 reached about 5 s of CPU for Vimy seed 1. That run now lasts 3.5 days with the comms and command model included, and its profile is flat: no function takes more than about 4%. Once Task 15 measured the routes available, a copy-free state was worth at most about 0.4 s, so the rest of the gap needs this task.
+
+**Files:**
+- Modify: the hot phases `fire.ts`, `movement.ts`, `command.ts`, `comms.ts`, `artillery.ts`, `morale.ts`, `resolve.ts` and `record.ts`, plus `step.ts`.
+- Test: `packages/engine/src/budget.test.ts`
+
+**Interfaces:**
+- **Unchanged:** every phase signature and the record format.
+- **Produces:** per-step typed-array views of companies (positions, men, status, suppression) that the hot phases read and write. Each phase converts to the existing `SimState` records once, at the phase boundary.
+
+- [ ] **Step 1: Restore the budget.** In `budget.test.ts`, put back 3000 ms of CPU per Vimy seed 1 run, including `JSON.stringify`, and a limit of 8 MB. Add a batch check of ≤ 5 min for 200 runs × 4 workers, either measured or projected from 20 runs. Run the test and confirm it fails.
+- [ ] **Step 2: Rewrite one phase at a time.** Profile, then rewrite the hottest phase over the typed views. Each commit must leave the record byte-identical for seeds 1–3; check this against the hashes taken before the change.
+- [ ] **Step 3: Verify.** Run `npm test` (it must be fully green, including the budget) and the e2e.
+- [ ] **Step 4: Commit.** Use `perf(engine): …` with "record byte-identical" in each commit message.
+
+Never change the model to meet the budget: no fewer busy steps, and no cut-offs that change outcomes.
+
+---
+
 **Not in this plan:**
 - calibration against Vimy, the setup and compare screens, what-if overlays and video export (Plan 4);
 - Messines (Plan 5);
