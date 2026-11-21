@@ -65,8 +65,8 @@ describe('draft Vimy scenario run', () => {
     // draft's battle is unchanged: expanded, its snapshots are those of 0.3.12.
     // 0.4.0 (Task 15): the run end (end.ts: objectives-held, lull, time-cap) with its run-ended event, the winner and key
     // ground in the summary, and each unit's formation path in the record. The draft's battle is unchanged up to its end: it
-    // now ends objectives-held at 440, two minutes after the Brown Line (438), with no winner (it has no key ground; both
-    // listed in defaultsUsed with its lull, the time limit).
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.0', hash: 'db49a8ad' });
+    // now ends objectives-held at 444, once the companies on the Brown Line (taken at 438) have stopped moving and nothing
+    // is due, with no winner (it has no key ground; both listed in defaultsUsed with its lull, the time limit).
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.0', hash: '0145d50e' });
   });
 });

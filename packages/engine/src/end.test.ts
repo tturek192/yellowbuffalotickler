@@ -82,6 +82,20 @@ describe('the run end and the winner (Task 15)', () => {
     expect(endCheck({ ...quiet, companies: late }, ctx)).toEqual({ ended: true, reason: 'lull' });
   });
 
+  it('suppression wearing off after the fighting stops does not keep a run from its lull', () => {
+    const [s, m] = fixtureWithDoctrineV3();
+    s.end = { keyGround: [], lullMin: est(2880) };
+    const { state, ctx } = initRun(s, m, { seed: 1 });
+    const after = {
+      ...state,
+      minute: 400,
+      events: [],
+      barrages: state.barrages.map((b) => ({ ...b, phase: 'done' as const })),
+      companies: state.companies.map((c) => (c.side === 'allied' ? { ...c, status: 'consolidating' as const, suppression: 0.3, morale: c.moraleStart } : c)),
+    };
+    expect(endCheck(after, ctx)).toEqual({ ended: true, reason: 'lull' });
+  });
+
   it('a garrison ordered while in its dugout and trapped there holds no order open, and stops no run ending (Task 12 N-3)', () => {
     const [s, m] = fixtureWithDoctrineV3();
     s.end = { keyGround: [], lullMin: est(60) };

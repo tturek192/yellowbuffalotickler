@@ -161,7 +161,16 @@ export function summarizeBatch(s: Scenario, runs: RunExtract[]): BatchSummary {
     return r;
   };
   for (const o of h.objectives) row(o.lineId, o.sectorId).hist = [minutesBetween(zero, v(o.earliest)), minutesBetween(zero, v(o.latest))];
-  for (const run of ordered) for (const t of run.lineTaken) row(t.lineId, t.sectorId).times.push(t.minute);
+  // Each run's first taking of each line (Task 15: a line lost and taken again counts once a run).
+  for (const run of ordered) {
+    const seen = new Set<string>();
+    for (const t of run.lineTaken) {
+      const key = `${t.lineId}|${t.sectorId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      row(t.lineId, t.sectorId).times.push(t.minute);
+    }
+  }
   const lines = [...rows.values()].map((r) => {
     const [p10, median, p90] = quantiles(r.times, [0.1, 0.5, 0.9]);
     return {

@@ -155,16 +155,27 @@ describe('quiet steps in contact with nobody able to fire (Task 15)', () => {
     expect(SCHEDULES.some(([name, source]) => name === 'morale-thresholds' && source === moraleThresholds)).toBe(true);
     const { state, ctx } = initRun(...dry(), { seed: 1 });
     const k = ctx.doctrines['bef-1917']!.common;
-    // c1 attacking and isolated as far as anyone knows (no morale phase has run), morale 0.06 above falling back, no suppression.
+    const iso = v(k.isolationDrain) / 60;
+    const rec = v(k.recoveryPerHour) / 60;
+    const half = v(ctx.tables.effects.suppressionHalfLifeMin);
+    const sd = v(k.suppressedDrain) / 60;
+    // c1 attacking and isolated as far as anyone knows (no morale phase has run), morale 0.06 above falling back.
     const m = v(k.fallBack) + 0.06;
-    const one = state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'advancing' as const, morale: m, moraleStart: m, suppression: 0 } : c));
-    const due = moraleThresholds({ ...state, companies: one }, ctx).filter((x) => x.startsMovement);
-    const perMin = v(k.isolationDrain) / 60;
-    expect(due.map((x) => x.minute)).toContainEqual(expect.closeTo(0.06 / perMin, 6));
-    // Recovering faster than it drains: nothing due.
-    const up = one.map((c) => (c.id === 'c1' ? { ...c, moraleStart: 1 } : c));
-    const recovers = v(k.recoveryPerHour) > v(k.isolationDrain);
-    expect(moraleThresholds({ ...state, companies: up }, ctx).some((x) => Math.abs(x.minute - 0.06 / perMin) < 1e-6)).toBe(!recovers);
+    const at = (suppression: number, morale = m) =>
+      moraleThresholds({ ...state, companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'advancing' as const, morale, moraleStart: 1, suppression } : c)) }, ctx);
+    // Isolation alone: due when it outruns recovery, at the minute the net fall reaches the threshold.
+    if (iso > rec) expect(at(0).map((x) => x.minute)).toContainEqual(expect.closeTo(0.06 / (iso - rec), 6));
+    else expect(at(0)).toEqual([]);
+    // Full suppression close above the threshold (within what it can still take): due, an early guess at its present rate.
+    const g = (0.5 * sd * half) / Math.LN2;
+    const fall = iso - rec + sd;
+    expect(fall).toBeGreaterThan(0);
+    expect(at(1, v(k.fallBack) + g)).toContainEqual({ minute: expect.closeTo(g / fall, 9), startsMovement: true });
+    // Suppression too light to take it that far before it wears off, and no lasting fall: never due.
+    if (iso <= rec) {
+      const light = (0.5 * 0.06 * Math.LN2) / (sd * half);
+      if (sd * light > rec) expect(at(light)).toEqual([]);
+    }
   });
 
   it('an off-map attack opening inside a quiet stretch opens at the minute fine steps open it', () => {

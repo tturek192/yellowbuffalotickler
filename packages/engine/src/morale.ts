@@ -221,12 +221,14 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
 
 /**
  * The minutes companies' morale is due to fall through a threshold it changes state at (Task 15, so a quiet step ends
- * where fine steps would see it): `surrender` for any company up on the field, and `fallBack` and `goToGround` for an
- * attacking one that has started. Morale falls between fires by `isolationDrain` (while isolated, as the morale phase last
- * found it; isolated when that is not known) and `suppressedDrain · suppression`, less `recoveryPerHour` below its
- * starting morale; suppression only decays, so the minute worked out at its present value is never late (an early guess
- * only shortens a quiet step). A fall starts movement (falling back) or changes what a company does, so the step that
- * sees it is a fine one.
+ * where fine steps would see it, and a run is not taken for a lull while one is due): `surrender` for any company up on
+ * the field, and `fallBack` and `goToGround` for an attacking one that has started. Morale falls between fires by
+ * `isolationDrain` (while isolated, as the morale phase last found it; isolated when that is not known) and
+ * `suppressedDrain · suppression`, and recovers by `recoveryPerHour` (up to its starting morale). Suppression only decays
+ * (`suppressionHalfLifeMin`), so the minute worked out at its present value is never late (an early guess only shortens a
+ * quiet step), and while isolation does not outrun recovery, suppression can take only so much more: a threshold beyond
+ * that is never reached. A fall starts movement (falling back) or changes what a company does, so the step that sees it
+ * is a fine one.
  */
 export function moraleThresholds(state: SimState, ctx: StepContext): Scheduled[] {
   const memo = isolationMemos.get(ctx);
@@ -237,11 +239,20 @@ export function moraleThresholds(state: SimState, ctx: StepContext): Scheduled[]
     const k = ctx.doctrines[c.doctrineId]!.common;
     const last = known ? memo.byAt[i] : undefined;
     const isolated = last === undefined || last.x !== c.x || last.y !== c.y || last.isolated;
-    const recovering = c.morale < c.moraleStart ? v(k.recoveryPerHour) : 0;
-    const fall = ((isolated ? v(k.isolationDrain) : 0) + v(k.suppressedDrain) * c.suppression - recovering) / 60;
+    // Per minute between fires: isolation's drain less the recovery (which follows any drain, up to the starting morale),
+    // and suppression's drain, which decays with suppression: from now on it can take at most supTotal in all.
+    const linear = ((isolated ? v(k.isolationDrain) : 0) - v(k.recoveryPerHour)) / 60;
+    const sup = (v(k.suppressedDrain) * c.suppression) / 60;
+    const supTotal = (sup * v(ctx.tables.effects.suppressionHalfLifeMin)) / Math.LN2;
+    const fall = linear + sup;
     if (!(fall > 0)) return;
     const at = [v(k.surrender), ...(FIGHTING.has(c.status) ? [v(k.fallBack), v(k.goToGround)] : [])];
-    for (const thr of at) if (c.morale >= thr) out.push({ minute: state.minute + (c.morale - thr) / fall, startsMovement: true });
+    for (const thr of at) {
+      if (c.morale < thr) continue;
+      // Not falling for good, and too far above the threshold for what suppression can still take: never reached.
+      if (linear <= 0 && c.morale - thr > supTotal) continue;
+      out.push({ minute: state.minute + (c.morale - thr) / fall, startsMovement: true });
+    }
   });
   return out;
 }

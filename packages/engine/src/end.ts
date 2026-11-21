@@ -8,7 +8,7 @@ import { featurePoints, pointRadiusM } from './segments';
 import type { EndReason } from './record';
 import { reservesUnderWay } from './reserves';
 import { SCHEDULES } from './schedule';
-import { onField } from './step';
+import { isBusy, onField } from './step';
 import type { SimState, StepContext } from './step';
 import type { Side } from './types';
 
@@ -17,7 +17,8 @@ import type { Side } from './types';
  * 1. objectives-held: the attacker holds every final objective line (each sector's last leg's line is in `taken`: taken,
  *    and not lost again), no counter-attack is ordered or under way, the command model has nothing in hand
  *    (`commandPending`: no order on its way, no stall to act on, no operation ready but for its hour), no reserve is on its
- *    way, and nothing is due within `end.lullMin` (`lullDue`: no men in dug-outs due to come up, no wave due to start, no
+ *    way, the battle is quiet (step.ts `isBusy`: no armed contact, no fire, nobody moving or pinned, no men just up out of
+ *    their dug-outs), and nothing is due within `end.lullMin` (`lullDue`: no men in dug-outs due to come up, no wave due to start, no
  *    off-map fire or attack due) — the plan has run and nobody is coming to take the lines back;
  * 2. lull: nothing is fighting (no fire came in on anyone this step), nothing is moving toward an objective (every company
  *    holding, consolidating, out of the fight, or off the map unordered; no barrage still to run), the command model has
@@ -75,7 +76,7 @@ export function endCheck(state: SimState, ctx: StepContext, o: { endMinute?: num
   const early = o.stopEarly ?? true;
   if (early) {
     const finals = finalLines(ctx);
-    const settled = () => !counterAttackUnderWay(state) && !commandPending(state, ctx) && !reservesUnderWay(state, ctx) && !lullDue(state, ctx, lullMin(ctx));
+    const settled = () => !isBusy(state, ctx) && !counterAttackUnderWay(state) && !commandPending(state, ctx) && !reservesUnderWay(state, ctx) && !lullDue(state, ctx, lullMin(ctx));
     if (finals.length > 0 && finals.every((k) => state.taken.includes(k)) && settled()) return { ended: true, reason: 'objectives-held' };
     const still =
       state.barrages.every((b) => b.phase === 'done') &&

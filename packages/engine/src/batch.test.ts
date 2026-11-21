@@ -69,6 +69,9 @@ describe('batch v2: runs against the historical targets (Task 15)', () => {
     expect(b.duration).toMatchObject({ target: 60, median: quantiles(per.map((x) => x.endedAt), [0.5])[0] });
     expect(b.winner).toMatchObject({ allied: 0, central: 0, none: 1, historical: 'allied', pass: false });
     expect(b.lines.map((l) => l.lineId)).toEqual(['black']);
+    // A line taken, lost and taken again counts once a run, at its first taking.
+    const again = summarizeBatch(s, per.map((x) => ({ ...x, lineTaken: [...x.lineTaken, { ...x.lineTaken[0]!, minute: 999 }] })));
+    expect(again.lines[0]).toMatchObject({ takenIn: 4, median: b.lines[0]!.median });
   });
 
   it('the same summary whatever order the runs come in (merged in seed order)', () => {
