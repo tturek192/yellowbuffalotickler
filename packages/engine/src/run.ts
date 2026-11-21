@@ -67,7 +67,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     defaultsUsed: new Set(used),
   };
   noteLightDefaults(scenario, ctx.defaultsUsed);
-  const segments = deriveSegments(scenario);
+  const segments = deriveSegments(scenario, models.tables, ctx.defaultsUsed);
   // A garrison's segment: the one whose garrisons it is among.
   const segmentOf = new Map(segments.flatMap((x) => x.garrisonIds.map((id) => [id, x.id] as const)));
   const state: SimState = {

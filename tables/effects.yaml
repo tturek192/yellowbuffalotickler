@@ -212,3 +212,26 @@ effects:
       and the attackers must look for them or cut a way through; below that share cut, the wire is said to be uncut. A judgement, not
       fitted to Vimy
     description: Share of a trench segment's wire cut below which the bombardment's result gives the cause wire-uncut.
+  strongpointRadiusM:
+    value: 100
+    estimate: "a strong point held by a company or more is taken to hold about one company's frontage of trench: the scenario's 41
+      first-position garrison companies hold some 8 km of it between them, about 200 m each (oob-german.yaml, geo/features.geojson),
+      so a diameter of 200 m. Geometry by judgement, not fitted to Vimy"
+    description: Radius in metres of a strong point mapped as a point with no radius of its own; its diameter is the frontage
+      the bombardment allots rounds by.
+    calibrated: true
+  villageRadiusM:
+    value: 50
+    estimate: the radius the map has drawn a village with when it gives none (packages/app/src/map/style.ts DEFAULT_RADIUS_M), a hamlet's
+      few houses; every Vimy village is mapped with its own radius
+    description: Radius in metres of a village mapped as a point with no radius of its own.
+  woodRadiusM:
+    value: 60
+    estimate: the radius the map has drawn a wood with when it gives none (packages/app/src/map/style.ts DEFAULT_RADIUS_M), a copse; the
+      Vimy woods are mapped as polygons
+    description: Radius in metres of a wood mapped as a point with no radius of its own.
+  craterRadiusM:
+    value: 10
+    estimate: the radius the map has drawn a crater with when it gives none (packages/app/src/map/style.ts DEFAULT_RADIUS_M); a mine
+      crater of 1916-17 was some tens of metres across, a shell crater a few metres
+    description: Radius in metres of a crater mapped as a point with no radius of its own.

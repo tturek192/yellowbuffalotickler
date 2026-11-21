@@ -187,6 +187,8 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
   const pieces = state.segments.flatMap((seg, k) => piecesOf(seg, k, wireBy.get(seg.featureId) ?? [], sparedBy.get(seg.featureId) ?? []));
   for (const seg of state.segments)
     if (seg.lengthM === 0) ctx.defaultsUsed.add(`bombardment of ${seg.id} ← no rounds (the segment has no frontage to share them by)`);
+  // (A point strongpoint has its diameter as frontage, so only a garrison placed past its trench's end, or on a
+  // point of a kind with no radius default, has none.)
 
   const noTarget = (i: number, a: Allocation) => ctx.defaultsUsed.add(`bombardment.allocations[${i}] (${a.artilleryId} ${a.task}) ← not fired (nothing for it to hit)`);
   b.allocations.forEach((a, i) => {
@@ -222,7 +224,10 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
       p.fired += r;
     }
   });
-  for (const p of pieces) if (p.fired > 0) churnAlong(ctx.world, featurePieces(features.get(state.segments[p.seg]!.featureId)!, p.y0, p.y1), p.fired);
+  // A point strongpoint's rounds fall across it, along its y band through the point.
+  const landsOn = (f: Feature, p: Piece): Point[][] =>
+    f.geometry.type === 'Point' ? [[[f.geometry.coordinates[0], p.y0], [f.geometry.coordinates[0], p.y1]]] : featurePieces(f, p.y0, p.y1);
+  for (const p of pieces) if (p.fired > 0) churnAlong(ctx.world, landsOn(features.get(state.segments[p.seg]!.featureId)!, p), p.fired);
 
   // Damage to each segment: each stretch's by the model's formulas, weighted by its length.
   const cutPerRound = v(fx.cutPerRound);
@@ -235,7 +240,7 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
     const width = seg.yMax - seg.yMin;
     const wired = ps.filter((p) => p.beltDepthM > 0);
     const wiredLen = sum(wired, (p) => p.lenM);
-    // A segment of no length (a point strongpoint) takes the belt over its place.
+    // A segment of no length (a garrison placed past its trench's end) takes the belt over its place.
     const wireBeltDepthM = wiredLen > 0 ? sum(wired, (p) => p.beltDepthM * p.lenM) / wiredLen : L === 0 ? (ps[0]?.beltDepthM ?? 0) : 0;
     const wireCut = wiredLen > 0 ? sum(wired, (p) => p.lenM * (1 - Math.exp((-p.wire * cutPerRound) / (p.beltDepthM * p.lenM)))) / wiredLen : 0;
     const trenchDamage = L > 0 ? sum(ps, (p) => (p.lenM > 0 ? p.lenM * (1 - Math.exp((-p.trench * damagePerRound) / p.lenM)) : 0)) / L : 0;

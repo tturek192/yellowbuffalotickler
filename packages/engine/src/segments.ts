@@ -1,5 +1,6 @@
 import { v } from '@wwi/scenario';
-import type { Feature, Formation, Point, Scenario } from '@wwi/scenario';
+import { EFFECT_KEYS } from '@wwi/scenario';
+import type { EffectKey, Feature, Formation, Point, Scenario, Tables } from '@wwi/scenario';
 import { byId } from './companies';
 import type { SegmentState } from './types';
 
@@ -64,6 +65,19 @@ export function featurePieces(f: Feature, y0: number, y1: number): Point[][] {
   return f.geometry.type === 'Point' ? [] : clipByY(featurePoints(f), y0, y1);
 }
 
+/**
+ * The radius of a Point feature in metres: its own `radiusM`, else the `<kind>RadiusM` default in
+ * `tables.effects` (listed in `defaultsUsed`), else 0 (no tables, or no default for the kind).
+ */
+export function pointRadiusM(f: Feature, tables?: Tables, defaultsUsed?: Set<string>): number {
+  if (f.geometry.type !== 'Point') return 0;
+  if (f.geometry.radiusM !== undefined) return f.geometry.radiusM;
+  const key = `${f.kind}RadiusM`;
+  if (!tables || !(EFFECT_KEYS as readonly string[]).includes(key)) return 0;
+  defaultsUsed?.add(`features[${f.id}].radiusM ← effects.${key}`);
+  return v(tables.effects[key as EffectKey]);
+}
+
 /** Every central garrison company that names a trench feature, in ascending id order. */
 function garrisons(s: Scenario): Company[] {
   const out: Company[] = [];
@@ -78,24 +92,26 @@ function garrisons(s: Scenario): Company[] {
 /**
  * One segment per German garrison company (garrisons at the same y, or on the same point strongpoint, share
  * one): the stretch of its `trenchFeatureId` between the midpoints to its neighbouring garrisons on the same
- * feature, the first and last running to the ends of the feature. Features in ascending id order, each south to north. The
- * scenario's defaults must be resolved (every garrison has `dugoutDepthM`).
+ * feature, the first and last running to the ends of the feature. Features in ascending id order, each south
+ * to north. A Point feature (a strongpoint) has one segment, y ± its radius (`pointRadiusM`), whose frontage
+ * (length) is its diameter. The scenario's defaults must be resolved (every garrison has `dugoutDepthM`).
  */
-export function deriveSegments(s: Scenario): SegmentState[] {
+export function deriveSegments(s: Scenario, tables?: Tables, defaultsUsed?: Set<string>): SegmentState[] {
   const byFeature = new Map<string, Company[]>();
   for (const c of garrisons(s)) byFeature.set(c.trenchFeatureId!, [...(byFeature.get(c.trenchFeatureId!) ?? []), c]);
   const out: SegmentState[] = [];
   for (const featureId of [...byFeature.keys()].sort()) {
     const f = s.features.find((x) => x.id === featureId);
     if (!f) throw new Error(`Garrison ${byFeature.get(featureId)![0]!.id}: trenchFeatureId names no feature "${featureId}"`);
-    const [lo, hi] = yExtent(f);
+    const point = f.geometry.type === 'Point';
+    const r = point ? pointRadiusM(f, tables, defaultsUsed) : 0;
+    const [lo, hi] = point ? [yExtent(f)[0] - r, yExtent(f)[1] + r] : yExtent(f);
     const yOf = (c: Company): number => {
       if (!Array.isArray(c.start)) throw new Error(`Company ${c.id}: start was not projected to a local point`);
       return c.start[1];
     };
     // Garrisons grouped by y, south to north (ids ascending within a group); every garrison of a point
     // feature (a strongpoint) is at the same place, so they share its one segment.
-    const point = f.geometry.type === 'Point';
     const groups: Company[][] = [];
     for (const c of [...byFeature.get(featureId)!].sort((a, b) => yOf(a) - yOf(b) || byId(a, b))) {
       const last = groups.at(-1);
@@ -117,7 +133,7 @@ export function deriveSegments(s: Scenario): SegmentState[] {
         garrisonIds: g.map((c) => c.id),
         yMin,
         yMax,
-        lengthM: featurePieces(f, yMin, yMax).reduce((a, p) => a + pathLength(p), 0),
+        lengthM: point ? yMax - yMin : featurePieces(f, yMin, yMax).reduce((a, p) => a + pathLength(p), 0),
         wireCut: 0,
         wireBeltDepthM: 0,
         trenchDamage: 0,

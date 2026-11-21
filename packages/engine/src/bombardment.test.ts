@@ -115,15 +115,23 @@ describe('the compressed bombardment', () => {
     expect(state.churn.reduce((a, x) => a + x, 0)).toBeCloseTo(700, 2);
   });
 
-  it('a garrison on a point strongpoint takes no rounds, and the run says so', () => {
-    const [s, m] = fixtureBomb({ trenchRounds: 400, heavyRounds: 200 });
+  it('a garrison on a point strongpoint loses men to a bombardment that covers its y-range', () => {
+    const [s, m] = fixtureBomb({ trenchRounds: 600, heavyRounds: 300 });
+    // y 200 ± 100 (strongpointRadiusM): 200 m of frontage beside the trench's 400 m.
     s.features.push({ id: 'sp', kind: 'strongpoint', side: 'central', geometry: { type: 'Point', coordinates: [300, 200] }, cite: { value: 'x', estimate: 'test' } });
     s.forces[1]!.formations[0]!.companies!.push({ id: 'k3', name: '3. Kompanie', role: 'garrison', strength: est(120), start: [300, 200], trenchFeatureId: 'sp' });
     const r = runScenario(s, m, { seed: 1 });
+    expect(r.geometry.segments.find((x) => x.id === 'sp:001')).toMatchObject({ yMin: 100, yMax: 300, lengthM: 200 });
     const ev = r.events.find((e) => e.kind === 'bombardment-result' && e.segmentId === 'sp:001')!;
-    expect(ev.factors).toMatchObject({ trenchDamage: 0, losses: 0 });
-    expect(r.defaultsUsed).toContain('bombardment of sp:001 ← no rounds (the segment has no frontage to share them by)');
-    expect(r.summary.casualties.bombardment.central.total).toBeGreaterThan(0);
+    // A third of each allocation (200 of 600 m of frontage): 300 trench rounds, 100 of them heavy.
+    expect(ev.factors!.trenchDamage).toBeCloseTo(1 - Math.exp((-300 * 5) / 200), 3);
+    expect(ev.factors!.dugoutDamage).toBeGreaterThan(0);
+    expect(ev.factors!.losses).toBeGreaterThan(0);
+    const k3 = r.snapshots[0]!.companies.rows.find((x) => x[0] === 'k3')!;
+    expect(k3[3]).toBe(120 - ev.factors!.losses!);
+    expect(r.summary.casualties.bombardment.central.formations['rir262']!.total).toBe(r.summary.casualties.bombardment.central.total);
+    expect(r.defaultsUsed).toContain('features[sp].radiusM ← effects.strongpointRadiusM');
+    expect(r.defaultsUsed.some((x) => x.includes('no frontage'))).toBe(false);
   });
 
   it('a wire belt or spared stretch on a trench with no garrison is recorded once and affects nothing', () => {

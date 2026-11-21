@@ -173,7 +173,7 @@ export const woodAt = (x0: number, x1: number) =>
 /** The bombardment's effect keys at the repository's starting values (tables/effects.yaml), for fixtures. */
 export const BOMB_EFFECTS = {
   cutPerRound: 20, damagePerRound: 5, dugoutPerRound: 10, safeDepthM: 3, lossRate: 0.5, killedFrac: 0.25,
-  batteryRecoveryHalfLifeMin: 120, wireUncutBelow: 0.5,
+  batteryRecoveryHalfLifeMin: 120, wireUncutBelow: 0.5, strongpointRadiusM: 100,
 };
 
 /** Fixture tables with ground, light and bombardment values set, and a heavy howitzer (`6in-how`). */

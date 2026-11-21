@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { est, germanForce, minimalScenario } from '@wwi/scenario/test-fixtures';
 import type { Feature, Scenario } from '@wwi/scenario';
 import { deriveSegments } from './segments';
+import { tablesWith } from './test-helpers';
 
 const cite = { value: 'schematic', estimate: 'test fixture' };
 const trench = (id: string, coordinates: Array<[number, number]>): Feature => ({ id, kind: 'trench', side: 'central', geometry: { type: 'LineString', coordinates }, cite });
@@ -58,10 +59,21 @@ describe('deriveSegments', () => {
     expect(segs[1]!.lengthM).toBe(0);
   });
 
-  it('the garrisons of a point strongpoint share one zero-length segment there; features without garrisons get none', () => {
-    const sp: Feature = { id: 'sp', kind: 'strongpoint', side: 'central', geometry: { type: 'Point', coordinates: [300, 250] }, cite };
+  it('the garrisons of a point strongpoint share one segment, y ± its radius, its diameter long; features without garrisons get none', () => {
+    const sp: Feature = { id: 'sp', kind: 'strongpoint', side: 'central', geometry: { type: 'Point', coordinates: [300, 250], radiusM: 40 }, cite };
     const segs = deriveSegments(scenarioWith([trench('empty', [[0, 0], [0, 400]]), sp], [garrison('b', 240, 'sp', 300), garrison('a', 260, 'sp', 300)]));
-    expect(segs.map((x) => [x.featureId, x.garrisonIds, x.yMin, x.yMax, x.lengthM])).toEqual([['sp', ['a', 'b'], 250, 250, 0]]);
+    expect(segs.map((x) => [x.featureId, x.garrisonIds, x.yMin, x.yMax, x.lengthM])).toEqual([['sp', ['a', 'b'], 210, 290, 80]]);
+  });
+
+  it("a point strongpoint with no radius of its own takes its kind's radius from tables.effects, and lists the default", () => {
+    const sp: Feature = { id: 'sp', kind: 'strongpoint', side: 'central', geometry: { type: 'Point', coordinates: [300, 250] }, cite };
+    const tables = tablesWith({ strongpointRadiusM: 100 });
+    const used = new Set<string>();
+    const [seg] = deriveSegments(scenarioWith([sp], [garrison('a', 250, 'sp', 300)]), tables, used);
+    expect([seg!.yMin, seg!.yMax, seg!.lengthM]).toEqual([150, 350, 200]);
+    expect([...used]).toEqual(['features[sp].radiusM ← effects.strongpointRadiusM']);
+    // Without tables (no default to read) it has no width.
+    expect(deriveSegments(scenarioWith([sp], [garrison('a', 250, 'sp', 300)]))[0]!.lengthM).toBe(0);
   });
 
   it('needs every garrison dugout depth resolved', () => {
