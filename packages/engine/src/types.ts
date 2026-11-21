@@ -98,7 +98,12 @@ export type Message = {
   finalId?: string;
   /** The failure draw lost it: at `dueMin` it is known lost (`message-lost`) and sent again by the next channel. */
   lost?: true;
+  /** Its hop had a surface line it could not use: cut by shelling along the line, or by an earlier failure draw. */
+  factors?: { cutBy: 'shelling' | 'failure' };
 };
+
+/** A surface line between two headquarters cut for the rest of the run (both directions): its `a|b` pair, sorted. */
+export type CutLine = { pair: string; by: 'shelling' | 'failure'; atMin: number };
 
 /** A decision an HQ has taken but not yet acted on (Task 12). */
 export type Decision = { kind: string; atMin: number; formationId: string; eventRefs: number[] };
@@ -135,7 +140,8 @@ export type HqState = {
 
 /**
  * Batteries answering a call for fire (Task 11): from `fromMin` to `toMin` the `guns` of each battery fire on the
- * segment instead of their own task. `id` is the call's message id; `refs` the event the call was about.
+ * segment instead of their own task. `id` is a fresh id from the message counter, taken when the call is answered;
+ * `refs` the event the call was about.
  */
 export type FireMission = {
   id: number;

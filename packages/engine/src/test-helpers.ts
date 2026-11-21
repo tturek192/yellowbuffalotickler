@@ -532,7 +532,8 @@ export type CommsOpts = {
  * fixtureWithDoctrineV3 with the allied battalion bn1 (companies c1 and c2) under brigade `b1`, division `d1` and corps
  * `cc`, linked up and down by one channel; channels: runner 30 min, buried cable 5, every other 10, none failing unless
  * `failPerHour` (runner). Every company fires no small arms, so nothing but the plan changes their status. Headquarters
- * stand behind their companies by the repository's rear offsets; runnerMinPerKm and runnerDelayCoversKm are 0.
+ * stand behind their companies by the repository's rear offsets; runnerMinPerKm and runnerDelayCoversKm are 0;
+ * reportEveryMin is the repository's 30.
  */
 export function fixtureComms(o: CommsOpts = {}): [Scenario, Models] {
   const [s, m] = fixtureWithDoctrineV3();
@@ -567,7 +568,9 @@ export function fixtureComms(o: CommsOpts = {}): [Scenario, Models] {
   for (const [k, value] of Object.entries(effects))
     (tables.effects as Record<string, unknown>)[k] = param(value);
   for (const w of ['rifle', 'lewis', 'vickers']) tables.weapons[w] = { ...tables.weapons[w]!, rpm: param(0) };
-  return [s, { ...m, tables }];
+  const doctrines = structuredClone(m.doctrines);
+  for (const d of Object.values(doctrines)) d.common.reportEveryMin = param(30);
+  return [s, { doctrines, tables }];
 }
 type FormationKindT = Scenario['forces'][number]['formations'][number]['kind'];
 

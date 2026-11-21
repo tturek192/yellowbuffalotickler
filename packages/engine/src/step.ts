@@ -6,10 +6,10 @@ import { CAUSES, emit } from './causes';
 import type { Cause } from './causes';
 import { bucketsOf, within } from './buckets';
 import { byId, isHolding } from './companies';
-import type { CompanyState } from './companies';
+import type { CompanyState, CompanyStatus } from './companies';
 import type { PhaseName } from './pipeline';
 import { segmentsOnLine } from './trenches';
-import type { BatteryState, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
+import type { BatteryState, CutLine, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
 
 export type SimState = {
   minute: number;
@@ -30,10 +30,13 @@ export type SimState = {
   messages: Message[];
   /** The id the next message gets (Task 11). */
   nextMessageId: number;
-  /** Surface lines cut by a failure draw, as "from>to" keys, sorted (Task 11); shelling cuts them without a key. */
-  cutLines: string[];
-  /** What each company last reported (Task 11): its status and the holder of its own segment (null: none). Looked up only. */
-  lastReport: Record<string, { status: string; holder: Side | null }>;
+  /** Surface lines cut, by shelling along them or by a failure draw, in pair order (Task 11); each noted once. */
+  cutLines: CutLine[];
+  /**
+   * What each company last reported (Task 11): its status, men, the holder of its own segment (null: none) and the
+   * minute it reported. Looked up only.
+   */
+  lastReport: Record<string, { status: CompanyStatus; men: number; holder: Side | null; atMin: number }>;
   /** Batteries answering calls for fire (Task 11), in id order. */
   fireMissions: FireMission[];
   /** Off-map formations (Task 13). */

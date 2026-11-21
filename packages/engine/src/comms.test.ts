@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
-import { ARTILLERY, companyReports, hqPositionOf, messageDueTimes, send } from './comms';
+import { ARTILLERY, companyReports, fireMissionEnds, hqPositionOf, messageDueTimes, send } from './comms';
 import { churn } from './ground';
 import { runPipeline } from './pipeline';
 import { initRun, runScenario } from './run';
@@ -68,6 +68,16 @@ describe('communications', () => {
     for (const e of lost) for (const ref of e.refs) expect(ref).toBeLessThan(e.id);
     expect(lost.some((e) => e.refs.length > 0)).toBe(true);
     expect(arrivalTimes(r).corps).toBeLessThan(Infinity);
+    // Each lost message is sent again on the same hop, with the same payload, leaving at the minute it was due.
+    const all = r.states.flatMap((s) => s.messages).filter((m, i, xs) => xs.findIndex((x) => x.id === m.id) === i);
+    const lostMsgs = all.filter((m) => m.lost && m.dueMin <= r.states.at(-1)!.minute);
+    expect(lostMsgs.length).toBeGreaterThan(0);
+    for (const m of lostMsgs) {
+      const again = all.find((x) => x.id > m.id && x.sentMin === m.dueMin && x.fromFormationId === m.fromFormationId && x.toFormationId === m.toFormationId);
+      expect(again, `resend of message ${m.id}`).toBeDefined();
+      expect(again!.payload).toEqual(m.payload);
+      expect(again!.kind).toBe(m.kind);
+    }
   });
 
   it('without communications every link is a runner, and the defaults say so', () => {
@@ -113,17 +123,75 @@ describe('communications', () => {
     expect(first(true)).toBe('runner');
   });
 
-  it('a surface line that lost a message to a failure draw stays cut, and later messages take the next channel', () => {
+  it('a surface line that lost a message to a failure draw stays cut, both ways, and later messages take the next channel', () => {
     const f = fixtureComms({ links: 'runners' });
-    f[0].communications = { links: [{ side: 'allied', from: 'battalion', to: 'brigade', channels: ['surface-line', 'runner'] }] };
+    f[0].communications = {
+      links: [
+        { side: 'allied', from: 'battalion', to: 'brigade', channels: ['surface-line', 'runner'] },
+        { side: 'allied', from: 'brigade', to: 'battalion', channels: ['surface-line', 'runner'] },
+      ],
+    };
     f[1].tables.channels['surface-line'] = { ...f[1].tables.channels['surface-line'], failPerHour: { value: 50, estimate: 'test', description: 'test' } };
     const r = runStates(f, { endMinute: 300 });
     const last = r.states.at(-1)!;
-    expect(last.cutLines).toContain('bn1>b1');
-    const lostAt = eventsOf(r).find((e) => e.kind === 'message-lost')!.minute;
-    const after = r.states.filter((s) => s.minute > lostAt).flatMap((s) => s.messages).filter((m) => m.fromFormationId === 'bn1');
+    expect(last.cutLines).toContainEqual(expect.objectContaining({ pair: 'b1|bn1', by: 'failure' }));
+    const lostAt = r.states.flatMap((s) => s.messages).find((m) => m.lost && m.channel === 'surface-line')!.dueMin;
+    // Every message bn1 sends from the minute the loss was known.
+    const after = r.states.flatMap((s) => s.messages).filter((m, i, xs) => xs.findIndex((x) => x.id === m.id) === i && m.fromFormationId === 'bn1' && m.sentMin >= lostAt);
     expect(after.length).toBeGreaterThan(0);
     expect(after.every((m) => m.channel === 'runner')).toBe(true);
+    expect(after.every((m) => m.factors?.cutBy === 'failure')).toBe(true);
+    // The same wire is cut for an order going down it.
+    const down = send(last, r.ctx, { side: 'allied', kind: 'order', fromFormationId: 'b1', toFormationId: 'bn1', sentMin: last.minute, payload: holdOrder });
+    expect(down.messages.find((m) => m.kind === 'order')).toMatchObject({ channel: 'runner', factors: { cutBy: 'failure' } });
+  });
+
+  it('a surface line is cut where shelling churned a cell along its middle, its ends untouched; the cut is noted once', () => {
+    const first = (shell: boolean) => {
+      const f = fixtureComms({ links: 'runners' });
+      f[0].communications = { links: [{ side: 'allied', from: 'battalion', to: 'brigade', channels: ['surface-line', 'runner'] }] };
+      const bde = f[0].forces[0]!.formations[0]!.children![0]!.children![0]!;
+      bde.hqPosition = [200, 200];
+      bde.children![0]!.hqPosition = [1000, 200];
+      const r = runStates(f, {
+        endMinute: 120,
+        at: (s, ctx) => {
+          if (shell) churn(ctx.world, [600, 200], 5);
+          return s;
+        },
+      });
+      return { m: r.states.flatMap((s) => s.messages).find((m) => m.fromFormationId === 'bn1')!, cut: r.states.at(-1)!.cutLines };
+    };
+    expect(first(false).m.channel).toBe('surface-line');
+    const shelled = first(true);
+    expect(shelled.m).toMatchObject({ channel: 'runner', factors: { cutBy: 'shelling' } });
+    expect(shelled.cut.filter((x) => x.pair === 'b1|bn1')).toEqual([expect.objectContaining({ by: 'shelling' })]);
+  });
+
+  it('a line found clear is walked again once the churn changes', () => {
+    const f = fixtureComms({ links: 'runners' });
+    f[0].communications = { links: [{ side: 'allied', from: 'battalion', to: 'brigade', channels: ['surface-line', 'runner'] }] };
+    const bde = f[0].forces[0]!.formations[0]!.children![0]!.children![0]!;
+    bde.hqPosition = [200, 200];
+    bde.children![0]!.hqPosition = [1000, 200];
+    const { state, ctx } = initRun(...f, { seed: 1 });
+    const report: Report = { atMin: 0, units: { c1: { status: 'pinned', men: 100, atMin: 0 } }, segments: {}, lines: {} };
+    const out = (s: SimState) => send(s, ctx, { side: 'allied', kind: 'report', fromFormationId: 'bn1', toFormationId: 'b1', sentMin: 0, payload: report }).messages.at(-1)!;
+    expect(out(state).channel).toBe('surface-line');
+    churn(ctx.world, [600, 200], 1);
+    expect(out(state).channel).toBe('runner');
+  });
+
+  it("a company whose men change keeps its HQ's picture current by a routine report every reportEveryMin, and only then", () => {
+    const f = fixtureComms({ links: 'runners' });
+    for (const c of allCompanies(f[0].forces[0]!)) c.role = 'reserve';
+    // c1 loses 20 men at Zero, its status unchanged.
+    const r = runStates(f, { endMinute: 200, at: (s) => ({ ...s, companies: s.companies.map((c) => (c.id === 'c1' ? { ...c, men: c.men - 20, killed: c.killed + 20 } : c)) }) });
+    const fromC1 = r.states.flatMap((s) => s.messages).filter((m, i, xs) => m.fromFormationId === 'c1' && xs.findIndex((x) => x.id === m.id) === i);
+    expect(fromC1.map((m) => m.sentMin)).toEqual([30]);
+    const men = r.states[0]!.companies.find((c) => c.id === 'c1')!.men;
+    expect(hq(r.states.at(-1)!, 'bn1').picture.units['c1']).toMatchObject({ status: 'holding', men, atMin: 30 });
+    expect(hq(r.states.at(-1)!, 'cc').picture.units['c1']!.men).toBe(men);
   });
 
   it('a runner takes longer the farther he has to go, beyond the way his delayMin allows for (runnerDelayCoversKm)', () => {
@@ -231,6 +299,42 @@ describe('communications and quiet steps', () => {
     expect(coarse.minute % 10).not.toBe(0);
   });
 
+  it('fire on call is not late by a quiet step: a call answered in a quiet stretch fires the same, with liaison and without', () => {
+    for (const liaison of [false, true]) {
+      const run = (quietMin: number) => {
+        const f = callFixture({ liaison });
+        const m: Models = withQuietStep(f[1], quietMin);
+        const { state, ctx } = initRun(f[0], m, { seed: 1 });
+        let s = pinnedCalls(state, ctx);
+        const events = [...s.events];
+        let steps = 0;
+        let fired = false;
+        while (s.minute < 300) {
+          const dt = isBusy(s, ctx) ? 2 : quietStep(s, ctx, 2, quietMin);
+          s = runPipeline(s, ctx, Math.min(dt, 300 - s.minute));
+          steps++;
+          events.push(...s.events);
+          if (s.fireMissions.length) {
+            fired = true;
+            expect(fireMissionEnds(s).every((x) => x.startsMovement === false)).toBe(true);
+            expect(fireMissionEnds(s).map((x) => x.minute)).toEqual(s.fireMissions.map((x) => x.toMin));
+          }
+        }
+        const near = (_k: string, x: unknown) => (typeof x === 'number' ? Math.round(x * 1e9) / 1e9 : x);
+        return { events: JSON.stringify(events), companies: JSON.stringify(s.companies, near), batteries: JSON.stringify(s.batteries), steps, fired };
+      };
+      const coarse = run(10);
+      const fine = run(2);
+      expect(coarse.fired).toBe(true);
+      expect(coarse.events).toContain('Fire called for by A Company');
+      expect(coarse.steps).toBeLessThan(fine.steps);
+      expect(coarse.events).toBe(fine.events);
+      // Company states alike to 1e-9: fatigue recovering by many small steps or a few large ones sums in another order.
+      expect(coarse.companies).toBe(fine.companies);
+      expect(coarse.batteries).toBe(fine.batteries);
+    }
+  });
+
   it('quiet steps do not change what happens with messages being lost and sent again', () => {
     const f = fixtureComms({ links: 'runners', failPerHour: 2 });
     const coarse = runScenario(f[0], withQuietStep(f[1], 10), { seed: 1, endMinute: 300, stopEarly: false });
@@ -241,26 +345,7 @@ describe('communications and quiet steps', () => {
 });
 
 describe('calls for fire', () => {
-  /**
-   * fixtureComms with two allied batteries that fire nothing of their own in the battle (counter-battery): `near` (4
-   * 18-pdrs, 1,000 rounds) 700 m behind the German trench and `far` (10, 1,000 rounds) 2 km further back; c1 pinned
-   * at minute 0 calls for fire, the call going by the chain or, with `liaison`, from bn1 by buried cable. The allied
-   * companies hold (nobody attacks), so the German garrisons are still in their trench when the fire comes.
-   */
-  function callRun(o: { liaison: boolean }): Run {
-    const f = fixtureComms({ links: 'runners' });
-    for (const c of allCompanies(f[0].forces[0]!)) c.role = 'reserve';
-    f[0].artillery.push(
-      { id: 'near', side: 'allied', weapon: '18pdr', count: est(4), role: 'counter-battery', position: [-550, 200], horseDrawn: false, ammunition: est(1000) },
-      { id: 'far', side: 'allied', weapon: '18pdr', count: est(10), role: 'counter-battery', position: [-2550, 200], horseDrawn: false, ammunition: est(1000) },
-    );
-    if (o.liaison) f[0].communications!.liaison = [{ side: 'allied', formationId: 'bn1', note: { value: 'liaison', estimate: 'test' } }];
-    return runStates(f, {
-      endMinute: 300,
-      // c1 is pinned for the log phase only (it calls), then holds again as before.
-      at: (s, ctx) => ({ ...companyReports({ ...s, companies: s.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'pinned' as const } : c)) }, ctx), companies: s.companies }),
-    });
-  }
+  const callRun = (o: { liaison: boolean }): Run => runStates(callFixture(o), { endMinute: 300, at: pinnedCalls });
   const answeredAt = (r: Run): number => r.states.find((s) => s.fireMissions.length > 0)?.fireMissions[0]!.fromMin ?? Infinity;
 
   it('a pinned company calls for fire on the nearest segment the enemy holds', () => {
@@ -293,6 +378,29 @@ describe('calls for fire', () => {
     expect(end.find((b) => b.id === 'far')!.ammoLeft).toBeCloseTo(1000 - 2 * 4 * 10, 6);
     expect(r.states.at(-1)!.fireMissions).toEqual([]);
   });
+});
+
+/**
+ * fixtureComms with two allied batteries that fire nothing of their own in the battle (counter-battery): `near` (4
+ * 18-pdrs, 1,000 rounds) 700 m behind the German trench and `far` (10, 1,000 rounds) 2 km further back; the call goes by
+ * the chain or, with `liaison`, from bn1 by buried cable. The allied companies hold (nobody attacks), so the German
+ * garrisons are still in their trench when the fire comes.
+ */
+function callFixture(o: { liaison: boolean }): [Scenario, Models] {
+  const f = fixtureComms({ links: 'runners' });
+  for (const c of allCompanies(f[0].forces[0]!)) c.role = 'reserve';
+  f[0].artillery.push(
+    { id: 'near', side: 'allied', weapon: '18pdr', count: est(4), role: 'counter-battery', position: [-550, 200], horseDrawn: false, ammunition: est(1000) },
+    { id: 'far', side: 'allied', weapon: '18pdr', count: est(10), role: 'counter-battery', position: [-2550, 200], horseDrawn: false, ammunition: est(1000) },
+  );
+  if (o.liaison) f[0].communications!.liaison = [{ side: 'allied', formationId: 'bn1', note: { value: 'liaison', estimate: 'test' } }];
+  return f;
+}
+
+/** c1 pinned for one log phase at Zero (it calls for fire), then holding again as before. */
+const pinnedCalls = (s: SimState, ctx: StepContext): SimState => ({
+  ...companyReports({ ...s, companies: s.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'pinned' as const } : c)) }, ctx),
+  companies: s.companies,
 });
 
 type Force = Scenario['forces'][number];

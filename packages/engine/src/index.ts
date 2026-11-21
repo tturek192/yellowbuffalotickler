@@ -7,7 +7,7 @@ export { CAUSES } from './causes';
 export type { Cause } from './causes';
 export { EVENT_KINDS } from './types';
 export type {
-  BatteryState, CallForFire, CasualtyCount, Decision, EventKind, FireMission, FormationKind, HqNews, HqState, Intent, Message, Order, OrderTarget,
+  BatteryState, CallForFire, CasualtyCount, CutLine, Decision, EventKind, FireMission, FormationKind, HqNews, HqState, Intent, Message, Order, OrderTarget,
   Applied, DugoutPoint, FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
 } from './types';
 export { initCompanies, leadFactor } from './companies';

@@ -22,6 +22,8 @@ export type World = {
   rows: number;
   /** Shells landed per 50 m cell, row-major. This is `SimState.churn`: the one array a run mutates in place. */
   churn: Float32Array;
+  /** Bumped by every `churn()`, so what was worked out from the churn (comms.ts's cut surface lines) can be redone. */
+  churnGen: number;
   /** Wood and village raster at 25 m, built by the first line-of-sight query (sight.ts). */
   blockers?: { data: Uint8Array; cols: number; rows: number };
   /** Line-of-sight results by integer key from the two 50 m cells (sight.ts). */
@@ -72,6 +74,7 @@ export function buildWorld(s: Scenario, tables: Tables, terrain?: Terrain): Worl
     cols,
     rows,
     churn: new Float32Array(cols * rows),
+    churnGen: 0,
     losCache: new Map(),
   };
 }
@@ -140,6 +143,7 @@ export function groundAt(w: World, p: Point): Ground {
 /** Accumulate `rounds` shells into the 50 m cell at p. Mutates `world.churn`, which is `SimState.churn`. */
 export function churn(w: World, p: Point, rounds: number): void {
   w.churn[cellOf(w, p)]! += rounds;
+  w.churnGen++;
 }
 
 /**

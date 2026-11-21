@@ -386,12 +386,20 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   const missions = state.fireMissions.map((m) => ({ m, overlap: Math.min(minute, m.toMin) - Math.max(from, m.fromMin) })).filter((x) => x.overlap > 0);
   const batIndex = new Map(bats.map((b, i) => [b.id, i]));
   const gunsBefore = bats.map((b) => b.guns);
-  for (const { m, overlap } of missions)
-    for (const g of m.guns) {
+  // Each mission's guns of a battery, in mission order, never more in all than the battery has (it may have lost guns
+  // since the calls were answered).
+  const free = [...gunsBefore];
+  const onCall = missions.map(({ m }) =>
+    m.guns.map((g) => {
       const i = batIndex.get(g.batteryId);
-      const b = i === undefined ? undefined : bats[i];
-      if (b && inAction(b)) b.guns = Math.max(0, b.guns - (Math.min(g.guns, gunsBefore[i!]!) * overlap) / dt);
-    }
+      const n = i === undefined || !inAction(bats[i]!) ? 0 : Math.min(g.guns, free[i]!);
+      if (i !== undefined) free[i]! -= n;
+      return { i, n };
+    }),
+  );
+  missions.forEach(({ overlap }, k) => {
+    for (const { i, n } of onCall[k]!) if (i !== undefined && n > 0) bats[i]!.guns = Math.max(0, bats[i]!.guns - (n * overlap) / dt);
+  });
 
   // 1. The creeping barrage. A sector's creeping artillery is its side's creeping batteries shared among the
   // sectors by width (the artillery entries name no sector), so guns on 100 m = guns × 100 / all sectors' width.
@@ -522,15 +530,14 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   // 6. Fire on call: the answering guns on the enemy companies in the segment called for, or up within captureRadiusM of
   // its trench, over the segment's length and captureRadiusM beyond each end (the zone its targets are drawn from).
   const callNear = v(fx.captureRadiusM);
-  for (const { m, overlap } of missions) {
+  for (let k = 0; k < missions.length; k++) {
+    const { m, overlap } = missions[k]!;
     const seg = segs.get(m.segmentId);
     if (!seg) continue;
     const spent: Spent[] = [];
-    for (const g of m.guns) {
-      const i = batIndex.get(g.batteryId);
+    for (const { i, n } of onCall[k]!) {
       const b = i === undefined ? undefined : bats[i];
-      if (!b || !inAction(b)) continue;
-      const n = Math.min(g.guns, gunsBefore[i!]!);
+      if (!b || !inAction(b) || !(n > 0)) continue;
       const need = n * v(ctx.tables.weapons[b.weapon]!.rpm) * overlap;
       if (!(need > 0)) continue;
       const frac = Math.min(1, b.ammoLeft / need);

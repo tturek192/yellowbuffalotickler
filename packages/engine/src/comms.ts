@@ -8,7 +8,7 @@ import { CELL_M } from './ground';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import type { SimState, StepContext } from './step';
-import type { BatteryState, CallForFire, FireMission, FormationKind, HqNews, HqState, Message, Order, Report, Side } from './types';
+import type { BatteryState, CallForFire, CutLine, FireMission, FormationKind, HqNews, HqState, Message, Order, Report, Side } from './types';
 
 /*
  * Communications (the model, "Command"): reports, orders and calls for fire travel as messages, one hop at a time, over
@@ -19,9 +19,10 @@ import type { BatteryState, CallForFire, FireMission, FormationKind, HqNews, HqS
  *   between has none, and the message is forwarded from there. Where no link reaches any of them, it goes to the next
  *   formation by runner. The links have no company level: a company's messages go to its battalion by runner. Without a
  *   `communications` section every link is by runner. Each default is listed in `defaultsUsed`.
- * - Of the hop's channels the fastest not cut is taken (by its expected delay); a surface line is cut where either end
- *   stands in a shelled cell (the churn grid holds a shell), or for good once a failure draw has lost a message on it.
- *   When every channel is cut, a runner goes.
+ * - Of the hop's channels the fastest not cut is taken (by its expected delay). A surface line, between two
+ *   headquarters in both directions, is cut where shelling has churned any 50 m cell along it (the churn grid holds a
+ *   shell), or for good once a failure draw has lost a message on it; each cut is noted once in `cutLines`, and a
+ *   message that could not use the line says why (`factors.cutBy`). When every channel is cut, a runner goes.
  * - Headquarters stand at their formation's `hqPosition`, else behind their companies by their level's rear offset
  *   (`hqPlace`); a company at its own place.
  * - Delay: (delayMin + runnerMinPerKm × the km beyond runnerDelayCoversKm, for a runner) × (0.5 + rng()), × (6 −
@@ -67,6 +68,10 @@ type Topology = {
   hqIndex: Map<string, number>;
   /** Each HQ's `reportEveryMin` (its side's doctrine), by its index in `SimState.hqs`. */
   everyMin: number[];
+  /** Whether shelling has churned a cell along the line between two HQs, by `a|b` pair (looked up only), as of `alongGen`. */
+  along: Map<string, boolean>;
+  /** The world's `churnGen` the memo holds for; a newer one empties it. */
+  alongGen: number;
 };
 const topologies = new WeakMap<Scenario, Topology>();
 
@@ -108,7 +113,7 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
   const liaison = new Map<string, true>((comms?.liaison ?? []).map((l) => [l.formationId, true]));
   const sorted = [...formations].sort((a, b) => byStr(a.id, b.id));
   const everyMin = sorted.map((f) => v(ctx.doctrines[f.doctrineId]!.common.reportEveryMin));
-  const topo: Topology = { nodes, links, liaison, hqIndex: new Map(sorted.map((f, i) => [f.id, i])), everyMin };
+  const topo: Topology = { nodes, links, liaison, hqIndex: new Map(sorted.map((f, i) => [f.id, i])), everyMin, along: new Map(), alongGen: ctx.world.churnGen };
   topologies.set(s, topo);
 
   // Every unit's way up, so the defaults the run will use are listed whatever happens.
@@ -141,7 +146,9 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
     nextMessageId: 0,
     cutLines: [],
     fireMissions: [],
-    lastReport: Object.fromEntries(state.companies.map((c) => [c.id, { status: c.status, holder: c.segmentId === undefined ? null : (segmentOf.get(c.segmentId) ?? null) }])),
+    lastReport: Object.fromEntries(
+      state.companies.map((c) => [c.id, { status: c.status, men: c.men, holder: c.segmentId === undefined ? null : (segmentOf.get(c.segmentId) ?? null), atMin: state.minute }]),
+    ),
   };
 }
 
@@ -258,8 +265,9 @@ type Work = {
   topo: Topology;
   queue: Message[];
   nextId: number;
-  cut: string[];
-  cutSet: Set<string>;
+  cut: CutLine[];
+  /** Cut pairs, looked up only. */
+  cutSet: Map<string, CutLine['by']>;
   hqs: HqState[];
   /** Per HQ, the parts copied this step (UNITS | SEGMENTS | LINES | NEWS). */
   touched: number[];
@@ -278,7 +286,7 @@ function begin(state: SimState, ctx: StepContext): Work {
     queue: [...state.messages],
     nextId: state.nextMessageId,
     cut: [...state.cutLines],
-    cutSet: new Set(state.cutLines),
+    cutSet: new Map(state.cutLines.map((x) => [x.pair, x.by])),
     hqs: [...state.hqs],
     touched: state.hqs.map(() => 0),
     companies: null,
@@ -293,7 +301,7 @@ function finish(w: Work): SimState {
     ...w.state,
     messages: w.queue,
     nextMessageId: w.nextId,
-    cutLines: [...w.cut].sort(byStr),
+    cutLines: w.cut.length === w.state.cutLines.length ? w.state.cutLines : [...w.cut].sort((a, b) => byStr(a.pair, b.pair)),
     hqs: w.hqs,
     fireMissions: w.missions,
     ...(w.companies ? { companies: w.companies } : {}),
@@ -322,9 +330,8 @@ const posOf = (w: Work, id: string): Point | null => {
   return w.topo.nodes.get(id)?.pos ?? null;
 };
 
-/** A shell has landed in the 50 m cell at p (points off the grid: none has). */
-function shelled(w: Work, p: Point | null): boolean {
-  if (!p) return false;
+/** A shell has landed in the 50 m cell holding p (points off the grid: none has). */
+function shelledAt(w: Work, p: Point): boolean {
   const g = w.ctx.world;
   const cx = Math.floor((p[0] - g.originX) / CELL_M);
   const cy = Math.floor((p[1] - g.originY) / CELL_M);
@@ -332,7 +339,44 @@ function shelled(w: Work, p: Point | null): boolean {
   return g.churn[cy * g.cols + cx]! > 0;
 }
 
-const lineKey = (from: string, to: string): string => `${from}>${to}`;
+/** Points along a line every half cell (numerical method: no 50 m cell it crosses by more than a corner is missed). */
+const ALONG_STEP_M = CELL_M / 2;
+
+/** Whether shelling has churned any cell along the straight line from a to b, walking from a and stopping at the first. */
+function shelledAlong(w: Work, a: Point, b: Point): boolean {
+  const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / ALONG_STEP_M));
+  for (let k = 0; k <= n; k++) if (shelledAt(w, [a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n])) return true;
+  return false;
+}
+
+/** The two ends of a line as one key, the same in both directions. */
+const pairKey = (from: string, to: string): string => (from < to ? `${from}|${to}` : `${to}|${from}`);
+
+/**
+ * Whether the surface line between two places is cut by shelling. Between two headquarters (which stand still) the
+ * answer is remembered by pair until the churn changes; a company's end moves, so its lines are walked each time.
+ */
+function shelledLine(w: Work, fromId: string, toId: string, a: Point | null, b: Point | null): boolean {
+  if (!a || !b) return (a !== null && shelledAt(w, a)) || (b !== null && shelledAt(w, b));
+  const fixed = w.topo.hqIndex.has(fromId) && w.topo.hqIndex.has(toId);
+  if (!fixed) return shelledAlong(w, a, b);
+  const topo = w.topo;
+  if (topo.alongGen !== w.ctx.world.churnGen) {
+    topo.along.clear();
+    topo.alongGen = w.ctx.world.churnGen;
+  }
+  const key = pairKey(fromId, toId);
+  let hit = topo.along.get(key);
+  if (hit === undefined) topo.along.set(key, (hit = shelledAlong(w, a, b)));
+  return hit;
+}
+
+/** Note a surface line cut, once. */
+function noteCut(w: Work, pair: string, by: CutLine['by'], t: number): void {
+  if (w.cutSet.has(pair)) return;
+  w.cutSet.set(pair, by);
+  w.cut.push({ pair, by, atMin: t });
+}
 
 /** The leader's (6 − orderSpeed) / 3 of a formation that sends an order; 1 for a formation with no leader or ratings (noted). */
 function orderFactor(w: Work, formationId: string): number {
@@ -367,8 +411,14 @@ function sendHop(w: Work, d: Draft, fromId: string, toId: string, t: number, pre
   const perKm = v(ctx.tables.effects.runnerMinPerKm);
   const base = (ch: ChannelKind): number => v(ctx.tables.channels[ch].delayMin) + (ch === 'runner' ? perKm * beyondKm : 0);
   const order = [...channelsOf(w.topo, fromId, toId)].sort((x, y) => base(x) - base(y) || CHANNEL_KINDS.indexOf(x) - CHANNEL_KINDS.indexOf(y));
-  const key = lineKey(fromId, toId);
-  const isCut = (ch: ChannelKind): boolean => ch === 'surface-line' && (w.cutSet.has(key) || shelled(w, a) || shelled(w, b));
+  const key = pairKey(fromId, toId);
+  const isCut = (ch: ChannelKind): boolean => {
+    if (ch !== 'surface-line') return false;
+    if (w.cutSet.has(key)) return true;
+    if (!shelledLine(w, fromId, toId, a, b)) return false;
+    noteCut(w, key, 'shelling', t);
+    return true;
+  };
   const start = prev === undefined ? 0 : (order.indexOf(prev) + 1) % order.length;
   let channel: ChannelKind | undefined;
   for (let k = 0; k < order.length && channel === undefined; k++) {
@@ -380,6 +430,8 @@ function sendHop(w: Work, d: Draft, fromId: string, toId: string, t: number, pre
     ctx.defaultsUsed.add(`communications: ${from.side} ${from.kind} → ${toId === ARTILLERY ? 'artillery' : w.topo.nodes.get(toId)!.kind} ← runner (every channel cut)`);
     channel = 'runner';
   }
+  // A hop that would rather have used its surface line (no slower than the channel taken) and could not says why.
+  const cutBy = channel !== 'surface-line' && order.includes('surface-line') && base('surface-line') <= base(channel) ? w.cutSet.get(key) : undefined;
   const factor = d.kind === 'order' ? orderFactor(w, fromId) : 1;
   const delay = base(channel) * (0.5 + ctx.rng()) * factor;
   const pLost = 1 - Math.exp((-v(ctx.tables.channels[channel].failPerHour) * delay) / 60);
@@ -397,6 +449,7 @@ function sendHop(w: Work, d: Draft, fromId: string, toId: string, t: number, pre
     ...(d.aboutEventId !== undefined ? { aboutEventId: d.aboutEventId } : {}),
     ...(d.finalId !== undefined ? { finalId: d.finalId } : {}),
     ...(lost ? { lost: true as const } : {}),
+    ...(cutBy !== undefined && channel !== 'surface-line' ? { factors: { cutBy } } : {}),
   });
 }
 
@@ -447,13 +500,7 @@ function deliver(w: Work, m: Message): void {
       refs: m.aboutEventId !== undefined ? [m.aboutEventId] : [],
       factors: { sentMin: round(m.sentMin, 1), lostAtMin: round(t, 1) },
     });
-    if (m.channel === 'surface-line') {
-      const key = lineKey(m.fromFormationId, m.toFormationId);
-      if (!w.cutSet.has(key)) {
-        w.cutSet.add(key);
-        w.cut.push(key);
-      }
-    }
+    if (m.channel === 'surface-line') noteCut(w, pairKey(m.fromFormationId, m.toFormationId), 'failure', t);
     const d: Draft = { side: m.side, kind: m.kind, payload: m.payload, ...(m.aboutEventId !== undefined ? { aboutEventId: m.aboutEventId } : {}), ...(m.finalId !== undefined ? { finalId: m.finalId } : {}) };
     return sendHop(w, d, m.fromFormationId, m.toFormationId, t, m.channel);
   }
@@ -562,7 +609,7 @@ function deliverOrder(w: Work, formationId: string, o: Order): void {
  * A call for fire reaches the artillery at t: `callForFireGuns` guns of the side's nearest batteries in action (by
  * distance to the segment; none placed come last, by id), less those already answering a call then, fire on it for
  * `callForFireMin`. Creeping and machine-gun barrage batteries keep to the timetable. A call no gun can answer leaves a
- * mission with no guns.
+ * mission with no guns; a call on a segment with no trench to aim at is dropped.
  */
 function answerCall(w: Work, d: Draft, t: number): void {
   const ctx = w.ctx;
@@ -570,7 +617,9 @@ function answerCall(w: Work, d: Draft, t: number): void {
   const seg = w.state.segments.find((x) => x.id === call.segmentId);
   if (!seg) return;
   const pts = segmentSamples(ctx, seg, w.state.companies);
-  const centre: Point = pts.length ? [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length] : [0, 0];
+  // A segment with no trench to aim at (no samples) cannot be fired on: the call goes unanswered.
+  if (pts.length === 0) return;
+  const centre: Point = [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
   const dur = v(ctx.tables.effects.callForFireMin);
   const busy = (b: BatteryState): number =>
     w.missions.filter((m) => m.toMin > t && m.fromMin < t + dur).reduce((a, m) => a + m.guns.filter((g) => g.batteryId === b.id).reduce((x, g) => x + g.guns, 0), 0);
@@ -627,9 +676,12 @@ export function commsPhase(state: SimState, ctx: StepContext): SimState {
 
 /**
  * The end of a step (the log phase): every company whose status changed, that took a segment, whose own segment
- * changed hands, or whose objective line was taken reports to its battalion; a company newly pinned calls for fire on
- * the nearest segment the enemy holds within `observerRangeM`. Companies in ascending id order, the report before the
- * call. Companies off the map report nothing.
+ * changed hands, or whose objective line was taken reports to its battalion; so does one whose men have changed since
+ * its last report once `reportEveryMin` (its doctrine) has passed since then (a routine report: at most one a period,
+ * and none while nothing changed). A company newly pinned calls for fire on the nearest segment the enemy holds within
+ * `observerRangeM`. Companies in ascending id order, the report before the call. Companies off the map report nothing.
+ * A report is about the company's last event this step (not a message lost), else the line taken, else its segment's
+ * change of hands, else the last fire on it.
  */
 export function companyReports(state: SimState, ctx: StepContext): SimState {
   const M = state.minute;
@@ -638,7 +690,7 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
   const lastEvent = new Map<string, number>();
   const linesTaken = new Map<string, number>();
   for (const e of state.events) {
-    if (e.unitId !== undefined) lastEvent.set(e.unitId, e.id);
+    if (e.unitId !== undefined && e.kind !== 'message-lost') lastEvent.set(e.unitId, e.id);
     if ((e.kind === 'segment-lost' || e.kind === 'segment-retaken') && e.unitId !== undefined && e.segmentId !== undefined) took.set(e.unitId, [...(took.get(e.unitId) ?? []), e.segmentId]);
     if (e.kind === 'line-taken') linesTaken.set(`${e.lineId}|${e.sectorId}`, e.id);
   }
@@ -647,10 +699,12 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
   const range = v(ctx.tables.effects.observerRangeM);
   // Segments change hands only with a segment-lost or segment-retaken event: without one, no holder is looked at.
   const anySeg = took.size > 0;
+  const every = (c: CompanyState): number => v(ctx.doctrines[c.doctrineId]!.common.reportEveryMin);
   for (const c of state.companies) {
     if (c.status === 'off-map') continue;
-    const before = state.lastReport[c.id] ?? { status: c.status, holder: null };
-    if (!anySeg && before.status === c.status && !(c.status === 'consolidating' && linesTaken.size)) continue;
+    const before = state.lastReport[c.id] ?? { status: c.status, men: c.men, holder: null, atMin: M };
+    const routine = c.men !== before.men && M >= before.atMin + every(c);
+    if (!anySeg && !routine && before.status === c.status && !(c.status === 'consolidating' && linesTaken.size)) continue;
     const own = c.segmentId === undefined ? undefined : holderOf.get(c.segmentId);
     const holder = own ? own.holder : null;
     const taken = took.get(c.id) ?? [];
@@ -658,15 +712,17 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     const lineEvent = key ? linesTaken.get(key) : undefined;
     const statusChanged = before.status !== c.status;
     const segChanged = own !== undefined && before.holder !== holder;
-    if (!statusChanged && !segChanged && taken.length === 0 && lineEvent === undefined) continue;
+    if (!routine && !statusChanged && !segChanged && taken.length === 0 && lineEvent === undefined) continue;
     w ??= begin(state, ctx);
     last ??= { ...state.lastReport };
-    last[c.id] = { status: c.status, holder };
+    last[c.id] = { status: c.status, men: c.men, holder, atMin: M };
     const segments: Report['segments'] = {};
     for (const id of taken) segments[id] = holderOf.get(id)!.holder;
     if (segChanged) segments[own!.id] = holder!;
     const report: Report = { atMin: M, units: { [c.id]: { status: c.status, men: c.men, atMin: M } }, segments, lines: lineEvent !== undefined ? { [key]: M } : {} };
-    const about = lastEvent.get(c.id) ?? lineEvent ?? (segChanged ? (own!.holderEventId ?? undefined) : undefined);
+    const segEvent = segChanged && own!.holderEventId !== null ? own!.holderEventId : undefined;
+    const fireEvent = c.recentFire.at(-1)?.eventId;
+    const about = lastEvent.get(c.id) ?? lineEvent ?? segEvent ?? (fireEvent === null ? undefined : fireEvent);
     sendOn(w, { side: c.side, kind: 'report', payload: report, ...(about !== undefined ? { aboutEventId: about } : {}) }, c.id, M);
     if (statusChanged && c.status === 'pinned') {
       const p: Point = [c.x, c.y];
@@ -689,16 +745,31 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
 // ---- scheduled minutes ------------------------------------------------------------------------------------------
 
 /**
- * Messages' due minutes and headquarters' routine summaries. A report or a call for fire moves nobody; an order reaching
- * the formation it is for may (the command model acts on it), so a quiet step ends before it.
+ * A call for fire is answered where it arrives: at the artillery (the liaison's buried-cable call), or at the top of the
+ * chain with no liaison there.
+ */
+const answersOnArrival = (topo: Topology, m: Message): boolean =>
+  m.toFormationId === ARTILLERY || (topo.nodes.get(m.toFormationId)?.parentId === null && !topo.liaison.has(m.toFormationId));
+
+/**
+ * Messages' due minutes, and companies' and headquarters' routine reports. A report, or a call for fire on its way,
+ * moves nobody. Two arrivals end a quiet step before them (`startsMovement`), so that the step they fall in is a fine
+ * step: an order reaching the formation it is for (the command model sets units moving on it), and a call for fire
+ * reaching the guns that answer it (fire that opens inside a quiet step would charge its per-step effects, such as
+ * fatigue under fire, for the whole of that step).
  */
 export function messageDueTimes(state: SimState, ctx: StepContext): Scheduled[] {
+  const topo = topologyOf(ctx);
   const out: Scheduled[] = state.messages.map((m) => ({
     minute: m.dueMin,
-    startsMovement: m.kind === 'order' && !m.lost && (m.finalId === undefined || m.finalId === m.toFormationId),
+    startsMovement: !m.lost && (m.kind === 'order' ? m.finalId === undefined || m.finalId === m.toFormationId : m.kind === 'call-for-fire' && answersOnArrival(topo, m)),
   }));
+  // A company's routine report, once its men have changed since its last.
+  for (const c of state.companies) {
+    const last = state.lastReport[c.id];
+    if (last && c.status !== 'off-map' && c.men !== last.men) out.push({ minute: last.atMin + v(ctx.doctrines[c.doctrineId]!.common.reportEveryMin), startsMovement: false });
+  }
   if (state.hqs.some((h) => h.news.sinceMin !== null)) {
-    const topo = topologyOf(ctx);
     state.hqs.forEach((h, i) => {
       const due = cadenceDue(topo, h, i);
       if (due < Infinity) out.push({ minute: due, startsMovement: false });
