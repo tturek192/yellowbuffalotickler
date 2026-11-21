@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as engine from './index';
@@ -9,7 +9,7 @@ import { PHASES, runPipeline } from './pipeline';
 import { runScenario } from './run';
 import { stochasticRound } from './stochastic';
 import { createRng } from './rng';
-import { ctxWithPhaseSpy, fixtureWithDoctrineV3, hash, initialState, shuffleCompanies } from './test-helpers';
+import { ctxWithPhaseSpy, doctrines, draft, fixtureWithDoctrineV3, hash, initialState, shuffleCompanies } from './test-helpers';
 import { initRun } from './run';
 
 describe('the step pipeline', () => {
@@ -38,6 +38,16 @@ describe('the step pipeline', () => {
   it('shuffling the order of companies in the scenario file does not change the record', () => {
     const [s, d] = fixtureWithDoctrineV3();
     expect(hash(runScenario(shuffleCompanies(s, 7), d, { seed: 3 }))).toBe(hash(runScenario(s, d, { seed: 3 })));
+  });
+  it('the shuffle really reorders the file, and on the draft too the record does not change', () => {
+    const [s] = fixtureWithDoctrineV3();
+    const shuffled = shuffleCompanies(s, 7);
+    expect(JSON.stringify(shuffled)).not.toBe(JSON.stringify(s));
+    expect(shuffled.forces.map((f) => f.side)).toEqual(['central', 'allied']);
+    const dr = draft();
+    const drShuffled = shuffleCompanies(dr, 7);
+    expect(JSON.stringify(drShuffled)).not.toBe(JSON.stringify(dr));
+    expect(hash(runScenario(drShuffled, doctrines(), { seed: 3 }))).toBe(hash(runScenario(dr, doctrines(), { seed: 3 })));
   });
 });
 
@@ -81,8 +91,11 @@ describe('the engine package', () => {
     expect(Object.keys(engine)).not.toContain('fixtureWithDoctrineV3');
     expect(readFileSync(`${here}/index.ts`, 'utf8')).not.toMatch(/test-helpers/);
   });
-  it('imports nothing from node:* outside tests and test helpers', () => {
-    const sources = readdirSync(here).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && f !== 'test-helpers.ts');
-    for (const f of sources) expect(readFileSync(`${here}/${f}`, 'utf8'), f).not.toMatch(/from ['"](node:|@wwi\/scenario\/node)/);
+  it('imports nothing from node:* or @wwi/scenario/node outside tests and test helpers, in any directory', () => {
+    const sources = (readdirSync(here, { recursive: true }) as string[])
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && !f.endsWith('test-helpers.ts'));
+    expect(sources).toContain('run.ts');
+    // Any quoted module specifier: `from '…'`, a bare `import '…'` and a dynamic `import('…')` alike.
+    for (const f of sources) expect(readFileSync(join(here, f), 'utf8'), f).not.toMatch(/['"](node:|@wwi\/scenario\/node)/);
   });
 });

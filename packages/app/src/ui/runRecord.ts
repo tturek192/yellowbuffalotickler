@@ -1,5 +1,5 @@
 import type { CompanyStatus, RunRecord } from '@wwi/engine';
-import { FEATURE_KINDS, isLocalDateTime, LOCAL_DATETIME_FORMAT, terrainGridProblem } from '@wwi/scenario';
+import { FEATURE_KINDS, isLocalDateTime, LOCAL_DATETIME_FORMAT, POSTURES, terrainGridProblem } from '@wwi/scenario';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -12,7 +12,8 @@ const STATUSES: readonly CompanyStatus[] = [
   'surrendered', 'destroyed', 'marching', 'off-map',
 ];
 /** The company columns the player reads; a record may carry more. */
-const NEEDED_COLUMNS = ['id', 'x', 'y', 'men', 'status'] as const;
+const NEEDED_COLUMNS = ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture'] as const;
+const isFrac = (v: unknown): boolean => isNum(v) && v >= 0 && v <= 1;
 const KINDS: readonly unknown[] = FEATURE_KINDS;
 
 /** A feature needs an id, a known kind, and a Point, LineString or Polygon geometry with usable coordinates. */
@@ -75,8 +76,12 @@ export function parseRunRecord(data: unknown): RunRecord {
         isNum(row[col.x]) &&
         isNum(row[col.y]) &&
         isNum(row[col.men]) &&
-        STATUSES.includes(row[col.status]);
-      if (!ok) fail(`snapshots[${i}].companies.rows[${j}] needs a value for each column: a unit's id, x, y, men and a known status`);
+        STATUSES.includes(row[col.status]) &&
+        isFrac(row[col.morale]) &&
+        isFrac(row[col.suppression]) &&
+        (POSTURES as readonly unknown[]).includes(row[col.posture]);
+      if (!ok)
+        fail(`snapshots[${i}].companies.rows[${j}] needs a value for each column: a unit's id, x, y, men, a known status, morale and suppression from 0 to 1, and a known posture`);
     });
     s.barrages.forEach((b: unknown, j) => {
       if (!isObject(b) || typeof b.sectorId !== 'string' || typeof b.done !== 'boolean' || !Array.isArray(b.points)) fail(`snapshots[${i}].barrages[${j}] needs sectorId, done and points`);

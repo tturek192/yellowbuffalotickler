@@ -15,6 +15,8 @@ export type { CompanyState, CompanyStatus } from './companies';
 export { PHASES, runPipeline } from './pipeline';
 export type { Phase, PhaseName } from './pipeline';
 export { inContact, isBusy } from './step';
+export { SCHEDULES, quietStep } from './schedule';
+export type { Scheduled, ScheduleSource } from './schedule';
 export type { SimState, StepContext } from './step';
 export { resolveDefaults } from './defaults';
 export { COMPANY_COLUMNS, ENGINE_VERSION, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './record';

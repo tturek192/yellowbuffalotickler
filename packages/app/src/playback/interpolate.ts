@@ -38,8 +38,7 @@ export function companiesOf(r: RunRecord, s: Snapshot): FrameCompany[] {
   const [id, x, y, men, status, morale, suppression, posture] = ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture'].map(col) as [
     number, number, number, number, number, number, number, number,
   ];
-  // parseRunRecord guarantees id, x, y, men and status, and a unit for every row; the rest may be absent.
-  const opt = <T>(row: readonly unknown[], i: number, fallback: T): T => (i >= 0 ? (row[i] as T) : fallback);
+  // parseRunRecord guarantees each of these columns, with a valid value, and a unit for every row.
   const out = rows.map((row): FrameCompany => {
     const cid = row[id] as string;
     const u = units.get(cid)!;
@@ -52,9 +51,9 @@ export function companiesOf(r: RunRecord, s: Snapshot): FrameCompany[] {
       y: row[y] as number,
       men: row[men] as number,
       status: row[status] as CompanyStatus,
-      morale: opt(row, morale, 1),
-      suppression: opt(row, suppression, 0),
-      posture: opt<Posture>(row, posture, 'moving'),
+      morale: row[morale] as number,
+      suppression: row[suppression] as number,
+      posture: row[posture] as Posture,
     };
   });
   decoded.set(s, out);

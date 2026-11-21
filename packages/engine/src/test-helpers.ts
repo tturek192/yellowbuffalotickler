@@ -83,7 +83,10 @@ export function hash(r: RunRecord | string): string {
   return h.toString(16).padStart(8, '0');
 }
 
-/** The scenario with every formation's companies in a seeded random order (Fisher–Yates). */
+/**
+ * The scenario in another file order: every formation's companies in a seeded random order (Fisher–Yates),
+ * and the forces, each force's formations and each formation's children reversed.
+ */
 export function shuffleCompanies(s: Scenario, seed: number): Scenario {
   const out = structuredClone(s);
   const rng = createRng(seed);
@@ -95,10 +98,18 @@ export function shuffleCompanies(s: Scenario, seed: number): Scenario {
         const j = Math.floor(rng() * (i + 1));
         [cs[i], cs[j]] = [cs[j]!, cs[i]!];
       }
-    for (const c of f.children ?? []) walk(c);
+    f.children?.reverse().forEach(walk);
   };
-  for (const force of out.forces) force.formations.forEach(walk);
+  out.forces.reverse();
+  for (const force of out.forces) force.formations.reverse().forEach(walk);
   return out;
+}
+
+/** The models with every doctrine's `common.quietStepMin` set to n. */
+export function withQuietStep(m: Models, n: number): Models {
+  const doctrines = structuredClone(m.doctrines);
+  for (const d of Object.values(doctrines)) d.common.quietStepMin = { ...d.common.quietStepMin, value: n };
+  return { ...m, doctrines };
 }
 
 export const companyIds = (r: RunRecord): string[] => r.units.map((u) => u.id);

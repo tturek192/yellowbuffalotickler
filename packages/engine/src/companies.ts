@@ -33,8 +33,6 @@ export type CompanyState = {
   y: number;
   /** Men standing. `men + killed + wounded + captured` is the company's men at Zero for the whole run. */
   men: number;
-  /** Alias of `men`, kept for the record's readers: whoever changes `men` sets it too. */
-  strength: number;
   killed: number;
   wounded: number;
   captured: number;
@@ -114,7 +112,6 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       x: c.start[0],
       y: c.start[1],
       men,
-      strength: men,
       killed: 0,
       wounded: 0,
       captured: 0,

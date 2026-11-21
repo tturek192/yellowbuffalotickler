@@ -1,11 +1,12 @@
 import { decodeTerrain, ScenarioError, v } from '@wwi/scenario';
 import type { Doctrine, Point, Scenario, Tables } from '@wwi/scenario';
-import { barrageXAt, initBarrage, phaseEndMin } from './barrage';
+import { barrageXAt, initBarrage } from './barrage';
 import { emit } from './causes';
 import { initCompanies, isHolding } from './companies';
 import { resolveDefaults } from './defaults';
 import { sampleYs } from './geometry';
 import { runPipeline } from './pipeline';
+import { quietStep } from './schedule';
 import { createRng } from './rng';
 import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
 import type { RunRecord, Snapshot } from './record';
@@ -71,24 +72,10 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
   return { state: emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' }), ctx };
 }
 
-/**
- * The next step's length: stepMin while busy (isBusy); otherwise the doctrines' quietStepMin, shortened
- * (in whole steps) so it never runs past a barrage's next phase or a waiting company's start.
- */
-function nextStepMin(state: SimState, ctx: StepContext, stepMin: number, endMinute: number): number {
-  let dt = stepMin;
-  if (!isBusy(state, ctx)) {
-    const forces = [...new Set(ctx.scenario.forces.map((f) => f.doctrine))];
-    const quiet = Math.max(stepMin, Math.min(...forces.flatMap((id) => (ctx.doctrines[id] ? [v(ctx.doctrines[id].common.quietStepMin)] : []))));
-    let next = Infinity;
-    for (const b of state.barrages) {
-      const end = phaseEndMin(b, ctx.scenario.sectors.find((x) => x.id === b.sectorId)!, ctx.lines);
-      if (end !== null && end > state.minute) next = Math.min(next, end);
-    }
-    for (const c of state.companies) if (c.status === 'waiting' && c.startMin > state.minute) next = Math.min(next, c.startMin);
-    dt = Math.min(quiet, Math.max(stepMin, Math.ceil((next - state.minute) / stepMin) * stepMin));
-  }
-  return Math.min(dt, endMinute - state.minute);
+/** The quiet step: the smallest `common.quietStepMin` among the forces' doctrines. */
+function quietStepMin(ctx: StepContext): number {
+  const ids = [...new Set(ctx.scenario.forces.map((f) => f.doctrine))].sort();
+  return Math.min(...ids.flatMap((id) => (ctx.doctrines[id] ? [v(ctx.doctrines[id].common.quietStepMin)] : [])));
 }
 
 function snapshot(state: SimState, ctx: StepContext): Snapshot {
@@ -134,15 +121,20 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
   const events: RunRecord['events'] = [...state.events];
   const snapshots = [snapshot(state, ctx)];
   let lastSnapshot = 0;
+  const quietMin = quietStepMin(ctx);
+  let busy = isBusy(state, ctx);
 
   while (state.minute < endMinute) {
-    state = runPipeline(state, ctx, nextStepMin(state, ctx, stepMin, endMinute));
+    // stepMin while busy; otherwise a quiet step, cut at whatever is scheduled next (schedule.ts).
+    const dt = busy ? stepMin : quietStep(state, ctx, stepMin, quietMin);
+    state = runPipeline(state, ctx, Math.min(dt, endMinute - state.minute));
     events.push(...state.events);
+    busy = isBusy(state, ctx);
     const finished =
       stopEarly &&
       state.barrages.every((b) => b.phase === 'done') &&
       state.companies.every((c) => isHolding(c) || c.status === 'consolidating');
-    const every = isBusy(state, ctx) ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
+    const every = busy ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
     const due = opts.snapshotEveryStep || Math.floor(state.minute / every) > Math.floor(lastSnapshot / every);
     if (due || state.minute >= endMinute || finished) {
       snapshots.push(snapshot(state, ctx));

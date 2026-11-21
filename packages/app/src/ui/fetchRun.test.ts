@@ -7,7 +7,7 @@ const record = {
   endMinute: 0,
   geometry: { lines: [], sectors: [], features: [] },
   units: [],
-  snapshots: [{ minute: 0, companies: { columns: ['id', 'x', 'y', 'men', 'status'], rows: [] }, barrages: [] }],
+  snapshots: [{ minute: 0, companies: { columns: ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture'], rows: [] }, barrages: [] }],
   events: [],
 };
 
