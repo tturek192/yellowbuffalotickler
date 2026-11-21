@@ -31,7 +31,8 @@ import type { FireGroup, Pending, Side } from './types';
  * visibility terms. `uphill` is the uphill counter-attack's penalty (reserves.ts): a counter-attacking firer below its
  * target fires `1 − uphillPenaltyPer10m · climb / 10` of its rate, cause `uphill-counter-attack`. `ammo` is the share
  * of this step's rounds the firer still has ammunition for: once it has made its advance, its rounds less its doctrine's
- * reserve (`attack.ammoReserveFrac`, smaller.ts), unless it is counter-attacked, when it fires into the reserve too;
+ * reserve (`attack.ammoReserveFrac`, smaller.ts), unless it sees itself counter-attacked (an enemy it saw last step
+ * has come at it, smaller.ts `counterAttacked`), when it fires into the reserve too;
  * `ammunition-low` when it comes down to the reserve. A target is in sight when the line of sight between the
  * two is clear (sight.ts) and it is nearer than the visibility; men down in their dugouts cannot be seen. Firer-target
  * pairs are found through a bucket grid (buckets.ts), never by looking at every pair.
@@ -140,6 +141,7 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
   const groupOf = new Map<string, Group>();
   const opened = new Map<string, number>(); // firer id -> its fire-opened event (looked up only)
   const low = new Map<string, number>(); // firer id -> its ammunition-low event (looked up only)
+  const seenNext = new Map<string, ReadonlyArray<readonly [string, number, number]>>(); // looked up only
   let out = state;
 
   for (let fi = 0; fi < state.companies.length; fi++) {
@@ -164,6 +166,9 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
       const within = targets.length >= maxTargets ? targets[targets.length - 1]!.r : reach;
       looked[fi] = { x: f.x, y: f.y, reach, visM, within, at: targets.map((x) => indexOf(x.t)), r: targets.map((x) => x.r) };
     }
+    // A company holding its ammunition reserve remembers where it saw its targets, to tell one coming at it (smaller.ts).
+    const reserve = ammoReserve(f, ctx);
+    if (reserve > 0) seenNext.set(f.id, targets.map(({ t }) => [t.id, t.x, t.y] as const));
     if (targets.length === 0) continue;
 
     // Rounds each weapon would fire at each target at the firer's rate; then as many as its ammunition allows.
@@ -178,8 +183,7 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
     const load = ammoLoad(f, d, ctx.tables);
     if (!(want > 0) || !(load > 0)) continue;
     // The ammunition reserve (Task 14): what it may fire is what it has above it, unless it is counter-attacked.
-    const reserve = ammoReserve(f, ctx);
-    const against = reserve > 0 && counterAttacked(plan);
+    const against = reserve > 0 && counterAttacked(f, targets, state.seen.get(f.id), ctx);
     const afford = Math.min(1, (Math.max(0, f.ammo - (against ? 0 : reserve)) * load) / want);
     if (reserve > 0 && f.ammoLowEventId === null && f.ammo - (afford * want) / load <= reserve + 1e-12) {
       low.set(f.id, out.nextEventId);
@@ -264,6 +268,8 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
     g.text = `Fire from ${from}`;
     g.factors = { firers: g.firers.length, rangeM: round(g.minR), rounds: round(g.rounds), visibilityM: round(visM), ...(g.climbM > 0 ? { climbM: round(g.climbM, 1) } : {}) };
   }
+  // What the companies holding their reserve saw this step (the same map kept while there are none, before or now).
+  if (seenNext.size > 0 || state.seen.size > 0) out = { ...out, seen: seenNext };
   if (opened.size === 0 && low.size === 0) return out;
   return {
     ...out,

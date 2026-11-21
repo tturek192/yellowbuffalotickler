@@ -129,6 +129,11 @@ export function checkReferences(
       if (!lineIds.has(t.objectiveLineId)) problems.push(`tanks[${i}].objectiveLineId: unknown line "${t.objectiveLineId}"`);
       if (!Array.isArray(t.start)) problems.push(`tanks[${i}].start: lonLat needs the node loader (and a frame) to project it`);
     });
+    const dupMine = dupCheck();
+    s.mines?.forEach((x, i) => {
+      dupMine(`mines[${i}].id`, x.id);
+      if (!Array.isArray(x.at)) problems.push(`mines[${i}].at: lonLat needs the node loader (and a frame) to project it`);
+    });
     const dupKey = dupCheck();
     s.end?.keyGround.forEach((k, i) => {
       dupKey(`end.keyGround[${i}].id`, k.id);

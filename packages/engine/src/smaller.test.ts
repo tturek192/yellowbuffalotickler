@@ -3,6 +3,8 @@ import type { Scenario } from '@wwi/scenario';
 import { est, wx } from '@wwi/scenario/test-fixtures';
 import { barrageXAt } from './barrage';
 import { lineXAt } from './geometry';
+import { groundAt, speedFactor } from './ground';
+import { SCHEDULES } from './schedule';
 import { directFire } from './fire';
 import { resolve } from './resolve';
 import type { RunRecord } from './record';
@@ -61,8 +63,9 @@ function bogRate(o: { rain: boolean }): number {
  * fixtureArtillery with a horse-drawn German battery `gb` (6 guns) 250 m behind the trench the attackers take, and a
  * preliminary bombardment of 300 rounds from g1 on it: gas with `gas`, otherwise high explosive (`battery`).
  */
-function runGassed(o: { gas: boolean; seed?: number }): RunRecord {
-  const [s, m] = fixtureArtillery({ effects: { horseLossPerGasRound: 0.01, gasHorseRadiusM: 200 } });
+const WITHDRAW_EFFECTS = { batteryWithdrawRangeM: 1000, limberMin: 1, batteryWithdrawM: 2000, batteryWithdrawMPerMin: 80 };
+function fixtureGassed(o: { gas: boolean; effects?: Record<string, number> }): [Scenario, Models] {
+  const [s, m] = fixtureArtillery({ effects: { horseLossPerGasRound: 0.01, gasHorseRadiusM: 200, ...WITHDRAW_EFFECTS, ...o.effects } });
   s.artillery.push({ id: 'gb', side: 'central', weapon: '18pdr', count: est(6), role: 'defensive', position: [400, 200], horseDrawn: true });
   s.bombardment = {
     from: { value: '1916-06-24T06:00', estimate: 'test fixture' },
@@ -70,17 +73,22 @@ function runGassed(o: { gas: boolean; seed?: number }): RunRecord {
     spared: [],
     wire: [],
   };
-  return runScenario(s, m, { seed: o.seed ?? 1, endMinute: 120 });
+  return [s, m];
+}
+function runGassed(o: { gas: boolean; seed?: number; effects?: Record<string, number> }): RunRecord {
+  return runScenario(...fixtureGassed(o), { seed: o.seed ?? 1, endMinute: 120 });
 }
 const gunsCaptured = (o: { gas: boolean }): number => runGassed(o).summary.gunsCaptured;
 
 /**
  * A consolidated attacker under fire (fixtureFire, its small arms carrying 100 rounds a rifle and 1,000 a gun): c1 has
  * reached the Black Line and holds it at x 600 with `ammo` of its rounds left; k1 is up in its trench (x 150), 450 m
- * off. With `counterAttack`, k2 comes at c1 across the open (x 450). The state and context at Zero, so arranged.
+ * off. With `enemy`, k2 is on the move across the open 160 m from c1 (x 450, y 150), its status `advancing`, and between
+ * steps it walks 20 m: at c1 (`coming`), across c1's front (`across`) or away (`away`). The state and context at Zero.
  */
-function consolidated(o: { counterAttack: boolean; ammo?: number }) {
-  const [s, m] = fixtureFire({ lagMin: 500 });
+type Enemy = 'none' | 'coming' | 'across' | 'away';
+function consolidated(o: { enemy: Enemy; ammo?: number }) {
+  const [s, m] = fixtureFire({ lagMin: 500, effects: { reserveReleaseRangeM: 300, closingShareMin: 0.5 } });
   for (const d of Object.values(m.doctrines)) {
     d.companyDefaults.roundsPerRifle = { ...d.companyDefaults.roundsPerRifle, value: 100 };
     d.companyDefaults.roundsPerLightMg = { ...d.companyDefaults.roundsPerLightMg, value: 1000 };
@@ -92,27 +100,31 @@ function consolidated(o: { counterAttack: boolean; ammo?: number }) {
     if (c.id === 'c1') return { ...c, x: 600, y: 100, status: 'consolidating' as const, intent: 'hold' as const, posture: 'in-trench' as const, ammo: o.ammo ?? 0.3, reached: { eventId: 0, causes: ['followed-barrage' as const] } };
     if (c.id === 'c2') return { ...c, men: 0, killed: c.men };
     if (c.id === 'k1') return { ...c, posture: 'in-trench' as const };
-    if (c.id === 'k2') return o.counterAttack ? { ...c, x: 450, y: 150, status: 'counter-attacking' as const, intent: 'counter-attack' as const, posture: 'moving' as const } : { ...c, men: 0, killed: c.men };
+    if (c.id === 'k2') return o.enemy !== 'none' ? { ...c, x: 450, y: 150, status: 'advancing' as const, intent: 'march' as const, posture: 'moving' as const } : { ...c, men: 0, killed: c.men };
     return c;
   });
   return { state: { ...state, companies }, ctx };
 }
 
 /** Five steps of direct fire and its resolution on `consolidated`: the share of its rounds c1 fired, and the states. */
-function fireSteps(o: { counterAttack: boolean; ammo?: number }) {
+function fireSteps(o: { enemy: Enemy; ammo?: number }) {
   const { state, ctx } = consolidated(o);
   let s: SimState = state;
   const events: SimState['events'] = [];
+  // k2's walk each step: toward c1 (600, 100), across (perpendicular) or away.
+  const [ux, uy] = [150 / Math.hypot(150, 50), -50 / Math.hypot(150, 50)];
+  const step = { none: [0, 0], coming: [ux, uy], across: [-uy, ux], away: [-ux, -uy] }[o.enemy];
   for (let i = 0; i < 5; i++) {
     const pending: Pending = { damage: [] };
-    s = { ...s, minute: s.minute + 2, events: [] };
+    const companies = i === 0 ? s.companies : s.companies.map((c) => (c.id === 'k2' ? { ...c, x: c.x + 20 * step[0]!, y: c.y + 20 * step[1]! } : c));
+    s = { ...s, companies, minute: s.minute + 2, events: [] };
     s = resolve(directFire(s, ctx, 2, pending), ctx, 2, pending);
     events.push(...s.events);
   }
   const c1 = (x: SimState) => x.companies.find((c) => c.id === 'c1')!;
   return { fired: c1(state).ammo - c1(s).ammo, left: c1(s).ammo, events, state: s, ctx };
 }
-const firedWhileConsolidating = (o: { counterAttack: boolean }): number => fireSteps(o).fired;
+const firedWhileConsolidating = (o: { counterAttack: boolean }): number => fireSteps({ enemy: o.counterAttack ? 'coming' : 'none' }).fired;
 
 describe('smaller mechanics (Task 14): the brief', () => {
   it('tanks bog more in mud', () => {
@@ -260,10 +272,44 @@ describe('gassed horses', () => {
     expect(e[0]!.causes.length).toBeGreaterThan(0);
     expect(run(true).summary.gunsCaptured).toBe(0);
   });
-  it('high explosive on the battery takes no horses: it gets its guns away', () => {
+  it('high explosive on the battery takes no horses: seeing the attackers come, it limbers up and gets its guns away', () => {
     const r = runGassed({ gas: false });
     expect(ofKind(r, 'horses-gassed')).toHaveLength(0);
     expect(r.summary.gunsCaptured).toBe(0);
+    const w = ofKind(r, 'guns-withdrawn');
+    expect(w).toHaveLength(1);
+    expect(w[0]).toMatchObject({ causes: ['enemy-near'], factors: { guns: 6 } });
+    // It moves back (to its side's rear, +x for the Germans) and fires no more until it is in its new place.
+    const { states } = runStates(fixtureGassed({ gas: false }), { endMinute: 120 });
+    const gb = (s: SimState) => s.batteries.find((b) => b.id === 'gb')!;
+    const start = states.findIndex((s) => gb(s).withdrawal !== undefined);
+    expect(start).toBeGreaterThan(0);
+    const { limberedMin, doneMin } = gb(states[start]!).withdrawal!;
+    expect(doneMin - limberedMin).toBeCloseTo(2000 / 80, 6);
+    const mid = states.find((s) => s.minute > limberedMin + 5 && s.minute < doneMin)!;
+    expect(gb(mid).position![0]).toBeGreaterThan(400);
+    expect(gb(mid).position![0]).toBeLessThan(2400);
+    const done = states.find((s) => s.minute >= doneMin)!;
+    expect(gb(done).position).toEqual([2400, 200]);
+    expect(gb(done).withdrawal).toBeUndefined();
+    // Out of action while it limbers and moves: it lays no defensive fire in those minutes.
+    const shelledBy = (s: SimState) => s.events.filter((e) => e.kind === 'shelled' && /efensive/.test(e.text));
+    const during = states.filter((s) => s.minute > states[start]!.minute && s.minute < doneMin);
+    expect(during.flatMap(shelledBy)).toEqual([]);
+  });
+  it('a horsed battery caught while it limbers up (attackers within gunCaptureRadiusM) is captured', () => {
+    // A long limber: the attackers reach the guns (x 400) before it is ready to move.
+    const r = runGassed({ gas: false, effects: { limberMin: 120, gunCaptureRadiusM: 300 } });
+    expect(ofKind(r, 'guns-withdrawn')).toHaveLength(1);
+    expect(r.summary.gunsCaptured).toBe(6);
+    expect(ofKind(r, 'guns-captured')[0]!.causes).toContain('enemy-near');
+  });
+  it('quiet steps do not change a withdrawal: it limbers, moves and comes back into action at the same minutes', () => {
+    const f = () => fixtureGassed({ gas: false });
+    const coarse = runScenario(f()[0], withQuietStep(f()[1], 10), { seed: 1, endMinute: 200 });
+    const fine = runScenario(f()[0], withQuietStep(f()[1], 2), { seed: 1, endMinute: 200 });
+    expect(ofKind(coarse, 'guns-withdrawn')).toEqual(ofKind(fine, 'guns-withdrawn'));
+    expect(ofKind(coarse, 'shelled').map((e) => [e.minute, e.text])).toEqual(ofKind(fine, 'shelled').map((e) => [e.minute, e.text]));
   });
   it('gas falls on the enemy batteries by their guns, and reaches the horses of every battery within gasHorseRadiusM of where it falls', () => {
     const [s, m] = fixtureArtillery({ effects: { horseLossPerGasRound: 0.01, gasHorseRadiusM: 200 } });
@@ -291,18 +337,35 @@ describe('gassed horses', () => {
 
 describe('the ammunition reserve', () => {
   it('a consolidating company stops at its reserve (ammoReserveFrac), with one ammunition-low referring to its arrival', () => {
-    const { left, events } = fireSteps({ counterAttack: false });
+    const { left, events } = fireSteps({ enemy: 'none' });
     expect(left).toBeCloseTo(0.2, 9);
     const low = events.filter((e) => e.kind === 'ammunition-low');
     expect(low).toHaveLength(1);
     expect(low[0]).toMatchObject({ unitId: 'c1', causes: ['ammunition-low'], refs: [0] });
   });
   it('fires into it when counter-attacked', () => {
-    const { left } = fireSteps({ counterAttack: true });
+    const { left, events } = fireSteps({ enemy: 'coming' });
     expect(left).toBeLessThan(0.2);
+    expect(events.filter((e) => e.kind === 'ammunition-low')).toHaveLength(1);
+  });
+  it('an enemy on the move across its front or away from it does not release the reserve: only one seen coming at it does', () => {
+    for (const enemy of ['across', 'away'] as const) expect(fireSteps({ enemy }).left, enemy).toBeCloseTo(0.2, 9);
+    // Nor one coming at it beyond reserveReleaseRangeM.
+    const far = (() => {
+      const { state, ctx } = consolidated({ enemy: 'coming' });
+      ctx.tables.effects.reserveReleaseRangeM = { ...ctx.tables.effects.reserveReleaseRangeM, value: 100 };
+      let s: SimState = state;
+      for (let i = 0; i < 5; i++) {
+        const pending: Pending = { damage: [] };
+        const companies = i === 0 ? s.companies : s.companies.map((c) => (c.id === 'k2' ? { ...c, x: c.x + 5 } : c));
+        s = resolve(directFire({ ...s, companies, minute: s.minute + 2, events: [] }, ctx, 2, pending), ctx, 2, pending);
+      }
+      return s.companies.find((c) => c.id === 'c1')!.ammo;
+    })();
+    expect(far).toBeCloseTo(0.2, 9);
   });
   it('a company held to its reserve is not armed: next to men down in their dugouts it is in contact with nobody who can fire', () => {
-    const { state, ctx } = consolidated({ counterAttack: false, ammo: 0.2 });
+    const { state, ctx } = consolidated({ enemy: 'none', ammo: 0.2 });
     const near = (ammo: number): SimState => ({
       ...state,
       companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, x: 130, ammo } : c.id === 'k1' ? { ...c, posture: 'in-dugout' as const } : c)),
@@ -312,12 +375,70 @@ describe('the ammunition reserve', () => {
     expect(inContact(near(0.2), ctx)).toBe(false);
   });
   it('a company still advancing has no reserve: it fires to its last round', () => {
-    const { state, ctx } = consolidated({ counterAttack: false, ammo: 0.1 });
+    const { state, ctx } = consolidated({ enemy: 'none', ammo: 0.1 });
     let s: SimState = { ...state, companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'advancing' as const, intent: 'advance' as const, posture: 'moving' as const, reached: null } : c)) };
     for (let i = 0; i < 5; i++) {
       const pending: Pending = { damage: [] };
       s = resolve(directFire({ ...s, minute: s.minute + 2, events: [] }, ctx, 2, pending), ctx, 2, pending);
     }
     expect(s.companies.find((c) => c.id === 'c1')!.ammo).toBe(0);
+  });
+});
+
+describe('mines', () => {
+  /**
+   * fixtureArtillery with an allied mine under the German trench at k1's place (150, 100), crater radius 40 m, blown
+   * `afterMin` minutes after Zero; the attackers start `lagMin` late; mineLossFrac 0.8.
+   */
+  function fixtureMine(o: { afterMin?: number; lagMin?: number } = {}): [Scenario, Models] {
+    const [s, m] = fixtureArtillery({ lagMin: o.lagMin ?? 0, effects: { mineLossFrac: 0.8, churnAreaPerShellM2: 30, crateredShare: 0.5 } });
+    s.mines = [{ id: 'm1', side: 'allied', at: [150, 100], firedAfterMin: est(o.afterMin ?? 0), craterRadiusM: est(40), cite }];
+    return [s, m];
+  }
+
+  it('a mine kills or buries the men of the enemy over it (mine-fired, cause mine), its share of their trench, and conserves men', () => {
+    const { states, ctx } = runStates(fixtureMine(), { endMinute: 4 });
+    const k = (s: SimState, id: string) => s.companies.find((c) => c.id === id)!;
+    const zero = states[0]!;
+    const after = states[1]!;
+    const fired = after.events.filter((e) => e.kind === 'mine-fired');
+    expect(fired).toHaveLength(1);
+    expect(fired[0]).toMatchObject({ minute: 0, causes: ['mine'] });
+    // k1's segment runs y 0 to 200: the crater (y 60 to 140) is 0.4 of it, so 0.8 × 0.4 of its men on average.
+    const lost = k(zero, 'k1').men - k(after, 'k1').men;
+    expect(lost).toBeGreaterThan(20);
+    expect(lost).toBeLessThan(60);
+    expect(fired[0]!.factors!.menLost).toBe(lost);
+    expect(k(after, 'k2').men).toBe(k(zero, 'k2').men);
+    for (const c of after.companies) expect(c.men + c.killed + c.wounded + c.captured).toBe(k(zero, c.id).men + k(zero, c.id).killed + k(zero, c.id).wounded + k(zero, c.id).captured);
+    // The crater is broken ground: cratered (off the trench itself, which stays a trench), and slow going.
+    expect(groundAt(ctx.world, [180, 100])).toBe('cratered');
+    expect(groundAt(ctx.world, [180, 300])).toBe('open');
+    expect(speedFactor(ctx.world, [180, 100], 0)).toBeLessThan(speedFactor(ctx.world, [180, 300], 0));
+    // Blown once only.
+    expect(states.flatMap((s) => s.events).filter((e) => e.kind === 'mine-fired')).toHaveLength(1);
+  });
+
+  it('a mine blown later is scheduled: a quiet step ends for it, and the run is the same as one stepped finely', () => {
+    const f = () => fixtureMine({ afterMin: 121, lagMin: 200 });
+    const coarse = runScenario(f()[0], withQuietStep(f()[1], 10), { seed: 1, endMinute: 180 });
+    const fine = runScenario(f()[0], withQuietStep(f()[1], 2), { seed: 1, endMinute: 180 });
+    expect(ofKind(coarse, 'mine-fired')).toEqual(ofKind(fine, 'mine-fired'));
+    expect(ofKind(coarse, 'mine-fired')[0]!.minute).toBe(121);
+    expect(coarse.summary.casualties).toEqual(fine.summary.casualties);
+  });
+
+  it('mines and withdrawals are registered schedule sources that move nobody', () => {
+    const names = SCHEDULES.map(([n]) => n);
+    expect(names).toEqual(expect.arrayContaining(['mines', 'battery-withdrawals']));
+    const { state, ctx } = initRun(...fixtureMine({ afterMin: 121 }), { seed: 1 });
+    const mines = SCHEDULES.find(([n]) => n === 'mines')![1](state, ctx);
+    expect(mines).toEqual([{ minute: 121, startsMovement: false }]);
+    const [s2, m2] = fixtureGassed({ gas: false });
+    const { states, ctx: ctx2 } = runStates([s2, m2], { endMinute: 30 });
+    const withdrawing = states.find((s) => s.batteries.some((b) => b.withdrawal))!;
+    const due = SCHEDULES.find(([n]) => n === 'battery-withdrawals')![1](withdrawing, ctx2);
+    const w = withdrawing.batteries.find((b) => b.withdrawal)!.withdrawal!;
+    expect(due).toEqual([{ minute: w.limberedMin, startsMovement: false }, { minute: w.doneMin, startsMovement: false }]);
   });
 });

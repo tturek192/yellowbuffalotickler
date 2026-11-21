@@ -170,7 +170,7 @@ All 16 values are calibrated estimates; the scenario says which channels link wh
 
 ## Effects
 
-The 62 effects are estimates except `crewPerLewis`, which is sourced; 48 are calibrated coefficients, and `twilightMin`, `tankMachineGuns`,
+The 69 effects are estimates except `crewPerLewis`, which is sourced; 54 are calibrated coefficients, and `twilightMin`, `tankMachineGuns`, `closingShareMin`,
 `lineFeatureMatchM`, `gapMultiplier`, `crewPerMg`, `trenchProximityM`, `wireUncutBelow`, `batteriesRecoveredFrac`,
 `mgUnobservedBelow`, `fireRefsMin` and the village, wood and crater radii are plain estimates (a calculation, a tolerance, an explanation threshold, a count or a
 map default, not fitted). The reasoning is in each entry; the ones with sources behind them:
@@ -191,8 +191,12 @@ map default, not fitted). The reasoning is in each entry; the ones with sources 
 | mgBarrageDepthM | 400 | the plan's figure; Nicholson's "bullet-swept zone 400 yards ahead" (p. 253) gives where it lay, not its depth |
 | sortieDelayMin | 30 | Germans "emerging from dug-outs which had been passed over" during the consolidation (`boh-1917-1` p. 333) |
 | crewPerLewis | 2 | sourced: the Nos. 1 and 2 (`ss143-1917` p. 9) |
-| tankBogMudFactor | 3 | the eight Vimy tanks "unable to negotiate the gripless mud and the deep shell craters" (`nicholson-1962` p. 254); a tank's 3.7 miles an hour fell to half a mile an hour "in heavily shelled ground" (p. 168). A calibrated judgement: a day of rain trebles the chance of bogging |
+| tankBogMudFactor | 3 | a calibrated judgement with no number behind it: mud stopped the Vimy tanks ("the gripless mud and the deep shell craters", `nicholson-1962` p. 254), but no source gives how much more often tanks bog in rain; p. 168 gives speed in shelled ground, not bogging |
 | tankMachineGuns | 5 | a male Mark I had "two six-pounder guns and four Hotchkiss machine-guns", a female "five Vickers and one Hotchkiss" (`nicholson-1962` p. 168): an even mix, 5 (a plain estimate) |
+| reserveReleaseRangeM | 400 | a calibrated judgement: the range at which a company holding its last rounds fires them at a counter-attack coming at it |
+| closingShareMin | 0.5 | a plain judgement: an enemy counts as coming at a company when half the ground it covered was toward it |
+| batteryWithdrawRangeM, limberMin, batteryWithdrawM, batteryWithdrawMPerMin | 1,000 m, 15 min, 2,000 m, 80 m/min | calibrated judgements: a horse-drawn battery seeing enemy infantry within about 1,000 m limbers up in a quarter of an hour and walks back 2 km to the next gun line; the guns that could not move at Vimy were those whose horses were gassed (`boh-1917-1` p. 320). No source read times or measures it |
+| mineLossFrac | 0.8 | a calibrated judgement: most men within a mine's crater are blown up or buried; Vimy's "killed a great part of the German garrison" (`boh-1917-1` p. 330) is the target |
 | crewPerMg | 4 | firer, loader and two carriers; the German company had "48 machine gunners (8 per gun)" with reliefs and carriers (`german-handbook-1917` p. 50) |
 
 Four keys came with the artillery of the battle, all by judgement, with no source behind them:
@@ -227,7 +231,7 @@ companies: `hqRearOffsetBattalionM` 600, `hqRearOffsetBrigadeM` 2,000 (brigade o
 target (its journey to the guns is the channels' delay).
 
 **Changed from the plan's starting values** (the pre-flight ruling seeded the 16 later keys with the plan's numbers for
-review here): `gasHorseRadiusM` 1,000 → 200 m (a gas shell's cloud spreads a couple of hundred metres, not a kilometre),
+review here): `gasHorseRadiusM` was set to 200 m and is back at the plan's 1,000 m (controller ruling, Task 14 fix round: no source gives a radius, so the plan's estimate stands),
 `sortieDelayMin` 20 → 30 (BOH p. 333), `killedFrac` 0.3 → 0.25, `dugoutPerRound` 30 → 10 and `safeDepthM` 5 → 3 (BOH
 p. 316). The others keep their starting values with reasoning added. Nothing was set to make Vimy come out right.
 
@@ -256,6 +260,9 @@ p. 316). The others keep their starting values with reasoning added. Nothing was
 
 ## Open questions for the historian
 
+- **German batteries withdrawing.** How fast could a German field battery at Vimy limber up and pull back, and at what
+  range of the enemy infantry did batteries start to withdraw on 9 April? The regimental histories of the field
+  artillery regiments would say.
 - **The tanks at Vimy.** Which marks (I or II) and how many male and female tanks did No. 12 Company, D Battalion, have
   on 9 April? `tankMachineGuns` takes an even mix of the Mark I's male (four machine guns) and female (six).
 - **Hogg and Thurston, Farndale, Clarke.** Most British ranges and shell weights come from Wikipedia, which cites Hogg

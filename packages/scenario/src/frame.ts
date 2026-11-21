@@ -88,7 +88,7 @@ export function projectLonLatPlacements(data: unknown, frame: Frame | undefined)
       walk(fo.children, `${base}[${i}].children`);
     });
   };
-  const d = data as { forces?: unknown; reserves?: unknown; artillery?: unknown; tanks?: unknown } | null;
+  const d = data as { forces?: unknown; reserves?: unknown; artillery?: unknown; tanks?: unknown; mines?: unknown } | null;
   if (Array.isArray(d?.artillery)) {
     d.artillery.forEach((a, i) => {
       if (a && typeof a === 'object') place(a as Record<string, unknown>, 'position', `artillery[${i}].position`, `artillery ${String((a as { id?: unknown }).id)}`);
@@ -97,6 +97,11 @@ export function projectLonLatPlacements(data: unknown, frame: Frame | undefined)
   if (Array.isArray(d?.tanks)) {
     d.tanks.forEach((t, i) => {
       if (t && typeof t === 'object') place(t as Record<string, unknown>, 'start', `tanks[${i}].start`, `tank ${String((t as { id?: unknown }).id)}`);
+    });
+  }
+  if (Array.isArray(d?.mines)) {
+    d.mines.forEach((t, i) => {
+      if (t && typeof t === 'object') place(t as Record<string, unknown>, 'at', `mines[${i}].at`, `mine ${String((t as { id?: unknown }).id)}`);
     });
   }
   if (Array.isArray(d?.forces)) {

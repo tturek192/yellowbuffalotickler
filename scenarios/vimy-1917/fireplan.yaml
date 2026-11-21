@@ -115,6 +115,33 @@ sectors:
 # - horseDrawn: true for the field batteries (the 13-pdrs are horse artillery, RCHA and RHA; the forward move of field
 #   batteries, rca-ww1-history; Nicholson p. 249: 50,000 horses in the Corps area) and for the German batteries, whose
 #   horses were gassed at Zero (BOH p. 320). Left out for the heavy pieces, horse- or tractor-drawn: not in the sources read.
+# Mines blown at Zero (Task 14 fix round): the two on the left, under the German front line opposite the 73rd Battalion
+# (BOH pp. 319, 330; Nicholson p. 260). Places and crater size are estimates (bombardment.md, "Mines at Zero"): on the
+# German front line (ger-front) across the 73rd's frontage (its companies at y 1036 and 1225, oob-canadian.yaml), one
+# near each half; no source read gives where each lay or how big its crater was. Their effect on the garrison ("killed
+# a great part", BOH p. 330) is a target, never an input.
+mines:
+  - id: mine-73bn-right
+    side: allied
+    at: [-704, 1080]
+    firedAfterMin: { value: 0, source: boh-1917-1, page: "319", note: "'On the stroke of 5.30 a.m. ... two mines were exploded on the left of the battle-front under the German front line'" }
+    craterRadiusM: { value: 30, estimate: "no source read gives the craters' size (BOH p. 330 names 'Gunner and Kennedy Craters' in No Man's Land, unmeasured); a judgement: a crater some 60 m across" }
+    cite:
+      value: "one of the two mines fired at Zero under the German front line opposite the 73rd Battalion"
+      source: boh-1917-1
+      page: "330"
+      note: "'Simultaneously with the opening of the bombardment, two mines were fired, which killed a great part of the German garrison in this sector'; Nicholson p. 260: 'Two mines exploded at zero hour killed many of the garrison opposite the 73rd Battalion'. Place an estimate"
+  - id: mine-73bn-left
+    side: allied
+    at: [-707, 1230]
+    firedAfterMin: { value: 0, source: boh-1917-1, page: "319", note: "'On the stroke of 5.30 a.m. ... two mines were exploded on the left of the battle-front under the German front line'" }
+    craterRadiusM: { value: 30, estimate: "as for mine-73bn-right" }
+    cite:
+      value: "the other of the two mines fired at Zero under the German front line opposite the 73rd Battalion"
+      source: boh-1917-1
+      page: "330"
+      note: "as for mine-73bn-right; Nicholson p. 260. Place an estimate"
+
 artillery:
   # Canadian Corps field artillery: 30 brigades with 480 18-pdrs and 138 4.5-inch howitzers (BOH p. 307; Nicholson p. 248).
   - id: cdn-18pdr-creeping

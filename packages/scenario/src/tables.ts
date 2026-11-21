@@ -68,6 +68,7 @@ export const EFFECT_KEYS = [
   'mudSpeedFactor', 'wireSpeedFactor', 'uphillPenaltyPer10m',
   'nightVisibilityM', 'twilightMin',
   'tankBogPerKm', 'horseLossPerGasRound', 'tankBogMudFactor', 'tankMachineGuns',
+  'reserveReleaseRangeM', 'closingShareMin', 'batteryWithdrawRangeM', 'limberMin', 'batteryWithdrawM', 'batteryWithdrawMPerMin', 'mineLossFrac',
   'barrageBandDepthM', 'mgBarrageDepthM', 'captureRadiusM', 'captureRatio', 'sortieDelayMin',
   'lineFeatureMatchM', 'callForFireMin', 'stallBarrageMin', 'gunCaptureRadiusM', 'tankSuppressRadiusM',
   'gasHorseRadiusM', 'gapMultiplier', 'maxTargetsPerFirer', 'crewPerLewis', 'crewPerMg', 'trenchProximityM',

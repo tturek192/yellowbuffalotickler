@@ -12,7 +12,7 @@ import { marchReserves } from './reserves';
 import { resolve } from './resolve';
 import { takeLines } from './step';
 import type { SimState, StepContext } from './step';
-import { moveTanks, tankFire } from './smaller';
+import { fireMines, moveTanks, tankFire, withdrawBatteries } from './smaller';
 import { captureSegments, mopUp, sorties } from './trenches';
 import type { Pending } from './types';
 
@@ -26,7 +26,7 @@ export type Phase = (state: SimState, ctx: StepContext, dt: number, pending: Pen
 /** Each company picks its intent (movement.ts). */
 const behaviourPhase: Phase = (state, ctx) => behaviour(state, ctx);
 
-/** Barrages advance along their timetables; then every artillery effect is gathered as pending damage (artillery.ts). */
+/** Barrages advance along their timetables; mines due are blown (smaller.ts); then every artillery effect is gathered as pending damage (artillery.ts). */
 const artillery: Phase = (state, ctx, dt, pending) => {
   const events: NewEvent[] = [];
   const barrages = state.barrages.map((b) => {
@@ -35,19 +35,21 @@ const artillery: Phase = (state, ctx, dt, pending) => {
     events.push(...r.events);
     return r.state;
   });
-  return artilleryFire(emit({ ...state, barrages }, ...events), ctx, dt, pending);
+  // Mines blown at their minute (smaller.ts), then the guns.
+  return artilleryFire(fireMines(emit({ ...state, barrages }, ...events), ctx), ctx, dt, pending);
 };
 
 /**
  * Companies move (movement.ts), and tanks (smaller.ts); then each attacker's gap to the barrage is taken, and garrisons
  * come up out of their dugouts or are caught in them (gap.ts); then segments change hands and guns are overrun, the
- * dugouts are mopped up, and men left in them too long come up (trenches.ts); then the reserves off the map march, and
+ * batteries with horses that see the enemy close withdraw (smaller.ts), the dugouts are mopped up, and men left in them
+ * too long come up (trenches.ts); then the reserves off the map march, and
  * those due arrive (reserves.ts).
  */
 const movement: Phase = (state, ctx, dt, pending) => {
   const moved = moveTanks(moveCompanies(state, ctx, dt, pending), ctx, dt);
   const gaps = emergence(trackGaps(moved, ctx, dt, state.companies), ctx);
-  return marchReserves(sorties(mopUp(captureSegments(gaps, ctx), ctx, dt), ctx), ctx);
+  return marchReserves(sorties(mopUp(withdrawBatteries(captureSegments(gaps, ctx), ctx), ctx, dt), ctx), ctx);
 };
 
 /** Rifle and machine-gun fire (fire.ts), then the machine guns of moving tanks, which only suppress (smaller.ts). */

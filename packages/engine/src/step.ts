@@ -47,6 +47,13 @@ export type SimState = {
   reserves: ReserveState[];
   /** Tanks (Task 14), in ascending id order. */
   tanks: TankState[];
+  /**
+   * What each company holding its ammunition reserve saw of its targets when it last looked (Task 14 fix round): each
+   * target's id and place, so it can tell an enemy coming at it. Looked up only. Not in the run record.
+   */
+  seen: ReadonlyMap<string, ReadonlyArray<readonly [id: string, x: number, y: number]>>;
+  /** The ids of the mines blown so far (Task 14 fix round). */
+  minesFired: string[];
   /** What the command model has decided (Task 12). */
   command: CommandState;
   /** Shells landed per 50 m cell (Task 6), row-major over the world's grid; the same array as `World.churn`. Not in the run record. */

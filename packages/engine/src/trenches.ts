@@ -185,9 +185,10 @@ function isBehindLines(seg: SegmentState, keys: readonly string[], state: Pick<S
 /**
  * A battery the enemy can take when it overruns the guns' position: one with no draught horses to pull the guns
  * away, because it never had any (`horseDrawn` false) or because it has lost them. Task 14 takes a battery's horses
- * when they are gassed (sets `horses` false); until then a horse-drawn battery always gets its guns away.
+ * when they are gassed (sets `horses` false). A battery with horses is caught only while it limbers up to withdraw, before
+ * `withdrawal.limberedMin` (smaller.ts `withdrawBatteries`); once it is moving, or before it has seen the enemy, it gets away.
  */
-export const capturable = (b: BatteryState): boolean => !b.horses;
+export const capturable = (b: BatteryState, minute: number): boolean => !b.horses || (b.withdrawal !== undefined && minute < b.withdrawal.limberedMin);
 
 /**
  * Segments change hands, in segment order (the model's movement phase; the plan: "attackers within 50 m of it outnumber
@@ -383,7 +384,7 @@ function gunsWithSegments(state: SimState, ctx: StepContext): SimState {
   // Batteries split from one artillery entry share its position: each position and side is looked at once (looked up only).
   const near = new Map<string, SegmentState | undefined>();
   const batteries = state.batteries.map((b) => {
-    if (b.captured || !capturable(b) || !b.position) return b;
+    if (b.captured || !capturable(b, state.minute) || !b.position) return b;
     const key = `${b.side}|${b.position[0]}|${b.position[1]}`;
     if (!near.has(key)) near.set(key, lostSegs.find((s) => s.garrisonSide === b.side && distanceTo(segmentSamples(ctx, s, state.companies), b.position!) <= rad));
     const seg = near.get(key);
@@ -403,14 +404,16 @@ function gunsWithSegments(state: SimState, ctx: StepContext): SimState {
     const ids = bs.map((b) => b.id.split('/')[0]!).filter((x, i, xs) => xs.indexOf(x) === i);
     // Guns whose horses the gas took (Task 14): the gassing is a cause, and its event a ref.
     const gassed = bs.flatMap((b) => (b.gassedEventId === undefined ? [] : [b.gassedEventId]));
-    const causes: Cause[] = [...(lostNow ? lostNow.causes : []), ...(gassed.length || !lostNow ? (['horses-gassed'] as const) : [])];
+    // Caught limbering up (Task 14 fix round): the enemy it was withdrawing from, and a ref to its withdrawal.
+    const limbering = bs.flatMap((b) => (b.horses && b.withdrawal ? [b.withdrawal.eventId] : []));
+    const causes: Cause[] = [...(lostNow ? lostNow.causes : []), ...(limbering.length ? (['enemy-near'] as const) : []), ...(gassed.length || (!lostNow && !limbering.length) ? (['horses-gassed'] as const) : [])];
     return {
       minute: state.minute,
       kind: 'guns-captured',
       segmentId: seg.id,
       text: `${guns} guns (${ids.join(', ')}) are overrun with ${seg.id}`,
       causes: ordered(causes),
-      refs: sortedUnique([...(seg.holderEventId === null ? [] : [seg.holderEventId]), ...gassed]),
+      refs: sortedUnique([...(seg.holderEventId === null ? [] : [seg.holderEventId]), ...gassed, ...limbering]),
       factors: { guns },
     };
   });
@@ -427,7 +430,7 @@ function gunsWithSegments(state: SimState, ctx: StepContext): SimState {
  * by them (or nothing else explains it).
  */
 function overrunGuns(state: SimState, ctx: StepContext): SimState {
-  const left = state.batteries.filter((b) => !b.captured && capturable(b) && b.position);
+  const left = state.batteries.filter((b) => !b.captured && capturable(b, state.minute) && b.position);
   if (left.length === 0) return state;
   const fx = ctx.tables.effects;
   const rad = v(fx.gunCaptureRadiusM);
@@ -456,7 +459,7 @@ function overrunGuns(state: SimState, ctx: StepContext): SimState {
     won.set(key, { lead, defenders: d });
   }
   if (won.size === 0) return state;
-  const batteries = state.batteries.map((b) => (!b.captured && capturable(b) && b.position && won.has(keyOf(b)) ? { ...b, captured: true } : b));
+  const batteries = state.batteries.map((b) => (!b.captured && capturable(b, state.minute) && b.position && won.has(keyOf(b)) ? { ...b, captured: true } : b));
   const events: NewEvent[] = keys.flatMap((key): NewEvent[] => {
     const w = won.get(key);
     if (!w) return [];
@@ -464,7 +467,8 @@ function overrunGuns(state: SimState, ctx: StepContext): SimState {
     const guns = sum(bs, (b) => b.guns);
     const ids = bs.map((b) => b.id.split('/')[0]!).filter((x, i, xs) => xs.indexOf(x) === i);
     const gassed = bs.flatMap((b) => (b.gassedEventId === undefined ? [] : [b.gassedEventId]));
-    const causes: Cause[] = gassed.length ? ['horses-gassed'] : [];
+    const limbering = bs.flatMap((b) => (b.horses && b.withdrawal ? [b.withdrawal.eventId] : []));
+    const causes: Cause[] = [...(gassed.length ? (['horses-gassed'] as const) : []), ...(limbering.length ? (['enemy-near'] as const) : [])];
     if (w.defenders > 0 || causes.length === 0) causes.push('outnumbered');
     return [{
       minute: state.minute,
@@ -473,7 +477,7 @@ function overrunGuns(state: SimState, ctx: StepContext): SimState {
       ...(w.lead.sectorId ? { sectorId: w.lead.sectorId } : {}),
       text: `${guns} guns (${ids.join(', ')}) are overrun by ${w.lead.name}`,
       causes: ordered(causes),
-      refs: sortedUnique(gassed),
+      refs: sortedUnique([...gassed, ...limbering]),
       factors: { guns, defenders: w.defenders },
     }];
   });

@@ -104,6 +104,8 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     fireMissions: [],
     reserves: initReserves(scenario),
     tanks: initTanks(scenario),
+    seen: new Map(),
+    minesFired: [],
     command: { ordered: {}, stallCommits: {}, launched: {}, counterAttacks: {}, divisions: {}, offMap: {} },
     churn: ctx.world.churn,
     nextEventId: 0,

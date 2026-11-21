@@ -362,6 +362,10 @@ arrivals are in `historical.yaml`.
 
 ## Conflicts
 
+- **How far the tanks got.** Nicholson p. 248: "none got beyond the German support trenches"; BOH p. 335: "none of which
+  succeeded in crossing No Man's Land". Both are kept as the validation target's range: no tank past the German support
+  trenches, and perhaps none past the German front line.
+
 - **The time of the 85th's attack** (spec 13.14). The 85th's history: "zero hour having been fixed for six o'clock"
   (`hayes-1920` p. 52). BOH: the companies "started off across No Man's Land at 6.45 p.m." (p. 341). Nicholson: "Late
   that afternoon" and "Before dark" (pp. 260-261). Until Plan 3 the scenario timed the attack by Hayes's six o'clock; the

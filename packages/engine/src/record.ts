@@ -2,7 +2,7 @@ import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenar
 import type { CompanyState, CompanyStatus } from './companies';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.2';
+export const ENGINE_VERSION = '0.4.3';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;

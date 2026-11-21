@@ -163,9 +163,9 @@ effects:
     calibrated: true
   tankBogMudFactor:
     value: 3
-    estimate: 'rain-soaked ground made the cratered field far worse for tanks: at Vimy the eight tanks "had been unable to negotiate
-      the gripless mud and the deep shell craters" (nicholson-1962 p. 254), and a tank''s 3.7 miles an hour fell to half a mile an
-      hour "in heavily shelled ground" (p. 168). A day of rain is taken to treble the chance of bogging; order of magnitude'
+    estimate: 'a judgement with no number behind it: mud stopped the Vimy tanks ("unable to negotiate the gripless mud and the deep
+      shell craters", nicholson-1962 p. 254), but no source read says how much more often a tank bogs after rain (p. 168 gives
+      only the speed in heavily shelled ground). A day of rain is taken to treble the chance; order of magnitude'
     description: Multiplier on a tank's chance of bogging after a whole day of rain (it applies as the factor to the power of the
       share of the past 24 hours it rained).
     calibrated: true
@@ -175,10 +175,56 @@ effects:
       Mark I); which marks and how many of each served at Vimy is not in the sources read, so an even mix: 5'
     description: Machine guns a moving tank fires at the enemy near it, which suppress and (in this model) hit no one.
   gasHorseRadiusM:
-    value: 200
-    estimate: a gas shell's cloud spreads and drifts a couple of hundred metres before it thins; the plan's 1 km would gas whole valleys
-      from one shell, so 200 m
-    description: Distance in metres from the point of impact within which gas reaches horses.
+    value: 1000
+    estimate: 'no source read gives how far gas from shells on a battery position reaches its horse lines; the plan''s 1 km is kept
+      (the horse lines and wagon lines stood some hundreds of metres behind the guns, and lethal gas shell was fired in
+      concentrated bursts on whole battery areas, boh-1917-1 p. 185). Plan 4 to calibrate'
+    description: Distance in metres from where gas falls within which it reaches a battery's horses.
+    calibrated: true
+  reserveReleaseRangeM:
+    value: 400
+    estimate: 'a company holding its last rounds fires them at a counter-attack once it is close enough for rapid fire to stop it:
+      SS 143 puts the platoon''s rifle fire at short ranges; about 400 m, inside the effective rifle and Lewis-gun range used for
+      gunCaptureRadiusM. Order of magnitude'
+    description: Distance in metres within which an enemy seen coming at a company makes it fire into its ammunition reserve.
+    calibrated: true
+  closingShareMin:
+    value: 0.5
+    estimate: 'an enemy counts as coming at a company when at least half of the ground it covered since the company last looked
+      was toward the company (its heading within 60 degrees of it); one marching across the front or away does not. A
+      judgement'
+    description: Least share of an enemy's movement, since the last look, that must close on a company for it to count as a
+      counter-attack on it.
+  batteryWithdrawRangeM:
+    value: 1000
+    estimate: 'horse-drawn field batteries pulled out when enemy infantry came within effective rifle and machine-gun range of their
+      teams, about 1,000 yards; the batteries at Vimy that could not move were those whose horses were gassed (boh-1917-1 p.
+      320). Order of magnitude'
+    description: Distance in metres within which a battery with horses, seeing enemy infantry, limbers up and withdraws.
+    calibrated: true
+  limberMin:
+    value: 15
+    estimate: 'the teams are brought up from the wagon lines and hooked in, and the guns pulled out of their pits: a quarter of an
+      hour under fire. A judgement; no source read times it'
+    description: Minutes a battery takes to limber up before it can move off; it can be captured meanwhile.
+    calibrated: true
+  batteryWithdrawM:
+    value: 2000
+    estimate: 'back to the next gun line: the German field artillery stood in depth behind the ridge, the Farbus Wood casemates and
+      the Bois de la Ville some 2 km apart (fireplan.yaml positions; boh-1917-1 pp. 305, 336). A judgement'
+    description: Distance in metres a withdrawing battery moves back, toward its side's rear, before it comes into action again.
+    calibrated: true
+  batteryWithdrawMPerMin:
+    value: 80
+    estimate: 'horse-drawn guns at a walk on broken, shelled roads: about 5 km an hour. A judgement'
+    description: Speed in metres a minute of a withdrawing battery.
+    calibrated: true
+  mineLossFrac:
+    value: 0.8
+    estimate: 'men in the stretch of trench over the charge are blown up or buried, and few dug out: "Two mines exploded at zero hour
+      killed many of the garrison" (nicholson-1962 p. 260); "killed a great part of the German garrison in this sector" (boh-1917-1
+      p. 330). Those are targets; the share killed within the crater is a judgement'
+    description: Share of the men within a mine's crater radius it kills or buries.
     calibrated: true
   gapMultiplier:
     value: 2

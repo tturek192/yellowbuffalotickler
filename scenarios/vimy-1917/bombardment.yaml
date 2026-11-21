@@ -68,7 +68,7 @@ bombardment:
     # unchanged (bombardment.md, "Gas at Zero").
     - artilleryId: cdn-60pdr
       task: gas
-      rounds: { value: 3240, estimate: "the 54 60-pdrs (BOH p. 306 n.1) at 1 round a minute (tables/weapons-1917.yaml) for an hour: the Arras plan had the 60-pdrs 'continue to fire lethal shell against battery positions until an hour after Zero' (BOH p. 185); BOH p. 320 confirms gas on every German battery position at Zero for the Canadian Corps, not how much (bombardment.md, Gas at Zero)" }
+      rounds: { value: 3240, estimate: "the 54 60-pdrs (BOH p. 306 n.1) at 1 round a minute (tables/weapons-1917.yaml) for an hour: the Arras plan had the 60-pdrs 'continue to fire lethal shell against battery positions until an hour after Zero' (BOH p. 185); BOH p. 320 confirms gas on every German battery position at Zero for the Canadian Corps, not how much. Sized on fire after Zero but carved out of the week before 9 April and applied with the preliminary bombardment, before the first step: the timing is approximate (bombardment.md, Gas at Zero; Conflicts)" }
     - artilleryId: cdn-6in-gun
       task: battery
       rounds: { value: 13858, estimate: "107,400 heavy counter-battery rounds (as for cdn-60pdr) x 8/62 counter-battery guns (bombardment.md)" }

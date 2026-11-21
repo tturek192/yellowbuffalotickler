@@ -32,6 +32,8 @@ export const CAUSES = [
   'planned-operation', 'reserve-arrived', 'ammunition-low', 'tank-bogged', 'horses-gassed',
   // The machine guns of a tank moving close by (Task 14)
   'tank-fire',
+  // Enemy infantry seen close to a battery, which withdraws (Task 14 fix round); a mine blown under the trench (Task 14 fix round)
+  'enemy-near', 'mine',
 ] as const;
 
 export type Cause = (typeof CAUSES)[number];

@@ -187,6 +187,21 @@ guns, like the high explosive, and takes the horses of the batteries within `gas
 (tables/effects.yaml `horseLossPerGasRound`). With both German entries standing for many batteries at one point each,
 the gas reaches every gun of an entry alike (Conflicts).
 
+### Mines at Zero
+
+Added with the mines (Plan 3 Task 14 fix round). "On the stroke of 5.30 a.m. ... two mines were exploded on the left of
+the battle-front under the German front line" (BOH p. 319); opposite the 73rd Battalion, "two mines were fired, which
+killed a great part of the German garrison in this sector. The remainder fled" (BOH p. 330); "Two mines exploded at
+zero hour killed many of the garrison opposite the 73rd Battalion" (Nicholson p. 260). Entered in `fireplan.yaml` as
+`mine-73bn-right` and `mine-73bn-left`, blown at Zero (sourced).
+
+- **Places are estimates.** On the German front line (`ger-front`) at y 1080 and 1230, across the 73rd's frontage (its
+  companies at y 1036 and 1225). No source read places either mine.
+- **The crater radius, 30 m, is an estimate.** No source read measures the craters.
+- **Their effect is a target.** "A great part of the garrison" killed (BOH p. 330) is what the engine's `mineLossFrac`
+  (tables/effects.yaml) should come near, never an input. The mine tunnelling before the battle ("No less than seventy
+  mines were fired in the first two months", BOH p. 309) is earlier history, not entered.
+
 ## The wire
 
 | Stretch | y | beltDepthM | Basis |
@@ -377,6 +392,9 @@ by battery or group (Open questions), a run's captured-guns count should not be 
 
 | Value | Source | Page | Quote (≤ 25 words) | Tier |
 |---|---|---|---|---|
+| `mines[]` two, at Zero | `boh-1917-1` | 319 | "two mines were exploded on the left of the battle-front under the German front line" | official |
+| (target) the mines' effect | `boh-1917-1` | 330 | "two mines were fired, which killed a great part of the German garrison in this sector" | official |
+| (check) opposite the 73rd | `nicholson-1962` | 260 | "Two mines exploded at zero hour killed many of the garrison opposite the 73rd Battalion" | official |
 | bombardment.from 1917-03-20T12:00 | `boh-1917-1` | 315 n.2 | "The expenditure of ammunition during the two phases of the bombardment was" | official |
 | `cdn-60pdr` gas 3,240 (estimate) | `boh-1917-1` | 320 | "all the German battery positions and ammunition dumps were bombarded with high explosive and gas shell" | official |
 | (basis) the 60-pdrs' lethal shell to Zero + 1 h | `boh-1917-1` | 185 | "The 60-pdrs., however, would continue to fire lethal shell against battery positions until an hour after Zero." | official |
@@ -462,6 +480,9 @@ by battery or group (Open questions), a run's captured-guns count should not be 
   photographs of 7 April showed it repaired (BOH p. 328). The schema's band spares it for the whole bombardment, from
   20 March, so the model's strong point takes no early damage either.
 
+- **When the gas fell.** The 3,240 gas rounds are sized on fire from Zero to an hour after it (BOH p. 185), but they are
+  carved out of rca-ww1-history's counter-battery rounds "in the week before 9 April" and applied in the engine's
+  pre-Zero bombardment pass, which takes the horses before the first step. The timing is approximate either way.
 - **Gas on aggregate batteries.** `horseLossPerGasRound` is per shell on one battery's horse lines, but each German
   entry stands for many batteries at one point (all 108 field guns at Farbus Wood): every gas round shared to the entry
   counts against all its horses, so 3,240 rounds leave almost none. The entries' single positions were already a known
@@ -469,6 +490,9 @@ by battery or group (Open questions), a run's captured-guns count should not be 
 
 ## Open questions for the historian
 
+- **The two mines at Zero.** Where exactly did the two mines opposite the 73rd Battalion lie, how large were their
+  charges and craters, and which German companies were over them? The 185th or 176th Tunnelling Company's records, or
+  the 73rd's war diary, would say.
 - **The gas rounds at Zero.** How many gas shells did the Canadian Corps' counter-battery fire on the German battery
   positions at Zero on 9 April, from which pieces, and for how long? BOH p. 320 says gas was fired, not how much; the
   Canadian Corps counter-battery records would say.

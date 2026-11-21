@@ -309,8 +309,8 @@ function firesOf(spent: Spent[], frontageM: number, obsOf: (o: Observation) => n
   return out;
 }
 
-/** A battery fires while it is not silenced, has rounds left and has not been overrun (Task 10). */
-const inAction = (b: BatteryState): boolean => b.suppressedUntilMin === null && b.ammoLeft > 0 && !b.captured;
+/** A battery fires while it is not silenced, has rounds left, has not been overrun (Task 10) and is not withdrawing (Task 14). */
+const inAction = (b: BatteryState): boolean => b.suppressedUntilMin === null && b.ammoLeft > 0 && !b.captured && b.withdrawal === undefined;
 const gunsIn = (bs: readonly BatteryState[], side: Side, pred: (b: BatteryState) => boolean = () => true): number =>
   sum(bs.filter((b) => b.side === side && pred(b)), (b) => b.guns);
 

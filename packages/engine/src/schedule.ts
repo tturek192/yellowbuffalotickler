@@ -5,6 +5,7 @@ import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
 import { moraleThresholds } from './morale';
 import { reserveTimes } from './reserves';
+import { batteryWithdrawals, mineTimes } from './smaller';
 import { dugoutSorties } from './trenches';
 import type { SimState, StepContext } from './step';
 
@@ -64,6 +65,9 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   // Task 15: morale falling through surrender, fall-back or go-to-ground between fires (a company falls back, gives up or
   // goes to ground): now that companies in contact with nobody able to fire step quietly (step.ts inContact).
   ['morale-thresholds', moraleThresholds],
+  // Task 14 fix round: mines blown, and batteries withdrawing limbered up and back in action (none moves a company).
+  ['mines', mineTimes],
+  ['battery-withdrawals', batteryWithdrawals],
 ];
 
 /**

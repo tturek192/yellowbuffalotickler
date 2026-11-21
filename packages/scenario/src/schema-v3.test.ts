@@ -52,6 +52,15 @@ describe('scenario v3', () => {
     expect(refs(bad)).toEqual(expect.arrayContaining([expect.stringMatching(/tanks\[1\]\.sectorId.*nope-s/), expect.stringMatching(/tanks\[1\]\.objectiveLineId.*nope-l/), expect.stringMatching(/tanks\[1\]\.id.*duplicate id "t1"/)]));
     expect(minimalScenarioV3().tanks).toBeUndefined();
   });
+  it('mines (Task 14 fix round): each names its side, place, minute after Zero, crater radius and a citation; ids are checked', () => {
+    const mine = (over: Record<string, unknown> = {}) => ({ id: 'm1', side: 'allied', at: [150, 100], firedAfterMin: e(0), craterRadiusM: e(40), cite: e('x'), ...over });
+    const s = minimalScenarioV3({ mines: [mine()] } as never);
+    expect(ScenarioSchema.parse(s).mines![0]!.craterRadiusM.value).toBe(40);
+    expect(refs(s)).toEqual([]);
+    expect(ScenarioSchema.safeParse(minimalScenarioV3({ mines: [mine({ firedAfterMin: e(-5) })] } as never)).success).toBe(false);
+    expect(ScenarioSchema.safeParse(minimalScenarioV3({ mines: [mine({ depthM: 3 })] } as never)).success).toBe(false);
+    expect(refs(minimalScenarioV3({ mines: [mine(), mine()] } as never))).toEqual([expect.stringMatching(/mines\[1\]\.id.*duplicate id "m1"/)]);
+  });
   it('a bombardment allocation may fire gas (Task 14)', () => {
     const s = minimalScenarioV3({ bombardment: { ...bombWith('g1'), allocations: [{ artilleryId: 'g1', task: 'gas', rounds: est(500) }] } });
     expect(ScenarioSchema.parse(s).bombardment!.allocations[0]!.task).toBe('gas');

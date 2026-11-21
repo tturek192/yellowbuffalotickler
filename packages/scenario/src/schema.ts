@@ -245,6 +245,16 @@ const TankSchema = z.strictObject({
   cite: sourced(z.string()),
 });
 
+/** A mine blown under the enemy (Task 14 fix round): `firedAfterMin` minutes after Zero (0: at Zero). */
+const MineSchema = z.strictObject({
+  id: z.string(),
+  side: Side,
+  at: PlacedPoint,
+  firedAfterMin: sourced(z.number().nonnegative()),
+  craterRadiusM: sourced(z.number().positive()),
+  cite: sourced(z.string()),
+});
+
 export const ScenarioSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -300,6 +310,8 @@ export const ScenarioSchema = z.object({
   offMap: OffMapSchema.optional(),
   /** Tanks (Task 14), on the map from Zero. */
   tanks: z.array(TankSchema).optional(),
+  /** Mines blown during the battle (Task 14 fix round). */
+  mines: z.array(MineSchema).optional(),
   air: z.strictObject({ superiority: z.union([Side, z.literal('contested')]), observedFrac: sourcedOrDisputed(z.number().min(0).max(1)) }).optional(),
   end: z
     .strictObject({

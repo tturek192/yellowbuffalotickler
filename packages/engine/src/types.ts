@@ -30,6 +30,8 @@ export const EVENT_KINDS = [
   'counter-attack-dropped',
   // Smaller mechanics (Task 14): a tank stuck in the mud, a battery's horses gassed, a company down to its ammunition reserve
   'tank-bogged', 'horses-gassed', 'ammunition-low',
+  // Task 14 fix round: a horse-drawn battery limbering up to withdraw; a mine blown under the enemy
+  'guns-withdrawn', 'mine-fired',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -321,6 +323,11 @@ export type BatteryState = {
   captured: boolean;
   /** The `horses-gassed` event that took its horses (Task 14); absent: it was never gassed. */
   gassedEventId?: number;
+  /**
+   * A withdrawal under way (Task 14 fix round): the battery limbers up until `limberedMin` (and can be captured meanwhile),
+   * then moves from `from` to `to`, arriving at `doneMin`; out of action throughout. `eventId`: its `guns-withdrawn`.
+   */
+  withdrawal?: { limberedMin: number; doneMin: number; from: Point; to: Point; eventId: number };
 };
 
 /**

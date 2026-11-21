@@ -31,6 +31,16 @@ describe('Vimy defences and the bombardment (Plan 3 Task 3)', () => {
   it("spares the 87th's stretch from the heavy artillery only (BOH p. 328): field guns, 4.5-in howitzers and mortars still fire on it", () => {
     expect(vimy().bombardment!.spared.map(x => x.onlyKinds)).toEqual([['heavy']]);
   });
+  it('blows the two mines at Zero opposite the 73rd Battalion (BOH pp. 319, 330), each on the German front line', () => {
+    const mines = vimy().mines!;
+    expect(mines.map((m) => m.id)).toEqual(['mine-73bn-right', 'mine-73bn-left']);
+    for (const m of mines) {
+      expect(m.side).toBe('allied');
+      expect(m.firedAfterMin).toMatchObject({ value: 0, source: 'boh-1917-1' });
+      expect(m.cite).toMatchObject({ source: 'boh-1917-1', page: '330' });
+      expect('estimate' in m.craterRadiusM).toBe(true);
+    }
+  });
   it('every German garrison has machine guns and dugout depth (sourced, estimated or disputed)', () => {
     for (const c of companiesOf(vimy(), 'central').filter(c => c.role === 'garrison')) {
       expect(c.machineGuns).toBeDefined(); expect(c.dugoutDepthM).toBeDefined();

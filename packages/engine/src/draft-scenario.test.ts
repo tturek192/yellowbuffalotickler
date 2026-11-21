@@ -74,6 +74,9 @@ describe('draft Vimy scenario run', () => {
     // 0.4.2 (Task 14): tanks (bogging, suppression), gas on the enemy's horses (guns then captured when overrun), and the
     // attackers' ammunition reserve. The draft has no tanks, no gas and no enemy: with the version set back to 0.4.1 its
     // record hashes to f4b5b276, so only the version moves the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.2', hash: '7ed66c11' });
+    // 0.4.3 (Task 14 fix round 1): the ammunition reserve released only on an enemy seen coming at the company, horse-drawn
+    // batteries limbering up and withdrawing from enemy infantry, and mines. The draft has none of them in play: with the
+    // version set back to 0.4.2 its record hashes to 7ed66c11 (the full suite passed so before the bump).
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.3', hash: 'acd659c0' });
   });
 });
