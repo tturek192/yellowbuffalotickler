@@ -38,7 +38,7 @@ describe('movement', () => {
   });
 
   it('fully cut wire costs nothing and fully uncut wire slows to wireSpeedFactor', () => {
-    expect(timeToObjective({ wireCut: 1 })).toBe(timeToObjective({ wireCut: 1 }));
+    expect(timeToObjective({ wireCut: 1 })).toBe(timeToObjective({ wireCut: 0, beltDepthM: 0 }));
     const free = timeToObjective({ wireCut: 1 });
     const uncut = timeToObjective({ wireCut: 0 });
     // 200 m of wire at half speed takes 2 minutes more than at full speed (50 m a minute): 4 minutes in all, give or take a step.
@@ -109,8 +109,10 @@ describe('movement', () => {
 
   it('a company that fell back rallies once its morale is back above fallBack, and holds: it does not take up the attack again by itself', () => {
     const w = walker({ x: -300, status: 'falling-back', intent: 'fall-back', morale: 0.4, posture: 'moving' });
-    const after = morale({ ...w.state, companies: [w.c1] }, w.ctx, 2, { damage: [], applied: new Map() }).companies[0]!;
-    expect(after).toMatchObject({ status: 'holding', intent: 'hold', posture: 'prone' });
+    const fellBackEventId = w.state.nextEventId - 1;
+    const out = morale({ ...w.state, companies: [{ ...w.c1, fellBackEventId }] }, w.ctx, 2, { damage: [], applied: new Map() });
+    expect(out.companies[0]).toMatchObject({ status: 'holding', intent: 'hold', posture: 'prone' });
+    expect(out.events.filter((e) => e.kind === 'company-rallied')).toMatchObject([{ unitId: 'c1', refs: [fellBackEventId] }]);
     // A pinned company with the same morale stays pinned, and goes on once it recovers (Task 9's rule).
     const pinned = morale({ ...w.state, companies: [{ ...w.c1, status: 'pinned', intent: 'go-to-ground' }] }, w.ctx, 2, { damage: [], applied: new Map() }).companies[0]!;
     expect(pinned.status).toBe('pinned');
@@ -141,5 +143,12 @@ describe('movement', () => {
   it('reaching the objective is a company-reached event with its cause, which the company keeps for the line-taken rule', () => {
     const r: RunRecord = runBrownCloseToBlue();
     for (const e of ofKind(r, 'company-reached')) expect(e.causes).toEqual(['followed-barrage']);
+    // A company that had lost its barrage arrives for that reason, referring to the event that said so.
+    const lostId = 0;
+    const w = walker({ x: 1140, barrageLost: true, barrageLostEventId: lostId });
+    const out = moveCompanies(w.state, w.ctx, 2, { damage: [] });
+    const reached = out.events.filter((e) => e.kind === 'company-reached');
+    expect(reached).toMatchObject([{ unitId: 'c1', causes: ['barrage-moved-on'], refs: [lostId] }]);
+    expect(out.companies[0]!.reached).toEqual({ eventId: reached[0]!.id, causes: ['barrage-moved-on'] });
   });
 });

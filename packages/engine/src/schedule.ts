@@ -1,4 +1,4 @@
-import { batteryRecoveries, offMapWindows } from './artillery';
+import { ammunitionRunsOut, batteryRecoveries, offMapWindows } from './artillery';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
 import { dugoutSorties } from './trenches';
@@ -38,6 +38,8 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['off-map-fire', offMapWindows],
   // Task 10: men left in dugouts coming up behind the attackers; they fire from their trench and move nobody.
   ['dugout-sorties', dugoutSorties],
+  // Task 10 fix round: batteries running out of rounds, so a quiet step ends when fine steps would see it; moves nobody.
+  ['ammunition-runs-out', ammunitionRunsOut],
 ];
 
 /**

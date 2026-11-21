@@ -20,6 +20,8 @@ export const EVENT_KINDS = [
   'direct-fire',
   // Plan 3, the fight for trenches (Task 10): batteries overrun when a segment near them is lost
   'guns-captured',
+  // A company that fell back rallies and holds (Task 10)
+  'company-rallied',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -99,7 +101,11 @@ export type HqState = {
 };
 
 /** Men of one garrison company left in the dugouts of a segment (Tasks 8, 10). */
-export type DugoutPoint = { companyId: string; point: Point; men: number; leftMin: number; eventId: number; cleared: number };
+/**
+ * `leftMin`: the minute the leading wave left them below (the trapping); `unguardedMin`: the last minute an enemy company
+ * stood at the entrances (within captureRadiusM), from which the sortie delay runs.
+ */
+export type DugoutPoint = { companyId: string; point: Point; men: number; leftMin: number; unguardedMin: number; eventId: number; cleared: number };
 
 /**
  * A stretch of German trench held by one garrison company (Task 7): the stretch of its feature between the
@@ -137,6 +143,11 @@ export type SegmentState = {
   /** The last minute a barrage (creeping or standing) was on it; null: none since Zero (Task 8). */
   barrageLastOverMin: number | null;
   /**
+   * Which of its trench samples (artillery.ts `segmentSamples`, by index) a barrage was on at `barrageLastOverMin`, for
+   * the local checks of capture, trapping and sorties: only the trench near the men matters (Task 10 fix round).
+   */
+  barrageOn: number[];
+  /**
    * The event that last told of fire on it, for the refs of its garrison's emergence: the `barrage-passed`
    * when the creeping barrage lifted off it, else its `bombardment-result`; null: neither (Task 8).
    */
@@ -147,8 +158,7 @@ export type SegmentState = {
   trapped: boolean;
   /**
    * Men of a garrison company left below ground when the attackers reached the segment over them, to be cleared by
-   * mopping up or to sortie (Tasks 8, 10): the company, where, how many are still below, the minute the leading wave
-   * left them behind (`leftMin`), its `defenders-trapped` event, and how many have been cleared out so far.
+   * mopping up or to sortie (Tasks 8, 10).
    */
   dugoutPoints: DugoutPoint[];
 };

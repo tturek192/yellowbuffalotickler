@@ -425,12 +425,13 @@ export const runCrush = (seed = 1): RunRecord => runScenario(...fixtureCrush(), 
 
 /**
  * The minute c1 of fixtureArtillery (starting 30 minutes late, so the barrage never holds it back) reaches the Black
- * Line, with a wire belt 200 m deep, cut by `wireCut`, in front of both segments of `ger-front-a` (x -50 to 150).
+ * Line, with a wire belt `beltDepthM` deep (default 200: x -50 to 150), cut by `wireCut`, in front of both segments of
+ * `ger-front-a`.
  */
-export function timeToObjective(o: { wireCut: number }): number {
+export function timeToObjective(o: { wireCut: number; beltDepthM?: number }): number {
   const f = fixtureArtillery({ lagMin: 30 });
   const { state, ctx } = initRun(f[0], f[1], { seed: 1 });
-  let s: SimState = { ...state, segments: state.segments.map((x) => ({ ...x, wireBeltDepthM: 200, wireCut: o.wireCut })) };
+  let s: SimState = { ...state, segments: state.segments.map((x) => ({ ...x, wireBeltDepthM: o.beltDepthM ?? 200, wireCut: o.wireCut })) };
   while (s.minute < 300) {
     s = runPipeline(s, ctx, 2);
     const e = s.events.find((x) => x.kind === 'company-reached' && x.unitId === 'c1');
@@ -467,11 +468,18 @@ export const reachedMinute = (r: RunRecord, lineId: string): number => Math.min(
 export const barrageResumeMinute = (r: RunRecord, lineId: string): number => ofKind(r, 'barrage-resume').find((e) => e.lineId === lineId)!.minute;
 
 /**
- * fixtureArtillery (c1 and c2 trap the garrisons k1 and k2, leaving about 60 men of each in the dugouts at x 150), and
- * with `mopUp` two mopping-up companies m1 (y 100) and m2 (y 300), 100 men each, following 4 minutes behind.
+ * fixtureArtillery (c1 and c2 trap the garrisons k1 and k2, leaving about 60 men of each in the dugouts at x 150, and
+ * take the Black Line at minute 32, so that trench is behind a taken line), and:
+ * - with `mopUp` two mopping-up companies m1 (y 100) and m2 (y 300), 100 men each, following 4 minutes behind;
+ * - with `holders` a holding company `res` of that many men on the trench at (150, 200), 100 m from both dugouts (so it
+ *   does not guard them) but holding both segments (within lineFeatureMatchM).
  */
-export function fixtureDugouts(o: { mopUp: boolean }): [Scenario, Models] {
+export function fixtureDugouts(o: { mopUp: boolean; holders?: number }): [Scenario, Models] {
   const f = fixtureArtillery();
+  if (o.holders !== undefined) {
+    withReserve(f, 150, 200);
+    f[0].forces[0]!.formations[0]!.companies!.find((c) => c.id === 'res')!.strength = est(o.holders);
+  }
   if (o.mopUp)
     f[0].forces[0]!.formations[0]!.companies!.push(
       ...[100, 300].map((y, i) => ({
@@ -481,7 +489,7 @@ export function fixtureDugouts(o: { mopUp: boolean }): [Scenario, Models] {
     );
   return f;
 }
-export const runDugouts = (o: { mopUp: boolean }, seed = 1): RunRecord => runScenario(...fixtureDugouts(o), { seed, endMinute: 120 });
+export const runDugouts = (o: { mopUp: boolean; holders?: number }, seed = 1): RunRecord => runScenario(...fixtureDugouts(o), { seed, endMinute: 120 });
 
 /**
  * fixtureArtillery with the attackers 30 minutes late and a German trench on the Black Line itself (x 1150) held by

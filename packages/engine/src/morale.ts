@@ -100,8 +100,8 @@ const STATE_EVENT = { pinned: 'company-pinned', 'falling-back': 'company-fell-ba
  * - `m < surrender` with an enemy within `closeRangeM` (one that is not down in its dugouts): surrendered, every man
  *   standing captured (`company-surrendered`);
  * - an attacking company that has started: `m < fallBack` falls back (`company-fell-back`); one falling back whose
- *   morale is back at `fallBack` or above rallies where it has got to and holds (Task 10: it does not take up the attack
- *   again unless ordered); else `m < goToGround` or `s > pinSuppression` pins it (`company-pinned`, posture prone unless
+ *   morale is back at `fallBack` or above rallies where it has got to and holds (`company-rallied`, ref to its
+ *   `company-fell-back`; Task 10: it does not take up the attack again unless ordered); else `m < goToGround` or `s > pinSuppression` pins it (`company-pinned`, posture prone unless
  *   it is in a trench), else it goes on (advancing, or consolidating once at its objective). Holding and waiting
  *   companies change state only by surrendering.
  * Men down in their dugouts are left alone: no fire reaches them, and the gap and mopping up decide their fate.
@@ -149,19 +149,30 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
     if (!FIGHTING.has(c.status)) return moved;
 
     const fall = m < v(k.fallBack);
-    if (c.status === 'falling-back' && !fall)
+    if (c.status === 'falling-back' && !fall) {
       // A company that broke and fell back does not take up the attack again by itself (Task 10, now that falling back
       // moves it): once its morale is back above fallBack it rallies where it has got to, and holds until ordered on.
+      events.push({
+        minute: state.minute,
+        kind: 'company-rallied',
+        unitId: c.id,
+        ...(c.sectorId ? { sectorId: c.sectorId } : {}),
+        text: `${c.name} rallies (morale ${round(m, 2)}) and holds where it is`,
+        refs: c.fellBackEventId === null ? [] : [c.fellBackEventId],
+        factors: { morale: round(m, 3), men: c.men },
+      });
       return { ...moved, status: 'holding', intent: 'hold', posture: c.posture === 'moving' ? 'prone' : c.posture };
+    }
     const pin = !fall && (m < v(k.goToGround) || c.suppression > v(k.pinSuppression));
     if (fall || pin) {
       const status: CompanyStatus = fall ? 'falling-back' : 'pinned';
       const intent: Intent = fall ? 'fall-back' : 'go-to-ground';
       // Pinned men go to ground; falling back keeps the posture it has (Task 10 moves it back).
       const posture = pin && c.posture === 'moving' ? 'prone' : c.posture;
+      const fellBack = fall && c.status !== status ? { fellBackEventId: state.nextEventId + events.length } : {};
       if (c.status !== status)
         events.push(stateEvent(moved, status, state.minute, { isolated, extra: [...(fall ? (['morale-broke'] as const) : []), ...(c.suppression > v(k.pinSuppression) ? (['suppressed'] as const) : [])] }));
-      return c.status === status && c.intent === intent && c.posture === posture ? moved : { ...moved, status, intent, posture };
+      return c.status === status && c.intent === intent && c.posture === posture ? moved : { ...moved, status, intent, posture, ...fellBack };
     }
     if (c.status === 'pinned') {
       // It goes on: back to its trench if it is at its objective, else on toward it.

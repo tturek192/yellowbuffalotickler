@@ -145,6 +145,7 @@ export function deriveSegments(s: Scenario, tables?: Tables, defaultsUsed?: Set<
         holderEventId: null,
         trappedEventId: null,
         barrageLastOverMin: null,
+        barrageOn: [],
         barrageEventId: null,
         emerged: false,
         trapped: false,

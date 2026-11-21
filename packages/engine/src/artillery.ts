@@ -110,6 +110,19 @@ export function noMansLandAt(lines: Lines, side: Side, y: number): [number, numb
   return best;
 }
 
+const nmlAtCache = new WeakMap<Scenario, Map<string, [number, number] | null>>();
+/** `noMansLandAt` for the scenario's lines, remembered by side and y (lines are fixed for the run; looked up only). */
+function nmlAt(ctx: StepContext, side: Side, y: number): [number, number] | null {
+  let m = nmlAtCache.get(ctx.scenario);
+  if (!m) nmlAtCache.set(ctx.scenario, (m = new Map()));
+  const key = `${side}|${y}`;
+  const hit = m.get(key);
+  if (hit !== undefined) return hit;
+  const out = noMansLandAt(ctx.scenario.lines, side, y);
+  m.set(key, out);
+  return out;
+}
+
 const nmlCache = new WeakMap<Scenario, Map<Side, number>>();
 /** The frontage of no man's land for `side`'s defensive fire: the length of y over which both sides have a trench line. */
 function noMansLandWidth(ctx: StepContext, side: Side): number {
@@ -303,11 +316,31 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   const field = state.companies.filter(onField);
   const sectors = sortedSectors(ctx);
   const barrageOf = new Map(state.barrages.map((b) => [b.sectorId, b]));
-  const active = sectors.filter((x) => barrageOf.get(x.id) && barrageOf.get(x.id)!.phase !== 'done');
+  // Each sector's barrage fires for the minutes of this step it was active: all of them, or, in the step it ends in,
+  // those before its end (so a quiet step that takes in a barrage's end fires as many minutes as fine steps would).
+  // A barrage that ended within the step lies where it last stood (pausing beyond its last line) for that fire.
+  const endedAt = (b: SimState['barrages'][number]): number | null => (b.phase === 'done' && b.phaseStartMin > from ? b.phaseStartMin : null);
+  const minutesOf = new Map(
+    sectors.map((x) => {
+      const b = barrageOf.get(x.id);
+      if (!b) return [x.id, 0] as const;
+      const end = endedAt(b);
+      return [x.id, b.phase !== 'done' ? dt : end !== null ? Math.min(dt, end - from) : 0] as const;
+    }),
+  );
+  const firing = (x: Sector): number => minutesOf.get(x.id) ?? 0;
+  /** Its barrage is still going at the step's end: only then does it cover trench (segments under it). */
+  const standsNow = (x: Sector): boolean => barrageOf.get(x.id)?.phase !== 'done';
+  const active = sectors.filter((x) => firing(x) > 0);
   const width = (x: Sector) => x.yMax - x.yMin;
   const allWidth = sum(s.sectors, width);
-  const activeShare = allWidth > 0 ? sum(active, width) / allWidth : 0;
-  const band = (x: Sector, y: number) => bandAt(barrageOf.get(x.id)!, x, ctx.lines, minute, y, v(fx.barrageBandDepthM));
+  // The share of the step's fire across the whole front: each active sector's width for the share of dt it fired.
+  const activeShare = allWidth > 0 ? sum(active, (x) => width(x) * (firing(x) / dt)) / allWidth : 0;
+  const effective = (x: Sector) => {
+    const b = barrageOf.get(x.id)!;
+    return endedAt(b) !== null ? { ...b, phase: 'pausing' as const } : b;
+  };
+  const band = (x: Sector, y: number) => bandAt(effective(x), x, ctx.lines, minute, y, v(fx.barrageBandDepthM));
   const visM = visibilityM(s, ctx.tables, minute);
   if (s.air === undefined && bats.some((b) => b.observation === 'aircraft')) ctx.defaultsUsed.add('air ← none (fire observed by aircraft is unobserved: observedFrac 0)');
   const observedFrac = s.air ? v(s.air.observedFrac) : 0;
@@ -349,50 +382,59 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   // 1. The creeping barrage. A sector's creeping artillery is its side's creeping batteries shared among the
   // sectors by width (the artillery entries name no sector), so guns on 100 m = guns × 100 / all sectors' width.
   const covered = new Set<string>();
+  // Which of each segment's trench samples a barrage is on now, by segment id (looked up only), for local checks (trenches.ts).
+  const onSamples = new Map<string, number[]>();
+  const markSamples = (seg: SegmentState, idx: number[]): void => {
+    if (idx.length === 0) return;
+    covered.add(seg.id);
+    const had = onSamples.get(seg.id) ?? [];
+    onSamples.set(seg.id, [...had, ...idx.filter((i) => !had.includes(i))].sort((a, b) => a - b));
+  };
+  const samplesWhere = (seg: SegmentState, f: (p: Point) => boolean): number[] =>
+    segmentSamples(ctx, seg, state.companies).flatMap((p, i) => (f(p) ? [i] : []));
   for (const side of SIDES) {
     const spent = spend(bats.filter((b) => b.side === side && b.role === 'creeping' && inAction(b)), ctx, dt, activeShare);
     if (!(sum(spent, (x) => x.guns) > 0) || allWidth <= 0) continue;
     const fires = firesOf(spent, allWidth, obsOf, ctx);
     const per100 = sum(spent, (x) => x.guns) * (100 / allWidth);
     for (const sec of active) {
-      for (const seg of state.segments)
-        if (segmentSamples(ctx, seg, state.companies).some((p) => sectorAtY(sectors, p[1]) === sec && within(band(sec, p[1]), p[0]))) covered.add(seg.id);
-      const fire: FireGroup = { key: `creeping:${side}:${sec.id}`, text: `Creeping barrage, ${sec.name}`, sectorId: sec.id, factors: { gunsPer100m: round(per100, 2), fired: round(roundsOver(fires, width(sec), dt)) } };
+      if (standsNow(sec)) for (const seg of state.segments) markSamples(seg, samplesWhere(seg, (p) => sectorAtY(sectors, p[1]) === sec && within(band(sec, p[1]), p[0])));
+      const min = firing(sec);
+      const fire: FireGroup = { key: `creeping:${side}:${sec.id}`, text: `Creeping barrage, ${sec.name}`, sectorId: sec.id, factors: { gunsPer100m: round(per100, 2), fired: round(roundsOver(fires, width(sec), min)) } };
       for (const c of field) {
         if (sectorAtY(sectors, c.y) !== sec || !within(band(sec, c.y), c.x)) continue;
         if (c.side === side) {
           const gapM = round(barrageXAt(barrageOf.get(sec.id)!, sec, ctx.lines, minute, c.y) - c.x);
-          push(c, fires, dt, ['artillery-fire', 'friendly-barrage', ...airCause(spent)], { key: `friendly:${c.id}`, text: `Own barrage falls on ${c.name}`, sectorId: sec.id, unitId: c.id, factors: { gapM } });
-        } else if (c.posture !== 'in-dugout') push(c, fires, dt, ['artillery-fire', ...airCause(spent)], fire);
+          push(c, fires, min, ['artillery-fire', 'friendly-barrage', ...airCause(spent)], { key: `friendly:${c.id}`, text: `Own barrage falls on ${c.name}`, sectorId: sec.id, unitId: c.id, factors: { gapM } });
+        } else if (c.posture !== 'in-dugout') push(c, fires, min, ['artillery-fire', ...airCause(spent)], fire);
         // Men down in their dugouts under the band take nothing from it, and cannot come up (the segment is covered).
       }
     }
   }
 
   // 2. Standing barrages on the enemy's segments ahead of the band, as far as the fire plan reaches.
+  // A segment is a target while some of its trench lies ahead of an active band; it is fired on for the most minutes of
+  // those sectors, and the barrage is on that stretch of it (the trench ahead of the band).
+  const ahead = (p: Point): Sector | null => {
+    const sec = sectorAtY(sectors, p[1]);
+    if (!sec || !active.includes(sec)) return null;
+    const b = band(sec, p[1]);
+    return b !== null && p[0] > b[1] && p[0] <= planReachX(sec, ctx.lines, p[1]) ? sec : null;
+  };
   for (const side of SIDES) {
-    const targets = state.segments.filter(
-      (seg) =>
-        seg.holder !== side &&
-        !covered.has(seg.id) &&
-        seg.lengthM > 0 &&
-        segmentSamples(ctx, seg, state.companies).some((p) => {
-          const sec = sectorAtY(sectors, p[1]);
-          if (!sec || !active.includes(sec)) return false;
-          const b = band(sec, p[1]);
-          return b !== null && p[0] > b[1] && p[0] <= planReachX(sec, ctx.lines, p[1]);
-        }),
-    );
+    const targets = state.segments.filter((seg) => seg.holder !== side && !covered.has(seg.id) && seg.lengthM > 0 && segmentSamples(ctx, seg, state.companies).some((p) => ahead(p) !== null));
     const frontage = sum(targets, (x) => x.lengthM);
     const batteries = bats.filter((b) => b.side === side && (b.role === 'standing' || b.role === 'heavy') && inAction(b));
     if (targets.length === 0 || batteries.length === 0) continue;
-    const spent = spend(batteries, ctx, dt, 1);
+    const minOf = new Map(targets.map((seg) => [seg.id, Math.max(...segmentSamples(ctx, seg, state.companies).map((p) => { const sec = ahead(p); return sec ? firing(sec) : 0; }))]));
+    const share = sum(targets, (x) => x.lengthM * (minOf.get(x.id)! / dt)) / frontage;
+    const spent = spend(batteries, ctx, dt, share);
     if (!(sum(spent, (x) => x.guns) > 0)) continue;
     const fires = firesOf(spent, frontage, obsOf, ctx);
-    for (const seg of targets) covered.add(seg.id);
+    for (const seg of targets) markSamples(seg, samplesWhere(seg, (p) => { const sec = ahead(p); return sec !== null && standsNow(sec); }));
     const ids = new Set(targets.map((x) => x.id));
-    const fire: FireGroup = { key: `standing:${side}`, text: 'Standing barrage', factors: { segments: targets.length, fired: round(roundsOver(fires, frontage, dt)) } };
-    for (const c of field) if (c.side !== side && c.segmentId !== undefined && ids.has(c.segmentId)) push(c, fires, dt, ['artillery-fire', ...airCause(spent)], fire);
+    const fire: FireGroup = { key: `standing:${side}`, text: 'Standing barrage', factors: { segments: targets.length, fired: round(roundsOver(fires, frontage, dt * share)) } };
+    for (const c of field) if (c.side !== side && c.segmentId !== undefined && ids.has(c.segmentId)) push(c, fires, minOf.get(c.segmentId)!, ['artillery-fire', ...airCause(spent)], fire);
   }
 
   // 3. The machine-gun barrage: a zone mgBarrageDepthM deep beyond the creeping band, suppression only.
@@ -402,11 +444,12 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     const fires = firesOf(spent, allWidth, obsOf, ctx);
     const depth = v(fx.mgBarrageDepthM);
     for (const sec of active) {
-      const fire: FireGroup = { key: `mg-barrage:${side}:${sec.id}`, text: `Machine-gun barrage, ${sec.name}`, sectorId: sec.id, factors: { fired: round(roundsOver(fires, width(sec), dt)) } };
+      const min = firing(sec);
+      const fire: FireGroup = { key: `mg-barrage:${side}:${sec.id}`, text: `Machine-gun barrage, ${sec.name}`, sectorId: sec.id, factors: { fired: round(roundsOver(fires, width(sec), min)) } };
       for (const c of field) {
         if (c.side === side || c.posture === 'in-dugout' || sectorAtY(sectors, c.y) !== sec) continue;
         const b = band(sec, c.y);
-        if (b && c.x > b[1] && c.x <= b[1] + depth) push(c, fires, dt, ['mg-fire'], fire, true);
+        if (b && c.x > b[1] && c.x <= b[1] + depth) push(c, fires, min, ['mg-fire'], fire, true);
       }
     }
   }
@@ -419,7 +462,7 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     const near = v(fx.captureRadiusM);
     const targets = field.filter((c) => {
       if (c.side === side) return false;
-      const nml = noMansLandAt(s.lines, side, c.y);
+      const nml = nmlAt(ctx, side, c.y);
       if (nml && c.x >= nml[0] && c.x <= nml[1]) return true;
       return lost.some((x) => c.y >= x.yMin - near && c.y <= x.yMax + near && distanceTo(segmentSamples(ctx, x, state.companies), at(c)) <= near);
     });
@@ -472,12 +515,20 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   out = emit({ ...out, batteries: bats, batteriesRecoveredEventId: recoveredEvent }, ...events);
   const segments: SegmentState[] = [];
   for (const seg of state.segments) {
-    if (covered.has(seg.id)) segments.push({ ...seg, barrageLastOverMin: minute });
+    if (covered.has(seg.id)) segments.push({ ...seg, barrageLastOverMin: minute, barrageOn: onSamples.get(seg.id)! });
     else if (seg.barrageLastOverMin === from) {
+      // It was under a barrage at the step's start; one that ended during the step was on it until its end.
+      const ends = segmentSamples(ctx, seg, state.companies).flatMap((p) => {
+        const sec = sectorAtY(sectors, p[1]);
+        const b = sec && barrageOf.get(sec.id);
+        const end = b ? endedAt(b) : null;
+        return end === null ? [] : [end];
+      });
+      const lastOverMin = ends.length ? Math.max(from, ...ends) : from;
       const id = out.nextEventId;
-      out = emit(out, { minute, kind: 'barrage-passed', segmentId: seg.id, text: `The barrage lifts off ${seg.id}`, causes: ['timetable'], factors: { lastOverMin: from } });
-      segments.push({ ...seg, barrageEventId: id });
-    } else segments.push(seg);
+      out = emit(out, { minute, kind: 'barrage-passed', segmentId: seg.id, text: `The barrage lifts off ${seg.id}`, causes: ['timetable'], factors: { lastOverMin } });
+      segments.push({ ...seg, barrageLastOverMin: lastOverMin, barrageEventId: id, barrageOn: [] });
+    } else segments.push(seg.barrageOn.length ? { ...seg, barrageOn: [] } : seg);
   }
   return { ...out, segments };
 }
@@ -494,3 +545,23 @@ export const batteryRecoveries = (state: SimState): Scheduled[] =>
 /** The minutes off-map fire opens and stops. Fire moves nobody. */
 export const offMapWindows = (_state: SimState, ctx: StepContext): Scheduled[] =>
   offMapFires(ctx).flatMap((e) => [{ minute: e.fromMin, startsMovement: false }, { minute: e.toMin, startsMovement: false }]);
+
+/**
+ * The minutes batteries that fire steadily are due to run out of rounds, so that a quiet step ends on the same grid
+ * minute as fine steps would (`ammunition-exhausted` at the same minute). Creeping and machine-gun barrage batteries fire
+ * their guns × rpm × the active sectors' share of the front each minute (exact while the barrages' phases hold, and
+ * phase changes are scheduled); standing and heavy batteries at most guns × rpm (an early guess only shortens a quiet
+ * step). Defensive fire comes only when enemies are in its zone, and is not forecast. Running out moves nobody.
+ */
+export function ammunitionRunsOut(state: SimState, ctx: StepContext): Scheduled[] {
+  const s = ctx.scenario;
+  const width = (x: Sector) => x.yMax - x.yMin;
+  const allWidth = sum(s.sectors, width);
+  const going = s.sectors.filter((x) => state.barrages.some((b) => b.sectorId === x.id && b.phase !== 'done'));
+  const share = allWidth > 0 ? sum(going, width) / allWidth : 0;
+  return state.batteries.flatMap((b) => {
+    if (!inAction(b) || !Number.isFinite(b.ammoLeft)) return [];
+    const rate = b.guns * v(ctx.tables.weapons[b.weapon]!.rpm) * (b.role === 'creeping' || b.role === 'mg-barrage' ? share : b.role === 'standing' || b.role === 'heavy' ? 1 : 0);
+    return rate > 0 ? [{ minute: state.minute + b.ammoLeft / rate, startsMovement: false }] : [];
+  });
+}

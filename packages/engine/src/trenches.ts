@@ -51,6 +51,45 @@ function nearSegment(cs: readonly CompanyState[], pts: readonly Point[], r: numb
   return out;
 }
 
+/**
+ * Whether a barrage is on the segment's trench within r of any of the points now: only the stretch of trench near the
+ * men counts (the samples `barrageOn` names). A segment marked under the barrage this minute without samples counts as
+ * covered all along.
+ */
+export function barrageNear(seg: SegmentState, ctx: StepContext, companies: readonly CompanyState[], minute: number, near: readonly Point[], r: number): boolean {
+  if (seg.barrageLastOverMin !== minute) return false;
+  if (seg.barrageOn.length === 0) return true;
+  const pts = segmentSamples(ctx, seg, companies);
+  return seg.barrageOn.some((i) => {
+    const p = pts[i];
+    return p !== undefined && near.some((q) => Math.hypot(p[0] - q[0], p[1] - q[1]) <= r);
+  });
+}
+
+/** The side whose companies aim at a taken line ("lineId|sectorId"), by the first company that does; null if none. */
+function takerOf(state: SimState, key: string): Side | null {
+  const c = state.companies.find((x) => x.objectiveLineId !== undefined && `${x.objectiveLineId}|${x.sectorId}` === key);
+  return c ? c.side : null;
+}
+
+/**
+ * Whether a segment lies in its holder's rear: some of its trench, inside a sector's y range, is at or behind a line
+ * its holder has taken in that sector (at: within `lineFeatureMatchM` beyond it; behind: on the attackers' side, lower x).
+ */
+export function inRear(seg: SegmentState, state: SimState, ctx: StepContext): boolean {
+  const match = v(ctx.tables.effects.lineFeatureMatchM);
+  const pts = segmentSamples(ctx, seg, state.companies);
+  for (const key of state.taken) {
+    if (takerOf(state, key) !== seg.holder) continue;
+    const [lineId, sectorId] = key.split('|') as [string, string];
+    const line = ctx.lines.get(lineId);
+    const sector = ctx.scenario.sectors.find((x) => x.id === sectorId);
+    if (!line || !sector) continue;
+    if (pts.some((p) => p[1] >= sector.yMin && p[1] <= sector.yMax && p[0] <= lineXAt(line, p[1]) + match)) return true;
+  }
+  return false;
+}
+
 // ---- segments changing hands --------------------------------------------------------------------------------
 
 /**
@@ -61,16 +100,23 @@ function nearSegment(cs: readonly CompanyState[], pts: readonly Point[], r: numb
 export const capturable = (b: BatteryState): boolean => !b.horses;
 
 /**
- * Segments change hands, in segment order (the model's movement phase). A segment's attackers are the companies of
- * the side not holding it, on the field and up (not down in dugouts), not waiting to start and not falling back,
- * within `captureRadiusM` of its trench (none while a barrage is on it); its defenders are the holder's companies up
- * and within that distance (a garrison still down in its dugouts defends nothing). It changes holder when there are
- * attackers and either no defenders or at least `captureRatio` times as many attacking men as defending:
- * `segment-lost` when its garrison's side loses it, `segment-retaken` when that side takes it back (any of its men left
- * in the dugouts there come up and rejoin it, and it counts as manned). Causes: `defenders-trapped` (the first loss of
- * a segment whose garrison was caught below, with a ref to the trapping), `wire-cut` or `wire-uncut` (a lost segment
- * with wire), `dugouts-uncleared` (attackers who came up from the dugouts, with refs to their sorties), `outnumbered`
- * (defenders there were overpowered), and otherwise the fire that took its garrison out.
+ * Segments change hands, in segment order (the model's movement phase; the plan: "attackers within 50 m of it outnumber
+ * its emerged defenders by 3:1, or the defenders are gone").
+ * - Attackers: the companies of the side not holding it, on the field and up (not down in dugouts), not waiting to start
+ *   and not falling back, within `captureRadiusM` of its trench. Nothing happens while a barrage is on the trench within
+ *   `captureRadiusM` of them (`barrageNear`): the rest of a long segment may be under it.
+ * - Defenders: the holder's companies up within `captureRadiusM`, and (except on a garrison's first loss, which is as it
+ *   was) the holder's companies up, consolidating or holding, within `lineFeatureMatchM` of it: the men on a taken line
+ *   hold the trench they stand on, at the distance the line-taken rule ties a trench to a line.
+ * - It changes holder when there are attackers and at least `captureRatio` times as many attacking men as defending.
+ *   With no defenders, the defenders are gone and it changes holder, except in its holder's rear (`inRear`: at or behind
+ *   a line its holder has taken): there it changes hands only by the 3:1 clause, so with no defenders at all it stays.
+ * - `segment-lost` when its garrison's side loses it, `segment-retaken` when that side takes it back. On a retake any of
+ *   its men left in the dugouts there come up and rejoin it (each a `dugout-sortie`), and it counts as manned.
+ * - Causes: `defenders-trapped` (the first loss of a segment whose garrison was caught below, with a ref to the
+ *   trapping), `wire-cut` or `wire-uncut` (a lost segment with wire), `dugouts-uncleared` (attackers who came up from
+ *   the dugouts, with refs to their sorties), `outnumbered` (defenders there were overpowered), and otherwise the fire
+ *   that took its garrison out.
  *
  * Then guns are overrun (`captureGuns`).
  */
@@ -78,22 +124,28 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
   const fx = ctx.tables.effects;
   const r = v(fx.captureRadiusM);
   const ratio = v(fx.captureRatio);
+  const match = v(fx.lineFeatureMatchM);
   const uncutBelow = v(fx.wireUncutBelow);
   let out = state;
   const upOf = (cs: readonly CompanyState[]) => cs.filter((c) => onField(c) && c.posture !== 'in-dugout');
   let up = upOf(state.companies);
   for (const seg0 of state.segments) {
     const seg = out.segments.find((x) => x.id === seg0.id)!;
-    // Nobody enters a trench a barrage is falling on (as with trapping, gap.ts).
-    if (seg.barrageLastOverMin === out.minute) continue;
     const pts = segmentSamples(ctx, seg, out.companies);
     if (pts.length === 0) continue;
     const other = enemyOf(seg.holder);
     const attackers = nearSegment(up.filter((c) => c.side === other && c.status !== 'waiting' && c.status !== 'falling-back'), pts, r);
-    const defenders = nearSegment(up.filter((c) => c.side === seg.holder), pts, r);
     const a = sum(attackers, (x) => x.c.men);
+    if (!(a > 0)) continue;
+    // Nobody enters a trench a barrage is falling on (as with trapping, gap.ts): only the trench near them matters.
+    if (barrageNear(seg, ctx, out.companies, out.minute, attackers.map((x) => at(x.c)), r)) continue;
+    const firstLoss = seg.holder === seg.garrisonSide && seg.holderEventId === null;
+    const holders = up.filter((c) => c.side === seg.holder);
+    const close = nearSegment(holders, pts, r);
+    const onLine = firstLoss ? [] : nearSegment(holders.filter((c) => c.status === 'consolidating' || c.status === 'holding'), pts, match);
+    const defenders = [...close, ...onLine.filter((x) => !close.some((y) => y.c.id === x.c.id))];
     const d = sum(defenders, (x) => x.c.men);
-    if (!(a > 0) || (d > 0 && a < ratio * d)) continue;
+    if (d > 0 ? a < ratio * d : inRear(seg, out, ctx)) continue;
 
     const lost = seg.holder === seg.garrisonSide;
     // The trapping explains the first loss only: a segment retaken and lost again was not lost over men below.
@@ -124,11 +176,18 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
 
     const id = out.nextEventId;
     const kind = lost ? 'segment-lost' : 'segment-retaken';
-    const rejoin = lost ? [] : seg.dugoutPoints.map((p) => p.companyId);
+    // Retaken: the men of its garrison still below come up and rejoin it, each a sortie (after the retake's event).
+    const rejoin = lost ? [] : seg.dugoutPoints.filter((p) => p.men > 0 && out.companies.some((c) => c.id === p.companyId && onField(c) && c.posture === 'in-dugout'));
+    const sortieId = (k: number): number => id + 1 + k;
     out = emit(
       {
         ...out,
-        companies: rejoin.length ? out.companies.map((c) => (rejoin.includes(c.id) && c.posture === 'in-dugout' ? { ...c, posture: 'in-trench' as const } : c)) : out.companies,
+        companies: rejoin.length
+          ? out.companies.map((c) => {
+              const k = rejoin.findIndex((p) => p.companyId === c.id);
+              return k < 0 ? c : { ...c, posture: 'in-trench' as const, sortieEventId: sortieId(k) };
+            })
+          : out.companies,
         // Retaken: its garrison's side holds it with men up in it, so nobody is left below and none can be caught there.
         segments: out.segments.map((x) => (x.id === seg.id ? { ...x, holder: other, holderEventId: id, ...(lost ? {} : { dugoutPoints: [], emerged: true }) } : x)),
       },
@@ -145,6 +204,20 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
         refs: sortedUnique(refs),
         factors: { attackers: a, defenders: d, inDugouts: below, ...(seg.wireBeltDepthM > 0 ? { wireCut: round(seg.wireCut, 3) } : {}) },
       },
+      ...rejoin.map((p): NewEvent => {
+        const g = out.companies.find((c) => c.id === p.companyId)!;
+        const men = Math.min(p.men, g.men);
+        return {
+          minute: out.minute,
+          kind: 'dugout-sortie',
+          segmentId: seg.id,
+          unitId: g.id,
+          text: `${men} men of ${g.name}, left in the dugouts of ${seg.id}, come up as their side retakes it`,
+          causes: ['dugouts-uncleared'],
+          refs: [p.eventId, id],
+          factors: { men, minutesBelow: out.minute - p.leftMin },
+        };
+      }),
     );
     if (rejoin.length) up = upOf(out.companies);
   }
@@ -268,36 +341,45 @@ export function mopUp(state: SimState, ctx: StepContext, dt: number): SimState {
 }
 
 /**
- * Sorties: men left in the dugouts come up behind the attackers once `sortieDelayMin` has passed since the leading wave
- * left them there, unless a mopping-up company is at the entrances (an enemy company mopping up within
- * `captureRadiusM` of them). They are the garrison company's own men, so the company comes up into its trench (no men
- * are made): it fires on the attackers' later waves and rear like any company, and can retake the segment.
- * `dugout-sortie`, cause `dugouts-uncleared`, ref to the trapping.
+ * Sorties: men left in the dugouts come up behind the attackers once `sortieDelayMin` has passed since the last enemy
+ * company stood at the entrances. Any enemy company up within `captureRadiusM` of a dugout point guards it (SS 143:
+ * moppers-up "guard the entrances to dugouts", and the later waves passing over do the same while they are there); the
+ * clock starts when the last of them leaves (`unguardedMin`). Nobody comes up while a barrage is on the trench within
+ * `captureRadiusM` of them. They are the garrison company's own men, so the company comes up into its trench (no men
+ * are made): it fires on the attackers' later waves and rear like any company. `dugout-sortie`, cause
+ * `dugouts-uncleared`, ref to the trapping.
  */
 export function sorties(state: SimState, ctx: StepContext): SimState {
   const fx = ctx.tables.effects;
   const delay = v(fx.sortieDelayMin);
   const r = v(fx.captureRadiusM);
   if (!state.segments.some((s) => s.dugoutPoints.length > 0)) return state;
-  const moppers = state.companies.filter((c) => onField(c) && c.intent === 'mop-up');
+  const up = state.companies.filter((c) => onField(c) && c.posture !== 'in-dugout');
   let out = state;
   for (const seg0 of state.segments) {
     for (const point of seg0.dugoutPoints) {
-      if (out.minute < point.leftMin + delay) continue;
-      if (moppers.some((c) => c.side !== seg0.garrisonSide && Math.hypot(point.point[0] - c.x, point.point[1] - c.y) <= r)) continue;
-      const g = out.companies.find((c) => c.id === point.companyId)!;
-      const men = Math.min(point.men, g.men);
-      const id = out.nextEventId;
-      const drop = (x: SegmentState): SegmentState => (x.id === seg0.id ? { ...x, dugoutPoints: x.dugoutPoints.filter((q) => q.companyId !== point.companyId) } : x);
-      if (men <= 0 || !onField(g)) {
-        out = { ...out, segments: out.segments.map(drop) };
+      const guarded = up.some((c) => c.side !== seg0.garrisonSide && Math.hypot(point.point[0] - c.x, point.point[1] - c.y) <= r);
+      const swap = (q: DugoutPoint | null) => (x: SegmentState): SegmentState =>
+        x.id === seg0.id ? { ...x, dugoutPoints: x.dugoutPoints.flatMap((p) => (p.companyId !== point.companyId ? [p] : q ? [q] : [])) } : x;
+      if (guarded) {
+        if (point.unguardedMin !== out.minute) out = { ...out, segments: out.segments.map(swap({ ...point, unguardedMin: out.minute })) };
         continue;
       }
+      if (out.minute < point.unguardedMin + delay) continue;
+      const seg = out.segments.find((x) => x.id === seg0.id)!;
+      if (barrageNear(seg, ctx, out.companies, out.minute, [point.point], r)) continue;
+      const g = out.companies.find((c) => c.id === point.companyId)!;
+      const men = Math.min(point.men, g.men);
+      if (men <= 0 || !onField(g)) {
+        out = { ...out, segments: out.segments.map(swap(null)) };
+        continue;
+      }
+      const id = out.nextEventId;
       out = emit(
         {
           ...out,
           companies: out.companies.map((c) => (c.id === g.id ? { ...c, posture: 'in-trench' as const, sortieEventId: id } : c)),
-          segments: out.segments.map(drop),
+          segments: out.segments.map(swap(null)),
         },
         {
           minute: out.minute,
@@ -307,7 +389,7 @@ export function sorties(state: SimState, ctx: StepContext): SimState {
           text: `${men} men of ${g.name}, left in the dugouts of ${seg0.id} ${out.minute - point.leftMin} minutes ago, come up behind the attackers`,
           causes: ['dugouts-uncleared'],
           refs: [point.eventId],
-          factors: { men, minutesBelow: out.minute - point.leftMin },
+          factors: { men, minutesBelow: out.minute - point.leftMin, unguardedMin: out.minute - point.unguardedMin },
         },
       );
     }
@@ -318,12 +400,12 @@ export function sorties(state: SimState, ctx: StepContext): SimState {
 /** The minutes men left in dugouts are due to come up. A sortie moves nobody: the men fire from their own trench. */
 export function dugoutSorties(state: SimState, ctx: StepContext): Scheduled[] {
   const delay = v(ctx.tables.effects.sortieDelayMin);
-  return state.segments.flatMap((s) => s.dugoutPoints.filter((p) => p.men > 0).map((p) => ({ minute: p.leftMin + delay, startsMovement: false })));
+  return state.segments.flatMap((s) => s.dugoutPoints.filter((p) => p.men > 0).map((p) => ({ minute: p.unguardedMin + delay, startsMovement: false })));
 }
 
 // ---- segments of a line -------------------------------------------------------------------------------------
 
-const onLineCache = new WeakMap<object, Map<string, string[]>>();
+const onLineCache = new WeakMap<StepContext, Map<string, string[]>>();
 
 /**
  * The segments an objective line runs along in a sector, for the line-taken rule: those with a point of their trench
@@ -331,8 +413,9 @@ const onLineCache = new WeakMap<object, Map<string, string[]>>();
  * Fixed for the run, so worked out once.
  */
 export function segmentsOnLine(state: SimState, ctx: StepContext, lineId: string, sectorId: string): SegmentState[] {
-  let cache = onLineCache.get(ctx.scenario);
-  if (!cache) onLineCache.set(ctx.scenario, (cache = new Map()));
+  // Keyed by the run's context: the answer depends on its tables (lineFeatureMatchM) and segments, not only on the scenario.
+  let cache = onLineCache.get(ctx);
+  if (!cache) onLineCache.set(ctx, (cache = new Map()));
   const key = `${lineId}|${sectorId}`;
   let ids = cache.get(key);
   if (!ids) {

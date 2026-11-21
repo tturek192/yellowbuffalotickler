@@ -8,7 +8,8 @@ import type { Models } from './run';
 import { SCHEDULES } from './schedule';
 import { takeLines } from './step';
 import type { SimState, StepContext } from './step';
-import { captureSegments, dugoutSorties } from './trenches';
+import { emergence } from './gap';
+import { captureSegments, dugoutSorties, sorties } from './trenches';
 import {
   companyIds, eventsOf, fixtureArtillery, fixtureDugouts, fixtureWithDoctrineV3, lineTakenMinute, ofKind, rowsOf, runDugouts, runHoldout,
   runOverrun, totalsOverTime, withQuietStep,
@@ -77,7 +78,7 @@ describe('the fight for trenches', () => {
     expect(taken.factors!.attackers).toBeGreaterThanOrEqual(3 * 20);
   });
 
-  it('men left in the dugouts come up after sortieDelayMin, retake the segment the attackers left, and are not new men', () => {
+  it('men left in the dugouts come up after sortieDelayMin, fire from their trench, and are not new men', () => {
     const r = runDugouts({ mopUp: false });
     const trapped = ofKind(r, 'defenders-trapped');
     const sorties = ofKind(r, 'dugout-sortie');
@@ -89,10 +90,80 @@ describe('the fight for trenches', () => {
       expect(e.minute - t.minute).toBeGreaterThanOrEqual(30);
       expect(e.factors!.men).toBe(trapped.find((x) => x.segmentId === e.segmentId)!.factors!.inDugouts);
     }
-    const retaken = ofKind(r, 'segment-retaken');
-    expect(retaken.length).toBeGreaterThan(0);
-    expect(retaken[0]!.causes).toContain('dugouts-uncleared');
     for (const id of companyIds(r)) expect(new Set(totalsOverTime(r, id))).toHaveLength(1);
+  });
+
+  it('a sortie with no attacker nearby cannot retake a segment behind a taken line, but a 3:1 sortie can', () => {
+    // The Black Line (x 1150) is taken at minute 32; the trench at x 150 is behind it.
+    const alone = runDugouts({ mopUp: false });
+    expect(ofKind(alone, 'line-taken')[0]!.minute).toBeLessThan(ofKind(alone, 'dugout-sortie')[0]!.minute);
+    expect(ofKind(alone, 'segment-retaken')).toHaveLength(0);
+    expect(alone.snapshots.at(-1)!.segments.rows.map((x) => x[1])).toEqual(['allied', 'allied']);
+    // 15 men holding the trench against about 60 from each dugout: 3 to 1, retaken.
+    const held = runDugouts({ mopUp: false, holders: 15 });
+    const retaken = ofKind(held, 'segment-retaken');
+    expect(retaken.map((e) => e.segmentId).sort()).toEqual(['ger-front-a:001', 'ger-front-a:002']);
+    for (const e of retaken) {
+      expect(e.factors!.defenders).toBe(15);
+      expect(e.factors!.attackers).toBeGreaterThanOrEqual(45);
+      expect(e.causes).toEqual(['dugouts-uncleared', 'outnumbered']);
+      expect(held.events[e.refs[0]!]!.kind).toBe('dugout-sortie');
+    }
+    // 30 men are too many for 60 to retake.
+    expect(ofKind(runDugouts({ mopUp: false, holders: 30 }), 'segment-retaken')).toHaveLength(0);
+  });
+
+  it('a segment ahead of the furthest taken line, abandoned by its holders, can be retaken', () => {
+    const { state, ctx } = initRun(...fixtureDugouts({ mopUp: false }), { seed: 1 });
+    const k1 = { ...state.companies.find((c) => c.id === 'k1')!, posture: 'in-trench' as const, men: 50 };
+    const s: SimState = {
+      ...state, minute: 40, events: [],
+      companies: state.companies.map((c) => (c.id === 'k1' ? k1 : c.side === 'allied' ? { ...c, x: 900 } : c)),
+      segments: state.segments.map((x) => ({ ...x, holder: 'allied' as const, holderEventId: 0 })),
+    };
+    // Black not taken: the abandoned trench goes back.
+    expect(captureSegments(s, ctx).events.filter((e) => e.kind === 'segment-retaken').map((e) => e.segmentId)).toEqual(['ger-front-a:001']);
+    // Black taken: it is the attackers' rear, and stays theirs.
+    expect(captureSegments({ ...s, taken: ['black|s1'] }, ctx).events.filter((e) => e.kind === 'segment-retaken')).toHaveLength(0);
+  });
+
+  it('enemy companies at the entrances hold a dugout sortie; its clock starts when the last of them leaves', () => {
+    const { state, ctx } = initRun(...fixtureDugouts({ mopUp: false }), { seed: 1 });
+    const point = { companyId: 'k1', point: [150, 100] as [number, number], men: 50, leftMin: 0, unguardedMin: 0, eventId: 0, cleared: 0 };
+    const k1 = { ...state.companies.find((c) => c.id === 'k1')!, men: 50, posture: 'in-dugout' as const };
+    const base: SimState = {
+      ...state, minute: 40, events: [],
+      companies: state.companies.map((c) => (c.id === 'k1' ? k1 : c.id === 'c1' ? { ...c, x: 150, y: 130, status: 'consolidating' as const } : c.side === 'allied' ? { ...c, x: 900 } : c)),
+      segments: state.segments.map((x, i) => ({ ...x, holder: 'allied' as const, holderEventId: 0, dugoutPoints: i === 0 ? [point] : [] })),
+    };
+    // c1 (no mopper) stands 30 m from the entrances: no sortie, and the clock restarts.
+    const guarded = sorties(base, ctx);
+    expect(guarded.events.filter((e) => e.kind === 'dugout-sortie')).toHaveLength(0);
+    expect(guarded.segments[0]!.dugoutPoints[0]!.unguardedMin).toBe(40);
+    // It leaves at 40: nothing at 60, the sortie at 70.
+    const gone = { ...guarded, companies: guarded.companies.map((c) => (c.id === 'c1' ? { ...c, x: 900 } : c)) };
+    expect(sorties({ ...gone, minute: 60 }, ctx).events.filter((e) => e.kind === 'dugout-sortie')).toHaveLength(0);
+    expect(sorties({ ...gone, minute: 70 }, ctx).events.filter((e) => e.kind === 'dugout-sortie')).toHaveLength(1);
+    // Nobody comes up while a barrage falls on the trench at the entrances.
+    const shelled = { ...gone, minute: 70, segments: gone.segments.map((x, i) => (i === 0 ? { ...x, barrageLastOverMin: 70, barrageOn: [4] } : x)) };
+    expect(sorties(shelled, ctx).events.filter((e) => e.kind === 'dugout-sortie')).toHaveLength(0);
+  });
+
+  it('a retake brings up the garrison still below as a sortie', () => {
+    // k1 is still below when k2, up in the trench, retakes the segment.
+    const { state, ctx } = initRun(...fixtureDugouts({ mopUp: false }), { seed: 1 });
+    const k1 = { ...state.companies.find((c) => c.id === 'k1')!, men: 50, posture: 'in-dugout' as const };
+    const k2 = { ...state.companies.find((c) => c.id === 'k2')!, x: 150, y: 120, posture: 'in-trench' as const };
+    const s: SimState = {
+      ...state, minute: 40, events: [],
+      companies: state.companies.map((c) => (c.id === 'k1' ? k1 : c.id === 'k2' ? k2 : c.side === 'allied' ? { ...c, x: 900 } : c)),
+      segments: state.segments.map((x, i) => ({ ...x, holder: 'allied' as const, holderEventId: 0, dugoutPoints: i === 0 ? [{ companyId: 'k1', point: [150, 100] as [number, number], men: 50, leftMin: 0, unguardedMin: 0, eventId: 0, cleared: 0 }] : [] })),
+    };
+    const out = captureSegments(s, ctx);
+    const [ret, sortie] = out.events;
+    expect(ret!.kind).toBe('segment-retaken');
+    expect(sortie).toMatchObject({ kind: 'dugout-sortie', unitId: 'k1', causes: ['dugouts-uncleared'], refs: [0, ret!.id] });
+    expect(out.companies.find((c) => c.id === 'k1')).toMatchObject({ posture: 'in-trench', sortieEventId: sortie!.id });
   });
 
   it('mopping up clears the dugouts at mopUpRateMenPerMin with bombs; the men cleared are prisoners of the garrison they belong to', () => {
@@ -131,16 +202,41 @@ describe('the fight for trenches', () => {
     const f = fixtureDugouts({ mopUp: false });
     const { state, ctx } = initRun(f[0], f[1], { seed: 1 });
     const seg = state.segments[0]!;
-    const s = { ...state, minute: 10, segments: [{ ...seg, dugoutPoints: [{ companyId: 'k1', point: [150, 100] as [number, number], men: 50, leftMin: 8, eventId: 0, cleared: 0 }] }, ...state.segments.slice(1)] };
+    const s = { ...state, minute: 10, segments: [{ ...seg, dugoutPoints: [{ companyId: 'k1', point: [150, 100] as [number, number], men: 50, leftMin: 6, unguardedMin: 8, eventId: 0, cleared: 0 }] }, ...state.segments.slice(1)] };
     expect(dugoutSorties(s, ctx)).toEqual([{ minute: 38, startsMovement: false }]);
-    const coarse = runScenario(...withQuiet(fixtureDugouts({ mopUp: false }), 10), { seed: 3, endMinute: 120 });
-    const fine = runScenario(...withQuiet(fixtureDugouts({ mopUp: false }), 2), { seed: 3, endMinute: 120 });
-    // What the trench fight did (the artillery's own ammunition accounting at the barrage's end is another matter).
-    const KINDS = ['defenders-trapped', 'segment-lost', 'segment-retaken', 'dugout-sortie', 'dugout-cleared', 'company-reached', 'line-taken'];
-    const fight = (r: RunRecord) => JSON.stringify(r.events.filter((e) => KINDS.includes(e.kind)).map(({ id: _, refs: __, ...e }) => e));
+    const coarse = runScenario(...withQuiet(fixtureDugouts({ mopUp: false, holders: 15 }), 10), { seed: 3, endMinute: 120 });
+    const fine = runScenario(...withQuiet(fixtureDugouts({ mopUp: false, holders: 15 }), 2), { seed: 3, endMinute: 120 });
     expect(ofKind(coarse, 'dugout-sortie').length).toBeGreaterThan(0);
     expect(ofKind(coarse, 'segment-retaken').length).toBeGreaterThan(0);
-    expect(fight(coarse)).toBe(fight(fine));
+    expect(ofKind(coarse, 'ammunition-exhausted').length).toBeGreaterThan(0);
+    expect(JSON.stringify(coarse.events)).toBe(JSON.stringify(fine.events));
+  });
+});
+
+describe('the barrage on a segment is local', () => {
+  // ger-front-a:001 runs from y 0 to 200 at x 150 (samples 25 m apart, indices 0 to 8); c1 stands at its south end.
+  const setup = (barrageOn: number[]) => {
+    const { state, ctx } = initRun(...fixtureArtillery(), { seed: 1 });
+    const s: SimState = {
+      ...state, minute: 20, events: [],
+      companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, x: 150, y: 10, status: 'advancing' as const } : c.side === 'allied' ? { ...c, x: -900 } : c)),
+      segments: state.segments.map((x, i) => (i === 0 ? { ...x, barrageLastOverMin: 20, barrageOn } : x)),
+    };
+    return { s, ctx };
+  };
+
+  it('a long segment partly under the barrage can be trapped and taken where the attackers stand, but not where shells fall near them', () => {
+    const far = setup([6, 7, 8]);
+    const on001 = (st: SimState) => st.events.filter((e) => e.segmentId === 'ger-front-a:001').map((e) => e.kind);
+    const trappedFar = emergence(far.s, far.ctx);
+    expect(on001(trappedFar)).toEqual(['defenders-trapped']);
+    expect(captureSegments(trappedFar, far.ctx).events.filter((e) => e.kind === 'segment-lost').map((e) => e.segmentId)).toEqual(['ger-front-a:001']);
+    const near = setup([0, 1, 2, 3]);
+    expect(on001(emergence(near.s, near.ctx))).toEqual([]);
+    // The garrison still below (not trapped, not up) would not be taken either, with the shells on the trench at c1.
+    const k1Up = { ...near.s, companies: near.s.companies.map((c) => (c.id === 'k1' ? { ...c, posture: 'in-trench' as const, men: 10 } : c)) };
+    expect(on001(captureSegments(k1Up, near.ctx))).toEqual([]);
+    expect(on001(captureSegments({ ...k1Up, segments: far.s.segments }, near.ctx))).toEqual(['segment-lost']);
   });
 });
 

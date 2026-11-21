@@ -249,14 +249,14 @@ export function moveCompanies(state: SimState, ctx: StepContext, dt: number, pen
     let next: CompanyState = c;
     let moved = 0;
     if (c.intent === 'advance' && c.status !== 'consolidating' && state.minute >= c.startMin && c.objectiveLineId !== undefined) {
-      const line = ctx.scenario.lines.find((l) => l.id === c.objectiveLineId)!;
-      const objX = lineXAt(line.points, c.y);
+      const objX = lineXAt(ctx.lines.get(c.objectiveLineId)!, c.y);
       const target = targetX(c, state, ctx);
       const own = ownSpeed(c, ctx);
       const speed = own * speedFactor(ctx.world, at(c), wet, [Math.min(Math.max(target, c.x), c.x + own * dt), c.y]);
       const x = Math.max(c.x, advanceThrough(c.x, target, speed, dt, beltsAt(state, ctx, c.y)));
       moved = x - c.x;
       if (objX - x <= 1) {
+        const line = ctx.scenario.lines.find((l) => l.id === c.objectiveLineId)!;
         const causes: Cause[] = [c.barrageLost ? 'barrage-moved-on' : 'followed-barrage'];
         const eventId = state.nextEventId + events.length;
         events.push({

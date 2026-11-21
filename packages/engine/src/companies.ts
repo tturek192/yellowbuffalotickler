@@ -92,6 +92,8 @@ export type CompanyState = {
   recentFire: Array<{ minute: number; eventId: number | null; causes: Cause[] }>;
   /** Its `company-reached` event and that event's causes, once it has reached its objective line (Task 10); null before. */
   reached: { eventId: number; causes: Cause[] } | null;
+  /** Its latest `company-fell-back` event, for the refs of its rally (Task 10); null if it never fell back. */
+  fellBackEventId: number | null;
   /** A garrison's `dugout-sortie` event, once its men left in the dugouts have come up behind the attackers (Task 10); null before. */
   sortieEventId: number | null;
 };
@@ -186,6 +188,7 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       officersLostEventId: null,
       recentFire: [],
       reached: null,
+      fellBackEventId: null,
       sortieEventId: null,
     };
   });

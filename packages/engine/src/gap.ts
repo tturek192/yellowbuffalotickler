@@ -7,6 +7,7 @@ import type { Cause } from './causes';
 import { isHolding } from './companies';
 import type { CompanyState } from './companies';
 import { targetX } from './movement';
+import { barrageNear } from './trenches';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import { stochasticRound } from './stochastic';
@@ -111,11 +112,12 @@ export function emergeAtMin(seg: SegmentState, doctrine: Doctrine, ctx: StepCont
 const at = (c: Pick<CompanyState, 'x' | 'y'>): [number, number] => [c.x, c.y];
 
 /**
- * Garrisons coming up, or caught below (the model, "The gap"), segment by segment in order, after movement. Nothing
- * happens to a garrison while a barrage is on its segment: the attackers cannot enter a trench their own barrage is
- * falling on, and the garrison cannot come up.
- * - With the barrage off it (lifted, or none on it since Zero), attackers within the garrison's `closeRangeM` of the
- *   segment before it is up trap it: `trappedSurrenderFrac` of each garrison company's men (rounded without bias, in
+ * Garrisons coming up, or caught below (the model, "The gap"), segment by segment in order, after movement. The
+ * garrison cannot come up while a barrage is anywhere on its segment, and the attackers cannot enter the trench where
+ * their own barrage is falling (`barrageNear`: on the trench within `closeRangeM` of them; the rest of a long segment may
+ * still be under it).
+ * - With the barrage off the trench near them (lifted, or none on it since Zero), attackers within the garrison's
+ *   `closeRangeM` of the segment before it is up trap it: `trappedSurrenderFrac` of each garrison company's men (rounded without bias, in
  *   ascending id order) surrender, the rest stay below as the segment's dugout points (`defenders-trapped`, cause
  *   `followed-barrage`);
  * - otherwise, once its emergence minute (`emergeAtMin`) is reached, it is up: its companies man the trench
@@ -128,7 +130,8 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
   const mult = v(ctx.tables.effects.gapMultiplier);
   for (const seg0 of state.segments) {
     const seg = out.segments.find((x) => x.id === seg0.id)!;
-    if (seg.emerged || seg.trapped || seg.barrageLastOverMin === out.minute) continue;
+    if (seg.emerged || seg.trapped) continue;
+    const under = seg.barrageLastOverMin === out.minute;
     const g = garrisonOf(out, ctx, seg);
     if (!g) continue;
     const pts = segmentSamples(ctx, seg, out.companies);
@@ -139,7 +142,10 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
     const nearest = attackers[0];
     const refs = seg.barrageEventId === null ? [] : [seg.barrageEventId];
     const names = g.companies.map((c) => c.name).join(', ');
-    if (nearest && nearest.d <= v(g.doctrine.common.closeRangeM)) {
+    const closeM = v(g.doctrine.common.closeRangeM);
+    const close = attackers.filter((x) => x.d <= closeM).map((x) => at(x.c));
+    // Attackers cannot enter the trench where their own barrage is falling: only the trench near them must be clear.
+    if (nearest && nearest.d <= closeM && !barrageNear(seg, ctx, out.companies, out.minute, close, closeM)) {
       const frac = v(g.doctrine.defence!.trappedSurrenderFrac);
       let captured = 0;
       let below = 0;
@@ -150,7 +156,7 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
         const n = Math.min(c.men, stochasticRound(c.men * frac, ctx.rng));
         captured += n;
         below += c.men - n;
-        if (c.men - n > 0) points.push({ companyId: c.id, point: at(c), men: c.men - n, leftMin: out.minute, eventId, cleared: 0 });
+        if (c.men - n > 0) points.push({ companyId: c.id, point: at(c), men: c.men - n, leftMin: out.minute, unguardedMin: out.minute, eventId, cleared: 0 });
         trapped.push({ ...c, men: c.men - n, captured: c.captured + n });
       }
       out = emit(
@@ -173,7 +179,8 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
       );
       continue;
     }
-    if (out.minute < emergeAtMin(seg, g.doctrine, ctx)) continue;
+    // The garrison cannot come up while a barrage is anywhere on its segment.
+    if (under || out.minute < emergeAtMin(seg, g.doctrine, ctx)) continue;
     const ids = g.companies.map((c) => c.id);
     const attack = nearest && ctx.doctrines[nearest.c.doctrineId]!.attack;
     const follow = attack ? v(attack.followDistanceM) : 0;
