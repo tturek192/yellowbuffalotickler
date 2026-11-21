@@ -32,6 +32,7 @@ The time-lapse shows all of it. The full Vimy scenario then runs to its end, and
   - reserves, weather and night;
   - running totals and the "why" panel.
 - **The report.** Task 19 runs Vimy and writes the first model report.
+- **The period style.** Task 20 dresses the time-lapse in the owner's chosen period map style.
 
 **Tech Stack:**
 - TypeScript (strict), npm workspaces, Zod 3, `yaml`, Vitest 5.
@@ -1596,6 +1597,91 @@ git commit -m "feat(cli): model report against the historical record; first Vimy
 
 ---
 
+### Task 20: The period map style (owner's choice: Clegg-style frame with pictorial territory fills and vignettes)
+
+The owner chose mockup A from https://claude.ai/artifact/9x2q5EpSQb3j9AXDT1i54i, with B's territory fills and vignettes. Board `Main.dc.html` there is the visual reference.
+
+**Files:**
+- Create:
+  - `packages/app/src/map/period.ts` (territory fills, vignettes, compass rose)
+  - `packages/app/src/ui/PeriodFrame.tsx` (border, title cartouche, Explanatory Notes panel)
+  - `packages/app/src/ui/periodStyle.ts` (style switch, persisted per viewer)
+  - `docs/research/vimy/insignia.md`
+- Modify:
+  - `packages/scenario/src/schema.ts` (formations gain optional `insignia?: { colour: Sourced<string>; shape?: 'rectangle' | 'circle' | 'diamond' | 'triangle' | 'semicircle' }`)
+  - `scenarios/vimy-1917/oob-canadian.yaml`
+  - `packages/engine/src/record.ts` (`record.units` carries each battalion's division insignia colour, if it has one)
+  - `packages/app/src/map/draw.ts`, `ui/Playback.tsx`, `ui/MapKey.tsx`, `ui/Timeline.tsx`
+- Test:
+  - `packages/app/src/map/period.test.ts`
+  - `packages/scenario/src/vimy-insignia.test.ts`
+  - `packages/app/e2e/playback.spec.ts`
+
+**What it looks like** (the reference board):
+- **The frame.** The map sits inside the frame; the frame never covers the map.
+  - Parchment ground with a paper texture, a dark outer border, a red double rule and corner ornaments.
+  - A title cartouche with the battle, the date and a scale bar.
+  - An "Explanatory Notes" panel in place of the map key.
+  - Period lettering throughout (IM Fell English and IM Fell English SC, which are freely licensed Google Fonts, plus EB Garamond).
+- **The clock and controls.** The clock is lettered in period style ("Monday, 9th April · 7.0 a.m."), with a red play button, the speeds, and a ribbon timeline whose milestone ticks are labelled in italics.
+- **Battalion blocks at corps zoom.**
+  - Each is a small rectangle in its division's insignia colour: filled when in action, open when waiting or in reserve.
+  - German battalions are dark blocks with a red edge.
+  - Morale and suppression states (Task 17) draw on the block.
+  - Zoomed in, companies keep Task 17's markers in the same colours.
+- **Territory fills.** Each side's held ground is a pastel wash: tan for the attacker, green for the defender. It is bounded by the moving front from Task 18, so it changes as ground is taken.
+- **The compass rose** replaces the north arrow.
+- **Vignettes.** Small ink drawings, each tied to something real in the run or the scenario, never decoration alone:
+  - a contact-patrol aircraft drawn when a `contact-patrol` channel message is in flight (Task 11);
+  - a tank at each tank's position (Task 14), drawn bogged when it bogs;
+  - a field gun at each battery `position` (Task 3);
+  - an observation balloon at each feature of a new kind `balloon`, which is added only where a source places one.
+  - All artwork is original; nothing is copied from the reference maps the owner showed.
+- **The plain trench-map style stays available.** A "Period style" switch in the header changes between the two. The choice is remembered per viewer, in browser storage, inside a try/catch.
+
+**Method for insignia:** research the 1917 divisional patch colours (and shapes, if a source gives them) of the four Canadian divisions and the British 5th Division, from the allowed hosts. Enter them as sourced, or as estimates with their reasoning. Notes follow the usual format. Formations without an insignia fall back to the side's colour, recorded in `defaultsUsed`.
+
+- [ ] **Step 1: Write the failing tests**
+
+```ts
+it('territory fills follow the front: a lost segment moves the defender fill back', () => {
+  expect(fillArea(recordWithLoss(), 60, 'central')).toBeLessThan(fillArea(recordWithLoss(), 0, 'central'));
+});
+it('every vignette is anchored to a run or scenario thing; none are drawn without one', () => {
+  expect(vignettes(recordWithNoTanksOrBalloons(), 30).filter(v => v.kind === 'tank' || v.kind === 'balloon')).toEqual([]);
+});
+it('battalion blocks use their division insignia colour, falling back to the side colour', () => {
+  expect(blockColour(unit({ insignia: '#3f7a3a' }))).toBe('#3f7a3a'); expect(blockColour(unit({ side: 'central' }))).toBe(MAP_COLORS.german);
+});
+it('every Canadian division has a sourced or estimated insignia colour', () => {
+  for (const d of ['1cdn', '2cdn', '3cdn', '4cdn']) expect(formation(vimy(), d).insignia).toBeDefined();
+});
+// e2e: the period style shows the Explanatory Notes panel and the cartouche; switching to the plain style hides them; the choice survives a reload
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `npx vitest run packages/app/src/map/period.test.ts packages/scenario/src/vimy-insignia.test.ts`
+Expected: FAIL.
+
+- [ ] **Step 3: Do the insignia research, then build the frame, blocks, fills, vignettes and switch.** Bump ENGINE_VERSION's patch if the record changes, and re-pin the golden.
+
+- [ ] **Step 4: Run all tests and the e2e, and look at screenshots in both styles at 1280 px and 390 px.**
+  - At 390 px, the frame collapses: a thin border, the cartouche above the map, and the Notes panel below it.
+  - No text may overlap.
+
+Run: `npm test && PW_CHROMIUM_PATH=/opt/pw-browsers/chromium npm -w packages/app run e2e`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add packages scenarios/vimy-1917 docs/research/vimy
+git commit -m "feat(app): period map style: Clegg frame, insignia blocks, territory fills and event vignettes"
+```
+
+---
+
 ## Done when
 
 - `npm test` and the e2e pass, and the budgets hold: one Vimy run ≤ 3 s, a record ≤ 8 MB, 200 runs with 4 workers ≤ 5 min.
@@ -1610,7 +1696,8 @@ git commit -m "feat(cli): model report against the historical record; first Vimy
   - strength, morale and suppression;
   - the moving front and captured ground;
   - barrages, bursts, reserves, weather and night;
-  - running totals.
+  - running totals;
+  - the period map style chosen by the owner (Task 20), with the plain trench-map style one switch away.
 - `docs/research/vimy/model-report-1.md` reports the uncalibrated model against the record honestly, with pass or fail per target.
 - No calibrated parameter has moved from its documented starting value.
 - `scenario.yaml` still says `status: draft`.
