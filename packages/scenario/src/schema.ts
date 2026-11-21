@@ -4,7 +4,7 @@ import { TIERS } from './sources';
 import { LocalDateTimeSchema } from './local-time';
 import { FrameSchema } from './frame';
 import { TerrainGridSchema } from './terrain';
-import { CHANNEL_KINDS } from './tables';
+import { CHANNEL_KINDS, WEAPON_KINDS } from './tables';
 
 const Side = z.enum(['allied', 'central']);
 
@@ -166,7 +166,14 @@ const BombardmentSchema = z.strictObject({
   allocations: z.array(
     z.strictObject({ artilleryId: z.string(), task: z.enum(['wire', 'trench', 'battery', 'harass']), rounds: Count }),
   ),
-  spared: z.array(YBand.extend({ featureId: z.string(), reason: sourced(z.string()) })),
+  spared: z.array(
+    YBand.extend({
+      featureId: z.string(),
+      reason: sourced(z.string()),
+      /** The weapon kinds that spared the stretch (it gets no rounds from them); absent: every kind. */
+      onlyKinds: z.array(z.enum(WEAPON_KINDS)).min(1).optional(),
+    }),
+  ),
   wire: z.array(YBand.extend({ featureId: z.string(), beltDepthM: sourced(z.number().positive()) })),
 });
 

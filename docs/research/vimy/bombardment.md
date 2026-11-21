@@ -186,8 +186,9 @@ belt per stretch, so the Second Line's two belts are summed. Its two belts "prot
 along the upper edges of Farbus Wood and the Bois de la Ville" (BOH p. 336). The 13th Brigade swung round to avoid "the
 thick double belt of wire" running south-east from Count's Wood (`hussey-inman-1921` p. 153).
 
-The Thélus Trench stretch has no garrison company. If the engine builds segments only from garrisons, that stretch has
-no effect.
+The Thélus Trench and Second Line stretches have no garrison company. The engine builds its trench segments only from
+garrisons, so these belts have nothing to act on: a run lists each once in its `defaultsUsed`
+(`bombardment.wire[thelus-trench] ← not applied (no garrison segment on the feature)`).
 
 **What the wire did.** The 1st Division's assaulting companies carried 24 pairs of wire-cutters each, because "the
 artillery fire would not have sufficiently reduced the wire on the right" (Nicholson p. 257). On the first position the
@@ -237,17 +238,18 @@ It does **not** include:
 - the 18-pdrs and 13-pdrs (kind `field-gun`);
 - the trench mortars (kind `mortar`), under the divisions.
 
-So the historical sparing is heavy-only. The schema's `spared` band takes no rounds of any kind, so at present the model
-spares the stretch from every gun and mortar. The sources do not say that the field guns or mortars fired on it; nor do
-they say that they did not. A comment on the entry in `bombardment.yaml` records the intended `onlyKinds: [heavy]`, for
-when the schema has that field.
+So the historical sparing is heavy-only, and the entry says so: `onlyKinds: [heavy]` (BOH p. 328). A `spared` band
+takes no rounds from the weapon kinds it names (every kind when it names none), so the 4.5-inch howitzers, the field
+guns and the mortars still fire on the stretch, and the heavy pieces' rounds go to the rest of the front. The sources
+do not say that the field guns or mortars fired on it; nor do they say that they did not.
 
 **The wire is the problem with heavy-only.** The outcome the sources give is that the strong point's covering wire
 survived: it "had been repaired" by the 7th, "the wire prevented all attempts to rush the strong point" (BOH p. 328),
 and "a section of wire had escaped destruction" (p. 329). The 18-pdrs fired 323,500 wire rounds and the medium mortars
 14,100 (Allocations). If those reached this stretch in the model, its wire would be cut, against the sourced outcome.
-Whether the field guns cut wire there after 7 April is an open question (below). The choice between `onlyKinds: [heavy]`
-and sparing it from all fire belongs to whoever sets that field, with this conflict in view (Conflicts).
+Whether the field guns cut wire there after 7 April is an open question (below). The entry follows the attribution
+(heavy only), so in the model the 18-pdrs' and mortars' wire rounds do cut this stretch, against the sourced outcome;
+sparing it from all fire would match the outcome instead (Conflicts).
 
 **Timing.** The stretch was not spared for the whole bombardment: it was "destroyed early in the bombardment" and left
 alone only after the 7 April photographs showed it repaired (BOH p. 328). The schema's band spares it from 20 March.
@@ -378,6 +380,7 @@ by battery or group (Open questions), a run's captured-guns count should not be 
 | spared stretch, cost | `nicholson-1962` | 259 | "From this position machine-gun fire cut down half the 87th's leading wave" | official |
 | spared stretch, why | `boh-1917-1` | 328 | "at the request of the infantry, who proposed to make use of it when captured, it was allowed to remain" | official |
 | spared stretch, by whom | `boh-1917-1` | 328 | "The heavy artillery commander had desired to destroy it again" | official |
+| spared stretch, weapon kinds (`onlyKinds: [heavy]`) | `boh-1917-1` | 328 | "The heavy artillery commander had desired to destroy it again" | official |
 | spared stretch, wire repaired | `boh-1917-1` | 328 | "this fortification and its covering wire had been repaired" | official |
 | spared stretch, wire held | `boh-1917-1` | 328 | "the wire prevented all attempts to rush the strong point" | official |
 | spared stretch, wire | `boh-1917-1` | 329 | "Only at Hill 145, where a section of wire had escaped destruction" | official |
@@ -429,9 +432,9 @@ by battery or group (Open questions), a run's captured-guns count should not be 
 - **The spared stretch: heavy-only, or all fire.** Both sources say the heavy artillery spared it (Nicholson p. 259;
   BOH p. 328: "The heavy artillery commander had desired to destroy it again"). Its covering wire survived and stopped
   the attack (BOH pp. 328-329). The field guns and medium mortars cut wire elsewhere, and no source says whether they
-  fired on this stretch. The data spares it from all fire, which matches the outcome (the wire held); sparing it from the
-  heavies only (`onlyKinds: [heavy]`, the attribution) would let the 18-pdrs' and mortars' wire rounds cut it in the
-  model, against the outcome. The two readings cannot both be kept until the field guns' fire there is known.
+  fired on this stretch. The data spares it from the heavies only (`onlyKinds: [heavy]`, the attribution), which lets
+  the 18-pdrs' and mortars' wire rounds cut it in the model, against the outcome (the wire held); sparing it from all
+  fire would match the outcome instead. The two readings cannot both be kept until the field guns' fire there is known.
 - **The spared stretch: from when.** It was "destroyed early in the bombardment" and left alone only after the
   photographs of 7 April showed it repaired (BOH p. 328). The schema's band spares it for the whole bombardment, from
   20 March, so the model's strong point takes no early damage either.

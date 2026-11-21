@@ -206,3 +206,9 @@ effects:
       cratered ground. A threshold of judgement, not fitted to Vimy
     description: Share of a 50 m square covered by shell holes at which its ground counts as cratered.
     calibrated: true
+  wireUncutBelow:
+    value: 0.5
+    estimate: an explanation threshold, not a rate. With half a belt still standing the gaps are lanes the enemy's machine guns cover,
+      and the attackers must look for them or cut a way through; below that share cut, the wire is said to be uncut. A judgement, not
+      fitted to Vimy
+    description: Share of a trench segment's wire cut below which the bombardment's result gives the cause wire-uncut.

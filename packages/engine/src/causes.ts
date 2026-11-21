@@ -43,6 +43,7 @@ export function emit(state: SimState, ...events: NewEvent[]): SimState {
       ...(e.sectorId !== undefined ? { sectorId: e.sectorId } : {}),
       ...(e.lineId !== undefined ? { lineId: e.lineId } : {}),
       ...(e.unitId !== undefined ? { unitId: e.unitId } : {}),
+      ...(e.segmentId !== undefined ? { segmentId: e.segmentId } : {}),
       text: e.text,
       causes: e.causes ?? [],
       refs,

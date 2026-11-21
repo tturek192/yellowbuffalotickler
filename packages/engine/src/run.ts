@@ -1,15 +1,18 @@
 import { decodeTerrain, ScenarioError, v } from '@wwi/scenario';
 import type { Doctrine, Point, Scenario, Tables } from '@wwi/scenario';
 import { barrageXAt, initBarrage } from './barrage';
+import { initBatteries, runBombardment } from './bombardment';
 import { emit } from './causes';
 import { initCompanies, isHolding } from './companies';
 import { buildWorld } from './ground';
 import { resolveDefaults } from './defaults';
+import { noteLightDefaults } from './light';
 import { sampleYs } from './geometry';
 import { runPipeline } from './pipeline';
+import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
 import { createRng } from './rng';
-import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
+import { ENGINE_VERSION, round, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN, tallyCasualties } from './record';
 import type { RunRecord, Snapshot } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
@@ -43,7 +46,11 @@ function checkCompanyWeapons(s: Scenario, models: Models): void {
   if (problems.length) throw new ScenarioError(problems);
 }
 
-/** The run's state at Zero and its step context: defaults resolved, companies placed, the zero-hour event emitted. */
+/**
+ * The run's state at Zero and its step context: defaults resolved, companies placed, trench segments and
+ * batteries set out, the zero-hour event emitted, and then the preliminary bombardment run (its losses taken
+ * before Zero, its results emitted at minute 0).
+ */
 export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'seed'>): { state: SimState; ctx: StepContext } {
   checkCompanyWeapons(s, models);
   const { scenario, used } = resolveDefaults(s, models.doctrines, models.tables);
@@ -59,21 +66,29 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     world: buildWorld(scenario, models.tables, terrain),
     defaultsUsed: new Set(used),
   };
+  noteLightDefaults(scenario, ctx.defaultsUsed);
+  const segments = deriveSegments(scenario);
+  // A garrison's segment: the one whose garrisons it is among.
+  const segmentOf = new Map(segments.flatMap((x) => x.garrisonIds.map((id) => [id, x.id] as const)));
   const state: SimState = {
     minute: 0,
     barrages: scenario.sectors.map(initBarrage),
-    companies: initCompanies(scenario, models.doctrines, rng),
+    companies: initCompanies(scenario, models.doctrines, rng).map((c) => {
+      const seg = segmentOf.get(c.id);
+      return seg === undefined ? c : { ...c, segmentId: seg };
+    }),
     taken: [],
     events: [],
-    segments: [],
-    batteries: [],
+    segments,
+    batteries: initBatteries(scenario, ctx.defaultsUsed),
     hqs: [],
     messages: [],
     reserves: [],
     churn: ctx.world.churn,
     nextEventId: 0,
   };
-  return { state: emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' }), ctx };
+  const atZero = emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' });
+  return { state: runBombardment(atZero, ctx).state, ctx };
 }
 
 /** The quiet step: the smallest `common.quietStepMin` among the forces' doctrines. */
@@ -100,6 +115,10 @@ function snapshot(state: SimState, ctx: StepContext): Snapshot {
         c.wounded,
         c.captured,
       ]),
+    },
+    segments: {
+      columns: [...SEGMENT_COLUMNS],
+      rows: state.segments.map((x, i) => [i, x.holder, round(x.wireCut, 2), x.emerged]),
     },
     barrages: state.barrages.map((b) => {
       const sector = ctx.scenario.sectors.find((x) => x.id === b.sectorId)!;
@@ -162,6 +181,14 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
       sectors: sc.sectors.map((x) => ({ id: x.id, yMin: x.yMin, yMax: x.yMax })),
       features: sc.features,
       ...(sc.terrainGrid ? { terrain: sc.terrainGrid } : {}),
+      segments: state.segments.map((x) => ({
+        id: x.id,
+        featureId: x.featureId,
+        garrisonIds: x.garrisonIds,
+        yMin: round(x.yMin, 1),
+        yMax: round(x.yMax, 1),
+        lengthM: round(x.lengthM, 1),
+      })),
     },
     units: state.companies.map((c) => ({ id: c.id, battalionId: c.battalionId, name: c.name, side: c.side })),
     snapshots,
@@ -171,9 +198,13 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
         .filter((e) => e.kind === 'line-taken')
         .map((e) => ({ lineId: e.lineId!, sectorId: e.sectorId!, minute: e.minute })),
       casualties: {
-        // No preliminary bombardment is simulated yet (Task 7): its period counts nobody.
-        bombardment: tallyCasualties(state.companies, () => ({ killed: 0, wounded: 0, captured: 0 })),
-        battle: tallyCasualties(state.companies, (c) => c),
+        // Men lost before Zero are in each company's totals and counted here apart from the battle.
+        bombardment: tallyCasualties(state.companies, (c) => ({ ...c.bombardment, captured: 0 })),
+        battle: tallyCasualties(state.companies, (c) => ({
+          killed: c.killed - c.bombardment.killed,
+          wounded: c.wounded - c.bombardment.wounded,
+          captured: c.captured,
+        })),
       },
       prisoners: { allied: 0, central: 0 },
       gunsCaptured: 0,

@@ -28,6 +28,9 @@ describe('Vimy defences and the bombardment (Plan 3 Task 3)', () => {
   it("records the 87th Battalion's front as spared, with its reason sourced", () => {
     expect(vimy().bombardment!.spared.some(x => 'source' in x.reason)).toBe(true);
   });
+  it("spares the 87th's stretch from the heavy artillery only (BOH p. 328): field guns, 4.5-in howitzers and mortars still fire on it", () => {
+    expect(vimy().bombardment!.spared.map(x => x.onlyKinds)).toEqual([['heavy']]);
+  });
   it('every German garrison has machine guns and dugout depth (sourced, estimated or disputed)', () => {
     for (const c of companiesOf(vimy(), 'central').filter(c => c.role === 'garrison')) {
       expect(c.machineGuns).toBeDefined(); expect(c.dugoutDepthM).toBeDefined();

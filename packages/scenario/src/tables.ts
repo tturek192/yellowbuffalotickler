@@ -71,7 +71,7 @@ export const EFFECT_KEYS = [
   'barrageBandDepthM', 'mgBarrageDepthM', 'captureRadiusM', 'captureRatio', 'sortieDelayMin',
   'lineFeatureMatchM', 'callForFireMin', 'stallBarrageMin', 'gunCaptureRadiusM', 'tankSuppressRadiusM',
   'gasHorseRadiusM', 'gapMultiplier', 'maxTargetsPerFirer', 'crewPerLewis', 'crewPerMg', 'trenchProximityM',
-  'churnAreaPerShellM2', 'crateredShare',
+  'churnAreaPerShellM2', 'crateredShare', 'wireUncutBelow',
 ] as const;
 
 export type WeaponKind = (typeof WEAPON_KINDS)[number];

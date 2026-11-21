@@ -208,6 +208,12 @@ companyDefaults:
     page: '30'
     note: '"Each battalion is divided into 4 companies and a machine gun company"'
     description: Companies in a battalion when the scenario does not say.
+  dugoutDepthM:
+    value: 6.1
+    estimate: 'twenty feet, the shallow end of the deep mined dug-outs: on Vimy Ridge "the main German dug-outs and tunnels twenty to
+      fifty feet down in the chalk" (boh-1917-1 p. 316). A garrison the scenario gives no depth for is taken to have the shallowest
+      of them; Vimy''s garrisons each have their own depth'
+    description: Depth in metres of the dugouts a garrison company shelters in when the scenario does not say.
 companyWeapons:
   rifle: rifle
   lightMg: mg08-15

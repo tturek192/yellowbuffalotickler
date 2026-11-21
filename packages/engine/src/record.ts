@@ -1,16 +1,16 @@
 import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
 import type { CompanyState, CompanyStatus } from './companies';
-import type { CasualtyCount, Side, SimEvent } from './types';
+import type { CasualtyCount, SegmentState, Side, SimEvent } from './types';
 
-export const ENGINE_VERSION = '0.3.0';
+export const ENGINE_VERSION = '0.3.1';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
 export const SNAPSHOT_QUIET_MIN = 60;
 
 /**
- * A table held as column names and rows of values in that order. Snapshot tables use it: `companies` now;
- * `segments` (Task 7) and `reserves` (Task 13) are added beside it the same way. Readers find a value by
+ * A table held as column names and rows of values in that order. Snapshot tables use it: `companies` and
+ * `segments` now; `reserves` (Task 13) is added beside them the same way. Readers find a value by
  * its column name, so a table can gain columns without breaking them.
  */
 export type Columnar<C extends string, R extends readonly unknown[]> = { columns: C[]; rows: R[] };
@@ -32,10 +32,20 @@ export type CompanyRow = [
   captured: number,
 ];
 
+export const SEGMENT_COLUMNS = ['segment', 'holder', 'wireCut', 'emerged'] as const;
+export type SegmentColumn = (typeof SEGMENT_COLUMNS)[number];
+/** `segment` is the segment's index in `geometry.segments`; wireCut to 0.01. */
+export type SegmentRow = [segment: number, holder: Side, wireCut: number, emerged: boolean];
+
+/** A trench segment as the record's geometry lists it: what does not change during the run (y and length to 0.1 m). */
+export type SegmentGeometry = Pick<SegmentState, 'id' | 'featureId' | 'garrisonIds' | 'yMin' | 'yMax' | 'lengthM'>;
+
 export type Snapshot = {
   minute: number;
   /** One row per company, in ascending id order. */
   companies: Columnar<CompanyColumn, CompanyRow>;
+  /** One row per trench segment, in `geometry.segments` order. */
+  segments: Columnar<SegmentColumn, SegmentRow>;
   /** `done` once the sector's barrage has ended; its points then hold where it last stood. */
   barrages: Array<{ sectorId: string; done: boolean; points: Point[] }>;
 };
@@ -61,6 +71,8 @@ export type RunRecord = {
     features: Feature[];
     /** The scenario's elevation grid; absent (not undefined) when the scenario has none. */
     terrain?: TerrainGrid;
+    /** The German trench segments (Task 7), in the order snapshot segment rows index them. */
+    segments: SegmentGeometry[];
   };
   /** Every company, in ascending id order: the battalion it belongs to, its name and side. */
   units: Array<{ id: string; battalionId: string; name: string; side: Side }>;

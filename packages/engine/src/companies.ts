@@ -36,6 +36,8 @@ export type CompanyState = {
   killed: number;
   wounded: number;
   captured: number;
+  /** The part of `killed` and `wounded` lost in the preliminary bombardment, before Zero (Task 7). */
+  bombardment: { killed: number; wounded: number };
   /** 0–1. */
   morale: number;
   /** Morale at Zero: recovery never takes morale above it. */
@@ -115,6 +117,7 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       killed: 0,
       wounded: 0,
       captured: 0,
+      bombardment: { killed: 0, wounded: 0 },
       morale,
       moraleStart: morale,
       suppression: 0,

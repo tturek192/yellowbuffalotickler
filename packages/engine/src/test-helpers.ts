@@ -5,7 +5,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decodeTerrain, encodeTerrain } from '@wwi/scenario';
-import type { Doctrine, Feature, Scenario, Tables } from '@wwi/scenario';
+import type { Doctrine, Feature, Scenario, Tables, WeaponKind } from '@wwi/scenario';
 import { est, germanForce, minimalDoctrineV2, minimalScenario, minimalScenarioV3, minimalTables } from '@wwi/scenario/test-fixtures';
 import { loadScenario, loadTables } from '@wwi/scenario/node';
 import { buildWorld } from './ground';
@@ -169,3 +169,69 @@ export const featureOf = (id: string, kind: Feature['kind'], geometry: Feature['
 export const woodAt = (x0: number, x1: number) =>
   featureOf('w', 'wood', { type: 'Polygon', coordinates: [[x0, -100], [x1, -100], [x1, 100], [x0, 100]] });
 
+
+/** The bombardment's effect keys at the repository's starting values (tables/effects.yaml), for fixtures. */
+export const BOMB_EFFECTS = {
+  cutPerRound: 20, damagePerRound: 5, dugoutPerRound: 10, safeDepthM: 3, lossRate: 0.5, killedFrac: 0.25,
+  batteryRecoveryHalfLifeMin: 120, wireUncutBelow: 0.5,
+};
+
+/** Fixture tables with ground, light and bombardment values set, and a heavy howitzer (`6in-how`). */
+export function bombTables(over: Record<string, number> = {}): Tables {
+  const t = tablesWith({ ...BOMB_EFFECTS, ...over });
+  t.weapons = { ...t.weapons, '6in-how': { ...t.weapons['18pdr']!, kind: 'heavy' } };
+  return t;
+}
+
+export type BombOpts = {
+  /** Rounds of the allied 18-pdrs (`g1`, kind field-gun) on wire, on trenches and on harassing fire. */
+  wireRounds?: number;
+  trenchRounds?: number;
+  harassRounds?: number;
+  /** Rounds of the allied heavy howitzers (`h1`, kind heavy) on trenches and on the German battery. */
+  heavyRounds?: number;
+  batteryRounds?: number;
+  /** true: the whole trench is spared from every kind; or the spared bands. */
+  spared?: boolean | Array<{ yMin: number; yMax: number; onlyKinds?: WeaponKind[] }>;
+  /** Both garrisons' dugout depth in metres (absent: the doctrine default). */
+  depth?: number;
+  /** counterBattery.suppressedAtZeroFrac (absent: no counterBattery section). */
+  suppressedAtZeroFrac?: number;
+};
+
+/**
+ * fixtureWithDoctrineV3 (garrisons k1 at y 100 and k2 at y 300 on `ger-front-a`, y 0 to 400, so two segments
+ * of 200 m) plus a bombardment: wire 20 m deep along the whole trench, heavy howitzers `h1`, a German field
+ * battery `gb` (10 guns at [900, 200]) and the bombardment tables.
+ */
+export function fixtureBomb(o: BombOpts = {}): [Scenario, Models] {
+  const [s, m] = fixtureWithDoctrineV3();
+  s.artillery.push(
+    { id: 'h1', side: 'allied', weapon: '6in-how', count: est(8), role: 'heavy', position: [-1500, 200], horseDrawn: false, ammunition: est(1000) },
+    { id: 'gb', side: 'central', weapon: '18pdr', count: est(10), role: 'defensive', position: [900, 200], horseDrawn: true },
+  );
+  const alloc = (artilleryId: string, task: 'wire' | 'trench' | 'battery' | 'harass', rounds: number | undefined) =>
+    rounds ? [{ artilleryId, task, rounds: est(rounds) }] : [];
+  const spared = o.spared === true ? [{ yMin: 0, yMax: 400 }] : o.spared || [];
+  s.bombardment = {
+    from: { value: '1916-06-24T06:00', estimate: 'test fixture' },
+    allocations: [
+      ...alloc('g1', 'wire', o.wireRounds), ...alloc('g1', 'trench', o.trenchRounds), ...alloc('g1', 'harass', o.harassRounds),
+      ...alloc('h1', 'trench', o.heavyRounds), ...alloc('h1', 'battery', o.batteryRounds),
+    ],
+    spared: spared.map((b) => ({ featureId: 'ger-front-a', ...b, reason: { value: 'spared', estimate: 'test fixture' } })),
+    wire: [{ featureId: 'ger-front-a', yMin: 0, yMax: 400, beltDepthM: est(20) }],
+  };
+  if (o.suppressedAtZeroFrac !== undefined) s.counterBattery = { side: 'allied', suppressedAtZeroFrac: est(o.suppressedAtZeroFrac), note: 'test fixture' };
+  if (o.depth !== undefined) for (const c of s.forces[1]!.formations[0]!.companies!) c.dugoutDepthM = est(o.depth);
+  return [s, { ...m, tables: bombTables() }];
+}
+
+/** A bombarded fixture (trench rounds only) for whole runs. */
+export const fixtureBombarded = (): [Scenario, Models] => fixtureBomb({ trenchRounds: 400, heavyRounds: 200 });
+
+/** The state at Zero of a fixture: the bombardment has run. */
+export const runBombardmentOn = (f: [Scenario, Models], seed = 1): SimState => initRun(f[0], f[1], { seed }).state;
+
+/** The mean wire cut over a state's segments. */
+export const wireCutOf = (state: SimState): number => state.segments.reduce((a, x) => a + x.wireCut, 0) / state.segments.length;

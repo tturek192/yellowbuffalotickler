@@ -35,6 +35,13 @@ describe('scenario v3', () => {
     expect(refs(s)).toEqual([]);
     expect(parseScenario(toYaml(s), ['bef-1917']).id).toBe('fixture');
   });
+  it('a spared stretch may name the weapon kinds that spared it, and only known kinds', () => {
+    const withKinds = (onlyKinds: unknown) =>
+      minimalScenarioV3({ bombardment: { ...bombWith('g1'), spared: [{ featureId: 'ger-front-a', yMin: 0, yMax: 50, reason: e('spared'), onlyKinds } as never], wire: [] } });
+    expect(ScenarioSchema.parse(withKinds(['heavy'])).bombardment!.spared[0]!.onlyKinds).toEqual(['heavy']);
+    expect(ScenarioSchema.safeParse(withKinds(['railway-gun'])).success).toBe(false);
+    expect(ScenarioSchema.safeParse(withKinds([])).success).toBe(false);
+  });
   it('rejects an operation whose prerequisite line/sector pair does not exist', () => {
     const s = minimalScenarioV3({ operations: [opWithPrereq('nope', 'barrage-x')] });
     expect(refs(s)).toContainEqual(expect.stringMatching(/operations\[0\]\.prerequisite.*nope/));

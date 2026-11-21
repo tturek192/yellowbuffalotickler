@@ -23,6 +23,8 @@ export type SimEvent = {
   sectorId?: string;
   lineId?: string;
   unitId?: string;
+  /** The trench segment the event is about (Task 7). */
+  segmentId?: string;
   text: string;
   causes: Cause[];
   /** Ids of earlier events that led to this one. */
@@ -88,19 +90,31 @@ export type HqState = {
   pending: Decision[];
 };
 
-/** A stretch of German trench held by one garrison company (Task 7). */
+/**
+ * A stretch of German trench held by one garrison company (Task 7): the stretch of its feature between the
+ * midpoints to the neighbouring garrisons on the same feature (garrisons at the same place share one).
+ */
 export type SegmentState = {
+  /** `featureId:NNN`, numbered south to north along the feature. */
   id: string;
   featureId: string;
+  /** In ascending id order. */
   garrisonIds: string[];
   yMin: number;
   yMax: number;
+  /** Length along the trench line between yMin and yMax (0 for a garrison on a point feature). */
   lengthM: number;
+  /** Share of the segment's wire cut, 0 to 1; 0 when it has no wire (wireBeltDepthM 0). */
   wireCut: number;
+  /** Depth of the wire belt in front of it, in metres; 0 when no wire belt lies on it. */
   wireBeltDepthM: number;
+  /** Share of the trench wrecked, 0 to 1. */
   trenchDamage: number;
+  /** Share of the dugouts broken, 0 to 1. */
   dugoutDamage: number;
+  /** Mean dugout depth of its garrisons, in metres. */
   dugoutDepthM: number;
+  /** Whether any part of it was spared by the bombardment, by any weapon kind. */
   spared: boolean;
   holder: Side;
   barrageLastOverMin: number | null;
@@ -108,15 +122,22 @@ export type SegmentState = {
   dugoutPoints: Array<{ point: Point; men: number }>;
 };
 
-/** A battery of guns (Tasks 7–8, 14). */
+/**
+ * A battery of guns (Tasks 7–8, 14): one per artillery entry. The guns of a German entry that the
+ * counter-battery fire silenced at Zero are split off one gun to a battery, `<entry id>/sNNN`, each with
+ * the minute it comes back into action (Task 7).
+ */
 export type BatteryState = {
   id: string;
   side: Side;
   weapon: string;
   guns: number;
+  /** The minute after Zero the battery fires again; null: in action. */
   suppressedUntilMin: number | null;
+  /** Rounds left for the battle; Infinity when the scenario gives no ammunition. */
   ammoLeft: number;
   position?: Point;
+  /** Whether it has draught horses (the artillery entry's horseDrawn). */
   horses: boolean;
 };
 

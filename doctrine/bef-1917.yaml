@@ -185,6 +185,11 @@ companyDefaults:
     estimate: the British battalion of four companies; every Canadian battalion in the scenario has four. No source read prints it (SS
       143 gives the company of four platoons, ss143-1917 p. 22)
     description: Companies in a battalion when the scenario does not say.
+  dugoutDepthM:
+    value: 6.1
+    estimate: taken as the German figure (de-1917, twenty feet, from boh-1917-1 p. 316); no British figure was found in the sources read.
+      Only a garrison company reads it, and no scenario so far has a British garrison under bombardment
+    description: Depth in metres of the dugouts a garrison company shelters in when the scenario does not say.
 companyWeapons:
   rifle: rifle
   lightMg: lewis

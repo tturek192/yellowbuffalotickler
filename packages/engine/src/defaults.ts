@@ -30,6 +30,12 @@ export function resolveDefaults(
       out[k] = { value: v(d.companyDefaults[k]), estimate: `doctrine default (${path})` };
       entries.push(`companies[${c.id}].${k} ← ${path}`);
     }
+    if (c.role === 'garrison' && c.dugoutDepthM === undefined) {
+      // Only a garrison shelters in dugouts under the bombardment (its trench segment's depth).
+      const path = `${doctrineId}.companyDefaults.dugoutDepthM`;
+      out.dugoutDepthM = { value: v(d.companyDefaults.dugoutDepthM), estimate: `doctrine default (${path})` };
+      entries.push(`companies[${c.id}].dugoutDepthM ← ${path}`);
+    }
     if (c.training === undefined) {
       // Not a model number: a company the sources do not show rehearsing is taken as standard (the larger NCO penalty).
       out.training = 'standard';
