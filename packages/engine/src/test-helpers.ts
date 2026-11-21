@@ -514,3 +514,63 @@ export function runOverrun(o: { horsesLost: boolean }): RunRecord {
   s.artillery.push({ id: 'gb', side: 'central', weapon: '18pdr', count: est(6), role: 'defensive', position: [400, 200], horseDrawn: !o.horsesLost });
   return runScenario(s, m, { seed: 1, endMinute: 120 });
 }
+
+// ---- communications (Task 11) -------------------------------------------------------------------------------------
+
+export type CommsOpts = {
+  /** Every link of the allied chain by runner, or by buried cable (the company's own report still goes by runner). */
+  links?: 'runners' | 'buried-cable' | 'none';
+  /** The runner's failPerHour (default 0). */
+  failPerHour?: number;
+  /** The orderSpeed of the leader of every allied headquarters (default: no leader). */
+  orderSpeed?: number;
+  /** Extra effect keys (runnerMinPerKm defaults to 0 here). */
+  effects?: Record<string, number>;
+};
+
+/**
+ * fixtureWithDoctrineV3 with the allied battalion bn1 (companies c1 and c2) under brigade `b1`, division `d1` and corps
+ * `cc`, linked up and down by one channel; channels: runner 30 min, buried cable 5, every other 10, none failing unless
+ * `failPerHour` (runner). Every company fires no small arms, so nothing but the plan changes their status.
+ */
+export function fixtureComms(o: CommsOpts = {}): [Scenario, Models] {
+  const [s, m] = fixtureWithDoctrineV3();
+  const force = s.forces[0]!;
+  const bn = force.formations[0]!;
+  const lead = o.orderSpeed === undefined ? {} : { leaderId: 'gen' };
+  force.formations = [
+    { id: 'cc', name: 'Corps', kind: 'corps', ...lead, children: [{ id: 'd1', name: '1st Division', kind: 'division', ...lead, children: [{ id: 'b1', name: '1st Brigade', kind: 'brigade', ...lead, children: [bn] }] }] },
+  ];
+  if (o.orderSpeed !== undefined) {
+    const r = est(o.orderSpeed);
+    s.leaders.push({ id: 'gen', name: { value: 'A. General', estimate: 'test' }, rank: { value: 'General', estimate: 'test' }, ratings: { planning: est(3), orderSpeed: r, adaptiveness: est(3), riskTolerance: est(3), moraleEffect: est(3) } });
+  }
+  if (o.links !== 'none') {
+    const ch = o.links === 'buried-cable' ? (['buried-cable'] as const) : (['runner'] as const);
+    const pairs: Array<[FormationKindT, FormationKindT]> = [['battalion', 'brigade'], ['brigade', 'division'], ['division', 'corps']];
+    s.communications = {
+      links: pairs.flatMap(([a, b]) => [
+        { side: 'allied' as const, from: a, to: b, channels: [...ch] },
+        { side: 'allied' as const, from: b, to: a, channels: [...ch] },
+      ]),
+    };
+  }
+  const tables = structuredClone(m.tables);
+  for (const k of Object.keys(tables.channels) as Array<keyof Tables['channels']>) tables.channels[k] = { delayMin: param(10), failPerHour: param(0) };
+  tables.channels.runner = { delayMin: param(30), failPerHour: param(o.failPerHour ?? 0) };
+  tables.channels['buried-cable'] = { delayMin: param(5), failPerHour: param(0) };
+  for (const [k, value] of Object.entries({ runnerMinPerKm: 0, callForFireMin: 10, callForFireGuns: 6, observerRangeM: 1500, captureRadiusM: 50, ...o.effects }))
+    (tables.effects as Record<string, unknown>)[k] = param(value);
+  for (const w of ['rifle', 'lewis', 'vickers']) tables.weapons[w] = { ...tables.weapons[w]!, rpm: param(0) };
+  return [s, { ...m, tables }];
+}
+type FormationKindT = Scenario['forces'][number]['formations'][number]['kind'];
+
+/** A run stepped by hand (initRun, then runPipeline every `stepMin`), keeping every state. */
+export function runStates(f: [Scenario, Models], o: { seed?: number; endMinute?: number; stepMin?: number; at?: (s: SimState, ctx: StepContext) => SimState } = {}): { states: SimState[]; ctx: StepContext } {
+  const { state, ctx } = initRun(f[0], f[1], { seed: o.seed ?? 1 });
+  let s = o.at ? o.at(state, ctx) : state;
+  const states = [s];
+  while (s.minute < (o.endMinute ?? 120)) states.push((s = runPipeline(s, ctx, o.stepMin ?? 2)));
+  return { states, ctx };
+}

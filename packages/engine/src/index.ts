@@ -7,7 +7,7 @@ export { CAUSES } from './causes';
 export type { Cause } from './causes';
 export { EVENT_KINDS } from './types';
 export type {
-  BatteryState, CasualtyCount, Decision, EventKind, FormationKind, HqState, Intent, Message, Order, OrderTarget,
+  BatteryState, CallForFire, CasualtyCount, Decision, EventKind, FireMission, FormationKind, HqNews, HqState, Intent, Message, Order, OrderTarget,
   Applied, DugoutPoint, FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
 } from './types';
 export { initCompanies, leadFactor } from './companies';
@@ -35,6 +35,7 @@ export type { Arms } from './fire';
 export { morale, moraleEffectOf, startingMorale, withStartingMorale } from './morale';
 export { BUCKET_M, bucketsOf, within } from './buckets';
 export type { Buckets } from './buckets';
+export { ARTILLERY, commsPhase, companyReports, fireMissionEnds, initComms, messageDueTimes, send } from './comms';
 export { initRun, runScenario } from './run';
 export type { Models, RunOptions } from './run';
 export { quantiles, runBatch } from './batch';

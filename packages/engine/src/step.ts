@@ -9,7 +9,7 @@ import { byId, isHolding } from './companies';
 import type { CompanyState } from './companies';
 import type { PhaseName } from './pipeline';
 import { segmentsOnLine } from './trenches';
-import type { BatteryState, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
+import type { BatteryState, FireMission, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
 
 export type SimState = {
   minute: number;
@@ -26,8 +26,16 @@ export type SimState = {
   batteries: BatteryState[];
   /** Headquarters and what each knows (Tasks 11–12). */
   hqs: HqState[];
-  /** Messages in transit (Task 11). */
+  /** Messages in transit (Task 11), in (dueMin, id) order. */
   messages: Message[];
+  /** The id the next message gets (Task 11). */
+  nextMessageId: number;
+  /** Surface lines cut by a failure draw, as "from>to" keys, sorted (Task 11); shelling cuts them without a key. */
+  cutLines: string[];
+  /** What each company last reported (Task 11): its status and the holder of its own segment (null: none). Looked up only. */
+  lastReport: Record<string, { status: string; holder: Side | null }>;
+  /** Batteries answering calls for fire (Task 11), in id order. */
+  fireMissions: FireMission[];
   /** Off-map formations (Task 13). */
   reserves: ReserveState[];
   /** Shells landed per 50 m cell (Task 6), row-major over the world's grid; the same array as `World.churn`. Not in the run record. */

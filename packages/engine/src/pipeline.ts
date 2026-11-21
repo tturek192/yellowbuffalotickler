@@ -1,6 +1,7 @@
 import { artilleryFire } from './artillery';
 import { emergence, trackGaps } from './gap';
 import { advanceBarrage } from './barrage';
+import { commsPhase, companyReports } from './comms';
 import { emit } from './causes';
 import type { NewEvent } from './causes';
 import { directFire } from './fire';
@@ -47,12 +48,15 @@ const movement: Phase = (state, ctx, dt, pending) => {
   return sorties(mopUp(captureSegments(gaps, ctx), ctx, dt), ctx);
 };
 
-/** Line-taken checks. */
-const log: Phase = (state, ctx) => takeLines(state, ctx);
+/** Deliver the messages due and update each HQ's picture (comms.ts). */
+const comms: Phase = (state, ctx) => commsPhase(state, ctx);
+
+/** Line-taken checks; then companies report what changed, and pinned companies call for fire (comms.ts). */
+const log: Phase = (state, ctx) => companyReports(takeLines(state, ctx), ctx);
 
 /** The nine phases of a step, in the spec's order (the model, "Step pipeline"). */
 export const PHASES = [
-  ['comms', none],
+  ['comms', comms],
   ['command', none],
   ['behaviour', behaviourPhase],
   ['artillery', artillery],

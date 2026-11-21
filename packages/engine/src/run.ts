@@ -4,6 +4,7 @@ import { barrageXAt, initBarrage } from './barrage';
 import { noteArtilleryDefaults } from './artillery';
 import { initBatteries, runBombardment } from './bombardment';
 import { emit } from './causes';
+import { initComms } from './comms';
 import { initCompanies, isHolding } from './companies';
 import { buildWorld } from './ground';
 import { resolveDefaults } from './defaults';
@@ -86,12 +87,17 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     batteries: initBatteries(scenario, ctx.defaultsUsed),
     hqs: [],
     messages: [],
+    nextMessageId: 0,
+    cutLines: [],
+    lastReport: {},
+    fireMissions: [],
     reserves: [],
     churn: ctx.world.churn,
     nextEventId: 0,
   };
   const atZero = emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' });
-  return { state: runBombardment(atZero, ctx).state, ctx };
+  // Headquarters start knowing their companies and the trenches as they stand once the bombardment is over (comms.ts).
+  return { state: initComms(runBombardment(atZero, ctx).state, ctx), ctx };
 }
 
 /** The quiet step: the smallest `common.quietStepMin` among the forces' doctrines. */

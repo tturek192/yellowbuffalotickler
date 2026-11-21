@@ -76,6 +76,7 @@ export const EFFECT_KEYS = [
   'unobservedFireFactor', 'observerRangeM', 'batteriesRecoveredFrac', 'blockedExitFactor',
   'isolationRadiusM', 'mgUnobservedBelow', 'fireRefsMin',
   'suppressionSpeedLoss', 'fatiguePerHourUnderFire', 'bombsPerManCleared',
+  'runnerMinPerKm', 'callForFireGuns',
 ] as const;
 
 export type WeaponKind = (typeof WEAPON_KINDS)[number];

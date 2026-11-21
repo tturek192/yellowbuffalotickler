@@ -213,6 +213,13 @@ dugout's entrances and call its men up, SS 143's "guard the entrances to dugouts
 bombs for a party of 20 to 40). Fatigue, on the doctrine's 0 to 1 scale, multiplies a company's speed and its fire by
 1 − fatigue; it needs no number of its own.
 
+Two came with communications, both calibrated judgements with no source for the number: `runnerMinPerKm` 15 (a man on
+foot through trenches and shell holes at about 4 km an hour; added to the runner's `delayMin` for the distance between
+sender and receiver as placed on the map, the owner's compendium having runners' times grow with distance) and
+`callForFireGuns` 6 (a call for fire is taken to be answered by one battery of six guns, for both sides: the British
+field battery as commonly given, not checked against a source read here). `callForFireMin` 10 now says what the engine does with it: the minutes the
+guns answering a call keep firing on its target (its journey to the guns is the channels' delay).
+
 **Changed from the plan's starting values** (the pre-flight ruling seeded the 16 later keys with the plan's numbers for
 review here): `gasHorseRadiusM` 1,000 → 200 m (a gas shell's cloud spreads a couple of hundred metres, not a kilometre),
 `sortieDelayMin` 20 → 30 (BOH p. 333), `killedFrac` 0.3 → 0.25, `dugoutPerRound` 30 → 10 and `safeDepthM` 5 → 3 (BOH

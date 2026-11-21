@@ -1,4 +1,5 @@
 import { ammunitionRunsOut, batteryRecoveries, offMapWindows } from './artillery';
+import { fireMissionEnds, messageDueTimes } from './comms';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
 import { dugoutSorties } from './trenches';
@@ -40,6 +41,10 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['dugout-sorties', dugoutSorties],
   // Task 10 fix round: batteries running out of rounds, so a quiet step ends when fine steps would see it; moves nobody.
   ['ammunition-runs-out', ammunitionRunsOut],
+  // Task 11: messages arriving and headquarters' routine summaries (only an order reaching its formation may set anyone
+  // moving), and fire on call stopping (moves nobody).
+  ['messages', messageDueTimes],
+  ['fire-missions', fireMissionEnds],
 ];
 
 /**

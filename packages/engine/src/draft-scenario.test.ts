@@ -27,6 +27,12 @@ describe('draft Vimy scenario run', () => {
     // at 318, not 316; the other lines' minutes are unchanged); each line-taken now refers to all its arrivals (not only
     // that step's) and carries factors (companies, consolidating, segments). The draft has no garrisons, wire or German
     // guns, so no segment, dugout or capture changes anything.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.4', hash: 'd78c0a8f' });
+    // 0.3.5 (Task 11): communications. The draft has no communications section, so every link is a runner (listed in
+    // defaultsUsed); its companies' reports go up to the battalion, brigade and division by runner, and one of them is
+    // lost on the way and sent again (one message-lost event, referring to the event the report was about). Nothing
+    // in the draft acts on what its headquarters know yet (Task 12), and no draw comes before a draw that changes the
+    // battle (the draft has no fire, so its only other draws are the companies' start and speed, at setup): its
+    // companies, other events and summary are unchanged.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.5', hash: '23c46997' });
   });
 });

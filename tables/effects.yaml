@@ -138,9 +138,10 @@ effects:
     description: Distance in metres within which a trench feature counts as belonging to a line.
   callForFireMin:
     value: 10
-    estimate: 'a forward observer''s request goes by telephone or signal to the battery, which lays and fires: about 10 minutes where
-      the line holds'
-    description: Minutes from a forward observer asking for fire to the guns answering.
+    estimate: 'a call for fire was answered with a short burst on the place named, not with a new programme: about 10 minutes of fire,
+      as long as the standing barrage a stalled attack asks for (stallBarrageMin). The call''s journey to the guns is the channels''
+      delay, not part of this'
+    description: Minutes the guns that answer a call for fire keep firing on its target.
     calibrated: true
   stallBarrageMin:
     value: 10
@@ -302,4 +303,18 @@ effects:
       to dugouts'); a party of 20 to 40 men is taken to come up after some 10 to 20 bombs down its stairways, about one bomb for every
       two men. A judgement, not fitted to Vimy"
     description: Bombs (grenades) a mopping-up company uses for each man it clears out of the dugouts.
+    calibrated: true
+  runnerMinPerKm:
+    value: 15
+    estimate: "a man on foot through trenches, shell holes and mud covers about 4 km an hour, so some 15 minutes a kilometre. The
+      owner's research compendium has runners' times growing with the distance they go (a design estimate there too). A judgement,
+      not fitted to Vimy"
+    description: Minutes a runner needs for each kilometre between the sender and the receiver as placed on the map, added to the
+      runner channel's delayMin (headquarters stand at the middle of their companies' places at Zero).
+    calibrated: true
+  callForFireGuns:
+    value: 6
+    estimate: "a call for fire is taken to be answered by one battery, taken as six guns for both sides (the British field battery as
+      commonly given, not checked against a source read for this project). A judgement, not fitted to Vimy"
+    description: Guns that answer a call for fire, taken from the nearest batteries of the caller's side that are in action.
     calibrated: true

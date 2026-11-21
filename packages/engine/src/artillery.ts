@@ -24,7 +24,9 @@ import type { BatteryState, FireGroup, Observation, Pending, SegmentState, Side 
  * 3. the machine-gun barrage, a zone `mgBarrageDepthM` deep beyond the band, which suppresses only;
  * 4. defensive fire of the `defensive` batteries on no man's land and on their side's lost segments, whenever
  *    enemies are there (`defensive-barrage`);
- * 5. off-map fire inside its window (`off-map-fire`), on the units in its target.
+ * 5. off-map fire inside its window (`off-map-fire`), on the units in its target;
+ * 6. fire on call (comms.ts): the guns answering a call for fire, lent from their batteries for the call's minutes, on
+ *    the enemy in the segment called for.
  *
  * Counter-battery fire during the battle (on-map `counter-battery` batteries and off-map fire on battery positions
  * alike) is not modelled yet: it should come as one mechanism with a data coefficient, with gas on the batteries
@@ -379,6 +381,18 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     }
   });
 
+  // Guns answering a call for fire (comms.ts) fire on its segment for the minutes of the step the call covers, and not
+  // on their own task: their share of the step is lent out of their battery for sources 1 to 5, and given back after 6.
+  const missions = state.fireMissions.map((m) => ({ m, overlap: Math.min(minute, m.toMin) - Math.max(from, m.fromMin) })).filter((x) => x.overlap > 0);
+  const batIndex = new Map(bats.map((b, i) => [b.id, i]));
+  const gunsBefore = bats.map((b) => b.guns);
+  for (const { m, overlap } of missions)
+    for (const g of m.guns) {
+      const i = batIndex.get(g.batteryId);
+      const b = i === undefined ? undefined : bats[i];
+      if (b && inAction(b)) b.guns = Math.max(0, b.guns - (Math.min(g.guns, gunsBefore[i!]!) * overlap) / dt);
+    }
+
   // 1. The creeping barrage. A sector's creeping artillery is its side's creeping batteries shared among the
   // sectors by width (the artillery entries name no sector), so guns on 100 m = guns × 100 / all sectors' width.
   const covered = new Set<string>();
@@ -505,6 +519,45 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     for (const c of field) if (c.side !== e.side && e.inside(at(c))) push(c, fires, overlap, ['off-map-fire'], fire);
   }
 
+  // 6. Fire on call: the answering guns on the enemy companies in the segment called for, or up within captureRadiusM of
+  // its trench, over the segment's length and captureRadiusM beyond each end (the zone its targets are drawn from).
+  const callNear = v(fx.captureRadiusM);
+  for (const { m, overlap } of missions) {
+    const seg = segs.get(m.segmentId);
+    if (!seg) continue;
+    const spent: Spent[] = [];
+    for (const g of m.guns) {
+      const i = batIndex.get(g.batteryId);
+      const b = i === undefined ? undefined : bats[i];
+      if (!b || !inAction(b)) continue;
+      const n = Math.min(g.guns, gunsBefore[i!]!);
+      const need = n * v(ctx.tables.weapons[b.weapon]!.rpm) * overlap;
+      if (!(need > 0)) continue;
+      const frac = Math.min(1, b.ammoLeft / need);
+      b.ammoLeft = frac < 1 ? 0 : b.ammoLeft - need;
+      spent.push({ battery: b, guns: n * frac });
+    }
+    const guns = sum(spent, (x) => x.guns);
+    if (!(guns > 0)) continue;
+    const frontage = seg.lengthM + 2 * callNear;
+    const fires = firesOf(spent, frontage, obsOf, ctx);
+    const pts = segmentSamples(ctx, seg, state.companies);
+    const caller = state.companies.find((c) => c.id === m.byUnitId);
+    const fire: FireGroup = {
+      key: `call:${m.id}`,
+      text: `Fire called for by ${caller?.name ?? m.byUnitId} on ${seg.id}`,
+      factors: { guns: round(guns, 1), fired: round(roundsOver(fires, frontage, overlap)) },
+    };
+    for (const c of field) {
+      if (c.side === m.side) continue;
+      const there = c.segmentId === seg.id || (c.posture !== 'in-dugout' && c.y >= seg.yMin - callNear && c.y <= seg.yMax + callNear && distanceTo(pts, at(c)) <= callNear);
+      if (there) push(c, fires, overlap, ['artillery-fire', ...airCause(spent)], fire, false, m.refs);
+    }
+  }
+  bats.forEach((b, i) => {
+    b.guns = gunsBefore[i]!;
+  });
+
   // Batteries that fired their last round this step.
   bats.forEach((b, i) => {
     if (ammoBefore[i]! > 0 && b.ammoLeft <= 0)
@@ -530,7 +583,7 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
       segments.push({ ...seg, barrageLastOverMin: lastOverMin, barrageEventId: id, barrageOn: [] });
     } else segments.push(seg.barrageOn.length ? { ...seg, barrageOn: [] } : seg);
   }
-  return { ...out, segments };
+  return { ...out, segments, fireMissions: state.fireMissions.filter((m) => m.toMin > minute) };
 }
 
 const within = (b: [number, number] | null, x: number): boolean => b !== null && x >= b[0] && x <= b[1];

@@ -61,15 +61,28 @@ export type Order = {
   eventId?: number;
 };
 
-/** What a report tells the HQ that receives it (Task 11). */
+/**
+ * What a report tells the HQ that receives it (Task 11): written at `atMin`; each unit as it stood at its own `atMin`
+ * (a summary passes on what reached its sender, which is older than the summary itself).
+ */
 export type Report = {
   atMin: number;
-  units: Record<string, { status: string; men: number }>;
+  units: Record<string, { status: string; men: number; atMin: number }>;
+  /** Segments by id and the side holding them. */
   segments: Record<string, Side>;
+  /** Lines taken, by `lineId|sectorId`, with the minute they were taken. */
   lines: Record<string, number | null>;
 };
 
-/** A message in transit over a channel (Task 11). */
+/** A company's call for fire on an enemy-held trench segment (Task 11). */
+export type CallForFire = { segmentId: string; byUnitId: string; atMin: number };
+
+/**
+ * A message in transit over a channel (Task 11), one hop of its journey: `fromFormationId` sends it to
+ * `toFormationId` (a formation id, a company id for a company's own reports and calls, or ARTILLERY for the last hop of
+ * a call for fire); a message going further names its destination in `finalId`, and each headquarters it reaches
+ * sends it on.
+ */
 export type Message = {
   id: number;
   side: Side;
@@ -79,12 +92,31 @@ export type Message = {
   sentMin: number;
   dueMin: number;
   channel: ChannelKind;
-  payload: Report | Order;
+  payload: Report | Order | CallForFire;
   aboutEventId?: number;
+  /** Where the message is going, when that is beyond this hop. */
+  finalId?: string;
+  /** The failure draw lost it: at `dueMin` it is known lost (`message-lost`) and sent again by the next channel. */
+  lost?: true;
 };
 
 /** A decision an HQ has taken but not yet acted on (Task 12). */
 export type Decision = { kind: string; atMin: number; formationId: string; eventRefs: number[] };
+
+/**
+ * What an HQ has learnt and not yet passed up (Task 11): the keys of its picture that changed, from when, whether any
+ * change is urgent (a unit's status, a segment's holder, a line taken), the latest event the news was about, and when it
+ * last sent a summary up.
+ */
+export type HqNews = {
+  units: string[];
+  segments: string[];
+  lines: string[];
+  sinceMin: number | null;
+  urgent: boolean;
+  aboutEventId: number | null;
+  sentMin: number;
+};
 
 /** A headquarters: what it knows (only what reports have told it) and what it has decided (Tasks 11–12). */
 export type HqState = {
@@ -98,6 +130,22 @@ export type HqState = {
     units: Record<string, { status: string; men: number; atMin: number }>;
   };
   pending: Decision[];
+  news: HqNews;
+};
+
+/**
+ * Batteries answering a call for fire (Task 11): from `fromMin` to `toMin` the `guns` of each battery fire on the
+ * segment instead of their own task. `id` is the call's message id; `refs` the event the call was about.
+ */
+export type FireMission = {
+  id: number;
+  side: Side;
+  segmentId: string;
+  byUnitId: string;
+  fromMin: number;
+  toMin: number;
+  guns: Array<{ batteryId: string; guns: number }>;
+  refs: number[];
 };
 
 /** Men of one garrison company left in the dugouts of a segment (Tasks 8, 10). */
