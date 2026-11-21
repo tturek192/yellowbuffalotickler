@@ -143,7 +143,7 @@ const cite = { value: 'fixture', estimate: 'test fixture' };
 /** Fixture tables with ground, mud, uphill and light values set. */
 export function tablesWith(over: Record<string, number> = {}) {
   const t = fixtureTables();
-  const set = { mudSpeedFactor: 0.6, uphillPenaltyPer10m: 0.02, trenchProximityM: 15, nightVisibilityM: 50, twilightMin: 35, ...over };
+  const set = { mudSpeedFactor: 0.6, uphillPenaltyPer10m: 0.02, trenchProximityM: 15, churnAreaPerShellM2: 30, crateredShare: 0.5, nightVisibilityM: 50, twilightMin: 35, ...over };
   for (const [k, value] of Object.entries(set)) (t.effects as Record<string, unknown>)[k] = { value, estimate: 'test', description: 'test', calibrated: true };
   return t;
 }

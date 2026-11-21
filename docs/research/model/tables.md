@@ -170,7 +170,7 @@ All 16 values are calibrated estimates; the scenario says which channels link wh
 
 ## Effects
 
-The 33 effects are estimates; 27 are calibrated coefficients, `crewPerLewis` is sourced, and `twilightMin`,
+The 35 effects are estimates; 29 are calibrated coefficients, `crewPerLewis` is sourced, and `twilightMin`,
 `lineFeatureMatchM`, `gapMultiplier`, `crewPerMg` and `trenchProximityM` are plain estimates (a calculation, a tolerance,
 an explanation threshold or a count, not fitted). The reasoning is in each entry; the ones with sources behind them:
 
@@ -183,6 +183,8 @@ an explanation threshold or a count, not fitted). The reasoning is in each entry
 | safeDepthM | 3 | a 6-15 m chalk dugout (p. 316) leaves a third to a sixth of its garrison exposed |
 | batteryRecoveryHalfLifeMin | 120 | gassed horses kept the German batteries from moving or bringing up ammunition (`boh-1917-1` p. 320) |
 | mudSpeedFactor | 0.6 | "the heavy mud slackened their pace" (`boh-1917-1` p. 333) |
+| churnAreaPerShellM2 | 30 | a field-gun or howitzer crater a few metres across (3-8 m) plus its lip (estimate; no source) |
+| crateredShare | 0.5 | half a 50 m cell holed: no unbroken line across it (judgement; no source) |
 | twilightMin | 35 | civil twilight at 50.4° N in early April, about 34 minutes (calculated) |
 | barrageBandDepthM | 90 | one lift: the barrage "lifted 100 yards every three minutes" (`nicholson-1962` p. 253) |
 | mgBarrageDepthM | 400 | the plan's figure; Nicholson's "bullet-swept zone 400 yards ahead" (p. 253) gives where it lay, not its depth |

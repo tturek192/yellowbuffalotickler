@@ -194,3 +194,15 @@ effects:
     estimate: a trench, its parapet and the shell holes along it lie within a few metres of the digitized line, which is itself a few
       metres off
     description: Distance in metres within which a company counts as being in a trench.
+  churnAreaPerShellM2:
+    value: 30
+    estimate: a field-gun or howitzer shell leaves a crater a few metres across (about 3 to 8 m) and throws up a lip around it; about 30 square
+      metres of ground disturbed a round is the middle of that range. Order of magnitude, not fitted to Vimy
+    description: Square metres of ground one shell churns up.
+    calibrated: true
+  crateredShare:
+    value: 0.5
+    estimate: once shell holes and their lips cover about half of a 50 m cell, no line across it is unbroken and men move and shelter as on
+      cratered ground. A threshold of judgement, not fitted to Vimy
+    description: Share of a 50 m square covered by shell holes at which its ground counts as cratered.
+    calibrated: true

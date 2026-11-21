@@ -3,14 +3,6 @@ import type { Feature, Ground, Point, Scenario, Tables, Terrain } from '@wwi/sce
 
 /** Side of a churn cell and of a line-of-sight cache cell, in metres (numerical-method constant). */
 export const CELL_M = 50;
-/**
- * Ground one shell churns, in square metres: a crater a few metres across plus its lip (a unit
- * conversion for the churn grid, not a model coefficient; how much slower or safer churned ground is
- * comes from tables.effects and tables.cover).
- */
-const ROUND_AREA_M2 = 30;
-/** A cell counts as cratered ground once shell holes cover this share of it (numerical-method threshold). */
-const CRATERED_SHARE = 0.5;
 const MIN_PER_DAY = 1440;
 
 type Shape = { id: string; kind: Feature['kind']; geometry: Feature['geometry']; box: [number, number, number, number] };
@@ -121,7 +113,7 @@ export function covers(sh: Shape, p: Point): boolean {
 
 /** Share of the point's 50 m cell that shell holes cover, 0 to 1. */
 export function churnShare(w: World, p: Point): number {
-  return 1 - Math.exp((-w.churn[cellOf(w, p)]! * ROUND_AREA_M2) / (CELL_M * CELL_M));
+  return 1 - Math.exp((-w.churn[cellOf(w, p)]! * v(w.tables.effects.churnAreaPerShellM2)) / (CELL_M * CELL_M));
 }
 
 /**
@@ -140,7 +132,7 @@ export function groundAt(w: World, p: Point): Ground {
   for (const kind of ['village', 'wood', 'crater'] as const) {
     for (const sh of w.shapes) if (sh.kind === kind && covers(sh, p)) return kind === 'crater' ? 'cratered' : kind;
   }
-  return churnShare(w, p) >= CRATERED_SHARE ? 'cratered' : 'open';
+  return churnShare(w, p) >= v(w.tables.effects.crateredShare) ? 'cratered' : 'open';
 }
 
 /** Accumulate `rounds` shells into the 50 m cell at p. Mutates `world.churn`, which is `SimState.churn`. */
