@@ -19,6 +19,8 @@ export const SourcesSchema = z.record(
     note: z.string().optional(),
   }),
 );
+/** A source registry: id to title, tier and the rest. */
+export type Sources = z.infer<typeof SourcesSchema>;
 
 /** At least two points, ordered south to north: the engine interpolates x along a line by y. */
 const LinePoints = z

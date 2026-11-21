@@ -36,7 +36,9 @@ export function reviewToMarkdown(doc: ReviewDoc, openQuestions: string[] = doc.o
     `- By source tier (sourced values; a disputed value counts under its best source): ` +
       Object.entries(c.byTier).map(([t, n]) => `${t} ${n}`).join(', '),
     '',
-    'Estimates are listed first in each section. Leader ratings are the builder\'s drafts and are yours to change.',
+    'Estimates are listed first in each section. Leader ratings are the builder\'s drafts and are yours to change. ' +
+      'Doctrine and model-table rows give each parameter\'s meaning after its value; "calibrated (Plan 4)" marks a model ' +
+      'coefficient that is fitted, not looked up.',
     '',
   ];
   for (const s of doc.sections) {
@@ -47,7 +49,8 @@ export function reviewToMarkdown(doc: ReviewDoc, openQuestions: string[] = doc.o
     }
     out.push('| Value | How it is known | Source | Note |', '| --- | --- | --- | --- |');
     for (const r of s.rows) {
-      out.push(`| **${cell(r.label)}**: ${cell(r.value)} | ${r.kind} | ${cell(r.cite)} | ${cell(r.note)} |`);
+      const what = r.description ? `${cell(r.value)} — ${cell(r.description)}` : cell(r.value);
+      out.push(`| **${cell(r.label)}**: ${what} | ${r.kind} | ${cell(r.cite)} | ${cell(r.note)} |`);
     }
     out.push('');
   }

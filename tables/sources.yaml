@@ -1,0 +1,135 @@
+# The source registry for the model tables (tables/*.yaml). Every Param `source` in a tables file must be an id here.
+# Tiers as in docs/research/vimy/sources.md: primary, official, scholarly, secondary, tertiary. Local copies of every
+# source are fetched by scripts/fetch-sources.sh into .cache/sources (never committed). Notes: docs/research/model/tables.md.
+sources:
+  nicholson-1962:
+    title: "Canadian Expeditionary Force 1914-1919: Official History of the Canadian Army in the First World War"
+    author: G. W. L. Nicholson
+    year: 1962
+    url: https://publications.gc.ca/collections/collection_2009/forces/DA3-4462E.pdf
+    tier: official
+    note: "the Vimy barrage's rate of fire (p. 253); Canadian Army casualties of the war (p. 535)"
+  boh-1917-1:
+    title: "Military Operations, France and Belgium, 1917: The German Retreat to the Hindenburg Line and the Battles of Arras"
+    author: Cyril Falls
+    year: 1940
+    url: https://archive.org/details/in.ernet.dli.2015.210683
+    tier: official
+    note: "buried cable routes and power buzzers at Arras (p. 193); the German dug-outs on Vimy Ridge (pp. 315-316, 321)"
+  ss143-1917:
+    title: "Instructions for the Training of Platoons for Offensive Action, 1917 (S.S. 143), U.S. War Department reprint"
+    author: General Staff, G.H.Q. (British Armies in France)
+    year: 1917
+    url: https://archive.org/details/instructionsfort00washrich
+    tier: primary
+    note: "the February 1917 platoon manual, reprinted by the U.S. War Department; the platoon's sections, the Lewis gun's Nos. 1 and 2 (p. 9)"
+  german-handbook-1917:
+    title: "Handbook of the German Army in War, January 1917"
+    author: General Staff, War Office (Great Britain)
+    year: 1917
+    url: https://archive.org/details/hndbkgermanarmy-1917jan
+    tier: primary
+    note: "British intelligence handbook; the MG 08 and machine-gun companies (pp. 49-52), field and foot artillery (pp. 63-70), trench mortars (p. 74). Page numbers are the book's"
+  german-handbook-1918:
+    title: "Handbook of the German Army in War, April 1918"
+    author: General Staff, War Office (Great Britain)
+    year: 1918
+    url: https://archive.org/details/hndbk-german-army-1918apr
+    tier: primary
+    note: "the Minenwerfer table with rates of fire (p. 104, from 'Die Minenwerfer', S.S. 624); later than April 1917, so used where the 1917 edition is silent"
+  lewis-1917:
+    title: "Instruction on the Lewis Automatic Machine Gun, 3rd edition, 1917"
+    year: 1917
+    url: https://archive.org/details/instructionlewisautomaticmachinegun1917
+    tier: primary
+    note: "a gunnery manual for the Lewis gun; methods of fire (pp. 80-81)"
+  us-handbook-artillery-1920:
+    title: "Handbook of Artillery, including Mobile, Anti-aircraft and Trench Matériel"
+    author: Ordnance Department, U.S. Army
+    year: 1920
+    url: https://archive.org/details/handbookofartill00unitrich
+    tier: primary
+    note: "covers the British pieces the U.S. Army took over: the 60-pdr (pp. 189-192), the 8-inch howitzers Mk VI-VIII (p. 267) and the 3-inch Stokes mortar (p. 372)"
+  wiki-qf-18pdr:
+    title: "QF 18-pounder gun (English Wikipedia, revision 1381471630)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1381471630
+    tier: tertiary
+    note: "infobox; cites Farndale 1986 for the January 1917 limit of 4 rounds a minute"
+  wiki-qf-13pdr:
+    title: "QF 13-pounder gun (English Wikipedia, revision 1373344568)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1373344568
+    tier: tertiary
+  wiki-qf-45in-how:
+    title: "QF 4.5-inch howitzer (English Wikipedia, revision 1378505635)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1378505635
+    tier: tertiary
+  wiki-bl-60pdr:
+    title: "BL 60-pounder gun (English Wikipedia, revision 1356559362)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1356559362
+    tier: tertiary
+  wiki-bl-6in-26cwt:
+    title: "BL 6-inch 26 cwt howitzer (English Wikipedia, revision 1376523837)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1376523837
+    tier: tertiary
+  wiki-bl-6in-mk7:
+    title: "BL 6-inch Mk VII naval gun (English Wikipedia, revision 1380496761)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1380496761
+    tier: tertiary
+    note: "the field-carriage range is quoted from Farndale and Clarke"
+  wiki-bl-8in-mk1-5:
+    title: "BL 8-inch howitzer Mk I–V (English Wikipedia, revision 1344300783)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1344300783
+    tier: tertiary
+  wiki-bl-92in-how:
+    title: "BL 9.2-inch howitzer (English Wikipedia, revision 1380261316)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1380261316
+    tier: tertiary
+  wiki-bl-12in-how:
+    title: "BL 12-inch howitzer (English Wikipedia, revision 1375089565)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1375089565
+    tier: tertiary
+  wiki-bl-12in-railway:
+    title: "BL 12-inch railway gun (English Wikipedia, revision 1365272701)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1365272701
+    tier: tertiary
+  wiki-bl-15in-how:
+    title: "BL 15-inch howitzer (English Wikipedia, revision 1314208646)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1314208646
+    tier: tertiary
+  wiki-stokes:
+    title: "Stokes mortar (English Wikipedia, revision 1384980042)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1384980042
+    tier: tertiary
+    note: "cites Field Artillery Notes No. 7 and the 1917 range table"
+  wiki-2in-mortar:
+    title: "2-inch medium mortar (English Wikipedia, revision 1382061596)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1382061596
+    tier: tertiary
+  wiki-945in-mortar:
+    title: "9.45-inch heavy mortar (English Wikipedia, revision 1381658165)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1381658165
+    tier: tertiary
+  wiki-lewis-gun:
+    title: "Lewis gun (English Wikipedia, revision 1386713927)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1386713927
+    tier: tertiary
+  wiki-vickers:
+    title: "Vickers machine gun (English Wikipedia, revision 1384940447)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1384940447
+    tier: tertiary
+  wiki-lee-enfield:
+    title: "Lee–Enfield (English Wikipedia, revision 1384683830)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1384683830
+    tier: tertiary
+  wiki-gewehr-98:
+    title: "Gewehr 98 (English Wikipedia, revision 1386421186)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1386421186
+    tier: tertiary
+  wiki-fk-96:
+    title: "7.7 cm FK 96 n.A. (English Wikipedia, revision 1380372348)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1380372348
+    tier: tertiary
+  wiki-sfh-13:
+    title: "15 cm sFH 13 (English Wikipedia, revision 1367909557)"
+    url: https://en.wikipedia.org/w/index.php?oldid=1367909557
+    tier: tertiary

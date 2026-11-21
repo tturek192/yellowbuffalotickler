@@ -8,7 +8,7 @@ import { mergeScenarioParts, locateProblem } from './include';
 import { FrameSchema, projectLonLatPlacements, type Frame } from './frame';
 import { terrainGridProblem, type TerrainGrid } from './terrain';
 import { TablesSchema, type Tables } from './tables';
-import { SourcesSchema } from './schema';
+import { SourcesSchema, type Sources } from './schema';
 import { collectSourceRefs } from './references';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
 
@@ -167,7 +167,10 @@ export function loadScenario(
  */
 const TABLE_SECTIONS = ['sources', 'weapons', 'cover', 'channels', 'effects'];
 
-export function loadTables(dir: string): Tables {
+/** The model tables and the sources registry their citations resolve in (the review document needs its titles and tiers). */
+export type LoadedTables = Tables & { sources: Sources };
+
+export function loadTables(dir: string): LoadedTables {
   let files: string[];
   try {
     files = readdirSync(dir).filter((f) => f.endsWith('.yaml')).sort();
@@ -219,7 +222,7 @@ export function loadTables(dir: string): Tables {
     }
   }
   for (const ref of collectSourceRefs(model, '')) {
-    if (!(ref.id in sources)) {
+    if (!Object.hasOwn(sources, ref.id)) {
       const file = owner.get(ref.path.split('.').slice(0, 2).join('.'));
       problems.push(`${file ? `${file}: ` : ''}${ref.path}: unknown source "${ref.id}"`);
     }
@@ -234,5 +237,16 @@ export function loadTables(dir: string): Tables {
     }
   }
   if (problems.length) throw new ScenarioError(problems);
-  return r.data!;
+  return { ...r.data!, sources: sourcesParsed.data! };
+}
+
+/** Read and check one doctrine file (`doctrine/<id>.yaml`); its citations must resolve in its own `sources`. */
+export function loadDoctrine(file: string): Doctrine {
+  let text: string;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch {
+    throw new ScenarioError([`cannot read ${file}`]);
+  }
+  return parseDoctrine(text);
 }

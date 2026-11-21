@@ -47,3 +47,24 @@ describe('Vimy research notes', () => {
     }
   });
 });
+
+describe('model research notes', () => {
+  const dir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../docs/research/model');
+  const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
+  it('exist for the tables and the doctrine, each with Conflicts and Open questions for the historian', () => {
+    expect(files).toEqual(expect.arrayContaining(['tables.md', 'doctrine.md']));
+    for (const f of files) {
+      const md = readFileSync(resolve(dir, f), 'utf8');
+      expect(md, f).toMatch(/^## Conflicts$/m);
+      expect(md, f).toMatch(/^## Open questions for the historian$/m);
+    }
+  });
+  it('quote no more than 25 words at a time and refer to no plan task numbers in their open questions', () => {
+    for (const f of files) {
+      const md = readFileSync(resolve(dir, f), 'utf8');
+      for (const q of quotes(md)) expect(q.text.split(/\s+/).filter(Boolean).length, `${f}:${q.line}`).toBeLessThanOrEqual(25);
+      expect(md.split('## Open questions for the historian')[1], f).not.toMatch(/\bTasks? \d|\bthis task\b/);
+    }
+  });
+});
+

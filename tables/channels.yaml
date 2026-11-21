@@ -1,89 +1,101 @@
+# Communication channels: delay and failure rate of each way of passing a message. Calibrated estimates with
+# their reasoning; the scenario says which channels link which headquarters. Notes: docs/research/model/tables.md.
 channels:
   buried-cable:
     delayMin:
       value: 5
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over buried-cable."
+      estimate: 'telephone or telegraph through an exchange: minutes to get the line and the person; the corps buried cable routes up
+        to brigade and battalion headquarters (boh-1917-1 p. 193)'
+      description: Minutes a message takes from sender to receiver by buried cable, including writing, sending and delivering it.
       calibrated: true
     failPerHour:
       value: 0.02
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that buried-cable is out of action."
+      estimate: 'buried cable was "proof against direct hits by all calibres up to 5.9-inch howitzers" (boh-1917-1 p. 193): it fails
+        rarely, by a heavy hit or a cut at an exchange'
+      description: Chance per hour that the buried cable link is broken or a message on it is lost.
       calibrated: true
   surface-line:
     delayMin:
-      value: 10
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over surface-line."
+      value: 5
+      estimate: as buried cable once the line is through
+      description: Minutes a message takes from sender to receiver by surface line, including writing, sending and delivering it.
       calibrated: true
     failPerHour:
       value: 0.3
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that surface-line is out of action."
+      estimate: air lines and lines along trench sides are cut by any shelling; boh-1917-1 p. 193 says cable was more reliable only
+        "provided that the cable could be protected from artillery fire and from traffic". Under shellfire about one hour in three
+      description: Chance per hour that the surface line link is broken or a message on it is lost.
       calibrated: true
   runner:
     delayMin:
       value: 30
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over runner."
+      estimate: a runner covers 1-2 km between headquarters through trenches, mud and shelling in 20-40 minutes; at Vimy the news of
+        the Schwaben Tunnel exit took an hour to reach the battalion headquarters at its other end (boh-1917-1 p. 325 n.1)
+      description: Minutes a message takes from sender to receiver by runner, including writing, sending and delivering it.
       calibrated: true
     failPerHour:
       value: 0.1
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that runner is out of action."
+      estimate: runners are killed, wounded or lose their way; one in ten messages an hour lost under fire, more in heavy shelling (at
+        Hill 70 two runners had to go back "through an intense barrage", one was killed, nicholson-1962 p. 291)
+      description: Chance per hour that the runner link is broken or a message on it is lost.
       calibrated: true
   visual:
     delayMin:
-      value: 15
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over visual."
+      value: 10
+      estimate: 'a short message spelt out by lamp or flag and read and relayed: about 10 minutes'
+      description: Minutes a message takes from sender to receiver by visual signalling (lamp, flag or shutter), including writing,
+        sending and delivering it.
       calibrated: true
     failPerHour:
       value: 0.3
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that visual is out of action."
+      estimate: lamps and flags need line of sight; smoke, mist, snow and dust from the bombardment break it often
+      description: Chance per hour that the visual signalling (lamp, flag or shutter) link is broken or a message on it is lost.
       calibrated: true
   pigeon:
     delayMin:
       value: 40
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over pigeon."
+      estimate: 'the bird flies fast but to a loft well behind, from which the message is telephoned on: 30-60 minutes'
+      description: Minutes a message takes from sender to receiver by pigeon, including writing, sending and delivering it.
       calibrated: true
     failPerHour:
       value: 0.1
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that pigeon is out of action."
+      estimate: birds are killed or stray, and are grounded at night and in heavy weather
+      description: Chance per hour that the pigeon link is broken or a message on it is lost.
       calibrated: true
   power-buzzer:
     delayMin:
       value: 8
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over power-buzzer."
+      estimate: 'an earth-induction Morse set: a short message in a few minutes, slower than speech'
+      description: Minutes a message takes from sender to receiver by power buzzer, including writing, sending and delivering it.
       calibrated: true
     failPerHour:
       value: 0.2
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that power-buzzer is out of action."
+      estimate: the sets were new and few (three to a division forecast for Arras, "no evidence that this was done in every case", boh-1917-1
+        p. 193 n.2); short range, easily damaged
+      description: Chance per hour that the power buzzer link is broken or a message on it is lost.
       calibrated: true
   wireless:
     delayMin:
       value: 10
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over wireless."
+      estimate: 'coded Morse through a forward station: about 10 minutes'
+      description: Minutes a message takes from sender to receiver by wireless, including writing, sending and delivering it.
       calibrated: true
     failPerHour:
       value: 0.3
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that wireless is out of action."
+      estimate: 'boh-1917-1 p. 193: "Valuable as was on occasion the modern field wireless-telegraphy apparatus ... telegraphy or telephony
+        over cables was more reliable"; aerials are shot away and sets break'
+      description: Chance per hour that the wireless link is broken or a message on it is lost.
       calibrated: true
   contact-patrol:
     delayMin:
       value: 20
-      estimate: "placeholder until Task 2: starting value"
-      description: "Minutes a message takes over contact-patrol."
+      estimate: 'the infantry light flares or show panels, the aircraft notes them and drops a message at headquarters or sends it by
+        wireless (nicholson-1962 p. 155): 15-30 minutes'
+      description: Minutes a message takes from sender to receiver by contact patrol aircraft, including writing, sending and delivering
+        it.
       calibrated: true
     failPerHour:
-      value: 0.1
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per hour that contact-patrol is out of action."
+      value: 0.2
+      estimate: needs flying weather and the infantry to show their positions; low cloud and snow ground the aircraft
+      description: Chance per hour that the contact patrol aircraft link is broken or a message on it is lost.
       calibrated: true

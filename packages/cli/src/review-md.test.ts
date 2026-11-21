@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildReview } from '@wwi/scenario';
-import { fixtureWithMixedValues } from '@wwi/scenario/test-fixtures';
+import { fixtureWithMixedValues, minimalDoctrineV2 } from '@wwi/scenario/test-fixtures';
 import { extractOpenQuestions, reviewToMarkdown } from './review-md';
 
 describe('reviewToMarkdown', () => {
@@ -15,6 +15,14 @@ describe('reviewToMarkdown', () => {
     expect(md).toMatch(/## Historical targets/);
     expect(md).toMatch(/\| Value \| How it is known/);
     expect(md).toMatch(/Estimates: 2/);
+  });
+
+  it('shows a parameter\'s description with its value', () => {
+    const d = minimalDoctrineV2();
+    d.common.baseMorale = { value: 0.8, estimate: 'why', description: 'Starting morale (0 to 1).', calibrated: true };
+    const md = reviewToMarkdown(buildReview(fixtureWithMixedValues(), { 'bef-1917': d }), []);
+    expect(md).toMatch(/\| \*\*bef-1917 \/ common \/ baseMorale\*\*: 0\.8 — Starting morale \(0 to 1\)\. \| estimate \| estimate \| calibrated \(Plan 4\)\. why \|/);
+    expect(md).toMatch(/## Model tables\n\nNo values\./);
   });
 
   it('escapes pipes in cells', () => {

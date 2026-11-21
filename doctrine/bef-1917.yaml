@@ -1,180 +1,279 @@
+# BEF infantry doctrine of 1917 (SS 143, February 1917; the Canadian Corps' practice at Vimy).
+# Every parameter is a Param with a plain-language description (tables/README.md): sourced where a manual or an
+# official history gives it, otherwise an estimate with its reasoning; behaviour coefficients are calibrated estimates
+# for Plan 4. Research notes: docs/research/model/doctrine.md.
 id: bef-1917
-title: BEF 1917 infantry doctrine (draft)
+title: BEF 1917 infantry doctrine (SS 143 and Canadian Corps practice)
 sources:
-  vimy-brief-2026:
-    title: Owner's Vimy research brief
-    year: 2026
-    tier: secondary
+  nicholson-1962:
+    title: 'Canadian Expeditionary Force 1914-1919: Official History of the Canadian Army in the First World War'
+    author: G. W. L. Nicholson
+    year: 1962
+    url: https://publications.gc.ca/collections/collection_2009/forces/DA3-4462E.pdf
+    tier: official
+    note: the Vimy preparations and rehearsals (p. 250), the barrage (p. 253); the German defensive principles of December 1916 (pp.
+      239-240) and the Eingreif divisions (p. 306)
+  boh-1917-1:
+    title: 'Military Operations, France and Belgium, 1917: The German Retreat to the Hindenburg Line and the Battles of Arras'
+    author: Cyril Falls
+    year: 1940
+    url: https://archive.org/details/in.ernet.dli.2015.210683
+    tier: official
+    note: German tactics and the Eingreif division (p. 241); the dug-outs on Vimy Ridge and the expectation of immediate counter-attacks
+      (p. 316); Gegenstoss and Gegenangriff (p. 523 n.)
+  ss143-1917:
+    title: Instructions for the Training of Platoons for Offensive Action, 1917 (S.S. 143), U.S. War Department reprint
+    author: General Staff, G.H.Q. (British Armies in France)
+    year: 1917
+    url: https://archive.org/details/instructionsfort00washrich
+    tier: primary
+    note: 'the platoon and company of February 1917: organization (p. 9), ammunition and bombs carried (p. 10), moppers-up (p. 16),
+      formations in two waves (Appendixes I and III, pp. 20-22)'
 common:
   baseMorale:
     value: 0.8
-    estimate: "placeholder until Task 2"
-    description: "Morale a company starts the battle with, before leader and training adjustments (0 to 1)."
+    estimate: 'morale runs from 0 to 1. A company starts at about 0.8; with lossShock 1, losing a third of its men in a short time takes
+      it below 0.5 and losing half takes it near 0.3. Both armies'' infantry in April 1917 are taken as steady troops: 0.8, before leader
+      and training adjustments; what the bombardment did to the German garrisons is the bombardment model''s, not the doctrine''s'
+    description: Morale a company starts the battle with, before leader and training adjustments (0 to 1).
+    calibrated: true
   goToGround:
     value: 0.5
-    estimate: "placeholder until Task 2"
-    description: "Morale below which a company goes to ground."
+    estimate: 'morale runs from 0 to 1. A company starts at about 0.8; with lossShock 1, losing a third of its men in a short time takes
+      it below 0.5 and losing half takes it near 0.3. an attack usually went to ground when a company had lost about a third of its
+      men in a few minutes: 0.5'
+    description: Morale below which a company goes to ground.
+    calibrated: true
   fallBack:
     value: 0.35
-    estimate: "placeholder until Task 2"
-    description: "Morale below which a company falls back."
+    estimate: 'morale runs from 0 to 1. A company starts at about 0.8; with lossShock 1, losing a third of its men in a short time takes
+      it below 0.5 and losing half takes it near 0.3. a company that had lost about half its men in a short time could rarely be held:
+      0.35'
+    description: Morale below which a company falls back.
+    calibrated: true
   surrender:
     value: 0.15
-    estimate: "placeholder until Task 2"
-    description: "Morale below which a company with an enemy close by surrenders."
+    estimate: 'morale runs from 0 to 1. A company starts at about 0.8; with lossShock 1, losing a third of its men in a short time takes
+      it below 0.5 and losing half takes it near 0.3. only a company close to breaking, with the enemy within bombing range, gives up:
+      0.15'
+    description: Morale below which a company with an enemy close by surrenders.
+    calibrated: true
   pinSuppression:
     value: 0.7
-    estimate: "placeholder until Task 2"
-    description: "Suppression above which a company is pinned."
+    estimate: suppression runs from 0 to 1; above 0.7 men under fire stay down whatever their morale
+    description: Suppression above which a company is pinned.
+    calibrated: true
   lossShock:
     value: 1.0
-    estimate: "placeholder until Task 2"
-    description: "Morale lost per fraction of the company that becomes a casualty in a step."
+    estimate: 'morale falls by the share of the company lost in the step: losing a tenth of its men costs a tenth of its morale. The
+      simplest proportional rule, for Plan 4 to calibrate'
+    description: Morale lost per fraction of the company that becomes a casualty in a step.
+    calibrated: true
   suppressedDrain:
     value: 0.3
-    estimate: "placeholder until Task 2"
-    description: "Morale lost per hour at full suppression."
+    estimate: an hour pinned under full suppression wears a company's morale down by about a third of its starting value
+    description: Morale lost per hour at full suppression.
+    calibrated: true
   isolationDrain:
     value: 0.1
-    estimate: "placeholder until Task 2"
-    description: "Morale lost per hour while cut off from its headquarters."
+    estimate: 'a company cut off from its headquarters loses morale slowly: about a tenth an hour'
+    description: Morale lost per hour while cut off from its headquarters.
+    calibrated: true
   recoveryPerHour:
     value: 0.2
-    estimate: "placeholder until Task 2"
-    description: "Morale regained per hour when no fire is coming in."
+    estimate: 'out of fire a company recovers, but more slowly than it was shaken: back from 0.4 to its start in about two hours'
+    description: Morale regained per hour when no fire is coming in.
+    calibrated: true
   leaderMoraleStep:
     value: 0.03
-    estimate: "placeholder until Task 2"
-    description: "Starting morale gained per point of the leader's morale rating above 3."
+    estimate: leader ratings run from 1 to 5 around 3, so the best and worst leaders move starting morale by 0.06 either way, less than
+      a tenth of its range
+    description: Starting morale gained per point of the leader's morale rating above 3.
+    calibrated: true
   closeRangeM:
     value: 50
-    estimate: "placeholder until Task 2"
-    description: "Distance in metres within which an enemy counts as close."
+    estimate: 'bomb and bayonet range: a hand grenade is thrown some 30 m and a rush covers the rest'
+    description: Distance in metres within which an enemy counts as close.
+    calibrated: true
   quietStepMin:
     value: 10
-    estimate: "placeholder until Task 2"
-    description: "Minutes per simulation step while nothing is in contact."
+    estimate: 'a numerical choice, not behaviour: 10-minute steps while nothing is in contact keep a four-day run fast; contact and
+      barrages switch to 2-minute steps'
+    description: Minutes per simulation step while nothing is in contact.
   baseOrderDelayMin:
-    value: 10
-    estimate: "placeholder until Task 2"
-    description: "Minutes a headquarters takes to turn a report into an order."
+    value: 15
+    estimate: a headquarters reads a report, decides and writes an order in some 10 to 30 minutes; 15, before the leader's orderSpeed
+      rating and the channel's delay
+    description: Minutes a headquarters takes to turn a report into an order.
+    calibrated: true
   marchKmPerHour:
     value: 4
-    estimate: "placeholder until Task 2"
-    description: "Marching speed of reserves in kilometres per hour."
+    estimate: about 2.5 miles an hour for formed infantry with halts on roads and tracks behind the front, slower than the 3 miles an
+      hour of a road march in peace; no rate was found in the sources read
+    description: Marching speed of reserves in kilometres per hour.
+    calibrated: true
   deployMin:
     value: 30
-    estimate: "placeholder until Task 2"
-    description: "Minutes a reserve needs to deploy from column into line."
+    estimate: a battalion arriving in column needs about half an hour to get its companies into their places and its orders out before
+      it can attack
+    description: Minutes a reserve needs to deploy from column into line.
+    calibrated: true
   reportEveryMin:
     value: 30
-    estimate: "placeholder until Task 2"
-    description: "Minutes between routine reports to the next headquarters."
+    estimate: battalions sent situation reports to brigade about every half hour in battle, and whenever something happened
+    description: Minutes between routine reports to the next headquarters.
+    calibrated: true
   fatiguePerKm:
     value: 0.02
-    estimate: "placeholder until Task 2"
-    description: "Fatigue gained per kilometre marched or advanced."
+    estimate: 'a man carrying 60 lb or more through mud and shell holes tires quickly: 10 km of it brings fatigue to 0.2 on a scale
+      of 0 to 1'
+    description: Fatigue gained per kilometre marched or advanced.
+    calibrated: true
   fatigueRecoveryPerHour:
     value: 0.05
-    estimate: "placeholder until Task 2"
-    description: "Fatigue lost per hour of rest."
+    estimate: 'resting in a trench or a shelter, men recover slowly: four hours take off 0.2'
+    description: Fatigue lost per hour of rest.
+    calibrated: true
 ncoPenalty:
   rehearsed:
     value: 0.1
-    estimate: "placeholder until Task 2"
-    description: "Share of speed and fire lost by a company with no officers that had rehearsed the attack."
+    estimate: 'SS 143 trained every section to act under its own N.C.O.: "Section commanders control and lead their sections" and each
+      man was trained to the Lewis gun or the rifle bomb (ss143-1917 pp. 12, 20); the Canadians rehearsed "repeatedly ... from platoon
+      to divisional level" until "all ranks knew just where they would have to go and what to do" (nicholson-1962 p. 250). A rehearsed
+      company that loses its officers goes on almost as well: a tenth'
+    description: Share of speed and fire lost by a company with no officers that had rehearsed the attack.
+    calibrated: true
   standard:
     value: 0.3
-    estimate: "placeholder until Task 2"
-    description: "Share of speed and fire lost by a company with no officers and no special rehearsal."
+    estimate: 'a company that has not rehearsed its task and loses its officers hesitates and loses touch: about a third of its speed
+      and fire, three times the rehearsed penalty'
+    description: Share of speed and fire lost by a company with no officers and no special rehearsal.
+    calibrated: true
 companyDefaults:
   officers:
-    value: 4
-    estimate: "placeholder until Task 2"
-    description: "Officers in a company when the scenario does not say."
+    value: 5
+    estimate: one officer at the head of each of four platoons ("Headquarters - 1 officer and 4 O. R.", ss143-1917 p. 9) and the company
+      commander; the second-in-command usually stayed out of the battle
+    description: Officers in a company when the scenario does not say.
   lewisGuns:
     value: 4
-    estimate: "placeholder until Task 2"
-    description: "Lewis guns in a company when the scenario does not say."
+    source: ss143-1917
+    page: 9, 22
+    note: one Lewis gun section in each platoon (p. 9) and four platoons in a company (Appendix III, p. 22)
+    description: Lewis guns in a company when the scenario does not say.
   machineGuns:
     value: 0
-    estimate: "placeholder until Task 2"
-    description: "Machine guns in a company when the scenario does not say."
+    estimate: British Vickers guns were in the brigade machine-gun companies, not in the infantry companies; the scenario enters them
+      as their own units or as mg-barrage artillery
+    description: Machine guns in a company when the scenario does not say.
   bombsPerMan:
     value: 2
-    estimate: "placeholder until Task 2"
-    description: "Grenades each man carries when the scenario does not say."
+    source: ss143-1917
+    page: '10'
+    note: in the trench-to-trench attack "every man ... carries at least 120 rounds S.A.A. and 2 or more bombs"; bombers carry more
+    description: Grenades each man carries when the scenario does not say.
   strength:
-    value: 120
-    estimate: "placeholder until Task 2"
-    description: "Men in a company when the scenario does not say."
+    value: 158
+    source: ss143-1917
+    page: '22'
+    note: '"The Company, Taking 4 Average Strength Platoons of 36 O.R. and Coy. H.Q. 14" (Appendix III): 4 x 36 + 14; an example average
+      strength, not an establishment'
+    description: Men in a company when the scenario does not say.
   companiesPerBattalion:
     value: 4
-    estimate: "placeholder until Task 2"
-    description: "Companies in a battalion when the scenario does not say."
+    estimate: the British battalion of four companies; every Canadian battalion in the scenario has four. No source read prints it (SS
+      143 gives the company of four platoons, ss143-1917 p. 22)
+    description: Companies in a battalion when the scenario does not say.
 attack:
   followDistanceM:
     value: 70
-    estimate: "SS 135/SS 143 practice of keeping close to the barrage; to source in Plan 2"
-    description: "How many metres behind the creeping barrage the attackers stay."
+    estimate: 'kept from Plan 1 (the engine reads it). The leading wave kept as close behind the barrage as it dared: at Vimy the 2nd
+      Brigade "rushed the sentries before the garrison could emerge" (boh-1917-1 p. 321), and at Passchendaele the infantry "followed
+      their barrage so closely that in most cases the Germans could not man their machine-guns" (nicholson-1962 p. 323). SS 135, which
+      would give the distance, was not found on the allowed hosts (doctrine.md, Open questions)'
+    description: How many metres behind the creeping barrage the attackers stay.
+    calibrated: true
   maxAdvanceMPerMin:
     value: 50
-    estimate: "~3 km/h over cratered ground; calibrated in Plan 4"
-    description: "Fastest walking pace of an advancing company in metres per minute."
+    estimate: 'kept from Plan 1 (the engine reads it): about 3 km an hour over cratered ground, faster than the barrage''s 100 yards
+      in 3 minutes (30 m a minute, nicholson-1962 p. 253), so a company can keep up and close up after a check'
+    description: Fastest walking pace of an advancing company in metres per minute.
+    calibrated: true
   startJitterMin:
     value: 2
-    estimate: "engine-test jitter; to calibrate in Plan 4"
-    description: "Each company starts up to this many minutes late, at random."
+    estimate: 'kept from Plan 1 (the engine reads it): companies leave their jumping-off trenches within a minute or two of Zero'
+    description: Each company starts up to this many minutes late, at random.
+    calibrated: true
   speedJitterFrac:
     value: 0.1
-    estimate: "engine-test jitter; to calibrate in Plan 4"
-    description: "Each company's speed varies at random by up to this fraction."
+    estimate: 'kept from Plan 1 (the engine reads it): companies'' paces differ by about a tenth with the ground'
+    description: Each company's speed varies at random by up to this fraction.
+    calibrated: true
   waveSpacingM:
-    value: 50
-    estimate: "placeholder until Task 2"
-    description: "Distance in metres between successive waves of an attack."
+    value: 70
+    estimate: SS 143 shows the two waves of a platoon 50 to 100 yards apart (46 to 91 m) in the trench-to-trench attack (ss143-1917
+      Appendix I, p. 20; the figures are read from an OCR of the diagram, doctrine.md); 70 m, inside the range
+    description: Distance in metres between successive waves of an attack.
+    calibrated: true
   mopUpRateMenPerMin:
-    value: 0.5
-    estimate: "placeholder until Task 2"
-    description: "Men a mopping-up company clears out of dugouts per minute."
+    value: 3
+    estimate: 'moppers-up "work in pairs", "guard the entrances to dugouts" and do not go down "before the platoon for which they are
+      mopping up arrives" (ss143-1917 p. 16): a dugout of 20-40 men, bombed and called on to surrender, comes up in some minutes; a
+      company''s pairs at several entrances clear about 3 men a minute'
+    description: Men a mopping-up company clears out of dugouts per minute.
+    calibrated: true
   stallToleranceMin:
     value: 30
-    estimate: "placeholder until Task 2"
-    description: "Minutes an attack can stand still before it counts as stalled."
+    estimate: a company that has stood still for half an hour has lost its barrage by 900 m and counts as stalled
+    description: Minutes an attack can stand still before it counts as stalled.
+    calibrated: true
   minAttackRatio:
     value: 1.5
-    estimate: "placeholder until Task 2"
-    description: "Attackers to defenders required before a commander orders a new attack."
+    estimate: a commander orders a fresh attack with at least half as many men again as the defenders in front; the capture itself needs
+      captureRatio (3 to 1) locally, which the barrage and surprise give
+    description: Attackers to defenders required before a commander orders a new attack.
+    calibrated: true
   trainingBonusRehearsed:
     value: 0.1
-    estimate: "placeholder until Task 2"
-    description: "Starting morale added for a company that rehearsed the attack."
+    estimate: 'troops who had rehearsed on a full-scale replica until "all ranks knew just where they would have to go and what to do
+      when they got there" (nicholson-1962 p. 250) start steadier: a tenth of the morale range'
+    description: Starting morale added for a company that rehearsed the attack.
+    calibrated: true
   ammoReserveFrac:
     value: 0.2
-    estimate: "placeholder until Task 2"
-    description: "Share of ammunition a company keeps back and will not fire away."
+    estimate: every man carried at least 120 rounds (ss143-1917 p. 10), with carrying parties for more; a fifth is kept back against
+      a counter-attack
+    description: Share of ammunition a company keeps back and will not fire away.
+    calibrated: true
 defence:
   emergeMin:
     value: 3
-    estimate: "placeholder until Task 2"
-    description: "Minutes after a barrage lifts before the garrison is out of its dugouts and firing."
+    estimate: 'the same climb out of a dugout as the Germans'': 3 minutes (de-1917)'
+    description: Minutes after a barrage lifts before the garrison is out of its dugouts and firing.
+    calibrated: true
   trappedSurrenderFrac:
     value: 0.5
-    estimate: "placeholder until Task 2"
-    description: "Share of a garrison that surrenders when attackers reach it before it emerges."
+    estimate: British dugouts were fewer and shallower; half of a trapped garrison gives up
+    description: Share of a garrison that surrenders when attackers reach it before it emerges.
+    calibrated: true
   localCounterAttackDelayMin:
     value: 30
-    estimate: "placeholder until Task 2"
-    description: "Minutes before a local reserve counter-attacks."
+    estimate: 'British troops holding captured ground counter-attacked locally to restore a lost post; with less doctrine for it than
+      the Germans: 30 minutes'
+    description: Minutes before a local reserve counter-attacks.
+    calibrated: true
   divisionalCounterAttackDelayMin:
-    value: 180
-    estimate: "placeholder until Task 2"
-    description: "Minutes before a divisional counter-attack."
+    value: 240
+    estimate: 'a British divisional counter-attack needed orders down two levels and a fresh barrage: about 4 hours'
+    description: Minutes before a divisional counter-attack.
+    calibrated: true
   counterAttackMinRatio:
     value: 1.0
-    estimate: "placeholder until Task 2"
-    description: "Defenders to attackers needed before a counter-attack is ordered."
+    estimate: British commanders counter-attacked with at least equal numbers
+    description: Defenders to attackers needed before a counter-attack is ordered.
+    calibrated: true
   commitReserveWhenLostFrac:
     value: 0.5
-    estimate: "placeholder until Task 2"
-    description: "Share of a sector's segments that must be lost before its reserve is committed."
+    estimate: a British reserve holding a captured line goes in when half the line is lost
+    description: Share of a sector's segments that must be lost before its reserve is committed.
+    calibrated: true

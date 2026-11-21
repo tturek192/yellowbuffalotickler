@@ -1,105 +1,116 @@
+# Cover: the share of fire that still hurts a man, by posture and ground. Calibrated estimates; notes in
+# docs/research/model/tables.md, "Cover".
 cover:
   moving:
     open:
       value: 1.0
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a moving man on open ground (1 is no protection)."
+      estimate: 'the reference: an upright man in the open gets no protection (order of magnitude; tables.md, Cover)'
+      description: Share of fire that still hurts a man walking or running upright on open ground (1 is no protection).
       calibrated: true
     cratered:
-      value: 0.9
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a moving man on cratered ground (1 is no protection)."
+      value: 0.8
+      estimate: moving through craters, men drop into shell holes at each halt and the lips screen them from grazing fire part of the
+        time (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man walking or running upright on shell-cratered ground (1 is no protection).
       calibrated: true
     wood:
-      value: 0.7
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a moving man on wood ground (1 is no protection)."
+      value: 0.6
+      estimate: trees and undergrowth hide men from aimed fire and stop some bullets, though shells burst in the branches; a little
+        under half the fire is lost (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man walking or running upright on a wood (1 is no protection).
       calibrated: true
     village:
-      value: 0.7
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a moving man on village ground (1 is no protection)."
+      value: 0.6
+      estimate: walls and rubble screen men moving between houses as a wood does (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man walking or running upright on a village (1 is no protection).
       calibrated: true
     trench:
       value: 0.5
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a moving man on trench ground (1 is no protection)."
+      estimate: moving along or across a trench system men are in the trench, or a step from it, about half the time (order of magnitude;
+        tables.md, Cover)
+      description: Share of fire that still hurts a man walking or running upright on trench ground (1 is no protection).
       calibrated: true
   prone:
     open:
-      value: 0.5
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a prone man on open ground (1 is no protection)."
-      calibrated: true
-    cratered:
       value: 0.4
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a prone man on cratered ground (1 is no protection)."
-      calibrated: true
-    wood:
-      value: 0.3
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a prone man on wood ground (1 is no protection)."
-      calibrated: true
-    village:
-      value: 0.3
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a prone man on village ground (1 is no protection)."
-      calibrated: true
-    trench:
-      value: 0.3
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a prone man on trench ground (1 is no protection)."
-      calibrated: true
-  in-trench:
-    open:
-      value: 0.3
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-trench man on open ground (1 is no protection)."
+      estimate: a prone man presents about a third of an upright man's target to bullets; shrapnel from above still reaches him (order
+        of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man lying down on open ground (1 is no protection).
       calibrated: true
     cratered:
       value: 0.25
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-trench man on cratered ground (1 is no protection)."
+      estimate: 'lying in a shell hole: protected from bullets except from close above, and from all but nearby bursts (order of magnitude;
+        tables.md, Cover)'
+      description: Share of fire that still hurts a man lying down on shell-cratered ground (1 is no protection).
       calibrated: true
     wood:
-      value: 0.2
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-trench man on wood ground (1 is no protection)."
+      value: 0.3
+      estimate: 'prone among trees and roots: between open and cratered ground (order of magnitude; tables.md, Cover)'
+      description: Share of fire that still hurts a man lying down on a wood (1 is no protection).
       calibrated: true
     village:
-      value: 0.2
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-trench man on village ground (1 is no protection)."
+      value: 0.25
+      estimate: 'prone behind rubble and walls: about as good as a shell hole (order of magnitude; tables.md, Cover)'
+      description: Share of fire that still hurts a man lying down on a village (1 is no protection).
       calibrated: true
     trench:
       value: 0.2
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-trench man on trench ground (1 is no protection)."
+      estimate: 'prone on trench ground is mostly prone in a broken trench or its parados: close to in-trench (order of magnitude; tables.md,
+        Cover)'
+      description: Share of fire that still hurts a man lying down on trench ground (1 is no protection).
+      calibrated: true
+  in-trench:
+    open:
+      value: 0.2
+      estimate: a man in a fire trench shows head and shoulders while firing and nothing when not; trench cover, the ground around it
+        matters little (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man in a trench, firing or keeping watch on open ground (1 is no protection).
+      calibrated: true
+    cratered:
+      value: 0.2
+      estimate: 'as on open ground: the trench is the cover (order of magnitude; tables.md, Cover)'
+      description: Share of fire that still hurts a man in a trench, firing or keeping watch on shell-cratered ground (1 is no protection).
+      calibrated: true
+    wood:
+      value: 0.15
+      estimate: a trench in a wood adds the trees' screen against observation (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man in a trench, firing or keeping watch on a wood (1 is no protection).
+      calibrated: true
+    village:
+      value: 0.15
+      estimate: a trench among ruins, often with cellars close by (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man in a trench, firing or keeping watch on a village (1 is no protection).
+      calibrated: true
+    trench:
+      value: 0.15
+      estimate: a trench inside a trench system, with traverses and communication trenches to move along (order of magnitude; tables.md,
+        Cover)
+      description: Share of fire that still hurts a man in a trench, firing or keeping watch on trench ground (1 is no protection).
       calibrated: true
   in-dugout:
     open:
-      value: 0.05
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-dugout man on open ground (1 is no protection)."
+      value: 0.02
+      estimate: a dugout is proof against all but heavy shells landing on it, which the bombardment model handles separately by dugout
+        depth; direct fire cannot reach men below ground (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man down in a dugout on open ground (1 is no protection).
       calibrated: true
     cratered:
-      value: 0.05
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-dugout man on cratered ground (1 is no protection)."
+      value: 0.02
+      estimate: as on open ground (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man down in a dugout on shell-cratered ground (1 is no protection).
       calibrated: true
     wood:
-      value: 0.05
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-dugout man on wood ground (1 is no protection)."
+      value: 0.02
+      estimate: as on open ground (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man down in a dugout on a wood (1 is no protection).
       calibrated: true
     village:
-      value: 0.05
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-dugout man on village ground (1 is no protection)."
+      value: 0.02
+      estimate: 'cellars as dugouts: as on open ground (order of magnitude; tables.md, Cover)'
+      description: Share of fire that still hurts a man down in a dugout on a village (1 is no protection).
       calibrated: true
     trench:
-      value: 0.05
-      estimate: "placeholder until Task 2: starting value"
-      description: "Share of fire that still hurts a in-dugout man on trench ground (1 is no protection)."
+      value: 0.02
+      estimate: as on open ground (order of magnitude; tables.md, Cover)
+      description: Share of fire that still hurts a man down in a dugout on trench ground (1 is no protection).
       calibrated: true

@@ -74,6 +74,20 @@ describe('cli', () => {
     expect(readFileSync(a, 'utf8')).toBe(readFileSync(join(repoRoot, 'docs/research/vimy/review.md'), 'utf8'));
   });
 
+  it('review lists every doctrine parameter and the model tables, read from --tables-dir', () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'review.md');
+    const r = runCli(['review', 'scenarios/vimy-1917/scenario.yaml', '--out', out]);
+    expect(r.code).toBe(0);
+    const md = readFileSync(out, 'utf8');
+    expect(md.indexOf('## Model tables')).toBeGreaterThan(md.indexOf('## Doctrine parameters'));
+    expect(md).toMatch(/\*\*de-1917 \/ defence \/ emergeMin\*\*/);
+    expect(md).toMatch(/\*\*weapons \/ 18pdr \/ rpm\*\*: 2 — .* \| sourced \| nicholson-1962, 253 \(official\)/);
+    expect(md).toMatch(/calibrated \(Plan 4\)/);
+    const bad = runCli(['review', 'scenarios/vimy-1917/scenario.yaml', '--out', out, '--tables-dir', 'no-such-dir']);
+    expect(bad.code).toBe(2);
+    expect(bad.stderr).toMatch(/cannot read tables directory no-such-dir/);
+  });
+
   it('review exits 1 without --out', () => {
     expect(runCli(['review', draft]).code).toBe(1);
   });

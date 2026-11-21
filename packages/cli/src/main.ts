@@ -3,14 +3,14 @@ import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runBatch, runScenario } from '@wwi/engine';
 import { buildReview, ScenarioError, v } from '@wwi/scenario';
-import { loadScenario } from '@wwi/scenario/node';
+import { loadScenario, loadTables } from '@wwi/scenario/node';
 import { formatBatch } from './format';
 import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-md';
 
 const USAGE = `usage:
   sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>]
   sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--doctrine-dir <dir>]
-  sim review <scenario.yaml> --out <file.md> [--notes <dir>] [--doctrine-dir <dir>]`;
+  sim review <scenario.yaml> --out <file.md> [--notes <dir>] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
 
 class UsageError extends Error {}
 
@@ -37,6 +37,7 @@ function main(argv: string[]): void {
         'seed-start': { type: 'string' },
         'doctrine-dir': { type: 'string' },
         notes: { type: 'string' },
+        'tables-dir': { type: 'string' },
       },
     });
   } catch (e) {
@@ -73,8 +74,9 @@ function main(argv: string[]): void {
           .filter(([, text]) => !text.includes(REVIEW_MARKER)) // a generated review is not a research note
           .flatMap(([f, text]) => extractOpenQuestions(text, f))
       : [];
+    const tables = loadTables(values['tables-dir'] ?? 'tables');
     mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, reviewToMarkdown(buildReview(scenario, doctrines), questions));
+    writeFileSync(out, reviewToMarkdown(buildReview(scenario, doctrines, tables), questions));
   } else if (command === 'run') {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, JSON.stringify(runScenario(scenario, doctrines, { seed })));

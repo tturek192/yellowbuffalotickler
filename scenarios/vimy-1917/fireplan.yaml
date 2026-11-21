@@ -100,7 +100,7 @@ artillery:
   - id: cdn-18pdr-creeping
     side: allied
     formationId: cdn-corps
-    weapon: 18-pdr
+    weapon: 18pdr
     role: creeping
     count:
       value: 320
@@ -112,25 +112,25 @@ artillery:
   - id: cdn-18pdr-standing
     side: allied
     formationId: cdn-corps
-    weapon: 18-pdr
+    weapon: 18pdr
     role: standing
     count: { value: 112, estimate: "the remaining third of the 480 18-pdrs 'less the silent forward batteries' formed standing barrages beyond the creeper (BOH p. 319 n.1): 480 - 320 creeping - 48 forward" }
   - id: cdn-18pdr-forward
     side: allied
     formationId: cdn-corps
-    weapon: 18-pdr
+    weapon: 18pdr
     role: creeping
     count: { value: 48, estimate: "'nine 18-pdr. ... batteries' dug in about Neuville St. Vaast, silent until they took over the creeping barrage for the final stage (BOH p. 307); guns per battery not given: 480 18-pdrs in 30 brigades of (taken) three 18-pdr batteries each is 5.3 a battery, so 9 x 5.3 = 48" }
   - id: cdn-45in-how
     side: allied
     formationId: cdn-corps
-    weapon: 4.5-in howitzer
+    weapon: 4.5in-how
     role: standing
     count: { value: 138, source: boh-1917-1, page: "307", note: "'480 18-pdrs. and 138 4.5-inch howitzers'; Nicholson p. 248. They fired on strong points, lifting when the creeper came within 150 yards (BOH p. 319 n.1); two batteries were silent forward (p. 307)" }
   - id: cdn-13pdr
     side: allied
     formationId: cdn-corps
-    weapon: 13-pdr
+    weapon: 13pdr
     role: standing
     count: { value: 20, source: rca-ww1-history, page: "the paragraphs on Vimy Ridge (no headings)", note: "'twenty 13 Pdrs (A & B Batteries RCHA with C and K Batteries RHA)'; not in Nicholson's or BOH's field totals; taken to be within Nicholson's 983 guns and mortars (fireplan.md); role not given, standing taken" }
   # Canadian Corps heavy artillery: 245 pieces (BOH p. 306 and n.1; Nicholson p. 248). Eight siege groups and three
@@ -138,120 +138,120 @@ artillery:
   - id: cdn-60pdr
     side: allied
     formationId: cdn-corps
-    weapon: 60-pdr
+    weapon: 60pdr
     role: counter-battery
     count: { value: 54, source: boh-1917-1, page: "306 n.1", note: "'54 60-pdrs.'; rca-ww1-history: 'nine 60 Pdr batteries'. Role inferred: the Corps had three counter-battery groups (rca-ww1-history) and the long guns are taken to be theirs (fireplan.md, Open questions)" }
   - id: cdn-6in-gun
     side: allied
     formationId: cdn-corps
-    weapon: 6-in gun
+    weapon: 6in-gun
     role: counter-battery
     count: { value: 8, source: boh-1917-1, page: "306 n.1", note: "'8 6-inch guns'; rca-ww1-history: 'two batteries of 6-inch Mark VII guns'. Role inferred, as for the 60-pdrs" }
   - id: cdn-6in-how
     side: allied
     formationId: cdn-corps
-    weapon: 6-in howitzer
+    weapon: 6in-how
     role: heavy
     count: { value: 104, source: boh-1917-1, page: "306 n.1", note: "'104 6-inch howitzers'" }
   - id: cdn-8in-how
     side: allied
     formationId: cdn-corps
-    weapon: 8-in howitzer
+    weapon: 8in-how
     role: heavy
     count: { value: 36, source: boh-1917-1, page: "306 n.1", note: "'36 8-inch howitzers'" }
   - id: cdn-92in-how
     side: allied
     formationId: cdn-corps
-    weapon: 9.2-in howitzer
+    weapon: 9.2in-how
     role: heavy
     count: { value: 36, source: boh-1917-1, page: "306 n.1", note: "'36 9.2-inch howitzers'" }
   - id: cdn-12in-how
     side: allied
     formationId: cdn-corps
-    weapon: 12-in howitzer
+    weapon: 12in-how
     role: heavy
     count: { value: 4, source: boh-1917-1, page: "306 n.1", note: "'4 12-inch howitzers'" }
   - id: cdn-15in-how
     side: allied
     formationId: cdn-corps
-    weapon: 15-in howitzer
+    weapon: 15in-how
     role: heavy
     count: { value: 3, source: boh-1917-1, page: "306 n.1", note: "'3 15-inch howitzers'" }
   # Trench mortars: the rest of Nicholson's 983 guns and mortars (p. 253) after the 245 heavies and 618 field pieces.
   - id: cdn-945in-tm
     side: allied
     formationId: cdn-corps
-    weapon: 9.45-in trench mortar
+    weapon: 9.45in-mortar
     role: trench-mortar
     count: { value: 24, source: rca-ww1-history, page: "the paragraphs on Vimy Ridge (no headings)", note: "'twenty-four 9.45-inch trench mortars' with the divisions' field artillery; BOH p. 314: the heavy mortars' task was demolition" }
   - id: cdn-medium-tm
     side: allied
     formationId: cdn-corps
-    weapon: medium trench mortar
+    weapon: 2in-mortar
     role: trench-mortar
     count: { value: 76, estimate: "the remainder of Nicholson's '983 guns and mortars supporting the Canadians' (p. 253) after 245 heavies, 618 field pieces (p. 248), 20 13-pdrs and 24 9.45-inch mortars (rca-ww1-history); taken as the medium mortars, whose task was wire-cutting (BOH p. 314); the 983's make-up is not given (fireplan.md, Open questions)" }
   # The indirect machine-gun barrage.
   - id: cdn-mg-barrage
     side: allied
     formationId: cdn-corps
-    weapon: Vickers MG
+    weapon: vickers
     role: mg-barrage
     count: { value: 150, source: nicholson-1962, page: "253", note: "'the continuous fire of 150 machine-guns, creating a bullet-swept zone 400 yards ahead'; BOH p. 319: 150 guns 'grouped in 8-gun batteries'. Of the Corps' 358 Vickers (p. 253 n.)" }
   # I Corps, on the left: 132 heavies and 102 field pieces (BOH pp. 306-307; Nicholson p. 248), not under General Byng.
   - id: i-corps-60pdr
     side: allied
-    weapon: 60-pdr
+    weapon: 60pdr
     role: counter-battery
     count: { value: 60, source: boh-1917-1, page: "306 n.2", note: "'60 60-pdrs.' of the I Corps heavy artillery, two bombardment and three counter-battery groups; the long guns taken as counter-battery, as for the Canadian Corps (fireplan.md)" }
   - id: i-corps-6in-how
     side: allied
-    weapon: 6-in howitzer
+    weapon: 6in-how
     role: heavy
     count: { value: 48, source: boh-1917-1, page: "306 n.2", note: "'40 6-inch howitzers, 8 6-inch howitzers' as the OCR reads (the second perhaps 6-inch guns); 48 together" }
   - id: i-corps-8in-how
     side: allied
-    weapon: 8-in howitzer
+    weapon: 8in-how
     role: heavy
     count: { value: 4, source: boh-1917-1, page: "306 n.2", note: "'4 8-inch howitzers'" }
   - id: i-corps-92in-how
     side: allied
-    weapon: 9.2-in howitzer
+    weapon: 9.2in-how
     role: heavy
     count: { value: 20, source: boh-1917-1, page: "306 n.2", note: "'20 9.2-inch howitzers'" }
   - id: i-corps-18pdr
     side: allied
-    weapon: 18-pdr
+    weapon: 18pdr
     role: standing
     count: { value: 66, source: boh-1917-1, page: "307", note: "'102 (66 18-pdrs. and 36 4.5-inch howitzers) of the I. Corps'; role not given: the I Corps stood on the defensive on the left (BOH p. 329), so standing taken" }
   - id: i-corps-45in-how
     side: allied
-    weapon: 4.5-in howitzer
+    weapon: 4.5in-how
     role: standing
     count: { value: 36, source: boh-1917-1, page: "307", note: "36 4.5-inch howitzers of the I Corps; role taken as standing" }
   # First Army pieces.
   - id: army-12in-how
     side: allied
-    weapon: 12-in howitzer
+    weapon: 12in-how
     role: heavy
     count: { value: 4, source: boh-1917-1, page: "306", note: "'Four 12-inch howitzers, in addition to the four ... attached to the Canadian Corps' at the disposal of the First Army; Nicholson p. 248: 'a few heavy guns'" }
   - id: army-12in-gun
     side: allied
-    weapon: 12-in gun
+    weapon: 12in-gun
     role: heavy
     count: { value: 1, source: boh-1917-1, page: "306", note: "'a single 12-inch gun' at the disposal of the First Army" }
   # German artillery of Group Vimy's two divisions on the Canadian front (the 16th Bavarian Division's is not given).
   - id: ger-gruppe-vimy-heavy
     side: central
     formationId: gruppe-vimy
-    weapon: heavy guns and howitzers
+    weapon: 150mm-sfh
     role: defensive
-    count: { value: 89, source: boh-1917-1, page: "353", note: "'The 79th Reserve and 1st Bavarian Reserve Divisions disposed of 89 heavy and 108 field guns and howitzers'" }
+    count: { value: 89, source: boh-1917-1, page: "353", note: "'The 79th Reserve and 1st Bavarian Reserve Divisions disposed of 89 heavy and 108 field guns and howitzers'. Weapon: BOH gives no split of the 89, so all are entered as the representative 150mm-sfh, the most numerous heavy class on the Arras front (148 of 355 heavy pieces were 15-cm to 19.9-cm howitzers, BOH p. 182 n.1); an estimate (fireplan.md, Weapon ids)" }
   - id: ger-gruppe-vimy-field
     side: central
     formationId: gruppe-vimy
-    weapon: field guns and howitzers
+    weapon: 77mm-fk
     role: defensive
-    count: { value: 108, source: boh-1917-1, page: "353", note: "108 field guns and howitzers of the two divisions; also three batteries of 30-cm naval guns before Henin Lietard, not entered" }
+    count: { value: 108, source: boh-1917-1, page: "353", note: "108 field guns and howitzers of the two divisions; also three batteries of 30-cm naval guns before Henin Lietard, not entered. Weapon: BOH gives no split of the 108, so all are entered as the representative 77mm-fk (419 of the Arras front's 659 field pieces were 77-mm and 9-cm guns, the rest 105-mm howitzers, BOH p. 182 n.1); an estimate (fireplan.md, Weapon ids)" }
 
 # The counter-battery state at Zero: the share of the German guns located, and so engaged, at Zero.
 counterBattery:

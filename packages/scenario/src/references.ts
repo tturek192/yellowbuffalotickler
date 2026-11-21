@@ -72,7 +72,7 @@ export function checkReferences(
 
   /** Weapon ids resolve only when the tables are at hand. */
   const checkWeapon = (path: string, id: string) => {
-    if (tables && !(id in tables.weapons)) problems.push(`${path}: unknown weapon "${id}"`);
+    if (tables && !Object.hasOwn(tables.weapons, id)) problems.push(`${path}: unknown weapon "${id}"`);
   };
   const checkFeature = (path: string, id: string) => {
     if (!featureKind.has(id)) problems.push(`${path}: unknown feature "${id}"`);

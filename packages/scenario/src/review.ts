@@ -1,5 +1,6 @@
-import type { Scenario } from './schema';
+import type { Scenario, Sources } from './schema';
 import type { Doctrine } from './doctrine';
+import type { Tables } from './tables';
 import { TIERS, type Tier } from './sources';
 
 export type ReviewRow = {
@@ -9,6 +10,8 @@ export type ReviewRow = {
   kind: 'sourced' | 'estimate' | 'disputed';
   cite: string;
   note?: string;
+  /** A model parameter's plain-language description (doctrine and tables rows). */
+  description?: string;
 };
 export type ReviewSection = { title: string; rows: ReviewRow[] };
 export type ReviewDoc = {
@@ -175,7 +178,29 @@ function geometryEntries(s: Scenario, reg: Registry): Entry[] {
   return out;
 }
 
-export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {}): ReviewDoc {
+/** A calibrated coefficient is fitted in Plan 4, never looked up: its note says so first. */
+const CALIBRATED = 'calibrated (Plan 4)';
+
+/** Every Param under `node` (doctrine or tables), with its description, and calibrated ones marked. */
+function paramEntries(node: unknown, path: string, names: string[], reg: Registry): Entry[] {
+  const out: Entry[] = [];
+  const walk = (n: unknown, p: string, ns: string[]) => {
+    if (isSourced(n)) {
+      const e = toEntry(n, p, ns, reg);
+      const note = n.calibrated === true ? [CALIBRATED, e.row.note].filter(Boolean).join('. ') : e.row.note;
+      out.push({ ...e, row: { ...e.row, note, description: typeof n.description === 'string' ? n.description : undefined } });
+    } else if (isObj(n)) {
+      for (const [k, v] of Object.entries(n)) walk(v, `${p}.${k}`, [...ns, k]);
+    }
+  };
+  walk(node, path, names);
+  return out;
+}
+
+/** The model tables, and the registry their citations resolve in. */
+export type ReviewTables = Pick<Tables, 'weapons' | 'cover' | 'channels' | 'effects'> & { sources?: Sources };
+
+export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {}, tables?: ReviewTables): ReviewDoc {
   const reg = tiersOf(s);
   const walk = (node: unknown, path: string, root: string[] = [], r: Registry = reg): Entry[] => {
     const out: Entry[] = [];
@@ -191,13 +216,14 @@ export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {
   }));
   const doctrineEntries = Object.entries(doctrines).flatMap(([id, d]) => {
     const r = tiersOf(s, d);
-    const out: Entry[] = [];
-    // Plan 3's new doctrine keys are placeholders until Task 2 sources them; the review lists the four it has always listed
-    for (const k of ['followDistanceM', 'maxAdvanceMPerMin', 'startJitterMin', 'speedJitterFrac'] as const) {
-      collect(d.attack?.[k], `doctrine.${id}.attack.${k}`, [id, k], r, out);
-    }
-    return out;
+    return (['common', 'ncoPenalty', 'companyDefaults', 'attack', 'defence'] as const).flatMap((k) =>
+      paramEntries(d[k], `doctrine.${id}.${k}`, [id, k], r),
+    );
   });
+  const tableReg: Registry = { ...s.sources, ...(tables?.sources ?? {}) };
+  const tableEntries = tables
+    ? (['weapons', 'cover', 'channels', 'effects'] as const).flatMap((k) => paramEntries(tables[k], `tables.${k}`, [k], tableReg))
+    : [];
 
   const sectionEntries: Array<[string, Entry[]]> = [
     ['Historical targets', walk(s.historical, 'historical')],
@@ -217,6 +243,7 @@ export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {
     ['Weather', walk(s.weather, 'weather')],
     ['Geometry', geometryEntries(s, reg)],
     ['Doctrine parameters', doctrineEntries],
+    ['Model tables', tableEntries],
   ];
 
   const sections: ReviewSection[] = sectionEntries.map(([title, entries]) => ({

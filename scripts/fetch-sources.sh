@@ -82,6 +82,14 @@ archive_text tenthbattalion00holluoft holland-1918         # The Story of the Te
 # Task 9: the British official history (Falls, 1917 vol. I) and the AEF's German division histories
 archive_text in.ernet.dli.2015.210683 boh-1917-1 2015.210683.Military-Operations
 archive_text historiesoftwohu00unit aef-251-divisions-1920
+# Plan 3: the manuals and handbooks behind the weapon tables and the doctrine (docs/research/model/*.md). A text file
+# name with a space is passed URL-encoded.
+archive_text instructionsfort00washrich ss143-1917                                       # SS 143 (US reprint)
+archive_text hndbkgermanarmy-1917jan german-handbook-1917 HndbkGermanArmy1917Jan        # GS, Handbook of the German Army in War
+archive_text hndbk-german-army-1918apr german-handbook-1918 %20HndbkGermanArmy1918Apr
+archive_text surveyofgermanta00unitrich survey-german-tactics-1918                       # AEF GHQ, A Survey of German Tactics
+archive_text instructionlewisautomaticmachinegun1917 lewis-1917 InstructionLewisAutomaticMachineGun1917
+archive_text handbookofartill00unitrich us-handbook-artillery-1920                       # US Ordnance, Handbook of Artillery
 
 # --- Royal Regiment of Canadian Artillery, "The First World War 1914-18" (Task 10): the Vimy artillery ------
 # A heritage page on rca-arc.org; saved as the HTML the site serves (fireplan.md cites its Vimy section).
@@ -119,6 +127,13 @@ done
 wiki_rev 1384058402
 for rev in 184527473 261023829 238811839 246262387 262475847 257541434; do
   wiki_rev "$rev" de
+done
+# Plan 3: the weapon articles, as leads and tertiary sources for rates, ranges and shell weights
+# (docs/research/model/tables.md lists which revision is which weapon).
+for rev in 1381471630 1373344568 1378505635 1356559362 1376523837 1380496761 1369516032 1344300783 1380261316 \
+  1365272701 1375089565 1314208646 1384980042 1382061596 1381658165 1386713927 1384940447 1384683830 1384752550 \
+  1380372348 1371485165 1367909557 1305354109 1311286259 1359862463 1386421186 1360197179; do
+  wiki_rev "$rev"
 done
 
 # --- IGN BD TOPO settlement areas (Task 9): the villages that place the German reserves --------------------

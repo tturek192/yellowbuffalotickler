@@ -1,166 +1,196 @@
+# Every other rate and radius the combat model uses. Calibrated estimates with their reasoning, except where a
+# source or a calculation gives the number. Notes: docs/research/model/tables.md.
 effects:
   killedFrac:
-    value: 0.3
-    estimate: "placeholder until Task 2: starting value"
-    description: "Share of casualties that are killed rather than wounded."
+    value: 0.25
+    estimate: 'the Canadian Army lost 51,748 killed in action or died of wounds among 232,494 casualties of all kinds (nicholson-1962
+      p. 535), 22 per cent; the total includes sick and injured, so the battle share of killed is a little higher: 0.25'
+    description: Share of casualties that are killed (or die of wounds) rather than wounded.
     calibrated: true
   officerExposure:
     value: 1.5
-    estimate: "placeholder until Task 2: starting value"
-    description: "How much more likely than a rifleman an officer is to be hit (multiplies officers / men)."
+    estimate: officers led from the front and were picked out; an officer is taken to be half again as likely to be hit as a man of
+      his company. Order of magnitude; Plan 4 can check it against the officer shares of the casualty returns
+    description: How much more likely than a rifleman an officer is to be hit (multiplies officers / men).
     calibrated: true
   densityRefMen:
     value: 30
-    estimate: "placeholder until Task 2: starting value"
-    description: "Men in a target group at which fire reaches full effect; smaller groups are hit proportionally less."
+    estimate: 'about a platoon: SS 143 sets a platoon at 28 to 44 other ranks (ss143-1917 p. 9). A burst or a traverse finds as many
+      men in any group at least that large; smaller groups, a section or a gun team, offer proportionally fewer'
+    description: Men in a target group at which fire reaches full effect; smaller groups are hit proportionally less.
     calibrated: true
   suppressionHalfLifeMin:
     value: 5
-    estimate: "placeholder until Task 2: starting value"
-    description: "Minutes for suppression to halve when no fire is coming in."
+    estimate: men who have gone to ground under fire take some minutes to get up and go on once it stops; half in 5 minutes, nearly
+      all in 15
+    description: Minutes for suppression to halve when no fire is coming in.
     calibrated: true
   cutPerRound:
     value: 20
-    estimate: "placeholder until Task 2: starting value"
-    description: "Square metres of wire belt cut by one shell."
+    estimate: a shrapnel or graze-fuzed burst on a belt of wire breaks the strands over a patch of about 4 m by 5 m; so a 20 m deep
+      belt needs about one round per metre of front to be 63 per cent cut. Allenby's planners reckoned on cutting 40 per cent of the
+      wire in a short bombardment (boh-1917-1 p. 179), the same order
+    description: Square metres of wire belt cut by one shell.
     calibrated: true
   damagePerRound:
     value: 5
-    estimate: "placeholder until Task 2: starting value"
-    description: "Metres of trench wrecked by one shell."
+    estimate: a medium or heavy shell bursting in or beside a trench blows in some 3 to 6 m of it; so one round per 5 m wrecks 63 per
+      cent of a trench
+    description: Metres of trench wrecked by one shell.
     calibrated: true
   dugoutPerRound:
-    value: 30
-    estimate: "placeholder until Task 2: starting value"
-    description: "Square metres of dugout roof broken by one heavy shell."
+    value: 10
+    estimate: 'a heavy shell with a delay fuze breaks a dugout only by a near-direct hit over it, and the deeper the dugout the less
+      it does: at 10 m depth one round breaks 1 m of a segment''s dugouts, at 5 m two. Low on purpose: "no amount of metal or explosive
+      from above could destroy the main German dug-outs ... twenty to fifty feet down in the chalk" (boh-1917-1 p. 316)'
+    description: Square metres of dugout (segment length times depth) broken by one heavy shell.
     calibrated: true
   safeDepthM:
-    value: 5
-    estimate: "placeholder until Task 2: starting value"
-    description: "Dugout depth at which a garrison is half as likely to be killed by bombardment as one in the open."
+    value: 3
+    estimate: 'the share of a garrison exposed to bombardment is 1 - d / (d + safeDepthM): 3 m of cover halves it, a deep chalk dugout
+      of 6-15 m (20 to 50 ft, boh-1917-1 p. 316) leaves a third to a sixth exposed, for the men who must keep sentries and come up'
+    description: Dugout depth in metres at which a garrison is half as exposed to bombardment as one with no dugouts.
     calibrated: true
   lossRate:
     value: 0.5
-    estimate: "placeholder until Task 2: starting value"
-    description: "Share of a garrison killed in a trench that is completely wrecked and has no dugouts."
+    estimate: a garrison without dugouts in a trench that is completely wrecked loses about half its men killed or wounded over a long
+      bombardment; the rest find shell holes or slip away
+    description: Share of a garrison lost in a trench that is completely wrecked and has no dugouts.
     calibrated: true
   batteryRecoveryHalfLifeMin:
     value: 120
-    estimate: "placeholder until Task 2: starting value"
-    description: "Minutes for a silenced battery to recover half of its lost fire."
+    estimate: 'a battery silenced by counter-battery fire and gas must replace men, horses and ammunition and repair or move its guns:
+      hours, not minutes. Gassed horses kept German batteries from moving or bringing up ammunition at Vimy (boh-1917-1 p. 320)'
+    description: Minutes for a silenced battery to recover half of its lost fire.
     calibrated: true
   mudSpeedFactor:
     value: 0.6
-    estimate: "placeholder until Task 2: starting value"
-    description: "Walking-speed multiplier on mud."
+    estimate: deep mud slows a loaded man to about half his pace; "the heavy mud slackened their pace" (boh-1917-1 p. 333)
+    description: Walking-speed multiplier on mud.
     calibrated: true
   wireSpeedFactor:
     value: 0.5
-    estimate: "placeholder until Task 2: starting value"
-    description: "Walking-speed multiplier through uncut wire."
+    estimate: 'passing through cut or partly cut wire means finding gaps and picking a way through: about half speed'
+    description: Walking-speed multiplier through uncut wire.
     calibrated: true
   uphillPenaltyPer10m:
     value: 0.02
-    estimate: "placeholder until Task 2: starting value"
-    description: "Fraction of walking speed lost per 10 metres of climb."
+    estimate: a loaded man climbing a slope loses about 2 per cent of his speed for every 10 m of height gained over a leg; the ridge's
+      slopes rise some tens of metres
+    description: Fraction of walking speed lost per 10 metres of climb.
     calibrated: true
   nightVisibilityM:
     value: 50
-    estimate: "placeholder until Task 2: starting value"
-    description: "How far men can see on a moonless night, in metres."
+    estimate: on a moonless night a man is seen at a few tens of metres; flares light patches for a moment
+    description: How far men can see on a moonless night, in metres.
     calibrated: true
   twilightMin:
-    value: 40
-    estimate: "placeholder until Task 2: starting value"
-    description: "Minutes of twilight at dawn and dusk when visibility rises or falls."
-    calibrated: true
+    value: 35
+    estimate: civil twilight (sun 0.8 to 6 degrees below the horizon) lasts about 34 minutes at 50.4 deg N in early April (spherical
+      astronomy, declination about +7.6 deg)
+    description: Minutes of twilight at dawn and dusk when visibility rises or falls.
   tankBogPerKm:
     value: 0.3
-    estimate: "placeholder until Task 2: starting value"
-    description: "Chance a tank bogs or breaks down per kilometre of cratered ground."
+    estimate: the 1917 Mark II tanks were slow, unreliable and sank in shell craters and mud; about a third bog or break down for each
+      kilometre of cratered ground. Order of magnitude, not fitted to Vimy, where the tanks' fate is a validation target
+    description: Chance a tank bogs or breaks down per kilometre of cratered ground.
     calibrated: true
   horseLossPerGasRound:
     value: 0.01
-    estimate: "placeholder until Task 2: starting value"
-    description: "Fraction of horses within the gas radius lost per gas shell."
+    estimate: each gas shell bursting within gasHorseRadiusM of a battery's horse lines kills or disables about 1 per cent of them;
+      100 shells take about 60 per cent. Gassed horses were what kept the German guns from moving at Vimy (boh-1917-1 p. 320)
+    description: Fraction of horses within the gas radius lost per gas shell.
     calibrated: true
   barrageBandDepthM:
     value: 90
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Depth in metres of the band a creeping barrage covers at any moment."
+    estimate: 'about one lift: the Vimy barrage lifted 100 yards (91 m) at a time (nicholson-1962 p. 253), and the zone its shells fall
+      in at any moment is about that deep'
+    description: Depth in metres of the band a creeping barrage covers at any moment.
     calibrated: true
   mgBarrageDepthM:
     value: 400
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Depth in metres of the zone an indirect machine-gun barrage covers."
+    estimate: the plan's figure, from the machine-gun barrage that created "a bullet-swept zone 400 yards ahead" of the infantry (nicholson-1962
+      p. 253); the source gives where the zone lay, not its depth, so the depth is an estimate
+    description: Depth in metres of the zone an indirect machine-gun barrage covers.
     calibrated: true
   captureRadiusM:
     value: 50
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Distance in metres within which attackers can capture a trench segment."
+    estimate: 'bomb and bayonet range: a Mills bomb is thrown some 30 m and a rush covers the rest; inside 50 m the fight for a trench
+      is hand to hand'
+    description: Distance in metres within which attackers can capture a trench segment.
     calibrated: true
   captureRatio:
     value: 3
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Attackers to defenders needed to capture a segment (3 means 3 to 1)."
+    estimate: the rule of thumb of three attackers to one defender to take a defended position
+    description: Attackers to defenders needed to capture a segment (3 means 3 to 1).
     calibrated: true
   sortieDelayMin:
-    value: 20
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Minutes before defenders sortie from their dugouts after attackers have passed."
+    value: 30
+    estimate: 'Germans left in dugouts the assault had passed came out once they judged it gone: at Vimy "some sharp combats were still
+      taking place with parties of the enemy emerging from dug-outs which had been passed over" during the consolidation of the Black
+      and Red Lines (boh-1917-1 p. 333), some tens of minutes after'
+    description: Minutes before defenders sortie from their dugouts after attackers have passed.
     calibrated: true
   lineFeatureMatchM:
     value: 150
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Distance in metres within which a trench feature counts as belonging to a line."
-    calibrated: true
+    estimate: 'a tolerance for matching a digitized trench to an objective line: the lines and trenches are digitized separately from
+      different maps, a few tens of metres apart at worst, and parallel trenches of one system lie 100-200 m apart'
+    description: Distance in metres within which a trench feature counts as belonging to a line.
   callForFireMin:
     value: 10
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Minutes from a forward observer asking for fire to the guns answering."
+    estimate: 'a forward observer''s request goes by telephone or signal to the battery, which lays and fires: about 10 minutes where
+      the line holds'
+    description: Minutes from a forward observer asking for fire to the guns answering.
     calibrated: true
   stallBarrageMin:
     value: 10
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Minutes a stalled attack waits before calling for a standing barrage on its front."
+    estimate: a stalled attack has lost its barrage (which moves 100 yards every 3 minutes, nicholson-1962 p. 253, so 300 m in 10 minutes)
+      and asks for a standing barrage on its front
+    description: Minutes a stalled attack waits before calling for a standing barrage on its front.
     calibrated: true
   gunCaptureRadiusM:
     value: 300
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Distance in metres within which attackers capture a battery."
+    estimate: a battery and its crews occupy about 100 m; attackers within effective rifle and Lewis range (300 m) make it untenable
+      and the guns are taken or abandoned
+    description: Distance in metres within which attackers capture a battery.
     calibrated: true
   tankSuppressRadiusM:
     value: 100
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Distance in metres within which a tank suppresses machine guns and infantry."
+    estimate: a tank draws and returns fire within a hundred metres; machine-gun posts that see it close up go quiet
+    description: Distance in metres within which a tank suppresses machine guns and infantry.
     calibrated: true
   gasHorseRadiusM:
-    value: 1000
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Distance in metres from the point of impact within which gas reaches horses."
+    value: 200
+    estimate: a gas shell's cloud spreads and drifts a couple of hundred metres before it thins; the plan's 1 km would gas whole valleys
+      from one shell, so 200 m
+    description: Distance in metres from the point of impact within which gas reaches horses.
     calibrated: true
   gapMultiplier:
     value: 2
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Multiplier applied where the gap between the barrage and the attackers is measured (the plan's starting value is 2)."
-    calibrated: true
+    estimate: 'an explanation threshold, not behaviour: a company more than twice its follow distance behind the barrage is said to
+      have lost it (cause barrage-moved-on)'
+    description: How many times the doctrine's follow distance a company must lag behind the barrage before its losses are put down
+      to the barrage having moved on.
   maxTargetsPerFirer:
     value: 2
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Most targets a single firer can engage at once."
+    estimate: a company engages the nearest enemies; splitting its fire between more than two groups is unrealistic for one company
+      commander's control
+    description: Most targets a single firer can engage at once.
     calibrated: true
   crewPerLewis:
     value: 2
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Men who serve one Lewis gun."
-    calibrated: true
+    source: ss143-1917
+    page: '9'
+    note: 'the Lewis gun section is "1 N. C. O. and 8 O. R. (includes Nos. 1 and 2)": the Nos. 1 and 2 serve the gun and alone carry
+      no rifle in the assault (p. 9); the rest carry drums and fight as riflemen'
+    description: Men who serve one Lewis gun (they fire no rifle).
   crewPerMg:
     value: 4
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Men who serve one machine gun."
-    calibrated: true
+    estimate: 'the men at the gun in action: the firer, the loader and two ammunition carriers. The German machine-gun company had 48
+      gunners for 6 guns, 8 a gun (german-handbook-1917 p. 50), the others reliefs and carriers'
+    description: Men who serve one machine gun (they fire no rifle).
   trenchProximityM:
     value: 15
-    estimate: "placeholder until Task 2: the plan's starting value"
-    description: "Distance in metres within which a company counts as being in a trench."
-    calibrated: true
+    estimate: a trench, its parapet and the shell holes along it lie within a few metres of the digitized line, which is itself a few
+      metres off
+    description: Distance in metres within which a company counts as being in a trench.

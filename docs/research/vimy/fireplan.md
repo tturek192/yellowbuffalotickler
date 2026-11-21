@@ -103,31 +103,31 @@ Park total: 1372 (source: a sum of sourced parts; no source prints this figure �
 
 | id | Weapon | Role | Count | How | Source |
 |---|---|---|---|---|---|
-| cdn-18pdr-creeping | 18-pdr | creeping | 320 (280-320) | disputed | BOH p. 319 n.1 (two-thirds of 480); Nicholson p. 253 (one gun to 25 yards × 7,000 yards) |
-| cdn-18pdr-standing | 18-pdr | standing | 112 | estimate | 480 − 320 − 48 (BOH p. 319 n.1: the other third, less the silent forward batteries) |
-| cdn-18pdr-forward | 18-pdr | creeping | 48 | estimate | nine batteries (BOH p. 307) × 5.3 guns (480 guns over 90 batteries, taking three 18-pdr batteries to each of the 30 brigades); with 6-gun batteries it would be 54, and 106 standing |
-| cdn-45in-how | 4.5-in howitzer | standing | 138 | sourced | BOH p. 307; Nicholson p. 248 |
-| cdn-13pdr | 13-pdr | standing | 20 | sourced (role estimate) | `rca-ww1-history` |
-| cdn-60pdr | 60-pdr | counter-battery | 54 | sourced (role estimate) | BOH p. 306 n.1; `rca-ww1-history` (nine batteries) |
-| cdn-6in-gun | 6-in gun | counter-battery | 8 | sourced (role estimate) | BOH p. 306 n.1; `rca-ww1-history` (two batteries) |
-| cdn-6in-how | 6-in howitzer | heavy | 104 | sourced | BOH p. 306 n.1 |
-| cdn-8in-how | 8-in howitzer | heavy | 36 | sourced | BOH p. 306 n.1 |
-| cdn-92in-how | 9.2-in howitzer | heavy | 36 | sourced | BOH p. 306 n.1 |
-| cdn-12in-how | 12-in howitzer | heavy | 4 | sourced | BOH p. 306 n.1 |
-| cdn-15in-how | 15-in howitzer | heavy | 3 | sourced | BOH p. 306 n.1 |
-| cdn-945in-tm | 9.45-in trench mortar | trench-mortar | 24 | sourced | `rca-ww1-history` |
-| cdn-medium-tm | medium trench mortar | trench-mortar | 76 | estimate | 983 − 245 − 618 − 20 − 24 (Nicholson pp. 248, 253; `rca-ww1-history`) |
-| cdn-mg-barrage | Vickers MG | mg-barrage | 150 | sourced | Nicholson p. 253; BOH p. 319 |
-| i-corps-60pdr | 60-pdr | counter-battery | 60 | sourced (role estimate) | BOH p. 306 n.2 |
-| i-corps-6in-how | 6-in howitzer | heavy | 48 | sourced | BOH p. 306 n.2 (40 + 8, as the OCR reads) |
-| i-corps-8in-how | 8-in howitzer | heavy | 4 | sourced | BOH p. 306 n.2 |
-| i-corps-92in-how | 9.2-in howitzer | heavy | 20 | sourced | BOH p. 306 n.2 |
-| i-corps-18pdr | 18-pdr | standing | 66 | sourced (role estimate) | BOH p. 307 |
-| i-corps-45in-how | 4.5-in howitzer | standing | 36 | sourced (role estimate) | BOH p. 307 |
-| army-12in-how | 12-in howitzer | heavy | 4 | sourced | BOH p. 306 |
-| army-12in-gun | 12-in gun | heavy | 1 | sourced | BOH p. 306 |
-| ger-gruppe-vimy-heavy | heavy guns and howitzers | defensive | 89 | sourced | BOH p. 353 (79th Reserve and 1st Bavarian Reserve Divisions) |
-| ger-gruppe-vimy-field | field guns and howitzers | defensive | 108 | sourced | BOH p. 353 |
+| cdn-18pdr-creeping | `18pdr` | creeping | 320 (280-320) | disputed | BOH p. 319 n.1 (two-thirds of 480); Nicholson p. 253 (one gun to 25 yards × 7,000 yards) |
+| cdn-18pdr-standing | `18pdr` | standing | 112 | estimate | 480 − 320 − 48 (BOH p. 319 n.1: the other third, less the silent forward batteries) |
+| cdn-18pdr-forward | `18pdr` | creeping | 48 | estimate | nine batteries (BOH p. 307) × 5.3 guns (480 guns over 90 batteries, taking three 18-pdr batteries to each of the 30 brigades); with 6-gun batteries it would be 54, and 106 standing |
+| cdn-45in-how | `4.5in-how` | standing | 138 | sourced | BOH p. 307; Nicholson p. 248 |
+| cdn-13pdr | `13pdr` | standing | 20 | sourced (role estimate) | `rca-ww1-history` |
+| cdn-60pdr | `60pdr` | counter-battery | 54 | sourced (role estimate) | BOH p. 306 n.1; `rca-ww1-history` (nine batteries) |
+| cdn-6in-gun | `6in-gun` | counter-battery | 8 | sourced (role estimate) | BOH p. 306 n.1; `rca-ww1-history` (two batteries) |
+| cdn-6in-how | `6in-how` | heavy | 104 | sourced | BOH p. 306 n.1 |
+| cdn-8in-how | `8in-how` | heavy | 36 | sourced | BOH p. 306 n.1 |
+| cdn-92in-how | `9.2in-how` | heavy | 36 | sourced | BOH p. 306 n.1 |
+| cdn-12in-how | `12in-how` | heavy | 4 | sourced | BOH p. 306 n.1 |
+| cdn-15in-how | `15in-how` | heavy | 3 | sourced | BOH p. 306 n.1 |
+| cdn-945in-tm | `9.45in-mortar` | trench-mortar | 24 | sourced | `rca-ww1-history` |
+| cdn-medium-tm | `2in-mortar` | trench-mortar | 76 | estimate | 983 − 245 − 618 − 20 − 24 (Nicholson pp. 248, 253; `rca-ww1-history`) |
+| cdn-mg-barrage | `vickers` | mg-barrage | 150 | sourced | Nicholson p. 253; BOH p. 319 |
+| i-corps-60pdr | `60pdr` | counter-battery | 60 | sourced (role estimate) | BOH p. 306 n.2 |
+| i-corps-6in-how | `6in-how` | heavy | 48 | sourced | BOH p. 306 n.2 (40 + 8, as the OCR reads) |
+| i-corps-8in-how | `8in-how` | heavy | 4 | sourced | BOH p. 306 n.2 |
+| i-corps-92in-how | `9.2in-how` | heavy | 20 | sourced | BOH p. 306 n.2 |
+| i-corps-18pdr | `18pdr` | standing | 66 | sourced (role estimate) | BOH p. 307 |
+| i-corps-45in-how | `4.5in-how` | standing | 36 | sourced (role estimate) | BOH p. 307 |
+| army-12in-how | `12in-how` | heavy | 4 | sourced | BOH p. 306 |
+| army-12in-gun | `12in-gun` | heavy | 1 | sourced | BOH p. 306 |
+| ger-gruppe-vimy-heavy | `150mm-sfh` | defensive | 89 | sourced | BOH p. 353 (79th Reserve and 1st Bavarian Reserve Divisions) |
+| ger-gruppe-vimy-field | `77mm-fk` | defensive | 108 | sourced | BOH p. 353 |
 
 By role (allied): creeping 368, standing 372, heavy 260, counter-battery 122, trench-mortar 100, mg-barrage 150; 1,372.
 The Canadian Corps' pieces sum to Nicholson's 983 guns and mortars (245 heavy + 618 field + 20 13-pdr + 100 mortars);
@@ -149,6 +149,35 @@ the 30-cm naval guns before Hénin-Liétard and the 16th Bavarian Division's gun
 Corps guns that fired on the right flank (BOH p. 313). Per-division allotments of the field artillery are not entered:
 the sources give only the ten field brigades of the 1st and 2nd Divisions (BOH p. 318) and the V and XI Brigades R.F.A.
 acting as the 4th Division's artillery (BOH p. 307 n.1).
+
+## Weapon ids
+
+The `weapon` of every artillery entry is an id in the model's weapon tables (`tables/weapons-1917.yaml`, notes in
+`docs/research/model/tables.md`), so the combat model can look up its rate of fire, range and shell. The names first
+entered were renamed to those ids; no count, role or source changed.
+
+| Was | Now | How |
+|---|---|---|
+| 18-pdr | `18pdr` | rename |
+| 13-pdr | `13pdr` | rename |
+| 4.5-in howitzer | `4.5in-how` | rename |
+| 60-pdr | `60pdr` | rename |
+| 6-in gun | `6in-gun` | rename |
+| 6-in howitzer | `6in-how` | rename |
+| 8-in howitzer | `8in-how` | rename |
+| 9.2-in howitzer | `9.2in-how` | rename |
+| 12-in howitzer | `12in-how` | rename |
+| 12-in gun | `12in-gun` | rename |
+| 15-in howitzer | `15in-how` | rename |
+| 9.45-in trench mortar | `9.45in-mortar` | rename |
+| medium trench mortar | `2in-mortar` | rename: BOH's table of the Canadian Corps' bombardment ammunition lists its mortars as the "2-inch trench mortar" and the "9.45-inch trench mortar" (p. 315 n.2), and "the medium and the Stokes" cut wire (p. 314) |
+| Vickers MG | `vickers` | rename |
+| heavy guns and howitzers (89, German) | `150mm-sfh` | representative, an estimate: BOH gives no split of Group Vimy's 89 heavy pieces (p. 353). On the whole Arras front the German heavies were 118 10-cm to 13-cm guns, 148 15-cm to 19.9-cm howitzers, 15 15-cm guns and 74 21-cm howitzers (p. 182 n.1); the 15-cm howitzer is the largest class. The front's mix is not the group's, so the entry is not split |
+| field guns and howitzers (108, German) | `77mm-fk` | representative, an estimate: no split of the 108 (p. 353); on the Arras front 419 of 659 field pieces were 77-mm and 9-cm guns and 240 were 105-mm howitzers (p. 182 n.1), so the field gun is the representative. Not split, as above |
+
+Splitting the two German entries by the front's proportions would give about 69 77-mm guns and 39 105-mm howitzers, and
+37 15-cm howitzers among the heavies; that would be an inference from another formation's mix, so it is an open question
+for the historian rather than data.
 
 ## Counter-battery at Zero
 
@@ -259,6 +288,9 @@ Roclincourt-Thélus road and the western slope of Hill 135 (BOH p. 336). Entered
 
 ## Open questions for the historian
 
+- **Group Vimy's guns by type.** BOH p. 353 gives the 79th Reserve and 1st Bavarian Reserve Divisions' 89 heavy and 108
+  field pieces without a split by calibre; they are entered as the representative 15-cm howitzer and 77-mm field gun
+  (Weapon ids). A German source (the divisions' artillery orders, *Die Osterschlacht bei Arras*) would give the mix.
 - **The divisional barrage maps and Canadian Corps Artillery Instruction No. 1** (35 pages, `rca-ww1-history`) would give
   each division's real lifts, the standing times on intermediate trenches and the protective barrage's distance and
   duration beyond each final objective (`standOffM`, the final `pauseMin`). None was found on the allowed hosts.

@@ -5,8 +5,8 @@ rates. They are data, not code. Change a number here and the simulation changes;
 needs editing. (Behaviour parameters, such as how fast a unit advances or when it breaks, live in
 `doctrine/*.yaml` instead.)
 
-Every `tables/*.yaml` file is read and merged. A file may hold any of four sections: `weapons`, `cover`,
-`channels` and `effects`. Each entry may be defined in one file only; the loader names both files if
+Every `tables/*.yaml` file is read and merged. A file may hold any of five sections: `sources`, `weapons`,
+`cover`, `channels` and `effects`. Each entry may be defined in one file only; the loader names both files if
 two define the same one.
 
 ## Every number is a `Param`
@@ -20,7 +20,7 @@ captureRatio:
 ```
 
 - `value` is the number.
-- Exactly one of `source` (an id from the scenario's source list, with an optional `page`) or `estimate`
+- Exactly one of `source` (an id from the `sources` registry in `tables/sources.yaml`, with an optional `page`) or `estimate`
   (the reasoning, in words) says where it came from.
 - `description` says in plain language what the number means. It is required, so you can read and edit
   the tables without the code.
@@ -29,10 +29,12 @@ captureRatio:
   Calibrated numbers are adjusted together in a calibration pass, never one at a time to make a single
   battle come out right.
 
-An entry marked `placeholder until Task 2` has a starting value that has not yet been researched.
+The research behind every number, with its sources, conflicts and open questions, is in
+`docs/research/model/tables.md`.
 
 ## Sections
 
+- `sources`: the registry every `source` id resolves in: title, author, year, url, tier and a note.
 - `weapons`: one entry per weapon id (for example `18pdr`): `kind`, `rpm`, `maxRangeM`, `rangeScaleM`,
   `lethality`, `suppressPerRound` and, for guns, `shellKg`.
 - `cover`: how much protection each posture (`moving`, `prone`, `in-trench`, `in-dugout`) gets on each

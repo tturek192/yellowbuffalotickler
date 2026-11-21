@@ -1,28 +1,956 @@
+# Weapons in use on the Western Front in April 1917, for the combat model. Every number is a Param (tables/README.md).
+# Facts (rates of fire, ranges, shell weights) cite a source in tables/sources.yaml or say why they are estimates; the
+# coefficients (lethality, rangeScaleM, suppressPerRound) are calibrated estimates, for Plan 4 to calibrate.
+# Research notes: docs/research/model/tables.md. The coefficients follow the rules written in their estimates.
 weapons:
+  rifle:
+    kind: small-arms
+    rpm:
+      value: 5
+      estimate: 'aimed fire kept up in action; the rapid rates are for a minute or so: 20-30 aimed shots a minute for the SMLE (wiki-lee-enfield)
+        and 15 for the Gewehr 98 (wiki-gewehr-98), whose "maximum rate of fire obtainable" is 35 to 40 (german-handbook-1917, the rifle
+        section). Men moving, loading under fire or looking for a target fire far less; a third of the slower rapid rate, 5'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 2743
+      source: wiki-lee-enfield
+      note: 3,000 yards, the SMLE's maximum range; the Gewehr 98's is 3,735 m (wiki-gewehr-98). One id for both sides' rifles
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 400
+      estimate: 'aimed rifle fire is effective to about 500 m (the SMLE''s 550-yard effective range, wiki-lee-enfield; the Gewehr 98''s
+        500 m with iron sights, wiki-gewehr-98): 400 m leaves a quarter of the point-blank effect at 550 m and almost none at 2 km'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.03
+      estimate: one hit in about 30 aimed rounds at a dense group in the open at close range; with rangeScaleM a rifleman then hits
+        0.07 men a minute at 300 m, so a machine gun (3.6 a minute at 300 m) is worth about 50 rifles, the builder's order of magnitude,
+        not a figure from a source read (tables.md, Coefficients)
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 0.05
+      estimate: 'half a machine-gun bullet''s: aimed rounds come singly; a 100-rifle company firing 5 rounds a minute each adds 0.25
+        a minute to a 100-man target'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+  lewis:
+    kind: lewis
+    rpm:
+      value: 250
+      source: lewis-1917
+      page: 81 (Methods of fire)
+      note: 'in traversing fire, bursts of five to ten rounds: "250 rounds per minute is all that is required at most"; the cyclic rate
+        is 500-600 (wiki-lewis-gun) and a 47-round magazine empties in seconds'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 3200
+      source: wiki-lewis-gun
+      note: 3,500 yards maximum; effective range 880 yards
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 500
+      estimate: 'a bipod gun, lighter and less steady than a tripod machine gun: its effective range is 880 yards (805 m, wiki-lewis-gun),
+        where 500 m leaves a fifth of the point-blank effect'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.01
+      estimate: 'bursts spread more than aimed rifle rounds: one hit in 100 rounds at a dense group close by; at 300 m and 250 rounds
+        a minute that is 1.4 men a minute, a little under half a tripod machine gun'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 0.08
+      estimate: automatic fire suppresses more per round than aimed rifle fire, less than a tripod gun's beaten zone; between the rifle's
+        0.05 and the machine gun's 0.1
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+  vickers:
+    kind: mg
+    rpm:
+      value: 450
+      source: wiki-vickers
+      note: 450-500 rounds a minute; the lower end, for belt changes and relaying
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 4115
+      source: wiki-vickers
+      note: 4,500 yards in indirect fire, the range the barrage guns used
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM: &id001
+      value: 1000
+      estimate: 'a tripod machine gun''s fire stays dense far out (the MG 08 is sighted to 2,200 yards, german-handbook-1917 p. 51):
+        1,000 m leaves three-quarters of the point-blank effect at 300 m and a tenth at 2,300 m, where indirect barrage fire works'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality: &id002
+      value: 0.012
+      estimate: 'the plan''s check: a gun firing about 400 rounds a minute at an exposed company moving in the open at 300 m should
+        cause casualties in single figures a minute; 400 x 0.012 x exp(-300/1000) = 3.6 a minute'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound: &id003
+      value: 0.1
+      estimate: a gun's 400 rounds a minute on a 100-man company add 0.4 a minute, so sustained fire pins it (0.7) inside two minutes,
+        less the decay (suppressionHalfLifeMin)
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+  mg08:
+    kind: mg
+    rpm:
+      value: 400
+      source: german-handbook-1917
+      page: '51'
+      note: '"400-500 rounds per minute"; the lower end, for belt changes (200-round belts, p. 51); machine gunners trained at "Sustained
+        fire at the rate of 500 rounds per minute" (p. 52)'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 4023
+      source: german-handbook-1917
+      page: '51'
+      note: '"Extreme range (at 32 deg elevation) 4,400 yards"; limit of sighting 2,200 yards'
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM: *id001
+    lethality: *id002
+    suppressPerRound: *id003
   18pdr:
     kind: field-gun
     rpm:
-      value: 4
-      estimate: "placeholder until Task 2: starting value"
-      description: "Rounds a gun fires per minute."
-      calibrated: true
+      value: 2
+      source: nicholson-1962
+      page: '253'
+      note: 'the creeping barrage at Vimy: "three rounds a minute" on the front trench for three minutes, then "slowing their rate of
+        fire to two rounds per minute"; the gun was limited to 4 a minute from January 1917 (wiki-qf-18pdr)'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
     maxRangeM:
-      value: 6000
-      estimate: "placeholder until Task 2: starting value"
-      description: "Longest range in metres at which the weapon can hit."
-      calibrated: true
+      value: 5966
+      source: wiki-qf-18pdr
+      note: 6,525 yards for the Mk I and II; 7,800 with the trail dug in, as it was for barrages
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
     rangeScaleM:
-      value: 3000
-      estimate: "placeholder until Task 2: starting value"
-      description: "Distance in metres over which effect falls by a factor of e."
+      value: 11900
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
       calibrated: true
     lethality:
-      value: 0.02
-      estimate: "placeholder until Task 2: starting value"
-      description: "Chance per round that a man in the target group is hit."
+      value: 0.5
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
       calibrated: true
     suppressPerRound:
-      value: 0.5
-      estimate: "placeholder until Task 2: starting value"
-      description: "How much one round adds to suppression."
+      value: 3.0
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
       calibrated: true
+    shellKg:
+      value: 8.4
+      source: wiki-qf-18pdr
+      note: 18.5 lb
+      description: Weight of one shell or bomb in kilograms, as fired.
+  13pdr:
+    kind: field-gun
+    rpm:
+      value: 2
+      estimate: 'sustained rate: the 18-pdr, limited to 4 rounds a minute from January 1917 (wiki-qf-18pdr, after Farndale), fired the
+        Vimy barrage at 2 after its first three minutes (nicholson-1962 p. 253), half its limit; the 13-pdr, a lighter quick-firing
+        gun of the same family, is given the same 2'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 5395
+      source: wiki-qf-13pdr
+      note: 5,900 yards
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 10800
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.41
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 2.5
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 5.7
+      source: wiki-qf-13pdr
+      note: 12.5 lb shrapnel, later HE
+      description: Weight of one shell or bomb in kilograms, as fired.
+  4.5in-how:
+    kind: howitzer
+    rpm:
+      value: 2
+      estimate: 'sustained rate: the 18-pdr, limited to 4 rounds a minute from January 1917 (wiki-qf-18pdr, after Farndale), fired the
+        Vimy barrage at 2 after its first three minutes (nicholson-1962 p. 253), half its limit; wiki-qf-45in-how gives 4 rounds a minute
+        for the howitzer, so half: 2'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 6218
+      source: wiki-qf-45in-how
+      note: 6,800 yards maximum (6,600 effective)
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 12400
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.69
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 4.1
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 15.9
+      source: wiki-qf-45in-how
+      note: 35 lb HE
+      description: Weight of one shell or bomb in kilograms, as fired.
+  60pdr:
+    kind: heavy
+    rpm:
+      value: 1
+      estimate: 'no rate for this piece was found in the sources read; separate-loading heavy pieces fire far slower than the field
+        guns (the 6-inch howitzer''s maximum is 2 a minute, wiki-bl-6in-26cwt; the 9.45-inch mortar''s 1 in 6 minutes, wiki-945in-mortar);
+        a 60 lb separate-loading gun, half the field guns'' 2: 1'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 9418
+      source: wiki-bl-60pdr
+      note: 10,300 yards with the 1917 2 c.r.h. shell on the Mk I carriage; 12,300 with the later 8 c.r.h. shell, and us-handbook-artillery-1920
+        pp. 189-192 gives 12,280 for the Mk I gun on the Mk II carriage (tables.md, Conflicts)
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 18800
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.9
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 5.4
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 27.2
+      source: wiki-bl-60pdr
+      note: 60 lb; us-handbook-artillery-1920 p. 192 the same
+      description: Weight of one shell or bomb in kilograms, as fired.
+  6in-gun:
+    kind: heavy
+    rpm:
+      value: 1
+      estimate: 'no rate for this piece was found in the sources read; separate-loading heavy pieces fire far slower than the field
+        guns (the 6-inch howitzer''s maximum is 2 a minute, wiki-bl-6in-26cwt; the 9.45-inch mortar''s 1 in 6 minutes, wiki-945in-mortar);
+        a 100 lb separate-loading gun on a travelling carriage: 1 (the 8 a minute in wiki-bl-6in-mk7 is the naval mounting''s)'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 10973
+      source: wiki-bl-6in-mk7
+      note: 12,000 yards on the field carriage (Farndale; Clarke gives 13,700 on the Mk II carriage)
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 21900
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 1.2
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 7.2
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 45.4
+      source: wiki-bl-6in-mk7
+      note: 100 lb
+      description: Weight of one shell or bomb in kilograms, as fired.
+  6in-how:
+    kind: heavy
+    rpm:
+      value: 1
+      estimate: 'half the "Max: 2 rpm" of wiki-bl-6in-26cwt, as the 18-pdr''s sustained rate is half its limit: 1'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 8687
+      source: wiki-bl-6in-26cwt
+      note: 9,500 yards with the 100 lb shell of the First World War
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 17400
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 1.2
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 7.2
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 45.4
+      source: wiki-bl-6in-26cwt
+      note: 100 lb
+      description: Weight of one shell or bomb in kilograms, as fired.
+  8in-how:
+    kind: heavy
+    rpm:
+      value: 0.5
+      estimate: 'no rate for this piece was found in the sources read; separate-loading heavy pieces fire far slower than the field
+        guns (the 6-inch howitzer''s maximum is 2 a minute, wiki-bl-6in-26cwt; the 9.45-inch mortar''s 1 in 6 minutes, wiki-945in-mortar);
+        a 200 lb shell: one round in two minutes'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 9839
+      source: us-handbook-artillery-1920
+      page: '267'
+      note: Mk VI, "maximum range of 10,760 yards"; 12,280 for the Mk VII; the converted Mk I-V reached 10,500 (wiki-bl-8in-mk1-5)
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 19700
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 1.6
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 9.6
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 90.7
+      source: wiki-bl-8in-mk1-5
+      note: 200 lb HE
+      description: Weight of one shell or bomb in kilograms, as fired.
+  9.2in-how:
+    kind: heavy
+    rpm:
+      value: 0.5
+      estimate: 'no rate for this piece was found in the sources read; separate-loading heavy pieces fire far slower than the field
+        guns (the 6-inch howitzer''s maximum is 2 a minute, wiki-bl-6in-26cwt; the 9.45-inch mortar''s 1 in 6 minutes, wiki-945in-mortar);
+        a 290 lb shell: one round in two minutes'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 9199
+      source: wiki-bl-92in-how
+      note: 10,060 yards for the Mk I; 13,935 for the Mk II
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 18400
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 2.0
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 12.0
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 131.5
+      source: wiki-bl-92in-how
+      note: 290 lb HE
+      description: Weight of one shell or bomb in kilograms, as fired.
+  12in-how:
+    kind: heavy
+    rpm:
+      value: 0.25
+      estimate: 'no rate for this piece was found in the sources read; separate-loading heavy pieces fire far slower than the field
+        guns (the 6-inch howitzer''s maximum is 2 a minute, wiki-bl-6in-26cwt; the 9.45-inch mortar''s 1 in 6 minutes, wiki-945in-mortar);
+        a 750 lb shell: one round in four minutes'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 10378
+      source: wiki-bl-12in-how
+      note: 11,350 yards for the Mk II; 14,350 for the Mk IV
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 20800
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 3.2
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 19.2
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 340.2
+      source: wiki-bl-12in-how
+      note: 750 lb
+      description: Weight of one shell or bomb in kilograms, as fired.
+  12in-gun:
+    kind: heavy
+    rpm:
+      value: 0.2
+      estimate: 'no rate for this piece was found in the sources read; separate-loading heavy pieces fire far slower than the field
+        guns (the 6-inch howitzer''s maximum is 2 a minute, wiki-bl-6in-26cwt; the 9.45-inch mortar''s 1 in 6 minutes, wiki-945in-mortar);
+        an 850 lb shell from a railway mounting: one round in five minutes'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 29901
+      source: wiki-bl-12in-railway
+      note: 32,700 yards for the Mk IX on its railway truck; BOH p. 306's "single 12-inch gun" is taken to be a railway gun (tables.md,
+        Open questions)
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 59800
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 3.4
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 20.4
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 385.6
+      source: wiki-bl-12in-railway
+      note: 850 lb HE
+      description: Weight of one shell or bomb in kilograms, as fired.
+  15in-how:
+    kind: heavy
+    rpm:
+      value: 0.2
+      estimate: 'no rate for this piece was found in the sources read; separate-loading heavy pieces fire far slower than the field
+        guns (the 6-inch howitzer''s maximum is 2 a minute, wiki-bl-6in-26cwt; the 9.45-inch mortar''s 1 in 6 minutes, wiki-945in-mortar);
+        a 1,450 lb shell: one round in five minutes'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 9876
+      source: wiki-bl-15in-how
+      note: 10,800 yards
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 19800
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 4.4
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 26.4
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 657.7
+      source: wiki-bl-15in-how
+      note: 1,450 lb (Clarke); Hogg and Thurston give 1,400
+      description: Weight of one shell or bomb in kilograms, as fired.
+  stokes-3in:
+    kind: mortar
+    rpm:
+      value: 6
+      source: wiki-stokes
+      note: '"6-8 rpm (sustained)", 25 the maximum; the lower end'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 686
+      source: us-handbook-artillery-1920
+      page: '372'
+      note: '"a maximum of 750 yards at 40 deg elevation" with cartridge and three rings; wiki-stokes gives 800'
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 1400
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.38
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 2.3
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 4.8
+      source: wiki-stokes
+      note: 10 lb 11 oz, the unstabilised First World War bomb; us-handbook-artillery-1920 p. 372 says about 11 lb
+      description: Weight of one shell or bomb in kilograms, as fired.
+  2in-mortar:
+    kind: mortar
+    rpm:
+      value: 2
+      source: wiki-2in-mortar
+      note: '"2-3 per minute" (after Ministry of Munitions 1922, p. 65); the lower end'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 521
+      source: wiki-2in-mortar
+      note: 570 yards, depending on charge
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 1000
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.83
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 5.0
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 23.1
+      source: wiki-2in-mortar
+      note: 51 lb as fired, bomb and stick
+      description: Weight of one shell or bomb in kilograms, as fired.
+  9.45in-mortar:
+    kind: mortar
+    rpm:
+      value: 0.167
+      source: wiki-945in-mortar
+      note: '"1 round every 6 minutes" (after the British handbook of February 1918)'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 2195
+      source: wiki-945in-mortar
+      note: 660-2,400 yards
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 4400
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 1.4
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 8.4
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 68.9
+      source: wiki-945in-mortar
+      note: 152 lb HE
+      description: Weight of one shell or bomb in kilograms, as fired.
+  77mm-fk:
+    kind: field-gun
+    rpm:
+      value: 2
+      estimate: 'the same class of quick-firing field gun as the 18-pdr, under the same limits of barrel wear (the German Somme instruction
+        quoted in wiki-qf-18pdr: barrage fire "must only last a few minutes"); wiki-fk-96 gives 10 a minute, a burst rate. The 18-pdr''s
+        sustained 2 (nicholson-1962 p. 253)'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 8400
+      source: german-handbook-1917
+      page: '63'
+      note: FK 96 n.A., "Maximum range with percussion fuze 9,186 yards"; 7,874 with time fuze
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 16800
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.45
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 2.7
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 6.8
+      source: german-handbook-1917
+      page: '64'
+      note: '"The long shell weighs 14.6 lbs., the other projectiles 15 lbs."'
+      description: Weight of one shell or bomb in kilograms, as fired.
+  105mm-lfh:
+    kind: howitzer
+    rpm:
+      value: 2
+      estimate: 'a field howitzer, as the 4.5-inch: 2 (no German rate found in the sources read)'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 7000
+      source: german-handbook-1917
+      page: '64'
+      note: light field howitzer 98/09, 7,655 yards with the No. 8 charge; 6,890 with No. 7, "the largest charge ordinarily employed"
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 14000
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.68
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 4.1
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 15.6
+      source: german-handbook-1917
+      page: '65'
+      note: '"The above shells weigh 34.5 lbs. each"'
+      description: Weight of one shell or bomb in kilograms, as fired.
+  150mm-sfh:
+    kind: heavy
+    rpm:
+      value: 1
+      estimate: 'wiki-sfh-13 gives 3 a minute; a third, as for the other heavy pieces: 1'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 8500
+      source: german-handbook-1917
+      page: '68'
+      note: the 1913 pattern, 9,296 yards; the 1902 pattern 8,147 and the old pattern 6,616
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 17000
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 1.1
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 6.6
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 41.7
+      source: german-handbook-1917
+      page: '69'
+      note: '"All three patterns of H.E. shell weigh about 92 lbs." (the OCR reads "J2"; read as 92, which matches a 15-cm shell of
+        about 42 kg)'
+      description: Weight of one shell or bomb in kilograms, as fired.
+  210mm-mrs:
+    kind: heavy
+    rpm:
+      value: 0.5
+      estimate: 'a 184 lb shell, as the 8-inch howitzer: one round in two minutes (no rate found)'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 9100
+      source: german-handbook-1917
+      page: '69'
+      note: the latest-pattern 21-cm mortar with the 1914 shell, 9,952 yards; 10,280 with the 1896 n/A shell
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 18200
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 1.6
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 9.6
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 83.5
+      source: german-handbook-1917
+      page: '70'
+      note: '"the 1914 and 1914 A patterns about 184 lbs."; the 1896 n/A pattern about 262'
+      description: Weight of one shell or bomb in kilograms, as fired.
+  minenwerfer-light:
+    kind: mortar
+    rpm:
+      value: 4
+      estimate: 'the light Minenwerfer fires "up to 20 rounds a minute for short periods" (german-handbook-1918 p. 104); sustained,
+        a fifth: 4, a little under the Stokes''s 6'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 1050
+      source: german-handbook-1917
+      page: '74'
+      note: 7.6-cm light Minenwerfer, 175-1,148 yards; about 1,094 in german-handbook-1918 p. 104
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 2100
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.37
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 2.2
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 4.5
+      source: german-handbook-1917
+      page: '74'
+      note: 10 lb H.E. projectile; 9.9 lb in german-handbook-1918 p. 104
+      description: Weight of one shell or bomb in kilograms, as fired.
+  minenwerfer-medium:
+    kind: mortar
+    rpm:
+      value: 0.5
+      source: german-handbook-1918
+      page: '104'
+      note: 17-cm medium Minenwerfer, "30-35 rounds per hour (H.E.)"; the 1916 pattern 80-85 an hour. 30 an hour taken
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 920
+      source: german-handbook-1917
+      page: '74'
+      note: 17-cm medium Minenwerfer, 116-1,006 yards; the 1916 pattern 328-1,208 (german-handbook-1918 p. 104)
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 1800
+      estimate: '2 x maxRangeM: an observed or registered gun keeps most of its accuracy across its range, losing about 40 per cent
+        at its longest range (exp(-0.5)); order of magnitude only (tables.md, Coefficients)'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 1.2
+      estimate: '0.5 x sqrt(shellKg / 8.4): the 18-pdr''s 0.5 men hit per round on a dense group in the open (one shrapnel or HE burst
+        among a platoon in the open hitting about one man in two rounds), scaled by the square root of shell weight because a burst''s
+        lethal area grows more slowly than its weight; order of magnitude only, for Plan 4 to calibrate (tables.md, Coefficients)'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 7.2
+      estimate: '6 x lethality: one burst near a 100-man company adds about 0.03 suppression for the 18-pdr, so its 9 rounds a minute
+        on 100 m of front pin a company inside two or three minutes; the same ratio for every shell (tables.md, Coefficients)'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
+    shellKg:
+      value: 49.4
+      source: german-handbook-1917
+      page: '74'
+      note: 109 lb H.E. projectile; 109.1 in german-handbook-1918 p. 104
+      description: Weight of one shell or bomb in kilograms, as fired.
