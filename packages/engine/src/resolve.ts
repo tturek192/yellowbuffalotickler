@@ -24,12 +24,11 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
   const byTarget = new Map<string, PendingDamage[]>();
   for (const p of pending.damage) byTarget.set(p.targetId, [...(byTarget.get(p.targetId) ?? []), p]);
 
-  type Tally = { fire: FireGroup; causes: Set<Cause>; refs: Set<number>; targets: Set<string>; names: string[]; hit: number; killed: number; wounded: number };
-  const tallies = new Map<string, Tally>();
-  // Fires in the order they were gathered, so events come out in a fixed order.
+  // Arrays, in the order the fires were gathered, so nothing depends on Map or Set iteration order.
+  type Tally = { fire: FireGroup; causes: Cause[]; refs: number[]; targets: Array<{ id: string; name: string }>; hit: number; killed: number; wounded: number };
+  const tallies: Tally[] = [];
   for (const p of pending.damage)
-    if (p.fire && !tallies.has(p.fire.key))
-      tallies.set(p.fire.key, { fire: p.fire, causes: new Set(), refs: new Set(), targets: new Set(), names: [], hit: 0, killed: 0, wounded: 0 });
+    if (p.fire && !tallies.some((t) => t.fire.key === p.fire!.key)) tallies.push({ fire: p.fire, causes: [], refs: [], targets: [], hit: 0, killed: 0, wounded: 0 });
 
   const companies = state.companies.map((c): CompanyState => {
     const ps = byTarget.get(c.id);
@@ -48,12 +47,11 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
       killed += k;
       wounded += n - k;
       gain += (p.suppressPerRound * p.rounds) / Math.max(c.men, 1);
-      const t = p.fire && tallies.get(p.fire.key);
+      const t = p.fire && tallies.find((x) => x.fire.key === p.fire!.key);
       if (t) {
-        for (const x of p.causes) t.causes.add(x);
-        for (const r of p.refs) t.refs.add(r);
-        if (!t.targets.has(c.id)) t.names.push(c.name);
-        t.targets.add(c.id);
+        for (const x of p.causes) if (!t.causes.includes(x)) t.causes.push(x);
+        for (const r of p.refs) if (!t.refs.includes(r)) t.refs.push(r);
+        if (!t.targets.some((x) => x.id === c.id)) t.targets.push({ id: c.id, name: c.name });
         t.hit += n;
         t.killed += k;
         t.wounded += n - k;
@@ -62,19 +60,18 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
     return { ...c, men, killed: c.killed + killed, wounded: c.wounded + wounded, suppression: Math.min(1, c.suppression + gain) * decay };
   });
 
-  const events: NewEvent[] = [...tallies.values()].map((t) => {
-    const one = t.targets.size === 1 ? [...t.targets][0]! : undefined;
-    const unitId = t.fire.unitId ?? one;
-    const on = t.names.length <= 3 ? t.names.join(', ') : `${t.names.length} companies`;
+  const events: NewEvent[] = tallies.map((t) => {
+    const unitId = t.fire.unitId ?? (t.targets.length === 1 ? t.targets[0]!.id : undefined);
+    const on = t.targets.length <= 3 ? t.targets.map((x) => x.name).join(', ') : `${t.targets.length} companies`;
     return {
       minute: state.minute,
       kind: 'shelled',
       ...(t.fire.sectorId !== undefined ? { sectorId: t.fire.sectorId } : {}),
       ...(unitId !== undefined ? { unitId } : {}),
       text: `${t.fire.text} on ${on}: ${t.hit} men hit (${t.killed} killed, ${t.wounded} wounded)`,
-      causes: CAUSES.filter((x) => t.causes.has(x)),
+      causes: CAUSES.filter((x) => t.causes.includes(x)),
       refs: [...t.refs].sort((a, b) => a - b),
-      factors: { ...t.fire.factors, targets: t.targets.size, hit: t.hit, killed: t.killed, wounded: t.wounded },
+      factors: { ...t.fire.factors, targets: t.targets.length, hit: t.hit, killed: t.killed, wounded: t.wounded },
     };
   });
   return emit({ ...state, companies }, ...events);

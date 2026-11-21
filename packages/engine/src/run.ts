@@ -1,6 +1,7 @@
 import { decodeTerrain, ScenarioError, v } from '@wwi/scenario';
 import type { Doctrine, Point, Scenario, Tables } from '@wwi/scenario';
 import { barrageXAt, initBarrage } from './barrage';
+import { noteArtilleryDefaults } from './artillery';
 import { initBatteries, runBombardment } from './bombardment';
 import { emit } from './causes';
 import { initCompanies, isHolding } from './companies';
@@ -67,6 +68,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     defaultsUsed: new Set(used),
   };
   noteLightDefaults(scenario, ctx.defaultsUsed);
+  noteArtilleryDefaults(scenario, ctx.defaultsUsed);
   const segments = deriveSegments(scenario, models.tables, ctx.defaultsUsed);
   // A garrison's segment: the one whose garrisons it is among.
   const segmentOf = new Map(segments.flatMap((x) => x.garrisonIds.map((id) => [id, x.id] as const)));

@@ -1,9 +1,8 @@
 import { minutesBetween, ScenarioError, v } from '@wwi/scenario';
-import type { Doctrine, Point, Scenario, Weapon } from '@wwi/scenario';
+import type { Point, Scenario, Weapon } from '@wwi/scenario';
 import { bandAt, barrageXAt, planReachX } from './barrage';
 import { emit } from './causes';
 import type { Cause, NewEvent } from './causes';
-import { isHolding } from './companies';
 import type { CompanyState } from './companies';
 import { lineXAt } from './geometry';
 import { distToSegment, groundAt, inPolygon } from './ground';
@@ -11,7 +10,6 @@ import { visibilityM } from './light';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import { featurePieces, featurePoints, pointRadiusM } from './segments';
-import { stochasticRound } from './stochastic';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
 import type { BatteryState, FireGroup, Observation, Pending, SegmentState, Side } from './types';
@@ -26,7 +24,11 @@ import type { BatteryState, FireGroup, Observation, Pending, SegmentState, Side 
  * 3. the machine-gun barrage, a zone `mgBarrageDepthM` deep beyond the band, which suppresses only;
  * 4. defensive fire of the `defensive` batteries on no man's land and on their side's lost segments, whenever
  *    enemies are there (`defensive-barrage`);
- * 5. off-map fire inside its window (`off-map-fire`), which also keeps silenced batteries in its target silent.
+ * 5. off-map fire inside its window (`off-map-fire`), on the units in its target.
+ *
+ * Counter-battery fire during the battle (on-map `counter-battery` batteries and off-map fire on battery positions
+ * alike) is not modelled yet: it should come as one mechanism with a data coefficient, with gas on the batteries
+ * (Task 14). Until then the German batteries recover from their Zero suppression only by `batteryRecoveryHalfLifeMin`.
  *
  * Fire-plan fire (1 to 4) is laid on lines the batteries were sited to reach, so it has no range term: one artillery
  * entry's position stands for many batteries spread along the front (at Vimy the 108 German field guns share one
@@ -74,7 +76,8 @@ export function segmentSamples(ctx: StepContext, seg: SegmentState, companies: r
   return out;
 }
 
-const distanceTo = (pts: readonly Point[], p: Point): number => {
+/** The distance from p to the nearest of the points. */
+export const distanceTo = (pts: readonly Point[], p: Point): number => {
   let d = Infinity;
   for (const q of pts) d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1]));
   return d;
@@ -182,6 +185,18 @@ function offMapFires(ctx: StepContext): OffMapFire[] {
   return out;
 }
 
+/**
+ * Record the rules the battle's artillery applies for want of data (Review Focus 2), once at setup:
+ * - creeping and machine-gun barrage batteries name no sector, so they are shared among the sectors by width;
+ * - fire-plan fire has no range term, because one artillery entry's position stands for many batteries.
+ */
+export function noteArtilleryDefaults(s: Scenario, defaultsUsed: Set<string>): void {
+  for (const a of s.artillery)
+    if ((a.role === 'creeping' || a.role === 'mg-barrage') && s.sectors.length > 0) defaultsUsed.add(`artillery[${a.id}] ← shared across sectors by width (no sector given)`);
+  if (s.artillery.some((a) => (['creeping', 'standing', 'heavy', 'mg-barrage', 'defensive'] as const).some((r) => r === a.role)))
+    defaultsUsed.add("fire-plan fire ← no range term (an artillery entry's position stands for many batteries along the front)");
+}
+
 // ---- observation and fire -----------------------------------------------------------------------------------
 
 /**
@@ -251,17 +266,17 @@ function spend(batteries: BatteryState[], ctx: StepContext, min: number, share: 
   });
 }
 
-/** Spent guns as fires on 100 m of `frontageM`, one per weapon and observation (in battery order). */
+/** Spent guns as fires on 100 m of `frontageM`, one per weapon and observation, in the order the batteries come. */
 function firesOf(spent: Spent[], frontageM: number, obsOf: (o: Observation) => number, ctx: StepContext): Fire[] {
-  const by = new Map<string, Fire>();
+  const out: Array<Fire & { key: string }> = [];
   for (const { battery: b, guns } of spent) {
     if (!(guns > 0)) continue;
     const key = `${b.weapon}|${b.observation}`;
-    const f = by.get(key) ?? { weapon: ctx.tables.weapons[b.weapon]!, per100: 0, obs: obsOf(b.observation) };
+    let f = out.find((x) => x.key === key);
+    if (!f) out.push((f = { key, weapon: ctx.tables.weapons[b.weapon]!, per100: 0, obs: obsOf(b.observation) }));
     f.per100 += (guns * 100) / frontageM;
-    by.set(key, f);
   }
-  return [...by.values()];
+  return out;
 }
 
 const inAction = (b: BatteryState): boolean => b.suppressedUntilMin === null && b.ammoLeft > 0;
@@ -297,23 +312,13 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   const observedFrac = s.air ? v(s.air.observedFrac) : 0;
   const obsOf = (o: Observation) => observationFactor(o, ctx, visM, observedFrac);
   const airCause = (spent: Spent[]): Cause[] => (spent.some((x) => x.guns > 0 && x.battery.observation === 'aircraft') ? ['air-observation'] : []);
-  const push = (c: CompanyState, fires: Fire[], min: number, causes: Cause[], fire: FireGroup, suppressOnly = false): void => {
+  const push = (c: CompanyState, fires: Fire[], min: number, causes: Cause[], fire: FireGroup, suppressOnly = false, refs: number[] = []): void => {
     const r = fireOn(c, fires, min, ctx, segs, suppressOnly);
     if (r.hits <= 0 && r.rounds <= 0) return;
-    pending.damage.push({ targetId: c.id, source: 'artillery', hits: r.hits, rounds: r.rounds, suppressPerRound: r.suppressPerRound, causes, refs: [], fire });
+    pending.damage.push({ targetId: c.id, source: 'artillery', hits: r.hits, rounds: r.rounds, suppressPerRound: r.suppressPerRound, causes, refs, fire });
   };
 
-  // Off-map fire on battery positions keeps the silenced guns there silent while it lasts: their recovery waits.
   const offMap = offMapFires(ctx).map((e) => ({ e, overlap: Math.min(minute, e.toMin) - Math.max(from, e.fromMin) }));
-  const held = new Map<string, number>();
-  for (const { e, overlap } of offMap) {
-    if (overlap <= 0) continue;
-    for (const b of bats)
-      if (b.side !== e.side && b.position && b.suppressedUntilMin !== null && b.suppressedUntilMin > from && e.inside(b.position)) {
-        b.suppressedUntilMin += overlap;
-        held.set(e.id, (held.get(e.id) ?? 0) + b.guns);
-      }
-  }
 
   // Batteries whose silence has run out fire again; "batteries recovered" once a side has the share of its guns back.
   const thr = v(fx.batteriesRecoveredFrac);
@@ -324,15 +329,20 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   const before = SIDES.map(shareOf);
   for (const b of bats) if (b.suppressedUntilMin !== null && b.suppressedUntilMin <= minute) b.suppressedUntilMin = null;
   const recovered = SIDES.map(shareOf);
+  // Emitted at once, so that the fire that follows can refer to it.
+  let out = emit({ ...state, batteries: bats });
+  const recoveredEvent = { ...(state.batteriesRecoveredEventId ?? {}) };
   SIDES.forEach((side, i) => {
-    if (before[i]! < thr && recovered[i]! >= thr)
-      events.push({
+    if (before[i]! < thr && recovered[i]! >= thr) {
+      recoveredEvent[side] = out.nextEventId;
+      out = emit(out, {
         minute,
         kind: 'batteries-recovered',
         text: `${pctText(recovered[i]!)} of the ${side === 'central' ? 'German' : 'Allied'} guns are back in action`,
         causes: ['batteries-recovered'],
         factors: { inActionFrac: round(recovered[i]!, 3), guns: gunsIn(bats, side, (b) => b.suppressedUntilMin === null) },
       });
+    }
   });
 
   // 1. The creeping barrage. A sector's creeping artillery is its side's creeping batteries shared among the
@@ -430,8 +440,13 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
         ...(lagging.length ? { gapM: round(Math.max(...lagging.map((c) => c.gapM!))) } : {}),
       },
     };
+    const recoveredRef = back >= thr && recoveredEvent[side] !== undefined ? [recoveredEvent[side]!] : [];
     const causes: Cause[] = ['defensive-barrage', ...(back >= thr ? (['batteries-recovered'] as const) : []), ...airCause(spent)];
-    for (const c of targets) push(c, fires, dt, c.barrageLost ? [...causes, 'barrage-moved-on'] : causes, fire);
+    for (const c of targets) {
+      // A company that has lost its barrage: the fire refers to the event that said so.
+      const lostRef = c.barrageLost && c.barrageLostEventId !== null ? [c.barrageLostEventId] : [];
+      push(c, fires, dt, c.barrageLost ? [...causes, 'barrage-moved-on'] : causes, fire, false, [...recoveredRef, ...lostRef]);
+    }
   }
 
   // 5. Off-map fire inside its window.
@@ -441,7 +456,7 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     const fire: FireGroup = {
       key: `off-map:${e.id}`,
       text: `Off-map fire (${e.id})`,
-      factors: { guns: e.guns, fired: round(e.guns * v(e.weapon.rpm) * overlap), ...(held.has(e.id) ? { gunsHeldSilent: held.get(e.id)! } : {}) },
+      factors: { guns: e.guns, fired: round(e.guns * v(e.weapon.rpm) * overlap) },
     };
     for (const c of field) if (c.side !== e.side && e.inside(at(c))) push(c, fires, overlap, ['off-map-fire'], fire);
   }
@@ -453,7 +468,7 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   });
 
   // The segments a barrage is on now; those it was on last step and is not now, it has lifted off.
-  let out = emit({ ...state, batteries: bats }, ...events);
+  out = emit({ ...out, batteries: bats, batteriesRecoveredEventId: recoveredEvent }, ...events);
   const segments: SegmentState[] = [];
   for (const seg of state.segments) {
     if (covered.has(seg.id)) segments.push({ ...seg, barrageLastOverMin: minute });
@@ -469,174 +484,11 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
 const within = (b: [number, number] | null, x: number): boolean => b !== null && x >= b[0] && x <= b[1];
 const pctText = (x: number): string => `${Math.round(x * 100)}%`;
 
-// ---- the gap ------------------------------------------------------------------------------------------------
-
-/**
- * Each attacking company's gap to its sector's barrage, `barrageX − x` (null once the barrage has ended, and for
- * holding companies). An advancing company has lost its barrage when it lags more than
- * `followDistanceM × (gapMultiplier − 1)` behind the place the barrage lets it be (`barrageX − followDistanceM`, or
- * its objective if nearer), that is, more than `gapMultiplier × followDistanceM` behind the barrage, and is not
- * closing up (its gap is no smaller than at its last step); it has it again once it is back within that. Entering the state emits `barrage-lost`.
- */
-export function trackGaps(state: SimState, ctx: StepContext): SimState {
-  const events: NewEvent[] = [];
-  const mult = v(ctx.tables.effects.gapMultiplier);
-  const companies = state.companies.map((c): CompanyState => {
-    const b = isHolding(c) ? undefined : state.barrages.find((x) => x.sectorId === c.sectorId);
-    const sec = b && ctx.scenario.sectors.find((x) => x.id === c.sectorId);
-    if (!b || !sec || b.phase === 'done') return c.gapM === null && !c.barrageLost ? c : { ...c, gapM: null, barrageLost: false };
-    const bx = barrageXAt(b, sec, ctx.lines, state.minute, c.y);
-    const gapM = bx - c.x;
-    let lost = false;
-    if (c.status === 'advancing') {
-      const d = ctx.doctrines[c.doctrineId]!;
-      const follow = v(d.attack!.followDistanceM);
-      const line = ctx.scenario.lines.find((l) => l.id === c.objectiveLineId);
-      const target = Math.min(line ? lineXAt(line.points, c.y) : Infinity, bx - follow);
-      const behind = target - c.x > follow * (mult - 1);
-      // No gap taken yet (its first step): nothing shows it falling behind.
-      const closing = c.gapM === null || gapM < c.gapM;
-      lost = behind && (c.barrageLost || !closing);
-      if (lost && !c.barrageLost)
-        events.push({
-          minute: state.minute,
-          kind: 'barrage-lost',
-          sectorId: c.sectorId,
-          unitId: c.id,
-          text: `${c.name} has lost its barrage: ${Math.round(gapM)} m behind it`,
-          causes: ['barrage-moved-on'],
-          factors: { gapM: round(gapM), followDistanceM: follow },
-        });
-    }
-    return { ...c, gapM, barrageLost: lost };
-  });
-  return emit({ ...state, companies }, ...events);
-}
-
-// ---- dugouts: emergence and trapping ------------------------------------------------------------------------
-
-type Garrison = { seg: SegmentState; companies: CompanyState[]; doctrine: Doctrine };
-
-function garrisonOf(state: SimState, ctx: StepContext, seg: SegmentState): Garrison | null {
-  const companies = state.companies.filter((c) => c.segmentId === seg.id && c.side === seg.holder && onField(c));
-  if (companies.length === 0) return null;
-  const doctrine = ctx.doctrines[companies[0]!.doctrineId]!;
-  if (!doctrine.defence) throw new Error(`Doctrine "${doctrine.id}" has no defence block, but company ${companies[0]!.id} garrisons ${seg.id}`);
-  return { seg, companies, doctrine };
-}
-
-/**
- * The minute a segment's garrison is up: `emergeMin` after the barrage was last on it (Zero, if none has been
- * since the bombardment), slower in proportion to its trench damage (blocked exits): × (1 + blockedExitFactor ×
- * trenchDamage).
- */
-export function emergeAtMin(seg: SegmentState, doctrine: Doctrine, ctx: StepContext): number {
-  const block = 1 + v(ctx.tables.effects.blockedExitFactor) * seg.trenchDamage;
-  return (seg.barrageLastOverMin ?? 0) + v(doctrine.defence!.emergeMin) * block;
-}
-
-/**
- * Garrisons coming up, or caught below (the model, "The gap"), segment by segment in order, after movement:
- * - attackers within the garrison's `closeRangeM` of the segment before it is up trap it: `trappedSurrenderFrac`
- *   of each garrison company's men (rounded without bias, in ascending id order) surrender, the rest stay below
- *   as the segment's dugout points (`defenders-trapped`, cause `followed-barrage`);
- * - otherwise, with no barrage on it now and its emergence minute (`emergeAtMin`) reached, it is up: its
- *   companies man the trench (`garrison-emerged`, refs to its last barrage event). The cause is the gap
- *   (`gap-behind-barrage`), and `barrage-moved-on` with `factors.gapM` when the nearest attacker is more than
- *   `gapMultiplier × followDistanceM` behind its barrage.
- */
-export function emergence(state: SimState, ctx: StepContext): SimState {
-  let out = state;
-  const mult = v(ctx.tables.effects.gapMultiplier);
-  for (const seg0 of state.segments) {
-    const seg = out.segments.find((x) => x.id === seg0.id)!;
-    if (seg.emerged || seg.trapped) continue;
-    const g = garrisonOf(out, ctx, seg);
-    if (!g) continue;
-    const pts = segmentSamples(ctx, seg, out.companies);
-    const attackers = out.companies
-      .filter((c) => c.side !== seg.holder && onField(c) && !isHolding(c) && c.status !== 'waiting')
-      .map((c) => ({ c, d: distanceTo(pts, at(c)) }))
-      .sort((a, b) => a.d - b.d || (a.c.id < b.c.id ? -1 : 1));
-    const nearest = attackers[0];
-    const refs = seg.barrageEventId === null ? [] : [seg.barrageEventId];
-    const names = g.companies.map((c) => c.name).join(', ');
-    if (nearest && nearest.d <= v(g.doctrine.common.closeRangeM)) {
-      const frac = v(g.doctrine.defence!.trappedSurrenderFrac);
-      let captured = 0;
-      let below = 0;
-      const points: SegmentState['dugoutPoints'] = [];
-      const trapped = new Map<string, CompanyState>();
-      for (const c of g.companies) {
-        const n = Math.min(c.men, stochasticRound(c.men * frac, ctx.rng));
-        captured += n;
-        below += c.men - n;
-        if (c.men - n > 0) points.push({ companyId: c.id, point: at(c), men: c.men - n });
-        trapped.set(c.id, { ...c, men: c.men - n, captured: c.captured + n });
-      }
-      out = emit(
-        {
-          ...out,
-          companies: out.companies.map((c) => trapped.get(c.id) ?? c),
-          segments: out.segments.map((x) => (x.id === seg.id ? { ...x, trapped: true, dugoutPoints: [...x.dugoutPoints, ...points] } : x)),
-        },
-        {
-          minute: out.minute,
-          kind: 'defenders-trapped',
-          segmentId: seg.id,
-          unitId: nearest.c.id,
-          ...(nearest.c.sectorId ? { sectorId: nearest.c.sectorId } : {}),
-          text: `${nearest.c.name} reaches ${seg.id} before its garrison (${names}) is up: ${captured} surrender, ${below} are left in the dugouts`,
-          causes: ['followed-barrage'],
-          refs,
-          factors: { captured, inDugouts: below, ...(nearest.c.gapM !== null ? { gapM: round(nearest.c.gapM) } : {}) },
-        },
-      );
-      continue;
-    }
-    if (seg.barrageLastOverMin === out.minute || out.minute < emergeAtMin(seg, g.doctrine, ctx)) continue;
-    const ids = new Set(g.companies.map((c) => c.id));
-    const follow = nearest && ctx.doctrines[nearest.c.doctrineId]!.attack ? v(ctx.doctrines[nearest.c.doctrineId]!.attack!.followDistanceM) : 0;
-    const movedOn = nearest !== undefined && nearest.c.gapM !== null && nearest.c.gapM > follow * mult;
-    const causes: Cause[] = [...(seg.barrageLastOverMin !== null ? (['gap-behind-barrage'] as const) : []), ...(movedOn ? (['barrage-moved-on'] as const) : [])];
-    out = emit(
-      {
-        ...out,
-        companies: out.companies.map((c) => (ids.has(c.id) ? { ...c, posture: 'in-trench' as const } : c)),
-        segments: out.segments.map((x) => (x.id === seg.id ? { ...x, emerged: true } : x)),
-      },
-      {
-        minute: out.minute,
-        kind: 'garrison-emerged',
-        segmentId: seg.id,
-        text: `The garrison of ${seg.id} (${names}) is up and manning the trench${nearest ? `; nearest attacker ${nearest.c.name}, ${Math.round(nearest.d)} m off` : ''}`,
-        causes,
-        refs,
-        factors: {
-          ...(nearest ? { attackerM: round(nearest.d) } : {}),
-          ...(movedOn ? { gapM: round(nearest.c.gapM!) } : {}),
-          trenchDamage: round(seg.trenchDamage, 3),
-        },
-      },
-    );
-  }
-  return out;
-}
-
 // ---- scheduled minutes ----------------------------------------------------------------------------------------
 
 /** The minutes silenced batteries come back into action. A recovery moves nobody. */
 export const batteryRecoveries = (state: SimState): Scheduled[] =>
   state.batteries.flatMap((b) => (b.suppressedUntilMin !== null && b.suppressedUntilMin > state.minute ? [{ minute: b.suppressedUntilMin, startsMovement: false }] : []));
-
-/** The minutes garrisons are due up (none while a barrage is on them). An emergence moves nobody. */
-export function garrisonEmergences(state: SimState, ctx: StepContext): Scheduled[] {
-  return state.segments.flatMap((seg) => {
-    if (seg.emerged || seg.trapped || seg.barrageLastOverMin === state.minute) return [];
-    const g = garrisonOf(state, ctx, seg);
-    return g ? [{ minute: emergeAtMin(seg, g.doctrine, ctx), startsMovement: false }] : [];
-  });
-}
 
 /** The minutes off-map fire opens and stops. Fire moves nobody. */
 export const offMapWindows = (_state: SimState, ctx: StepContext): Scheduled[] =>

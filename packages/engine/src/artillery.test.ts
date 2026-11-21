@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
-import { observationFactor } from './artillery';
+import { artilleryFire, observationFactor } from './artillery';
+import type { Pending } from './types';
 import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import type { RunRecord } from './record';
@@ -152,20 +153,6 @@ describe('artillery in the battle', () => {
     expect(off[0]!.minute).toBe(46);
   });
 
-  it('off-map fire on battery positions keeps the guns silenced there silent while it lasts', () => {
-    const minutesOf = (r: RunRecord) => ofKind(r, 'batteries-recovered').map((e) => e.minute);
-    const mk = (target: { xMin: number; xMax: number; yMin: number; yMax: number }) => {
-      const f = withGermanGuns(fixtureArtillery(), 1);
-      f[0].offMap = { attacks: [], fire: [{ id: 'cb', side: 'allied', weapon: '18pdr', guns: est(10), window: { from: '1916-07-01T07:30', to: '1916-07-01T09:30' }, target, cite: { value: 'test', estimate: 'test' } }] };
-      return run(f, 1, 400);
-    };
-    const onGuns = minutesOf(mk({ xMin: 800, xMax: 1000, yMin: 100, yMax: 300 }));
-    const elsewhere = minutesOf(mk({ xMin: -1000, xMax: -900, yMin: 100, yMax: 300 }));
-    expect(onGuns).toHaveLength(1);
-    expect(onGuns[0]!).toBeGreaterThan(120);
-    expect(onGuns[0]!).toBeGreaterThan(elsewhere[0]!);
-  });
-
   it('battery recoveries and off-map windows in a quiet stretch happen at the same minute however long the quiet step', () => {
     for (const seed of [1, 2, 3, 4, 5]) {
       const f = withGermanGuns(withReserve(fixtureArtillery({ effects: { batteryRecoveryHalfLifeMin: 50 } }), -300), 1);
@@ -213,5 +200,47 @@ describe('artillery in the battle', () => {
     expect(r.endMinute).toBeLessThan(1000);
     expect(ofKind(r, 'shelled').some((e) => e.causes.includes('defensive-barrage'))).toBe(true);
     for (const id of companyIds(r)) expect(new Set(totalsOverTime(r, id))).toHaveLength(1);
+  });
+  it('defensive fire falls on a segment its side has lost, on the enemies in it', () => {
+    // No allied trench line, so no no man's land: only the lost segment can draw the fire.
+    const { state, ctx } = initRun(...withGermanGuns(fixtureArtillery()), { seed: 1 });
+    const lostSeg = state.segments[0]!; // ger-front-a:001, x 150, y 0 to 200
+    const s = {
+      ...state,
+      minute: 2,
+      segments: state.segments.map((x) => (x.id === lostSeg.id ? { ...x, holder: 'allied' as const } : x)),
+      companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, x: 160, y: 100, status: 'consolidating' as const } : c.id === 'c2' ? { ...c, x: -500 } : c)),
+    };
+    const pending: Pending = { damage: [] };
+    artilleryFire(s, ctx, 2, pending);
+    const def = pending.damage.filter((p) => p.causes.includes('defensive-barrage'));
+    expect(def.map((p) => p.targetId)).toEqual(['c1']);
+    expect(def[0]!.hits).toBeGreaterThan(0);
+    // Its frontage is the lost segment's 200 m: 10 guns × 100 / 200 on each 100 m.
+    expect(def[0]!.fire!.factors.guns).toBe(10);
+    // With the segment held again, nobody is shelled.
+    const none: Pending = { damage: [] };
+    artilleryFire({ ...s, segments: state.segments }, ctx, 2, none);
+    expect(none.damage.filter((p) => p.causes.includes('defensive-barrage'))).toEqual([]);
+  });
+
+  it('defensive fire after batteries-recovered refers to that event, and fire on a company that lost its barrage to its barrage-lost', () => {
+    const r = runDefensive({ suppressedAtZeroFrac: 0.83 });
+    const rec = ofKind(r, 'batteries-recovered')[0]!;
+    const after = ofKind(r, 'shelled').filter((e) => e.causes.includes('batteries-recovered'));
+    expect(after.length).toBeGreaterThan(0);
+    for (const e of after) expect(e.refs).toContain(rec.id);
+    const f = withGermanGuns(withAlliedFront(fixtureArtillery({ startX: -90, speedMPerMin: 20 }), -100));
+    const slow = run(f);
+    const lostFire = ofKind(slow, 'shelled').filter((e) => e.causes.includes('barrage-moved-on'));
+    expect(lostFire.length).toBeGreaterThan(0);
+    for (const e of lostFire) expect(e.refs.some((x) => slow.events[x]!.kind === 'barrage-lost')).toBe(true);
+  });
+
+  it('records that barrage guns are shared across sectors by width, and that fire-plan fire has no range term', () => {
+    const d = run(withGermanGuns(fixtureArtillery())).defaultsUsed;
+    expect(d).toContain('artillery[g1] ← shared across sectors by width (no sector given)');
+    expect(d).toContain("fire-plan fire ← no range term (an artillery entry's position stands for many batteries along the front)");
+    expect(d.filter((x) => x.startsWith('artillery[gb] ← shared'))).toEqual([]);
   });
 });

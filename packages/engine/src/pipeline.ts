@@ -1,4 +1,5 @@
-import { artilleryFire, emergence, trackGaps } from './artillery';
+import { artilleryFire } from './artillery';
+import { emergence, trackGaps } from './gap';
 import { advanceBarrage, barrageXAt } from './barrage';
 import { emit } from './causes';
 import type { NewEvent } from './causes';
@@ -47,7 +48,7 @@ const movement: Phase = (state, ctx, dt) => {
     return barrageXAt(b, sector, ctx.lines, state.minute, y);
   };
   const moved = moveCompanies(state.companies, barrageX, ctx.scenario.lines, ctx.doctrines, state.minute, dt);
-  return emergence(trackGaps(emit({ ...state, companies: moved.companies }, ...moved.events), ctx), ctx);
+  return emergence(trackGaps(emit({ ...state, companies: moved.companies }, ...moved.events), ctx, dt, state.companies), ctx);
 };
 
 /** Line-taken checks. */

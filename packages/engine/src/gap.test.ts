@@ -98,4 +98,45 @@ describe('the gap and the dugouts', () => {
     expect(at(10)).toEqual(at(2));
     expect(at(10)).toEqual([[42, 'ger-rear-k3:001']]);
   });
+  it('a company slower per step than one lift but keeping pace on average does not lose its barrage', () => {
+    // 40 m a minute is 80 m a 2-minute step, less than one 91 m lift, but more than the barrage's 30.3 m a minute:
+    // 400 m back at Zero, it gains on the barrage on average.
+    const r = runGap({ startX: -400, speedMPerMin: 40 });
+    expect(ofKind(r, 'barrage-lost')).toHaveLength(0);
+    // It was behind the whole way (more than 140 m), but gaining: its gap shrank from about 550 m.
+    const gaps = rowsOf(r, 'c1').filter((x) => x.status === 'advancing').map((x) => x.gapM as number);
+    expect(Math.min(...gaps)).toBeGreaterThan(140);
+    expect(gaps.at(-1)!).toBeLessThan(gaps[0]! - 200);
+  });
+
+  it('a company falling behind is flagged once, not again on every lift', () => {
+    const lost = ofKind(runGap({ startX: -400, speedMPerMin: 20 }), 'barrage-lost');
+    expect(lost.filter((e) => e.unitId === 'c1')).toHaveLength(1);
+    expect(lost[0]!.factors!.barrageMPerMin).toBeCloseTo(91 / 3, 1);
+  });
+
+  it('attackers cannot trap a garrison while their barrage is still on its segment', () => {
+    // With closeRangeM 100 the attackers, 70 m behind the barrage, are within reach of the front trench while the
+    // barrage still stands on it (minutes 0 to 3); the trap must wait until it has lifted.
+    const [s, m] = fixtureArtillery({ lagMin: 0 });
+    m.doctrines['de-1917']!.common.closeRangeM = { ...m.doctrines['de-1917']!.common.closeRangeM, value: 100 };
+    const r = runScenario(s, m, { seed: 1 });
+    const trapped = ofKind(r, 'defenders-trapped');
+    expect(trapped).toHaveLength(2);
+    for (const e of trapped) {
+      const passed = ofKind(r, 'barrage-passed').find((x) => x.segmentId === e.segmentId)!;
+      expect(e.minute).toBeGreaterThanOrEqual(passed.minute);
+    }
+    expect(trapped[0]!.minute).toBe(4);
+  });
+
+  it('a garrison that no barrage ever held comes up with a cause all the same', () => {
+    const f = withRearTrench(fixtureArtillery({ lagMin: 12 }), 150, 'k3');
+    f[0].features.find((x) => x.id === 'ger-rear-k3')!.geometry = { type: 'LineString', coordinates: [[150, 600], [150, 800]] };
+    f[0].forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!.start = [150, 700];
+    const up = ofKind(runScenario(...f, { seed: 1 }), 'garrison-emerged');
+    expect(up.find((e) => e.segmentId === 'ger-rear-k3:001')!.causes).toEqual(['timetable']);
+    expect(up.filter((e) => e.segmentId!.startsWith('ger-front-a')).every((e) => e.causes.includes('gap-behind-barrage'))).toBe(true);
+    for (const e of up) expect(e.causes.length).toBeGreaterThan(0);
+  });
 });

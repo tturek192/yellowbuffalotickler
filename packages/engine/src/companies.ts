@@ -69,6 +69,8 @@ export type CompanyState = {
   gapM: number | null;
   /** It has fallen so far behind its barrage that the barrage no longer protects it (Task 8, `barrage-lost`). */
   barrageLost: boolean;
+  /** The `barrage-lost` event of its present loss, for refs; null while it has its barrage. */
+  barrageLostEventId: number | null;
 };
 
 /** Garrison and reserve companies hold; only the others attack. */
@@ -144,6 +146,7 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       speedMPerMin,
       gapM: null,
       barrageLost: false,
+      barrageLostEventId: null,
     };
   });
 }

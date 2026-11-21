@@ -1,4 +1,5 @@
-import { batteryRecoveries, garrisonEmergences, offMapWindows } from './artillery';
+import { batteryRecoveries, offMapWindows } from './artillery';
+import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
 import type { SimState, StepContext } from './step';
 

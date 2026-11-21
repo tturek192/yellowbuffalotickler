@@ -25,7 +25,8 @@ export type {
 } from './record';
 export { deriveSegments } from './segments';
 export { initBatteries, runBombardment } from './bombardment';
-export { artilleryFire, emergeAtMin, emergence, noMansLandAt, observationFactor, trackGaps } from './artillery';
+export { artilleryFire, noMansLandAt, noteArtilleryDefaults, observationFactor } from './artillery';
+export { emergeAtMin, emergence, trackGaps } from './gap';
 export { resolve } from './resolve';
 export { initRun, runScenario } from './run';
 export type { Models, RunOptions } from './run';

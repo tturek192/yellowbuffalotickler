@@ -5,7 +5,7 @@ import { emit } from './causes';
 import { isHolding } from './companies';
 import type { CompanyState } from './companies';
 import type { PhaseName } from './pipeline';
-import type { BatteryState, HqState, Message, ReserveState, SegmentState, SimEvent } from './types';
+import type { BatteryState, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
 
 export type SimState = {
   minute: number;
@@ -30,6 +30,8 @@ export type SimState = {
   churn: Float32Array;
   /** The id the next emitted event gets. */
   nextEventId: number;
+  /** Each side's last `batteries-recovered` event, for the refs of the defensive fire after it (Task 8). */
+  batteriesRecoveredEventId?: Partial<Record<Side, number>>;
 };
 
 export type StepContext = {
