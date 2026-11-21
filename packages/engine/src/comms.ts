@@ -7,7 +7,7 @@ import type { CompanyState } from './companies';
 import { CELL_M } from './ground';
 import { lineXAt } from './geometry';
 import { featurePoints as featurePointsOf, pointRadiusM } from './segments';
-import { lineTakerOf, segmentDefenders, segmentsOnLine } from './trenches';
+import { lineTakerOf, segmentDefenders, segmentsOnLine, segmentById } from './trenches';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import { onField } from './step';
@@ -424,7 +424,7 @@ type Work = {
   missions: FireMission[];
   events: NewEvent[];
   /** The companies by id, made when first needed (looked up only). */
-  companyAt: Map<string, CompanyState> | null;
+  companyAt: ById | null;
 };
 
 function begin(state: SimState, ctx: StepContext): Work {
@@ -471,14 +471,27 @@ function enqueue(q: Message[], m: Message): void {
   q.splice(lo, 0, m);
 }
 
-const companyAt = (w: Work): Map<string, CompanyState> => (w.companyAt ??= byIdOf(w.companies ?? w.state.companies));
+const companyAt = (w: Work): ById => (w.companyAt ??= byIdOf(w.companies ?? w.state.companies));
 
-/** The companies by id, worked out once for each companies array (a state's array is never changed once made). */
-const byIdMemo = new WeakMap<readonly CompanyState[], Map<string, CompanyState>>();
-function byIdOf(cs: readonly CompanyState[]): Map<string, CompanyState> {
-  let m = byIdMemo.get(cs);
-  if (!m) byIdMemo.set(cs, (m = new Map(cs.map((c) => [c.id, c]))));
-  return m;
+/**
+ * The companies by id. Every state's companies are the same ids in the same order, so each id's place is worked out once
+ * (and checked on each look-up: a list of other ids is looked through).
+ */
+type ById = { get(id: string): CompanyState | undefined; has(id: string): boolean };
+let places: Map<string, number> = new Map();
+/** Lists whose every id is where `places` says (checked once for each list). */
+const placed = new WeakSet<readonly CompanyState[]>();
+function byIdOf(cs: readonly CompanyState[]): ById {
+  if (!placed.has(cs)) {
+    if (places.size !== cs.length || cs.some((c, k) => places.get(c.id) !== k)) places = new Map(cs.map((c, k) => [c.id, k]));
+    placed.add(cs);
+  }
+  const at = places;
+  const get = (id: string): CompanyState | undefined => {
+    const i = at.get(id);
+    return i === undefined ? undefined : cs[i];
+  };
+  return { get, has: (id) => at.has(id) };
 }
 
 const posOf = (w: Work, id: string): Point | null => {
@@ -701,7 +714,7 @@ const PICTURE = UNITS | SEGMENTS | LINES | ENEMY | ABOUT | PLANS;
  * however much the HQ knows; every LAYERS_MAX copies they are flattened into one. `about` is only ever read by key
  * (command.ts `aboutOf`), never listed or spread, so a key reads the same either way.
  */
-const LAYERS_MAX = 8;
+const LAYERS_MAX = 32;
 const layerDepth = new WeakMap<object, number>();
 function layered<T extends Record<string, number>>(o: T): T {
   const depth = layerDepth.get(o) ?? 0;
@@ -840,7 +853,7 @@ function merge(w: Work, hqId: string, r: Report, t: number, aboutEventId: number
 function keepsEstimate(w: Work, id: string, side: Side, holder: Side | undefined): boolean {
   if (id.startsWith('line:')) return true;
   if (id.startsWith('place:') || holder === undefined || holder === side) return false;
-  return w.state.segments.find((x) => x.id === id)?.garrisonSide !== side;
+  return segmentById(w.state.segments, id)?.garrisonSide !== side;
 }
 
 /**
@@ -909,7 +922,7 @@ function deliverOrder(w: Work, formationId: string, o: Order): void {
 function answerCall(w: Work, d: Draft, t: number): void {
   const ctx = w.ctx;
   const call = d.payload as CallForFire;
-  const seg = w.state.segments.find((x) => x.id === call.segmentId);
+  const seg = segmentById(w.state.segments, call.segmentId);
   if (!seg) return;
   const pts = segmentSamples(ctx, seg, w.state.companies);
   // A segment with no trench to aim at (no samples) cannot be fired on: the call goes unanswered.

@@ -7,7 +7,7 @@ import type { Cause } from './causes';
 import { isHolding } from './companies';
 import type { CompanyState } from './companies';
 import { targetX } from './movement';
-import { barrageNear } from './trenches';
+import { barrageNear, segmentById } from './trenches';
 import { round } from './record';
 import type { Scheduled } from './schedule';
 import { stochasticRound } from './stochastic';
@@ -129,7 +129,7 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
   let out = state;
   const mult = v(ctx.tables.effects.gapMultiplier);
   for (const seg0 of state.segments) {
-    const seg = out.segments.find((x) => x.id === seg0.id)!;
+    const seg = segmentById(out.segments, seg0.id)!;
     if (seg.emerged || seg.trapped) continue;
     const under = seg.barrageLastOverMin === out.minute;
     const g = garrisonOf(out, ctx, seg);

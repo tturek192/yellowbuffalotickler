@@ -15,7 +15,7 @@ import { arrivalKnown, orderReserve } from './reserves';
 import type { Scheduled } from './schedule';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
-import { behindLines, lineTakerOf, segmentsOnLine } from './trenches';
+import { behindLines, lineTakerOf, segmentsOnLine, segmentById } from './trenches';
 import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget, ReserveState, SegmentState, Side } from './types';
 
 /*
@@ -361,7 +361,7 @@ function offMapAttacksOf(s: Scenario): OffMapAttack[] {
  */
 function onTarget(w: Work, a: OffMapAttack): CompanyState[] {
   const side = enemyOf(a.side);
-  const segs = (w.topo.featureSegments.get(a.targetFeatureId) ?? []).map((id) => w.state.segments.find((x) => x.id === id)!);
+  const segs = (w.topo.featureSegments.get(a.targetFeatureId) ?? []).map((id) => segmentById(w.state.segments, id)!);
   const r = v(w.ctx.tables.effects.captureRadiusM);
   return w.state.companies.filter((c) => c.side === side && onField(c) && c.posture !== 'in-dugout' && segs.some((x) => distanceTo(segmentSamples(w.ctx, x, w.state.companies), [c.x, c.y]) <= r));
 }
@@ -402,7 +402,7 @@ function reachable(w: Work, h: HqState, segmentId: string): boolean {
   const key = `${h.formationId}|${segmentId}`;
   let hit = w.reach.get(key);
   if (hit === undefined) {
-    const seg = w.state.segments.find((x) => x.id === segmentId);
+    const seg = segmentById(w.state.segments, segmentId);
     const holder = h.picture.segments[segmentId];
     const lines = holder === undefined ? [] : linesBy(w, h.picture.lines, holder, true);
     w.reach.set(key, (hit = seg !== undefined && !behindLines(seg, lines, w.state, w.ctx)));
@@ -564,7 +564,7 @@ function commitReserves(w: Work, h: HqState, order: readonly ReserveState[], wai
   }
   if (order.length) {
     const held = front.filter((x) => h.picture.segments[x] === h.side);
-    const to = (held.length ? held : front).map((id) => w.state.segments.find((x) => x.id === id)!);
+    const to = (held.length ? held : front).map((id) => segmentById(w.state.segments, id)!);
     // reserves.ts works out when each arrives, and marches it.
     w.state = { ...w.state, reserves: w.state.reserves.map((x) => (eventOf.has(x.formationId) ? orderReserve(x, w.state, w.ctx, M, fid, eventOf.get(x.formationId)!, to) : x)) };
   }
@@ -700,7 +700,7 @@ function goDivisional(w: Work, fid: string, d: Doctrine, onlyReserves: boolean):
   w.state = reportPlan(w.state, w.ctx, fid, M, eventId);
   markOrdered(w, h, force);
   // Each company to the lost segment nearest it.
-  const segs = targets.map((id) => w.state.segments.find((x) => x.id === id)!);
+  const segs = targets.map((id) => segmentById(w.state.segments, id)!);
   // By where the plan placed it (its HQ does not see where it stands now).
   const nearest = (p: { x: number; y: number }): SegmentState => {
     let best = segs[0]!;

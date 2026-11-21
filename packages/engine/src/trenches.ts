@@ -82,13 +82,30 @@ export function barrageNear(seg: SegmentState, ctx: StepContext, companies: read
 }
 
 /** The side whose companies aim at a taken line ("lineId|sectorId"), by the first company that does; null if none. */
-export function takerOf(state: SimState, key: string): Side | null {
+export function takerOf(state: Pick<SimState, 'companies'>, key: string): Side | null {
+  // Worked out once for each companies array (never changed once made) and line.
+  let m = takerMemo.get(state.companies);
+  if (!m) takerMemo.set(state.companies, (m = new Map()));
+  const hit = m.get(key);
+  if (hit !== undefined) return hit;
   const bar = key.indexOf('|');
   const lineId = key.slice(0, bar);
   const sectorId = key.slice(bar + 1);
   const c = state.companies.find((x) => x.objectiveLineId === lineId && x.sectorId === sectorId);
-  return c ? c.side : null;
+  const side = c ? c.side : null;
+  m.set(key, side);
+  return side;
 }
+const takerMemo = new WeakMap<readonly CompanyState[], Map<string, Side | null>>();
+
+/** A segment by id: its place in the list worked out once for each segments array (never changed once made). */
+export function segmentById(segments: readonly SegmentState[], id: string): SegmentState | undefined {
+  let m = segmentPlaces.get(segments);
+  if (!m) segmentPlaces.set(segments, (m = new Map(segments.map((x, i) => [x.id, i]))));
+  const i = m.get(id);
+  return i === undefined ? undefined : segments[i];
+}
+const segmentPlaces = new WeakMap<readonly SegmentState[], Map<string, number>>();
 
 /**
  * Whether a segment lies in its holder's rear: some of its trench, inside a sector's y range, is at or behind a line
@@ -488,7 +505,7 @@ export function sorties(state: SimState, ctx: StepContext): SimState {
         continue;
       }
       if (out.minute < point.unguardedMin + delay) continue;
-      const seg = out.segments.find((x) => x.id === seg0.id)!;
+      const seg = segmentById(out.segments, seg0.id)!;
       if (barrageNear(seg, ctx, out.companies, out.minute, [point.point], r)) continue;
       const g = out.companies.find((c) => c.id === point.companyId)!;
       const men = Math.min(point.men, g.men);

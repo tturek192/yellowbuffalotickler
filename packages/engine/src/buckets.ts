@@ -158,9 +158,13 @@ export type Tracker = {
 };
 export const tracker = (): Tracker => ({ ids: [], x: new Float64Array(0), y: new Float64Array(0), member: new Uint8Array(0), group: [], fresh: true });
 
+/** Lists already found to hold a tracker's ids in its order, by the ids array they matched. */
+const sameIds = new WeakMap<object, readonly string[]>();
+
 export function changesSince<T extends At & { id: string }>(tr: Tracker, items: readonly T[], inSet: (it: T) => boolean, groupOf: (it: T) => string): Map<string, Buckets<At>> {
   const n = items.length;
-  const same = tr.ids.length === n && items.every((it, i) => it.id === tr.ids[i]);
+  const same = tr.ids.length === n && (sameIds.get(items) === tr.ids || items.every((it, i) => it.id === tr.ids[i]));
+  if (same) sameIds.set(items, tr.ids);
   tr.fresh = !same;
   if (!same) {
     tr.ids = items.map((it) => it.id);
