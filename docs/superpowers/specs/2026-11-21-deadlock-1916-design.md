@@ -1,21 +1,23 @@
 # Deadlock 1916 — Design
 
 Date: 2026-11-21
-Status: draft for the owner's approval
+Status: draft for the owner's approval (includes the owner's answers of 2026-11-21)
 Working title: **Deadlock 1916** (the owner's name for now)
 Extends: `docs/superpowers/specs/2026-11-20-wwi-battle-simulator-design.md` (the "base design"). Everything there still binds unless this document changes it, and the changes are listed in "Decisions this changes".
 
 ## Intent
 
-Deadlock 1916 is a laboratory for the central puzzle of the Western Front: attacks could **break in** to the enemy's trenches but almost never **break through**. The owner, a historian with a PhD, wants to use the simulator to ask questions like these:
+Deadlock 1916 is a laboratory for the central puzzle of the Western Front: attacks could **break in** to the enemy's trenches but almost never **break through**. The owner, a historian, wants to use the simulator to ask questions like these:
 - How would the deadlock have been broken, from different vantage points, concentrations or tactics?
 - What level of manpower and artillery would have changed the course of history?
 - How did supply, food, disease and morale shape what armies could do between and during battles?
 - What would a general of 1916, with only the information and levers of his time, have achieved?
 
-Two things make the answers worth having:
-- **The model is proven on real battles first.** Its counterfactuals come from the same engine that reproduced what happened.
+Two things make it worth playing:
+- **It is engaging and flexible to play.** This is the owner's first priority.
 - **Every answer says how credible it is,** from documented fact to impossible, and why.
+
+Checking the model against real battles is useful and planned, but it serves the game, and the owner may drop it if it proves cumbersome. Deadlock 1916 is a personal tool, not a product for sale, and it makes no claims.
 
 ## Goals
 
@@ -74,8 +76,7 @@ Two things make the answers worth having:
 
 ## Anti-goals (failure even if it technically works)
 
-- **Counterfactuals from an unproven model.** No what-if result is presented until the engine has reproduced its validation battles.
-- **Pretend precision.** A result shown without its credibility grade, or an "untrue" input accepted silently.
+- **Pretend precision.** A result shown without its credibility grade, or an "untrue" input accepted silently. What-ifs and sweeps are never locked, even before any check battle passes; this is the owner's decision. The grade carries the warning instead.
 - **Overfitting,** as in the base design. Every new army-and-year profile adds parameters, and they must be shared and checked on battles they were not tuned on.
 - **A black box,** as in the base design. Operational summary rules must explain their results too.
 - **Too slow to sweep.** A tipping-point sweep must finish in minutes, not hours.
@@ -179,18 +180,19 @@ Two things make the answers worth having:
 - **Order of battle.** It generates a plausible order of battle from the year's establishments.
 - **Determinism and grading.** The generator is deterministic for a given seed. Everything it makes is graded "possible", and the generator's rules cite their sources.
 
-### Sequencing (proof first)
+### Sequencing (game first, checked as we go)
 
-The owner agreed: prove the model on real battles before trusting its counterfactuals. Proposed order:
+The owner's priority is engaging, flexible play; checking against history is useful but optional. This order is my call from that priority, and the owner can reorder it:
 1. **Plan 3:** the combat model (in progress).
-2. **Plan 4:** calibrate on Vimy, plus the setup and compare screens, plus what-if overlays (as the base design planned).
-3. **Plan 5:** Messines, the check battle (as the base design planned).
-4. **Credibility grades, the limits table and the post-conflict report.** They apply to everything after, so they come early.
-5. **Either side attacks, bent fronts, and doctrine profiles across armies and years,** checked on a battle where the Germans attack. Candidates: Second Ypres, or a sector of March 1918. The owner chooses.
-6. **The operational layer and sustainment,** with the seam. Checked on a historical case of the reserve race. Candidates: Cambrai 1917 (the break-in and the German counter-stroke), or a sector of the March 1918 offensive.
-7. **Playing the general:** live engine, headquarters picture, orders, replay.
+2. **Plan 4:** calibrate on Vimy (kept light), plus the setup and compare screens, plus what-if overlays.
+3. **Credibility grades, the limits table and the post-conflict report.** They apply to everything after.
+4. **Playing the general, as a corps commander** (the owner's choice: corps first, army later): live engine, headquarters picture, orders, replay.
+5. **Either side attacks, bent fronts, and doctrine profiles across armies and years,** checked on **a sector of the German March 1918 offensive** (the owner accepted the recommendation).
+6. **The operational layer and sustainment,** with the seam. Checked on **the same March 1918 sector's reserve race**, so one research effort serves both checks.
+7. **A French battle: the Verdun counter-offensive of 24 October 1916,** with the French 1916 doctrine profile. This is my pick from the two the owner was offered, because it fits the battle layer best.
 8. **Generated sectors.**
 9. **Tipping-point sweeps** and their screen.
+10. **Optional:** Messines as an untouched check battle, and playing at army level.
 
 ## Left to the builder
 
@@ -200,8 +202,24 @@ The owner agreed: prove the model on real battles before trusting its counterfac
 - **Generator internals,** and which real region supplies relief for each ground type.
 - **Performance tuning** within the budgets above.
 
-## Left to the owner
+## Settled with the owner (2026-11-21)
 
-- **The battle that checks either side attacking** (step 5) and **the operational check case** (step 6).
-- **Which deadlock conditions apply by default,** and their thresholds per scenario.
-- **Whether the order of steps 4–9 suits his priorities.**
+- **Check battles:** a sector of the March 1918 German offensive (either side attacking, and the reserve race), and the Verdun counter-offensive of 24 October 1916 (French).
+- **The player-general:** corps first, army later.
+- **What-ifs and sweeps are never locked.** Grades carry the warning. Checking against history serves the game and may be dropped.
+- **Still the owner's to set as data:** which deadlock conditions apply by default, and their thresholds per scenario.
+
+## Builder's calls (from the design review; the owner can override)
+
+- **Sweeps and speed.** A sweep runs the operational layer, with summary rules standing in for the detailed fights. A single run may switch the detailed battle layer on, at a slower speed. The ≤ 10 s operational budget is for runs with summary rules; with detailed fights, each fight adds its battle-layer time.
+- **Doctrine profiles.** A profile is a set of parameter values over a growing set of behaviours.
+  - Examples of new behaviours: German 1918 infiltration around strongpoints, Eingreif counter-attacks, cloud gas, flamethrowers, massed tanks, and French methodical-battle methods.
+  - They are built when a check battle or the game needs them, not for all twelve army-years in advance.
+  - The tech-tree timeline is data saying which behaviours and weapons each army-year may use.
+- **Grades for estimates, tuned values and results.**
+  - An estimate with written reasoning is "possible", unless a documented limit or range says otherwise.
+  - Tuned (calibrated) parameters are "possible", marked as tuned.
+  - Results use the same six grades, set by how close a run's conditions are to those of the battles the model has been checked on: forces per km, guns per km, years and doctrine profiles, ground, and weather.
+- **The research compendium.** The owner's compendium stays in the owner's Google Doc. It is not copied into the repository unless the owner asks, because it is his private document and the repository is pushed to GitHub. Its rules and dates may be used as drafts graded "possible", cited as the owner's compendium. They are checked against primary sources before anything is treated as factual.
+- **Summary rules.** They are first fitted on the real battle maps available: Vimy, then March 1918, then Verdun. Once generated sectors exist, they are refitted and their results regraded.
+- **Playing at corps level** uses the battle layer's headquarters pictures and channels from Plan 3. The operational layer gets its own reporting delays when army-level play arrives.
