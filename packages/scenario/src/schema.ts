@@ -288,7 +288,8 @@ export const ScenarioSchema = z.object({
   air: z.strictObject({ superiority: z.union([Side, z.literal('contested')]), observedFrac: sourcedOrDisputed(z.number().min(0).max(1)) }).optional(),
   end: z
     .strictObject({
-      keyGround: z.array(z.strictObject({ id: z.string(), name: z.string(), featureId: z.string() })),
+      /** The ground whose holder wins (Task 15), each piece with the source that makes it key. */
+      keyGround: z.array(z.strictObject({ id: z.string(), name: z.string(), featureId: z.string(), cite: sourced(z.string()) })),
       lullMin: sourced(z.number().positive()),
     })
     .optional(),

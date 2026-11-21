@@ -50,6 +50,9 @@ describe('batch v2: runs against the historical targets (Task 15)', () => {
     expect(durationPass({ value: 4350 }, 4350 + 1441)).toBe(false);
     expect(durationPass({ value: 10000 }, 12900)).toBe(true);
     expect(durationPass({ value: 4350, range: [4350, 7710] }, 9000)).toBe(true);
+    // A disputed end: ±1 day of its range, no more.
+    expect(durationPass({ value: 4350, range: [4350, 7710] }, 7710 + 1441)).toBe(false);
+    expect(durationPass({ value: 4350, range: [4350, 7710] }, 4350 - 1441)).toBe(false);
   });
 
   it('each target row has the batch p10, median and p90 of the same side, formation and window, beside the target', () => {

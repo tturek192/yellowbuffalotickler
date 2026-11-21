@@ -36,6 +36,8 @@ describe('Vimy command, planned operations, flanks and end conditions (Plan 3 Ta
   });
   it('key ground includes Hill 145 and the Pimple', () => {
     expect(vimy().end!.keyGround.map(k => k.featureId)).toEqual(expect.arrayContaining(['hill-145', 'the-pimple']));
+    // Task 15 (fix round): each piece of key ground cites what makes it key.
+    for (const k of vimy().end!.keyGround) expect(k.cite).toMatchObject({ source: 'nicholson-1962', page: '245' });
   });
 
   // Guards beside the brief's three tests.

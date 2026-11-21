@@ -29,7 +29,7 @@ describe('scenario v3', () => {
         attacks: [{ id: 'a1', side: 'allied', name: 'Raid', window: { from: '1916-07-01T07:30', to: '1916-07-01T08:30' }, targetFeatureId: 'ger-front-a', suppressFrac: e(0.5), cite: e('x') }],
       },
       air: { superiority: 'contested', observedFrac: e(0.5) },
-      end: { keyGround: [{ id: 'k1', name: 'Ridge', featureId: 'ger-front-a' }], lullMin: e(120) },
+      end: { keyGround: [{ id: 'k1', name: 'Ridge', featureId: 'ger-front-a', cite: e('test') }], lullMin: e(120) },
     });
     expect(ScenarioSchema.parse(s).end!.lullMin.value).toBe(120);
     expect(refs(s)).toEqual([]);
@@ -60,7 +60,7 @@ describe('scenario v3', () => {
         fire: [{ id: 'f1', side: 'allied', weapon: 'death-ray', guns: e(1), window: { from: '1916-07-01T07:30', to: '1916-07-01T08:30' }, target: { featureId: 'nope-f' }, cite: e('x') }],
         attacks: [],
       },
-      end: { keyGround: [{ id: 'k1', name: 'Ridge', featureId: 'nope-k' }], lullMin: e(60) },
+      end: { keyGround: [{ id: 'k1', name: 'Ridge', featureId: 'nope-k', cite: e('test') }], lullMin: e(60) },
     });
     const p = refs(s);
     for (const re of [/spared\[0\]\.featureId.*nowhere/, /spared\[0\]: yMin 5 is above yMax 1/, /liaison\[0\]\.formationId.*ghost-bn/, /offMap\.fire\[0\]\.weapon.*death-ray/, /offMap\.fire\[0\]\.target\.featureId.*nope-f/, /end\.keyGround\[0\]\.featureId.*nope-k/]) {

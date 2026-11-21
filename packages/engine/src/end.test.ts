@@ -4,7 +4,9 @@ import { commandPending } from './command';
 import { endCheck, finalLines, holderOf, lullMin } from './end';
 import { initRun, runScenario } from './run';
 import type { RunRecord } from './record';
-import { fixtureFire, fixtureWithDoctrineV3, ofKind } from './test-helpers';
+import type { Message, Report } from './types';
+import { v } from '@wwi/scenario';
+import { fixtureFire, fixtureTables, fixtureWithDoctrineV3, ofKind } from './test-helpers';
 
 /**
  * The v3 fixture with a German knoll on the Black Line its key ground: the two assault companies take the Black Line, its
@@ -13,7 +15,7 @@ import { fixtureFire, fixtureWithDoctrineV3, ofKind } from './test-helpers';
 function runEasy(): RunRecord {
   const [s, m] = fixtureWithDoctrineV3();
   s.features.push({ id: 'knoll', kind: 'strongpoint', side: 'central', geometry: { type: 'Point', coordinates: [1150, 100] }, cite: est('test') });
-  s.end = { keyGround: [{ id: 'knoll', name: 'The knoll', featureId: 'knoll' }], lullMin: est(120) };
+  s.end = { keyGround: [{ id: 'knoll', name: 'The knoll', featureId: 'knoll', cite: est('test') }], lullMin: est(120) };
   return runScenario(s, m, { seed: 1 });
 }
 
@@ -21,7 +23,7 @@ function runEasy(): RunRecord {
 function runStalled(): RunRecord {
   const [s, m] = fixtureFire({ mgs: 4, startX: -500 });
   s.timeLimitMinutes = 240;
-  s.end = { keyGround: [{ id: 'front', name: 'The German front trench', featureId: 'ger-front-a' }], lullMin: est(120) };
+  s.end = { keyGround: [{ id: 'front', name: 'The German front trench', featureId: 'ger-front-a', cite: est('test') }], lullMin: est(120) };
   return runScenario(s, m, { seed: 1 });
 }
 
@@ -82,6 +84,26 @@ describe('the run end and the winner (Task 15)', () => {
     expect(endCheck({ ...quiet, companies: late }, ctx)).toEqual({ ended: true, reason: 'lull' });
   });
 
+  it('a report on its way that tells of a change keeps the run going; a routine one does not (fix round 1, I-1)', () => {
+    const [s, m] = fixtureWithDoctrineV3();
+    s.end = { keyGround: [], lullMin: est(2880) };
+    const { state, ctx } = initRun(s, m, { seed: 1 });
+    const quiet = { ...state, minute: 400, events: [], messages: [], barrages: state.barrages.map((b) => ({ ...b, phase: 'done' as const })), companies: state.companies.map((c) => (c.side === 'allied' ? { ...c, status: 'holding' as const } : c)) };
+    expect(endCheck(quiet, ctx)).toEqual({ ended: true, reason: 'lull' });
+    const h = quiet.hqs.find((x) => x.side === 'allied' && x.picture.units['c1'] !== undefined)!;
+    const known = h.picture.units['c1']!;
+    const report = (status: string, extra: Partial<Report> = {}): Message => ({
+      id: 999, side: 'allied', kind: 'report', fromFormationId: 'c1', toFormationId: h.formationId, sentMin: 395, dueMin: 410, channel: 'runner',
+      payload: { atMin: 395, units: { c1: { status, men: known.men - 3, atMin: 395 } }, segments: {}, lines: {}, ...extra },
+    });
+    // c1 fell back, and its HQ has not heard yet: not a lull.
+    expect(endCheck({ ...quiet, messages: [report('falling-back')] }, ctx).ended).toBe(false);
+    // A segment changing hands, in a report with the status the HQ knows: not a lull either.
+    expect(endCheck({ ...quiet, messages: [report(known.status, { segments: { 'ger-front-a:001': 'allied' } })] }, ctx).ended).toBe(false);
+    // Only its men, as it knows them otherwise: routine, a lull.
+    expect(endCheck({ ...quiet, messages: [report(known.status)] }, ctx)).toEqual({ ended: true, reason: 'lull' });
+  });
+
   it('suppression wearing off after the fighting stops does not keep a run from its lull', () => {
     const [s, m] = fixtureWithDoctrineV3();
     s.end = { keyGround: [], lullMin: est(2880) };
@@ -116,12 +138,44 @@ describe('the run end and the winner (Task 15)', () => {
     expect(endCheck(up, ctx).ended).toBe(false);
   });
 
-  it('key ground with no trench segment is held by the side with more men up on it, else by its own side', () => {
-    const [s, m] = fixtureWithDoctrineV3();
-    s.features.push({ id: 'knoll', kind: 'strongpoint', side: 'central', geometry: { type: 'Point', coordinates: [600, 200] }, cite: est('test') });
-    const { state, ctx } = initRun(s, m, { seed: 1 });
-    expect(holderOf(state, ctx, 'knoll')).toBe('central');
-    const there = state.companies.map((c) => (c.id === 'c1' ? { ...c, x: 600, y: 200, posture: 'in-trench' as const } : c));
-    expect(holderOf({ ...state, companies: there }, ctx, 'knoll')).toBe('allied');
+  describe('who holds a piece of key ground (fix round 1 ruling)', () => {
+    // The v3 fixture: the German front trench ger-front-a at x 150 (segments :001 y 0-200, :002 y 200-400), the Black
+    // Line at x 1150; a knoll put where each test needs it.
+    const withKnoll = (x: number, y: number) => {
+      const [s, m] = fixtureWithDoctrineV3();
+      s.features.push({ id: 'knoll', kind: 'strongpoint', side: 'central', geometry: { type: 'Point', coordinates: [x, y] }, cite: est('test') });
+      return initRun(s, m, { seed: 1 });
+    };
+    const near = v(fixtureTables().effects.lineFeatureMatchM);
+
+    it('1. the side with men up within captureRadiusM of it', () => {
+      const { state, ctx } = withKnoll(600, 200);
+      const there = state.companies.map((c) => (c.id === 'c1' ? { ...c, x: 600, y: 200, posture: 'in-trench' as const } : c));
+      expect(holderOf({ ...state, companies: there }, ctx, 'knoll')).toBe('allied');
+      // Down in a dug-out men hold nothing.
+      const below = there.map((c) => (c.id === 'c1' ? { ...c, posture: 'in-dugout' as const } : c));
+      expect(holderOf({ ...state, companies: below }, ctx, 'knoll')).not.toBe('allied');
+    });
+
+    it('2. else the holder of the trench segment nearest it, within lineFeatureMatchM', () => {
+      const { state, ctx } = withKnoll(150 + near / 2, 300);
+      const empty = state.companies.map((c) => ({ ...c, x: c.x + 5000 }));
+      expect(holderOf({ ...state, companies: empty }, ctx, 'knoll')).toBe('central');
+      const taken = state.segments.map((x) => (x.id === 'ger-front-a:002' ? { ...x, holder: 'allied' as const } : x));
+      expect(holderOf({ ...state, companies: empty, segments: taken }, ctx, 'knoll')).toBe('allied');
+      // :001 taken instead: the nearest (:002, y 200-400) still German.
+      const other = state.segments.map((x) => (x.id === 'ger-front-a:001' ? { ...x, holder: 'allied' as const } : x));
+      expect(holderOf({ ...state, companies: empty, segments: other }, ctx, 'knoll')).toBe('central');
+    });
+
+    it('3. else the side holding the line it lies behind', () => {
+      // Between the German front and the Black Line, far from any trench and with nobody on it.
+      const { state, ctx } = withKnoll(700, 200);
+      const empty = state.companies.map((c) => ({ ...c, x: c.x + 5000 }));
+      // Behind the German front line (the defender's side of it): German.
+      expect(holderOf({ ...state, companies: empty }, ctx, 'knoll')).toBe('central');
+      // Once the Black Line is taken and held, the knoll lies behind it: the attacker's.
+      expect(holderOf({ ...state, companies: empty, taken: [`black|${ctx.scenario.sectors[0]!.id}`] }, ctx, 'knoll')).toBe('allied');
+    });
   });
 });

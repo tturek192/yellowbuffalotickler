@@ -93,11 +93,14 @@ export function casualtyPass(t: Target, s: Spread): boolean {
   return t.value >= s.p10 && t.value <= s.p90 && Math.abs(s.median - t.value) <= 0.25 * t.value;
 }
 
-/** Spec section 7's duration criterion: the median end within ±1 day of the historical one, or ±30% for a longer battle (of its range, for a disputed one). */
+/**
+ * Spec section 7's duration criterion: the median end within ±1 day of the historical one, or ±30% for a battle longer
+ * than that makes (from Zero); for a disputed end, within ±1 day of its range (the conservative reading).
+ */
 export function durationPass(t: Target, median: number): boolean {
-  const tol = (x: number): number => Math.max(1440, 0.3 * x);
-  const [lo, hi] = t.range ?? [t.value, t.value];
-  return median >= lo - tol(lo) && median <= hi + tol(hi);
+  if (t.range) return median >= t.range[0] - 1440 && median <= t.range[1] + 1440;
+  const tol = Math.max(1440, 0.3 * t.value);
+  return Math.abs(median - t.value) <= tol;
 }
 
 /** Minutes after Zero of a scenario time. */

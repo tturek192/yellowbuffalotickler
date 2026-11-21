@@ -6,7 +6,7 @@ import { repoRoot } from './test-helpers';
  * One full Vimy run, seed 1, timed inside a worker thread that loads the engine as plain modules (tsx), the way `sim run`
  * and `sim batch --workers` run it: the test runner's own module transform (every cross-module call through a live-binding
  * getter) would otherwise be timed along with the engine. The run is the thread's first, so compiling the engine counts.
- * The budget is the run's CPU time on its thread, so that other test files running beside it do not count; the wall time
+ * The budget is the run's CPU time on its thread, writing its record as JSON included (`sim run` pays it too), so that other test files running beside it do not count; the wall time
  * is printed too (on an idle machine the two agree to within the garbage collector's helper threads).
  */
 function timedRun(): Promise<{ ms: number; cpuMs: number; bytes: number; endedAt: number; endReason: string }> {
@@ -19,9 +19,10 @@ function timedRun(): Promise<{ ms: number; cpuMs: number; bytes: number; endedAt
     const t0 = performance.now();
     const c0 = process.threadCpuUsage();
     const r = runScenario(scenario, models, { seed: 1 });
+    const json = JSON.stringify(r);
     const c1 = process.threadCpuUsage(c0);
     const ms = performance.now() - t0;
-    parentPort.postMessage({ ms, cpuMs: (c1.user + c1.system) / 1000, bytes: JSON.stringify(r).length, endedAt: r.summary.endedAt, endReason: r.summary.endReason });
+    parentPort.postMessage({ ms, cpuMs: (c1.user + c1.system) / 1000, bytes: Buffer.byteLength(json), endedAt: r.summary.endedAt, endReason: r.summary.endReason });
   `;
   return new Promise((done, fail) => {
     const w = new Worker(new URL(`data:text/javascript,${encodeURIComponent(script)}`), { workerData: { root: repoRoot }, execArgv: ['--import', 'tsx'] });

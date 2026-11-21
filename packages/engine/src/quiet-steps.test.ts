@@ -153,29 +153,27 @@ describe('quiet steps in contact with nobody able to fire (Task 15)', () => {
 
   it('registers morale thresholds as minutes that start movement, at the minute the morale reaches them', () => {
     expect(SCHEDULES.some(([name, source]) => name === 'morale-thresholds' && source === moraleThresholds)).toBe(true);
-    const { state, ctx } = initRun(...dry(), { seed: 1 });
-    const k = ctx.doctrines['bef-1917']!.common;
-    const iso = v(k.isolationDrain) / 60;
-    const rec = v(k.recoveryPerHour) / 60;
-    const half = v(ctx.tables.effects.suppressionHalfLifeMin);
-    const sd = v(k.suppressedDrain) / 60;
-    // c1 attacking and isolated as far as anyone knows (no morale phase has run), morale 0.06 above falling back.
-    const m = v(k.fallBack) + 0.06;
-    const at = (suppression: number, morale = m) =>
-      moraleThresholds({ ...state, companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'advancing' as const, morale, moraleStart: 1, suppression } : c)) }, ctx);
-    // Isolation alone: due when it outruns recovery, at the minute the net fall reaches the threshold.
-    if (iso > rec) expect(at(0).map((x) => x.minute)).toContainEqual(expect.closeTo(0.06 / (iso - rec), 6));
-    else expect(at(0)).toEqual([]);
-    // Full suppression close above the threshold (within what it can still take): due, an early guess at its present rate.
-    const g = (0.5 * sd * half) / Math.LN2;
-    const fall = iso - rec + sd;
-    expect(fall).toBeGreaterThan(0);
-    expect(at(1, v(k.fallBack) + g)).toContainEqual({ minute: expect.closeTo(g / fall, 9), startsMovement: true });
-    // Suppression too light to take it that far before it wears off, and no lasting fall: never due.
-    if (iso <= rec) {
-      const light = (0.5 * 0.06 * Math.LN2) / (sd * half);
-      if (sd * light > rec) expect(at(light)).toEqual([]);
-    }
+    /** The dry fixture with its morale numbers pinned (per hour; suppression halving in 5 minutes). */
+    const pinned = (isolationDrain: number) => {
+      const [s, m] = dry();
+      const d = m.doctrines['bef-1917']!;
+      d.common = { ...d.common, isolationDrain: est(isolationDrain), recoveryPerHour: est(0.2), suppressedDrain: est(0.3), fallBack: est(0.35), surrender: est(0.15), goToGround: est(0.5) };
+      m.tables.effects = { ...m.tables.effects, suppressionHalfLifeMin: est(5) };
+      return initRun(s, m, { seed: 1 });
+    };
+    const at = (o: ReturnType<typeof pinned>, suppression: number, morale: number) =>
+      moraleThresholds({ ...o.state, companies: o.state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'advancing' as const, morale, moraleStart: 1, suppression } : c)) }, o.ctx);
+    // c1 attacking and isolated as far as anyone knows (no morale phase has run), 0.06 above falling back (0.35).
+    // Isolation outrunning recovery (0.3 against 0.2 an hour): due when the net fall of 0.1 an hour reaches it, 36 minutes.
+    expect(at(pinned(0.3), 0, 0.41).map((x) => x.minute)).toContainEqual(expect.closeTo(36, 6));
+    // Isolation slower than recovery: never due.
+    const slow = pinned(0.1);
+    expect(at(slow, 0, 0.41)).toEqual([]);
+    // Full suppression close above the threshold: 0.3/60 a minute can take 0.3 · 5 / (60 ln 2) ≈ 0.036 before it wears
+    // off, so 0.02 above it is due, at the present rate of fall (an early guess): 0.02 / ((0.1 − 0.2 + 0.3) / 60) = 6 min.
+    expect(at(slow, 1, 0.37)).toContainEqual({ minute: expect.closeTo(6, 9), startsMovement: true });
+    // 0.06 above it is beyond what suppression can take: never due.
+    expect(at(slow, 1, 0.41)).toEqual([]);
   });
 
   it('an off-map attack opening inside a quiet stretch opens at the minute fine steps open it', () => {

@@ -14,7 +14,7 @@ import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
 import { snapshotWriter } from './snapshots';
-import { endCheck, endRun } from './end';
+import { endCheck, endRun, lullMin } from './end';
 import { summarize } from './summary';
 import { createStreams } from './rng';
 import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './record';
@@ -77,6 +77,8 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
   };
   noteLightDefaults(scenario, ctx.defaultsUsed);
   noteArtilleryDefaults(scenario, ctx.defaultsUsed);
+  // The run's lull (end.ts): its default is recorded whether or not the run ever comes to one.
+  lullMin(ctx);
   const segments = deriveSegments(scenario, models.tables, ctx.defaultsUsed);
   // A garrison's segment: the one whose garrisons it is among.
   const segmentOf = new Map(segments.flatMap((x) => x.garrisonIds.map((id) => [id, x.id] as const)));

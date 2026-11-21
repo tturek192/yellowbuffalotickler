@@ -67,6 +67,10 @@ describe('draft Vimy scenario run', () => {
     // ground in the summary, and each unit's formation path in the record. The draft's battle is unchanged up to its end: it
     // now ends objectives-held at 444, once the companies on the Brown Line (taken at 438) have stopped moving and nothing
     // is due, with no winner (it has no key ground; both listed in defaultsUsed with its lull, the time limit).
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.0', hash: '0145d50e' });
+    // 0.4.1 (Task 15 fix round 1): a run does not end while news that could lead to a decision is on its way (end.ts
+    // `newsInTransit`), key ground is held by the men on it, else the nearest trench, else the line it lies behind, and
+    // the lull's default is recorded at setup. The draft's battle is unchanged; it now ends objectives-held at 618, once the
+    // 1st Brigade's last report (lost once on the way, at 526) has reached the division.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.1', hash: 'f4b5b276' });
   });
 });

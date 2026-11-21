@@ -181,12 +181,20 @@ air:
 
 # How a run ends and who wins (spec 12).
 end:
-  # Nicholson p. 245: "The crest of the Ridge was formed by two heights, Hill 135 ... and Hill 145"; spec 12: for Vimy
-  # the key ground is "the ridge crest, Hill 145 and the Pimple". The crest is held through its two heights.
+  # The crest is held through its two heights, and the Pimple ends the Ridge to the north.
   keyGround:
-    - { id: crest-hill-135, name: "The ridge crest: Hill 135, north of Thélus", featureId: hill-135 }
-    - { id: crest-hill-145, name: "The ridge crest: Hill 145", featureId: hill-145 }
-    - { id: the-pimple, name: "The Pimple (Hill 120)", featureId: the-pimple }
+    - id: crest-hill-135
+      name: "The ridge crest: Hill 135, north of Thélus"
+      featureId: hill-135
+      cite: { value: "one of the two heights forming the crest of the Ridge", source: nicholson-1962, page: "245", note: "'The crest of the Ridge was formed by two heights, Hill 135 (measured in metres), immediately north of the village of Thelus'" }
+    - id: crest-hill-145
+      name: "The ridge crest: Hill 145"
+      featureId: hill-145
+      cite: { value: "the other height forming the crest of the Ridge", source: nicholson-1962, page: "245", note: "'and Hill 145, two miles farther north-west'" }
+    - id: the-pimple
+      name: "The Pimple (Hill 120)"
+      featureId: the-pimple
+      cite: { value: "the independent height at the north end of the Ridge", source: nicholson-1962, page: "245", note: "'an independent height of 120 metres at the north end of the Ridge, known as \"The Pimple\"'" }
   lullMin:
     value: 2880
     estimate: "48 hours. The longest pause between attacks in the battle was from the 10th Brigade's attack on Hill 145 (3 p.m. on 10 April, BOH p. 342) to the Pimple (5 a.m. on 12 April, BOH p. 345), about 38 hours, the result of the Northern Attack's being 'postponed for 48 hours' (BOH p. 343). A shorter lull would end a run that follows the historical course before the Pimple; 48 hours is the postponement itself (command.md)"
