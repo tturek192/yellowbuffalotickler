@@ -60,7 +60,7 @@ async function main(argv: string[]): Promise<void> {
     if (values.event !== undefined) {
       console.log(formatWhy(explain(record, { eventId: intOpt('event', values.event) }), record.zeroHour));
     } else if (values.unit !== undefined && values.at !== undefined) {
-      console.log(formatWhy(explain(record, { unitId: values.unit, minute: atMinute(record.zeroHour, values.at) }), record.zeroHour));
+      console.log(formatWhy(explain(record, { unitId: values.unit, minute: atMinute(record.zeroHour, values.at, record.endMinute) }), record.zeroHour));
     } else {
       throw new UsageError('expected --event <n> or --unit <id> --at <HH:MM>');
     }

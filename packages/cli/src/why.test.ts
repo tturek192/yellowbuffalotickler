@@ -19,11 +19,22 @@ import { vimy, vimyDoctrines } from '../../engine/src/test-helpers';
 const record = (): RunRecord => runScenario(vimy(), vimyDoctrines(), { seed: 1 });
 
 describe('sim why', () => {
-  it('atMinute turns a clock time into minutes from the record zero hour', () => {
-    expect(atMinute('2017-04-09T05:30', '05:30')).toBe(0);
-    expect(atMinute('2017-04-09T05:30', '06:45')).toBe(75);
-    expect(atMinute('2017-04-09T05:30', '05:00')).toBe(-30);
-    expect(() => atMinute('2017-04-09T05:30', '25:00')).toThrow(/HH:MM/);
+  it('atMinute reads HH:MM on a one-day record, and a day plus time (CLI or ISO form) on a longer one', () => {
+    const z = '2017-04-09T05:30';
+    expect(atMinute(z, '05:30', 600)).toBe(0);
+    expect(atMinute(z, '06:45', 600)).toBe(75);
+    expect(atMinute(z, '05:00', 600)).toBe(-30);
+    expect(() => atMinute(z, '25:00', 600)).toThrow(/HH:MM/);
+    expect(atMinute(z, '10 Apr 14:00', 5070)).toBe(24 * 60 + 8 * 60 + 30);
+    expect(atMinute(z, '2017-04-10T14:00', 5070)).toBe(24 * 60 + 8 * 60 + 30);
+    expect(atMinute(z, '09 Apr 06:00', 5070)).toBe(30);
+  });
+
+  it('atMinute fails loudly on a bare time for a multi-day record, and on a time after the record ends', () => {
+    const z = '2017-04-09T05:30';
+    expect(() => atMinute(z, '14:00', 5070)).toThrow(/spans 2017-04-09 to 2017-04-12.*10 Apr 14:00/);
+    expect(() => atMinute(z, '13 Apr 14:00', 5070)).toThrow(/after the record ends/);
+    expect(() => atMinute(z, '20:00', 600)).toThrow(/after the record ends/);
   });
 
   it('formatWhy prints an indented chain with causes in plain language', () => {
@@ -46,11 +57,19 @@ describe('sim why', () => {
     const a = cli(['why', file, '--event', String(pinned.id)]);
     expect(a.code).toBe(0);
     expect(a.stdout).toMatch(/pinned/i);
-    const hh = (m: number) => { const t = new Date(Date.parse(`${r.zeroHour}:00Z`) + m * 60000); return `${String(t.getUTCHours()).padStart(2, '0')}:${String(t.getUTCMinutes()).padStart(2, '0')}`; };
-    const b = cli(['why', file, '--unit', pinned.unitId!, '--at', hh(pinned.minute)]);
+    const iso = (m: number) => new Date(Date.parse(`${r.zeroHour}:00Z`) + m * 60000).toISOString().slice(0, 16);
+    const b = cli(['why', file, '--unit', pinned.unitId!, '--at', iso(pinned.minute)]);
     expect(b.code).toBe(0);
     expect(b.stdout).toMatch(/^#\d+ /);
     expect(cli(['why', file]).code).toBe(1);
+    // A later day resolves to that day's event, not the zero day's; a bare time on a multi-day record fails loudly.
+    const late = r.events.filter((e) => e.unitId !== undefined && e.minute > 24 * 60).at(-1)!;
+    const c = cli(['why', file, '--unit', late.unitId!, '--at', iso(late.minute)]);
+    expect(c.code).toBe(0);
+    expect(c.stdout).toMatch(new RegExp(`^#${late.id} `));
+    const d = cli(['why', file, '--unit', late.unitId!, '--at', '14:00']);
+    expect(d.code).toBe(3);
+    expect(d.stderr).toMatch(/ambiguous.*spans/);
     expect(cli(['why', file, '--event', '999999']).code).toBe(3);
   }, 60_000);
 });
