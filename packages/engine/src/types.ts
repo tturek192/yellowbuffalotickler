@@ -390,6 +390,8 @@ export type FireGroup = {
   /** Set when the fire is about one company (the own barrage on a company too close to it). */
   unitId?: string;
   factors: Record<string, number>;
+  /** The event that already reports this fire (a `mine-fired`): `resolve` emits none for it and refers to this one. */
+  eventId?: number;
 };
 
 /**
@@ -398,7 +400,7 @@ export type FireGroup = {
  */
 export type PendingDamage = {
   targetId: string;
-  source: 'artillery' | 'direct-fire';
+  source: 'artillery' | 'direct-fire' | 'mine';
   firerId?: string;
   hits: number;
   /** Rounds that arrived, for suppression. */
@@ -409,6 +411,11 @@ export type PendingDamage = {
   refs: number[];
   /** The fire this damage is part of. */
   fire?: FireGroup;
+  /**
+   * Casualties already drawn (a mine's, Task 14 fix round 2, from its own stream): `resolve` applies exactly these, all
+   * killed (or buried), with no draw of its own; officers only as there are men left.
+   */
+  exact?: number;
   /** Direct fire: the share of the firer's ammunition load (its `ammo`) these rounds used up (Task 9). */
   ammoUsed?: number;
 };

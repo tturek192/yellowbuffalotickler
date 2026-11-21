@@ -7,6 +7,8 @@ import { groundAt, speedFactor } from './ground';
 import { SCHEDULES } from './schedule';
 import { directFire } from './fire';
 import { resolve } from './resolve';
+import { morale } from './morale';
+import { fireMines } from './smaller';
 import type { RunRecord } from './record';
 import { initRun, runScenario } from './run';
 import type { Models } from './run';
@@ -419,6 +421,25 @@ describe('mines', () => {
     expect(states.flatMap((s) => s.events).filter((e) => e.kind === 'mine-fired')).toHaveLength(1);
   });
 
+  it('a mine\'s losses shake morale as much as an equal loss to shellfire (they go through resolve, like every loss)', () => {
+    const [s, m] = fixtureMine();
+    const { state, ctx } = initRun(s, m, { seed: 1 });
+    // k1 up in its trench, so its morale moves.
+    const up: SimState = { ...state, minute: 2, events: [], companies: state.companies.map((c) => (c.id === 'k1' ? { ...c, posture: 'in-trench' as const } : c)) };
+    const minePending: Pending = { damage: [] };
+    const blown = resolve(fireMines(up, ctx, minePending), ctx, 2, minePending);
+    const k1 = (x: SimState) => x.companies.find((c) => c.id === 'k1')!;
+    const lost = k1(up).men - k1(blown).men;
+    expect(lost).toBeGreaterThan(0);
+    expect(minePending.applied!.get('k1')).toEqual({ menBefore: k1(up).men, hit: lost });
+    const shellPending: Pending = { damage: [{ targetId: 'k1', source: 'artillery', hits: lost, rounds: 0, suppressPerRound: 0, causes: ['artillery-fire'], refs: [] }] };
+    const shelled = resolve(up, ctx, 2, shellPending);
+    expect(k1(shelled).men).toBe(k1(blown).men);
+    expect(k1(morale(blown, ctx, 2, minePending)).morale).toBeCloseTo(k1(morale(shelled, ctx, 2, shellPending)).morale, 12);
+    expect(k1(morale(blown, ctx, 2, minePending)).morale).toBeLessThan(k1(up).morale);
+    // The mine's event is what the company's recent fire names.
+    expect(k1(blown).recentFire.at(-1)).toMatchObject({ causes: ['mine'], eventId: blown.events.find((e) => e.kind === 'mine-fired')!.id });
+  });
   it('a mine blown later is scheduled: a quiet step ends for it, and the run is the same as one stepped finely', () => {
     const f = () => fixtureMine({ afterMin: 121, lagMin: 200 });
     const coarse = runScenario(f()[0], withQuietStep(f()[1], 10), { seed: 1, endMinute: 180 });

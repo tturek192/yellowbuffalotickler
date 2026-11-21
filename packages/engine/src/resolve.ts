@@ -12,7 +12,8 @@ import type { Applied, FireGroup, Pending, PendingDamage } from './types';
  * - companies in ascending id order, each one's pending damage in the order it was gathered: casualties
  *   `stochasticRound(min(hits, men left))`, split into killed and wounded by `killedFrac`, and of them officers
  *   `stochasticRound(casualties × min(1, officerExposure × officers / men))` (three draws for each pending entry,
- *   whatever its values, so the draw order depends only on what was gathered);
+ *   whatever its values, so the draw order depends only on what was gathered; a mine's entries carry their casualties
+ *   already drawn, `exact`, and draw nothing here);
  * - suppression `s ← min(1, s + Σ suppressPerRound · rounds / max(men, 1))`, then for every company
  *   `s ← s · 2^(−dt / suppressionHalfLifeMin)`;
  * - each firer's ammunition goes down by the share of its load it fired (`ammunition-exhausted` when it runs out);
@@ -48,10 +49,12 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
     if (!ps) return null;
     const r: Done = { men: c.men, killed: 0, wounded: 0, officers: c.officers, gain: 0, hit: 0, keys: [] };
     for (const p of ps) {
-      const n = Math.min(r.men, stochasticRound(Math.min(p.hits, r.men), ctx.rngs.casualties));
-      const k = Math.min(n, stochasticRound(n * killedFrac, ctx.rngs.casualties));
+      // A mine's casualties come already drawn (`exact`): all killed or buried, officers only as men are left.
+      const exact = p.exact !== undefined;
+      const n = exact ? Math.min(r.men, p.exact!) : Math.min(r.men, stochasticRound(Math.min(p.hits, r.men), ctx.rngs.casualties));
+      const k = exact ? n : Math.min(n, stochasticRound(n * killedFrac, ctx.rngs.casualties));
       const share = Math.min(1, (exposure * r.officers) / Math.max(r.men, 1));
-      const o = Math.min(r.officers, n, stochasticRound(Math.min(r.officers, n * share), ctx.rngs.casualties));
+      const o = exact ? Math.max(0, r.officers - (r.men - n)) : Math.min(r.officers, n, stochasticRound(Math.min(r.officers, n * share), ctx.rngs.casualties));
       r.men -= n;
       // Officers are among the men: never more of them than men standing.
       r.officers = Math.min(r.officers - o, r.men);
@@ -78,9 +81,11 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
   });
 
   // 2. One event for each fire: artillery always, direct fire only when it hit someone.
-  const reported = tallies.filter((t) => t.fire.kind !== 'direct-fire' || t.hit > 0);
+  // A fire an event already reports (a mine's, Task 14 fix round 2) gets none here; its companies refer to that one.
+  const reported = tallies.filter((t) => t.fire.eventId === undefined && (t.fire.kind !== 'direct-fire' || t.hit > 0));
   const eventOf = new Map<string, number>(); // fire key -> event id (looked up only)
   reported.forEach((t, i) => eventOf.set(t.fire.key, state.nextEventId + i));
+  for (const t of tallies) if (t.fire.eventId !== undefined) eventOf.set(t.fire.key, t.fire.eventId);
   const fireEvents: NewEvent[] = reported.map((t) => {
     const unitId = t.fire.unitId ?? (t.targets.length === 1 ? t.targets[0]!.id : undefined);
     const on = t.targets.length <= 3 ? t.targets.map((x) => x.name).join(', ') : `${t.targets.length} companies`;

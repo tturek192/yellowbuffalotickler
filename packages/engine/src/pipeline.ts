@@ -36,7 +36,7 @@ const artillery: Phase = (state, ctx, dt, pending) => {
     return r.state;
   });
   // Mines blown at their minute (smaller.ts), then the guns.
-  return artilleryFire(fireMines(emit({ ...state, barrages }, ...events), ctx), ctx, dt, pending);
+  return artilleryFire(fireMines(emit({ ...state, barrages }, ...events), ctx, pending), ctx, dt, pending);
 };
 
 /**

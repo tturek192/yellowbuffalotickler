@@ -362,19 +362,19 @@ const minesOf = (ctx: StepContext): Mine[] => [...(ctx.scenario.mines ?? [])].so
  * Mines blown (the artillery phase; Task 14 fix round), in order of their minute, then id, each once when its minute has
  * come: every enemy company on the field (down in its dugouts too) with men within the crater (`craterRadiusM`) loses
  * `stochasticRound(men × share × mineLossFrac)` men killed or buried (one draw from the `mines` stream for each such
- * company, in ascending id order). `share`: for a garrison of a trench segment within the radius of its trench, the part
+ * company, in ascending id order), gathered as pending damage with those casualties fixed (`exact`), which `resolve`
+ * applies with the step's other losses, so they shake morale as any loss does. `share`: for a garrison of a trench segment within the radius of its trench, the part
  * of the segment's y extent the crater covers; for any other company, all its men if it stands within the radius. The
  * crater is broken ground: its 50 m cells are churned (ground.ts) to twice the depth at which ground counts as cratered
  * (`crateredShare`), so it is cratered and slow going (numerical method, not a model number). `mine-fired`, cause `mine`.
  */
-export function fireMines(state: SimState, ctx: StepContext): SimState {
+export function fireMines(state: SimState, ctx: StepContext, pending: Pending): SimState {
   const all = ctx.scenario.mines;
   if (!all || all.length === 0) return state;
   const due = minesOf(ctx).filter((m) => !state.minesFired.includes(m.id) && v(m.firedAfterMin) <= state.minute);
   if (due.length === 0) return state;
   const fx = ctx.tables.effects;
   const lossFrac = v(fx.mineLossFrac);
-  let companies = state.companies;
   const events: NewEvent[] = [];
   for (const m of due) {
     if (!Array.isArray(m.at)) throw new Error(`Mine ${m.id}: at was not projected to a local point`);
@@ -382,20 +382,23 @@ export function fireMines(state: SimState, ctx: StepContext): SimState {
     const r = v(m.craterRadiusM);
     let lost = 0;
     let hit = 0;
-    companies = companies.map((c) => {
-      if (c.side === m.side || !onField(c)) return c;
+    const eventId = state.nextEventId + events.length;
+    const fire: FireGroup = { key: `mine:${m.id}`, kind: 'shelled', text: `Mine ${m.id}`, factors: {}, eventId };
+    for (const c of state.companies) {
+      if (c.side === m.side || !onField(c)) continue;
       const seg = c.segmentId === undefined ? undefined : state.segments.find((x) => x.id === c.segmentId);
       let share = 0;
       if (seg && Math.abs(c.x - mx) <= r) {
         const w = seg.yMax - seg.yMin;
         share = w > 0 ? Math.max(0, Math.min(seg.yMax, my + r) - Math.max(seg.yMin, my - r)) / w : Math.abs(c.y - my) <= r ? 1 : 0;
       } else if (!seg && Math.hypot(c.x - mx, c.y - my) <= r) share = 1;
-      if (!(share > 0)) return c;
+      if (!(share > 0)) continue;
       hit++;
       const n = Math.min(c.men, stochasticRound(c.men * Math.min(1, share * lossFrac), ctx.rngs.mines));
       lost += n;
-      return n === 0 ? c : { ...c, men: c.men - n, killed: c.killed + n, officers: Math.min(c.officers, c.men - n) };
-    });
+      // Applied by resolve with the step's other losses (so the morale phase feels them), exactly as drawn here.
+      if (n > 0) pending.damage.push({ targetId: c.id, source: 'mine', hits: n, exact: n, rounds: 0, suppressPerRound: 0, causes: ['mine'], refs: [eventId], fire });
+    }
     // The crater: its cells churned past the cratered threshold.
     const per = (2 * -Math.log(1 - Math.min(0.999, v(fx.crateredShare))) * CELL_M * CELL_M) / v(fx.churnAreaPerShellM2);
     const w = ctx.world;
@@ -411,7 +414,7 @@ export function fireMines(state: SimState, ctx: StepContext): SimState {
       factors: { menLost: lost, companies: hit, craterRadiusM: r },
     });
   }
-  return emit({ ...state, companies, minesFired: [...state.minesFired, ...due.map((m) => m.id)] }, ...events);
+  return emit({ ...state, minesFired: [...state.minesFired, ...due.map((m) => m.id)] }, ...events);
 }
 
 /** The minutes the mines not yet blown are due (schedule.ts; they move nobody). */
