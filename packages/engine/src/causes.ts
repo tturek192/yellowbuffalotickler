@@ -13,6 +13,8 @@ export const CAUSES = [
   'dugouts-uncleared', 'defenders-trapped', 'outnumbered',
   // Leadership and morale
   'officers-lost', 'led-by-ncos', 'morale-broke', 'suppressed', 'isolated',
+  // No fire came in long enough for morale to recover (a company that fell back rallies, Task 10)
+  'morale-recovered',
   // Ground, weather and light
   'mud', 'poor-visibility', 'darkness', 'air-observation', 'uphill-counter-attack',
   // Command and communications

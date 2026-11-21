@@ -158,6 +158,7 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
         unitId: c.id,
         ...(c.sectorId ? { sectorId: c.sectorId } : {}),
         text: `${c.name} rallies (morale ${round(m, 2)}) and holds where it is`,
+        causes: ['morale-recovered'],
         refs: c.fellBackEventId === null ? [] : [c.fellBackEventId],
         factors: { morale: round(m, 3), men: c.men },
       });

@@ -112,7 +112,7 @@ describe('movement', () => {
     const fellBackEventId = w.state.nextEventId - 1;
     const out = morale({ ...w.state, companies: [{ ...w.c1, fellBackEventId }] }, w.ctx, 2, { damage: [], applied: new Map() });
     expect(out.companies[0]).toMatchObject({ status: 'holding', intent: 'hold', posture: 'prone' });
-    expect(out.events.filter((e) => e.kind === 'company-rallied')).toMatchObject([{ unitId: 'c1', refs: [fellBackEventId] }]);
+    expect(out.events.filter((e) => e.kind === 'company-rallied')).toMatchObject([{ unitId: 'c1', causes: ['morale-recovered'], refs: [fellBackEventId] }]);
     // A pinned company with the same morale stays pinned, and goes on once it recovers (Task 9's rule).
     const pinned = morale({ ...w.state, companies: [{ ...w.c1, status: 'pinned', intent: 'go-to-ground' }] }, w.ctx, 2, { damage: [], applied: new Map() }).companies[0]!;
     expect(pinned.status).toBe('pinned');
