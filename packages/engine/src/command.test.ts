@@ -111,7 +111,7 @@ describe('the command model', () => {
       ...s,
       companies: s.companies.map((c) => (c.id === 'c2' ? { ...c, status: 'holding' as const, intent: 'hold' as const } : c)),
       hqs: s.hqs.map((h) => (h.picture.units['c2'] ? { ...h, picture: { ...h.picture, units: { ...h.picture.units, c2: { ...h.picture.units['c2']!, status: 'holding' } } } } : h)),
-      lastReport: { ...s.lastReport, c2: { ...s.lastReport['c2']!, status: 'holding' } },
+      lastReport: new Map([...s.lastReport, ['c2', { ...s.lastReport.get('c2')!, status: 'holding' as const }]]),
     });
     const r = runStates(fixtureStall(), { endMinute: 300, at: rallied });
     const e = firstOf(r, 'order-issued')!;
@@ -192,7 +192,7 @@ describe('the command model', () => {
         ...s,
         companies: s.companies.map((c) => (c.id === 'c1' || c.id === 'c2' ? { ...c, status: 'holding' as const, intent: 'hold' as const } : c)),
         hqs: s.hqs.map((h) => ({ ...h, picture: { ...h.picture, units: Object.fromEntries(Object.entries(h.picture.units).map(([id, u]) => [id, id === 'c1' || id === 'c2' ? { ...u, status: 'holding' } : u])) } })),
-        lastReport: { ...s.lastReport, c1: { ...s.lastReport['c1']!, status: 'holding' }, c2: { ...s.lastReport['c2']!, status: 'holding' } },
+        lastReport: new Map([...s.lastReport, ['c1', { ...s.lastReport.get('c1')!, status: 'holding' as const }], ['c2', { ...s.lastReport.get('c2')!, status: 'holding' as const }]]),
       });
       const r = runStates(f, { endMinute: 200, at: rallied });
       expect(r.states[0]!.hqs.find((h) => h.formationId === 'b1')!.picture.enemy['line:black|s1']).toEqual({ men: 640, atMin: 0, intel: true, base: 640 });

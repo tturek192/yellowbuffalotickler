@@ -164,7 +164,7 @@ export function initComms(state: SimState, ctx: StepContext): SimState {
     nextMessageId: 0,
     cutLines: [],
     fireMissions: [],
-    lastReport: Object.fromEntries(
+    lastReport: new Map(
       state.companies.map((c) => [c.id, { status: c.status, men: c.men, holder: c.segmentId === undefined ? null : (segmentOf.get(c.segmentId) ?? null), atMin: state.minute }]),
     ),
   };
@@ -1007,7 +1007,7 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
   }
   let seen: ReturnType<typeof enemySeen> | undefined;
   let w: Work | null = null;
-  let last: SimState['lastReport'] | null = null;
+  let last: Map<string, SimState['lastReport'] extends ReadonlyMap<string, infer R> ? R : never> | null = null;
   const range = v(ctx.tables.effects.observerRangeM);
   // Segments change hands only with a segment-lost or segment-retaken event: without one, no holder is looked at.
   const anySeg = took.size > 0;
@@ -1027,7 +1027,7 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     });
   for (const c of state.companies) {
     if (c.status === 'off-map') continue;
-    const had = state.lastReport[c.id];
+    const had = state.lastReport.get(c.id);
     const before = had ?? { status: c.status, men: c.men, holder: null, atMin: M };
     const routine = had !== undefined && c.men !== had.men && M >= had.atMin + every(c);
     const aim = c.objectiveLineId === undefined || linesLost.size === 0 ? '' : `${c.objectiveLineId}|${c.sectorId}`;
@@ -1043,8 +1043,8 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     const segChanged = own !== undefined && before.holder !== holder;
     if (!routine && !statusChanged && !segChanged && taken.length === 0 && lineEvent === undefined && lostEvent === undefined && sighted.length === 0) continue;
     w ??= begin(state, ctx);
-    last ??= { ...state.lastReport };
-    last[c.id] = { status: c.status, men: c.men, holder, atMin: M };
+    last ??= new Map(state.lastReport);
+    last.set(c.id, { status: c.status, men: c.men, holder, atMin: M });
     const segments: Report['segments'] = {};
     for (const id of taken) segments[id] = holderOf.get(id)!.holder;
     if (segChanged) segments[own!.id] = holder!;
@@ -1207,7 +1207,7 @@ export function messageDueTimes(state: SimState, ctx: StepContext): Scheduled[] 
   }));
   // A company's routine report, once its men have changed since its last.
   for (const c of state.companies) {
-    const last = state.lastReport[c.id];
+    const last = state.lastReport.get(c.id);
     if (last && c.status !== 'off-map' && c.men !== last.men) out.push({ minute: last.atMin + v(ctx.doctrines[c.doctrineId]!.common.reportEveryMin), startsMovement: false });
   }
   if (state.hqs.some((h) => h.news.sinceMin !== null)) {

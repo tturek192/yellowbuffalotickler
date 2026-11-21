@@ -39,7 +39,7 @@ export type SimState = {
    * What each company last reported (Task 11): its status, men, the holder of its own segment (null: none) and the
    * minute it reported. Looked up only.
    */
-  lastReport: Record<string, { status: CompanyStatus; men: number; holder: Side | null; atMin: number }>;
+  lastReport: ReadonlyMap<string, { status: CompanyStatus; men: number; holder: Side | null; atMin: number }>;
   /** Batteries answering calls for fire (Task 11), in id order. */
   fireMissions: FireMission[];
   /** Off-map formations (Task 13), in the scenario's order. */

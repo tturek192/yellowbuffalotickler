@@ -99,7 +99,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     messages: [],
     nextMessageId: 0,
     cutLines: [],
-    lastReport: {},
+    lastReport: new Map(),
     fireMissions: [],
     reserves: initReserves(scenario),
     command: { ordered: {}, stallCommits: {}, launched: {}, counterAttacks: {}, divisions: {}, offMap: {} },
