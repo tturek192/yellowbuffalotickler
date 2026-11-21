@@ -105,3 +105,71 @@ test('plays a run with map features and German garrisons', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({ path: out('garrisons-narrow.png'), fullPage: true });
 });
+
+test.describe('Vimy markers and zoom', () => {
+  test.use({ deviceScaleFactor: 2 });
+
+  /** Record every string the map draws, so the canvas's labels can be asserted on. */
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      const seen = new Set<string>();
+      (window as unknown as { __drawn: Set<string> }).__drawn = seen;
+      const fillText = CanvasRenderingContext2D.prototype.fillText;
+      CanvasRenderingContext2D.prototype.fillText = function (this: CanvasRenderingContext2D, text: string, ...rest: [number, number, number?]) {
+        seen.add(String(text));
+        return fillText.call(this, text, ...rest);
+      };
+    });
+  });
+
+  const drawn = (page: Page): Promise<string[]> => page.evaluate(() => [...(window as unknown as { __drawn: Set<string> }).__drawn]);
+  const forget = (page: Page): Promise<void> => page.evaluate(() => (window as unknown as { __drawn: Set<string> }).__drawn.clear());
+  /** A company label such as "16A" or "3/261"; battalion labels never look like this. */
+  const isCompanyLabel = (t: string): boolean => /^\d+[A-Z]$/.test(t) || /^\d+\/\d+$/.test(t);
+
+  test('shows battalion markers at corps zoom, and company labels once zoomed in', async ({ page }) => {
+    await page.goto('/?run=vimy');
+    const map = page.getByRole('img', { name: /^Trench map of / });
+    await expect(map).toHaveAttribute('data-detail', 'battalion');
+    await expect.poll(async () => (await drawn(page)).includes('102')).toBe(true);
+    expect((await drawn(page)).filter(isCompanyLabel)).toEqual([]);
+    await page.screenshot({ path: out('vimy-fitall.png') });
+
+    // Zoom in on the line with the wheel, about a point on the map.
+    const box = (await map.boundingBox())!;
+    await forget(page);
+    await page.mouse.move(box.x + box.width * 0.45, box.y + box.height * 0.5);
+    for (let i = 0; i < 12 && (await map.getAttribute('data-detail')) !== 'company'; i++) {
+      await page.mouse.wheel(0, -300);
+      await page.waitForTimeout(60);
+    }
+    await expect(map).toHaveAttribute('data-detail', 'company');
+    await expect.poll(async () => (await drawn(page)).some(isCompanyLabel)).toBe(true);
+    await page.screenshot({ path: out('vimy-zoomed.png') });
+
+    // Mid-attack: pinned, falling-back and surrendered markers and suppression rings show.
+    await page.getByLabel('Battle time').fill('150');
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: out('vimy-zoomed-mid.png') });
+
+    // Drag pans, and Fit all returns to the corps view.
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.45 + 80, box.y + box.height * 0.5 + 30, { steps: 4 });
+    await page.mouse.up();
+    await expect(map).toHaveAttribute('data-detail', 'company');
+    await page.getByRole('button', { name: 'Fit all' }).click();
+    await expect(map).toHaveAttribute('data-detail', 'battalion');
+    await expect(page.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
+  });
+
+  test('zooms with the buttons, one step at a time, to a limit', async ({ page }) => {
+    await page.goto('/?run=vimy');
+    const map = page.getByRole('img', { name: /^Trench map of / });
+    const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+    for (let i = 0; i < 30 && (await zoomIn.isEnabled()); i++) await zoomIn.click();
+    await expect(zoomIn).toBeDisabled();
+    await expect(map).toHaveAttribute('data-detail', 'company');
+    await page.getByRole('button', { name: 'Zoom out' }).click();
+    await expect(zoomIn).toBeEnabled();
+  });
+});

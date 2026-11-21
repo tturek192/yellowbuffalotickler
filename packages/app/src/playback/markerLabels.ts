@@ -29,3 +29,14 @@ export function layoutMarkers(ticks: readonly number[], widths: readonly number[
     return { row: 0, offset: 0, hidden: true };
   });
 }
+
+/** Horizontal padding of a timeline label (3 px each side, styles.css `.marker-label`). */
+export const LABEL_PAD_PX = 6;
+
+/** Width of a label's box from a text measurer (canvas `measureText`): the text plus its padding. */
+export function labelBoxWidth(text: string, measure: (text: string) => number): number {
+  return Math.ceil(measure(text)) + LABEL_PAD_PX;
+}
+
+/** The old estimate (~5.4 px a character at 13 px), kept only where no canvas is there to measure with. */
+export const estimateTextWidth = (text: string): number => text.length * 5.4;

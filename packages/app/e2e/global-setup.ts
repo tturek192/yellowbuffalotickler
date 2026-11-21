@@ -6,6 +6,8 @@ const RUNS: Array<[scenario: string, run: string]> = [
   ['scenarios/vimy-1917/1cdn-3bde-draft.yaml', 'sample'],
   // The draft plus synthetic features of every kind and a holding German garrison.
   ['packages/app/e2e/fixtures/garrisons.yaml', 'garrisons'],
+  // The Vimy scenario itself: hundreds of companies in over a hundred battalions.
+  ['scenarios/vimy-1917/scenario.yaml', 'vimy'],
 ];
 
 /** Write the run records the e2e tests play. */

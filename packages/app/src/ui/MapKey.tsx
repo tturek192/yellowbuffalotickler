@@ -3,6 +3,7 @@ import type { RunRecord } from '@wwi/engine';
 import type { FeatureKind } from '@wwi/scenario';
 import { featureInk } from '../map/features';
 import { MAP_COLORS } from '../map/style';
+import { MARKER_STYLE } from '../map/unitMarkers';
 
 type Feature = RunRecord['geometry']['features'][number];
 
@@ -136,9 +137,46 @@ export function MapKey({ record }: { record: RunRecord }) {
         </defs>
         <rect x="1" y="1" width="26" height="8" fill="url(#key-hatch)" stroke="rgba(150,116,40,.85)" strokeWidth="1" />
       </KeyRow>
-      <KeyRow label="Company">
+      <KeyRow label="Battalion (zoomed out)">
+        <rect x="5" y="3.5" width="18" height="6" fill={MAP_COLORS.allied} />
+        <path d="M12 0.5V2.5M16 0.5V2.5" stroke={MAP_COLORS.ink} strokeWidth="1" />
+      </KeyRow>
+      <KeyRow label="Company (zoomed in)">
         <rect x="1" y="1" width="12" height="8" fill={MAP_COLORS.allied} />
         <rect x="15.5" y="1.5" width="11" height="7" fill={MAP_COLORS.central} stroke={MAP_COLORS.centralEdge} strokeWidth="1" />
+      </KeyRow>
+      <KeyRow label="Strength (bar under)">
+        <rect x="4" y="1" width="20" height="5" fill={MAP_COLORS.allied} />
+        <rect x="4" y="7" width="20" height="2.5" fill="rgba(59,51,38,.25)" />
+        <rect x="4" y="7" width="12" height="2.5" fill={MAP_COLORS.ink} />
+      </KeyRow>
+      <KeyRow label="Steady">
+        <rect x="5" y="1" width="18" height="8" fill={MAP_COLORS.allied} />
+      </KeyRow>
+      <KeyRow label="Pinned (hatched)">
+        <defs>
+          <pattern id="key-pinned" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+            <path d="M0 0v4" stroke={MARKER_STYLE.hatch} strokeWidth="1.4" />
+          </pattern>
+        </defs>
+        <rect x="5" y="1" width="18" height="8" fill={MAP_COLORS.allied} />
+        <rect x="5" y="1" width="18" height="8" fill="url(#key-pinned)" />
+      </KeyRow>
+      <KeyRow label="Falling back">
+        <rect x="11" y="1" width="14" height="8" fill={MAP_COLORS.allied} />
+        <path d="M9 5H2M2 5l3-2.5M2 5l3 2.5" fill="none" stroke={MARKER_STYLE.arrow} strokeWidth="1.5" />
+      </KeyRow>
+      <KeyRow label="Surrendered (white flag)">
+        <rect x="5" y="3" width="18" height="6" fill={MAP_COLORS.allied} opacity="0.7" />
+        <path d="M20 3V0.3" stroke={MAP_COLORS.ink} strokeWidth="1" />
+        <path d="M20 0.3l-6 1.2 6 1.8z" fill="#fff" stroke={MAP_COLORS.ink} strokeWidth="0.6" />
+      </KeyRow>
+      <KeyRow label="Destroyed">
+        <rect x="5" y="1" width="18" height="8" fill={MARKER_STYLE.destroyed} opacity="0.55" />
+      </KeyRow>
+      <KeyRow label="Suppressed (pulsing ring)">
+        <rect x="1.5" y="0.75" width="25" height="8.5" fill="none" stroke={MARKER_STYLE.suppression} strokeWidth="1.2" opacity="0.7" />
+        <rect x="7" y="2.5" width="14" height="5" fill={MAP_COLORS.allied} />
       </KeyRow>
       <KeyRow label="Consolidating">
         <rect x="5.5" y="0.5" width="17" height="9" fill="none" stroke="rgba(20,16,8,.45)" strokeWidth="1" />

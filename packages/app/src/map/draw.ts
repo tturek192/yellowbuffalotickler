@@ -1,18 +1,16 @@
 import type { RunRecord } from '@wwi/engine';
-import { companiesOf, type Frame } from '../playback';
+import { aggregateBattalions, companiesOf, type Frame } from '../playback';
 import { BARRAGE_DEPTH_M, worldToScreen, type Point, type View } from './projection';
 import { declutter, type Screen } from './declutter';
 import { divisionTags, nudgeClear, objectiveLabelGroups, overlaps, placeClear, trenchLabel, type Box } from './labels';
 import { drawFeatures } from './features';
 import { terrainLayer } from './hillshade';
 import { LABEL_FONT, MAP_COLORS, MARKER_FONT, crenellatedPath, sideColor, tracePath } from './style';
+import { detailAt } from './zoom';
+import { MARKER_STYLE, drawUnitMarker } from './unitMarkers';
 
 export { crenellatedPath, MAP_COLORS } from './style';
 
-/** Vertical room one company marker needs: 16 px box, 2 px gap, 3 px strength bar, 3 px air. */
-const MARKER_PITCH = 24;
-/** Furthest a marker may be nudged from its true position; beyond this, markers overlap rather than mislead. */
-const MARKER_MAX_SHIFT = Math.min(13, MARKER_PITCH / 2);
 type Line = RunRecord['geometry']['lines'][number];
 
 /** '16bn-a' → '16A'; 'rir262-1' → '1/262' (company/regiment); otherwise the first three characters, upper-cased. */
@@ -284,61 +282,33 @@ function drawBarrage(ctx: CanvasRenderingContext2D, view: View, points: Point[])
   ctx.restore();
 }
 
-function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame): void {
+/** What changes between frames of the same battle minute: the wall-clock pulse of the suppression rings. */
+export type DrawOptions = { /** Suppression-ring phase in cycles (wall time, never battle time); 0 holds the rings still. */ pulse?: number };
+
+/** Draw markers declutted against each other, top to bottom so the lower ones overlap the upper ones' bars. */
+function placeMarkers<T extends { x: number; y: number }>(view: View, items: readonly T[], w: (t: T) => number, h: number): Array<{ item: T; at: Screen }> {
+  const pitch = MARKER_STYLE.pitch(h);
+  const wide = Math.max(0, ...items.map(w));
+  const placed = declutter(items.map((t) => worldToScreen(view, [t.x, t.y])), wide + 2, pitch, Math.min(13, pitch / 2));
+  return items.map((item, i) => ({ item, at: placed[i]! })).sort((a, b) => a.at[1] - b.at[1]);
+}
+
+/** Corps zoom: one marker per battalion, its strength, morale and suppression summed from its companies. */
+function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number): void {
+  const { minW, h, padX } = MARKER_STYLE.battalion;
+  ctx.font = `600 11px ${MARKER_FONT}`;
+  const wOf = (label: string): number => Math.max(minW, Math.ceil(ctx.measureText(label).width) + 2 * padX);
+  for (const { item: b, at } of placeMarkers(view, aggregateBattalions(frame.companies, r), (b) => wOf(b.label), h)) {
+    drawUnitMarker(ctx, { at, w: wOf(b.label), h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, battalion: true, phase });
+  }
+}
+
+/** Zoomed in: one marker per company on the map. */
+function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number): void {
   const initial = new Map((r.snapshots[0] ? companiesOf(r, r.snapshots[0]) : []).map((c) => [c.id, c.men]));
-  const W = 26;
-  const H = 16;
-  const placed = declutter(frame.companies.map((c) => worldToScreen(view, [c.x, c.y])), W + 2, MARKER_PITCH, MARKER_MAX_SHIFT);
-  const order = frame.companies.map((c, i) => ({ c, at: placed[i]! })).sort((a, b) => a.at[1] - b.at[1]);
-  for (const { c, at } of order) {
-    const [sx, sy] = at;
-    const x = Math.round(sx - W / 2);
-    const y = Math.round(sy - H / 2);
-    const color = sideColor(c.side);
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(40, 30, 10, 0.35)';
-    ctx.shadowBlur = 3;
-    ctx.shadowOffsetY = 1;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, W, H);
-    ctx.restore();
-
-    if (c.status === 'consolidating') {
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x - 1, y - 1, W + 2, H + 2);
-      ctx.strokeStyle = 'rgba(20, 16, 8, 0.4)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x - 2.5, y - 2.5, W + 5, H + 5);
-    } else if (c.side === 'central') {
-      ctx.strokeStyle = MAP_COLORS.centralEdge;
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x + 0.75, y + 0.75, W - 1.5, H - 1.5);
-    } else {
-      ctx.strokeStyle = 'rgba(20, 16, 8, 0.45)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x + 0.5, y + 0.5, W - 1, H - 1);
-    }
-
-    const text = shortId(c.id);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `600 11px ${MARKER_FONT}`;
-    // Longer ids (German company/regiment) step down a size to stay inside the marker.
-    if (ctx.measureText(text).width > W - 4) ctx.font = `600 9.5px ${MARKER_FONT}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, x + W / 2, y + H / 2 + 0.5);
-
-    // Holding companies (garrisons, reserves) have no attack to wear them down: no strength bar.
-    if (c.status === 'holding') continue;
-    const full = initial.get(c.id) ?? c.men;
-    const ratio = full > 0 ? Math.max(0, Math.min(1, c.men / full)) : 0;
-    const by = y + H + 2;
-    ctx.fillStyle = 'rgba(59, 51, 38, 0.25)';
-    ctx.fillRect(x, by, W, 3);
-    ctx.fillStyle = MAP_COLORS.ink;
-    ctx.fillRect(x, by, Math.round(W * ratio), 3);
+  const { w, h } = MARKER_STYLE.company;
+  for (const { item: c, at } of placeMarkers(view, frame.companies.filter((c) => c.status !== 'off-map'), () => w, h)) {
+    drawUnitMarker(ctx, { at, w, h, label: shortId(c.id), side: c.side, status: c.status, morale: c.morale, suppression: c.suppression, men: c.men, full: initial.get(c.id) ?? c.men, phase });
   }
 }
 
@@ -388,9 +358,10 @@ function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
 
 /**
  * Draw one frame in CSS pixels (the caller sets the devicePixelRatio transform): paper and terrain, map
- * features, trenches, objective lines, barrage bands (until each barrage ends), then company markers.
+ * features, trenches, objective lines, barrage bands (until each barrage ends), then unit markers: battalions at corps
+ * zoom, companies once 1 km is wider than 250 px (`detailAt`).
  */
-export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame): void {
+export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, opts: DrawOptions = {}): void {
   drawPaper(ctx, view, r);
   const labels: Box[] = [];
   drawFeatures(ctx, view, r.geometry.features, labels);
@@ -400,7 +371,8 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   const objectives = r.geometry.lines.filter((l) => l.kind === 'objective');
   for (const l of objectives) drawObjective(ctx, view, l);
   for (const b of frame.barrages) if (!b.done) drawBarrage(ctx, view, b.points);
-  drawCompanies(ctx, view, r, frame);
+  if (detailAt(view) === 'company') drawCompanies(ctx, view, r, frame, opts.pulse ?? 0);
+  else drawBattalions(ctx, view, r, frame, opts.pulse ?? 0);
   // The clock card (HTML, .clock-card in styles.css) hides the sheet's top-left corner: keep labels out from under it.
   labels.push({ x0: 0, x1: cssSize(ctx).w < 600 ? 230 : 300, y0: 0, y1: 86 });
   // Line labels go on top of the markers so a stack of companies never hides a name.

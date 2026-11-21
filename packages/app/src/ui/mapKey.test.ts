@@ -25,7 +25,7 @@ function keyOf(kinds: FeatureKind[], terrain = false): string {
 describe('MapKey', () => {
   it('always names trenches, objectives, the barrage and companies', () => {
     const html = keyOf([]);
-    for (const t of ['Allied trench', 'German trench', 'Objective line', 'Barrage', 'Company', 'Consolidating']) expect(html).toContain(t);
+    for (const t of ['Allied trench', 'German trench', 'Objective line', 'Barrage', 'Battalion', 'Company', 'Consolidating', 'Strength', 'Steady', 'Pinned', 'Falling back', 'Surrendered', 'Destroyed', 'Suppressed']) expect(html).toContain(t);
   });
 
   it('adds a feature symbol only when the record has that kind', () => {

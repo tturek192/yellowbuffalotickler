@@ -278,6 +278,55 @@ code {
   display: block;
   width: 100%;
   height: 100%;
+  cursor: grab;
+  /* the map handles drags and pinches itself */
+  touch-action: none;
+}
+
+.map-canvas canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.zoom-controls {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(59, 51, 38, 0.6);
+  border-radius: 3px;
+  background: rgba(239, 230, 207, 0.94);
+  box-shadow: 0 1px 4px rgba(40, 30, 10, 0.3);
+  overflow: hidden;
+}
+
+.zoom-controls button {
+  width: 34px;
+  height: 32px;
+  border: 0;
+  border-top: 1px solid rgba(59, 51, 38, 0.3);
+  background: transparent;
+  color: var(--ink);
+  font: 600 18px/1 var(--font-head);
+  cursor: pointer;
+}
+
+.zoom-controls button:first-child {
+  border-top: 0;
+}
+
+.zoom-controls .zoom-fit {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.zoom-controls button:hover:not(:disabled) {
+  background: rgba(122, 96, 52, 0.18);
+}
+
+.zoom-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .clock-card {

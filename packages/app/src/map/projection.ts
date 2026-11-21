@@ -48,7 +48,8 @@ export function recordBounds(r: RunRecord): Bounds {
     }
   }
   for (const s of r.snapshots) {
-    for (const c of companiesOf(r, s)) add(c.x, c.y);
+    // Off-map companies are not drawn, so they do not stretch the sheet.
+    for (const c of companiesOf(r, s)) if (c.status !== 'off-map') add(c.x, c.y);
     for (const br of s.barrages) for (const [x, y] of br.points) add(x + BARRAGE_DEPTH_M, y);
   }
   for (const s of r.geometry.sectors) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layoutMarkers, shortMarkerLabel } from './markerLabels';
+import { LABEL_PAD_PX, labelBoxWidth, layoutMarkers, shortMarkerLabel } from './markerLabels';
 
 describe('shortMarkerLabel', () => {
   it('shortens line and division and drops "taken"', () => {
@@ -29,5 +29,13 @@ describe('layoutMarkers', () => {
   });
   it('hides a label wider than the track', () => {
     expect(layoutMarkers([50], [500], 300, 3)[0]!.hidden).toBe(true);
+  });
+});
+
+describe('labelBoxWidth', () => {
+  it('is the measured text width plus the label padding, not a per-character guess', () => {
+    const measure = (t: string): number => (t === 'WW' ? 20.2 : 1);
+    expect(labelBoxWidth('WW', measure)).toBe(21 + LABEL_PAD_PX);
+    expect(labelBoxWidth('ii', measure)).toBe(1 + LABEL_PAD_PX);
   });
 });

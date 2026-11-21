@@ -202,6 +202,74 @@ describe('map labels', () => {
   });
 });
 
+describe('a label slid sideways', () => {
+  // Two objective lines end at the same spot under the top margin, so the second label cannot be lifted clear: it slides.
+  const sheetView: View = { scale: 0.5, tx: 100, ty: 500 };
+  const objective = (id: string, name: string): RunRecord['geometry']['lines'][number] => ({ id, name, kind: 'objective', color: '#222', points: [[800, 0], [800, 920]] });
+  const r: RunRecord = (() => {
+    const base = record([]);
+    return { ...base, geometry: { ...base.geometry, lines: [objective('a', 'Alpha Line'), objective('b', 'Bravo Line')] } };
+  })();
+
+  it('is drawn where it was placed, clear of its neighbour, with its hairline leading back to the line', () => {
+    const rec = recordingContext();
+    drawFrame(rec.ctx, sheetView, r, frameAt(r, 0));
+    const textX = (t: string): number => rec.calls.find((c) => c.name === 'fillText' && c.args[0] === t)!.args[1] as number;
+    const width = 'Alpha Line'.length * 6; // the stub context measures 6 px a character
+    const alpha = textX('Alpha Line');
+    const bravo = textX('Bravo Line');
+    // The first sits centred on the line's end (screen x 500); the second has moved sideways and no longer touches it.
+    expect(alpha).toBe(500 - width / 2);
+    expect(bravo).not.toBe(alpha);
+    expect(bravo >= alpha + width || bravo + width <= alpha).toBe(true);
+    // Its hairline starts on the moved label (within its box) and ends at the line's end.
+    const leaders = rec.calls.filter((c, i) => c.name === 'lineTo' && rec.calls[i - 1]?.name === 'moveTo' && (c.args[0] as number) === 500 && (rec.calls[i - 1]!.args[0] as number) !== 500);
+    expect(leaders.length).toBeGreaterThanOrEqual(1);
+    const startX = rec.calls[rec.calls.indexOf(leaders[0]!) - 1]!.args[0] as number;
+    expect(startX).toBeGreaterThanOrEqual(bravo);
+    expect(startX).toBeLessThanOrEqual(bravo + width);
+  });
+});
+
+describe('unit markers', () => {
+  const unit = (id: string, bn: string, x: number, over: Partial<Company> = {}): Company => ({ id, battalionId: bn, side: 'allied', x, y: 300, men: 100, status: 'advancing', ...over } as Company);
+  const texts = (r: RunRecord, v: View, pulse?: number): string[] => {
+    const rec = recordingContext();
+    drawFrame(rec.ctx, v, r, frameAt(r, 0), pulse === undefined ? {} : { pulse });
+    return rec.calls.filter((c) => c.name === 'fillText').map((c) => String(c.args[0]));
+  };
+  const r = record([], [unit('12bn-a', '12bn', 100), unit('12bn-b', '12bn', 140), unit('13bn-a', '13bn', 600)]);
+  const corps: View = { scale: 0.1, tx: 100, ty: 500 };
+
+  it('draws one marker per battalion at corps zoom and one per company when zoomed in', () => {
+    expect(texts(r, corps)).toEqual(expect.arrayContaining(['12', '13']));
+    expect(texts(r, corps)).not.toContain('12A');
+    expect(texts(r, view)).toEqual(expect.arrayContaining(['12A', '12B', '13A']));
+    expect(texts(r, view)).not.toContain('12');
+  });
+
+  it('does not draw off-map companies at either zoom', () => {
+    const away = record([], [unit('12bn-a', '12bn', 100), unit('99bn-a', '99bn', 300, { status: 'off-map' })]);
+    expect(texts(away, view)).toContain('12A');
+    expect(texts(away, view)).not.toContain('99A');
+    expect(texts(away, corps)).not.toContain('99');
+  });
+
+  it('rings a suppressed marker, and the ring moves with the pulse phase, not with the record', () => {
+    const calm = record([], [unit('12bn-a', '12bn', 100)]);
+    const shaken = record([], [unit('12bn-a', '12bn', 100, { suppression: 0.7 } as Partial<Company>)]);
+    const rects = (rr: RunRecord, pulse: number): unknown[][] => {
+      const rec = recordingContext();
+      drawFrame(rec.ctx, view, rr, frameAt(rr, 0), { pulse });
+      return rec.calls.filter((c) => c.name === 'strokeRect' && c.strokeStyle === '#d9822b').map((c) => c.args);
+    };
+    expect(rects(calm, 0.25)).toEqual([]);
+    expect(rects(shaken, 0.25)).toHaveLength(1);
+    expect(rects(shaken, 0.25)).toEqual(rects(shaken, 1.25));
+    expect(rects(shaken, 0.25)).not.toEqual(rects(shaken, 0.75));
+  });
+});
+
 describe('terrain', () => {
   let made = 0;
   const saved = { OffscreenCanvas: globalThis.OffscreenCanvas, ImageData: globalThis.ImageData };

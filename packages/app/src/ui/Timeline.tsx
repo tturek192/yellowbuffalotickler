@@ -1,10 +1,25 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Marker } from '../playback';
-import { layoutMarkers, shortMarkerLabel } from '../playback/markerLabels';
+import { estimateTextWidth, labelBoxWidth, layoutMarkers, shortMarkerLabel } from '../playback/markerLabels';
 
 const LABEL_ROWS = 3;
-/** Estimated label width: ~5.4 px a character at 13 px (measured about 4.6) plus padding; errs wide so neighbours never touch. */
-const labelWidth = (text: string): number => text.length * 5.4 + 10;
+/** The font of `.marker-label` at its widest weight (a passed marker is 600), so a label never outgrows its box. */
+const LABEL_FONT = '600 13px "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif';
+
+/** A text measurer on a canvas, or the character-count estimate where there is none (server rendering, tests). */
+function textMeasurer(): (text: string) => number {
+  try {
+    const ctx = document.createElement('canvas').getContext('2d');
+    if (ctx) {
+      ctx.font = LABEL_FONT;
+      // `.marker-label` letter-spacing is 0.02em: 0.26 px a character at 13 px.
+      return (text) => ctx.measureText(text).width + text.length * 0.26;
+    }
+  } catch {
+    /* no DOM: fall through */
+  }
+  return estimateTextWidth;
+}
 
 type Props = {
   minute: number;
@@ -31,11 +46,24 @@ export function Timeline({ minute, endMinute, markers, valueText, startLabel, en
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  // Web fonts change a label's width when they arrive: measure again then.
+  const [fontsReady, setFontsReady] = useState(0);
+  useEffect(() => {
+    if (!document.fonts) return;
+    let live = true;
+    document.fonts.load(LABEL_FONT).finally(() => live && setFontsReady((n) => n + 1));
+    return () => {
+      live = false;
+    };
+  }, []);
   const shown = useMemo(() => markers.map((m) => ({ ...m, short: shortMarkerLabel(m.label) })), [markers]);
   const slots = useMemo(
-    () => layoutMarkers(shown.map((m) => (pct(m.minute) / 100) * trackPx), shown.map((m) => labelWidth(m.short)), trackPx, LABEL_ROWS),
+    () => {
+      const measure = textMeasurer();
+      return layoutMarkers(shown.map((m) => (pct(m.minute) / 100) * trackPx), shown.map((m) => labelBoxWidth(m.short, measure)), trackPx, LABEL_ROWS);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [shown, trackPx, endMinute],
+    [shown, trackPx, endMinute, fontsReady],
   );
   return (
     <div className="timeline">
