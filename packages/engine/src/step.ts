@@ -4,8 +4,8 @@ import type { World } from './ground';
 import type { BarrageState } from './barrage';
 import { CAUSES, emit } from './causes';
 import type { Cause } from './causes';
-import { bucketsOf, within } from './buckets';
-import { byId, isHolding } from './companies';
+import { anyWithin, bucketsOf } from './buckets';
+import { isHolding } from './companies';
 import type { CompanyState, CompanyStatus } from './companies';
 import type { PhaseName } from './pipeline';
 import { segmentsOnLine, takerOf } from './trenches';
@@ -86,7 +86,7 @@ export function inContact(state: SimState, ctx: StepContext): boolean {
   for (const a of field) {
     if (isHolding(a)) continue;
     const r = v(ctx.doctrines[a.doctrineId]!.common.closeRangeM);
-    if (within(enemies[a.side], a.x, a.y, r, byId).length > 0) return true;
+    if (anyWithin(enemies[a.side], a.x, a.y, r)) return true;
   }
   return false;
 }

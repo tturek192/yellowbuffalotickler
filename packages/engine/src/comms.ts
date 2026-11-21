@@ -965,7 +965,7 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     if (e.kind === 'line-taken') linesTaken.set(`${e.lineId}|${e.sectorId}`, e.id);
     if (e.kind === 'line-lost') linesLost.set(`${e.lineId}|${e.sectorId}`, e.id);
   }
-  const seen = enemySeen(state, ctx);
+  let seen: ReturnType<typeof enemySeen> | undefined;
   let w: Work | null = null;
   let last: SimState['lastReport'] | null = null;
   const range = v(ctx.tables.effects.observerRangeM);
@@ -987,8 +987,9 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     });
   for (const c of state.companies) {
     if (c.status === 'off-map') continue;
-    const before = state.lastReport[c.id] ?? { status: c.status, men: c.men, holder: null, atMin: M };
-    const routine = c.men !== before.men && M >= before.atMin + every(c);
+    const had = state.lastReport[c.id];
+    const before = had ?? { status: c.status, men: c.men, holder: null, atMin: M };
+    const routine = had !== undefined && c.men !== had.men && M >= had.atMin + every(c);
     const aim = c.objectiveLineId === undefined ? '' : `${c.objectiveLineId}|${c.sectorId}`;
     const lostEvent = aim && linesLost.size ? linesLost.get(aim) : undefined;
     const sighted = enemyLineEvents.length ? seesLines(c) : [];
@@ -1012,7 +1013,7 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
       const [lineId, sectorId] = aim.split('|') as [string, string];
       for (const x of segmentsOnLine(state, ctx, lineId, sectorId)) segments[x.id] = x.holder;
     }
-    const enemy = seen(c);
+    const enemy = (seen ??= enemySeen(state, ctx))(c);
     const lines: Report['lines'] = lineEvent !== undefined ? { [key]: M } : {};
     const lost: Record<string, number> = lostEvent !== undefined ? { [aim]: M } : {};
     for (const [k, what] of sighted) (what === 'taken' ? lines : lost)[k] = M;

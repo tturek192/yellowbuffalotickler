@@ -1,6 +1,7 @@
 import { v } from '@wwi/scenario';
 import type { Formation, Scenario } from '@wwi/scenario';
-import { bucketsOf, within } from './buckets';
+import { anyWithin, bucketsOf, changedNear, changesSince, nearestWithin, tracker } from './buckets';
+import type { Tracker } from './buckets';
 import type { Buckets } from './buckets';
 import { emit } from './causes';
 import type { Cause, NewEvent } from './causes';
@@ -115,11 +116,34 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
   const isoR = v(fx.isolationRadiusM);
   const field = state.companies.filter(onField);
   const up = field.filter((c) => c.posture !== 'in-dugout');
-  const friends = Object.fromEntries(SIDES.map((s) => [s, bucketsOf(field.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>;
-  const foes = Object.fromEntries(SIDES.map((s) => [s, bucketsOf(up.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>;
+  // Each side's companies on the field and those up, in buckets: built when first asked for.
+  let grids: { friends: Record<Side, Buckets<CompanyState>>; foes: Record<Side, Buckets<CompanyState>> } | undefined;
+  const gridsOf = () =>
+    (grids ??= {
+      friends: Object.fromEntries(SIDES.map((s) => [s, bucketsOf(field.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>,
+      foes: Object.fromEntries(SIDES.map((s) => [s, bucketsOf(up.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>,
+    });
   const events: NewEvent[] = [];
+  // Isolation is worked out again only where something moved within isolationRadiusM (`isolationMemo`).
+  let memo = isolationMemos.get(ctx);
+  if (!memo) isolationMemos.set(ctx, (memo = { field: tracker(), up: tracker(), byAt: [] }));
+  const fieldMoved = changesSince(memo.field, state.companies, onField, (c) => c.side);
+  const upMoved = changesSince(memo.up, state.companies, (c) => onField(c) && c.posture !== 'in-dugout', (c) => c.side);
+  const was = memo.field.fresh || memo.up.fresh ? [] : memo.byAt;
+  const isolation: IsolationMemo['byAt'] = [];
+  const isolatedNow = (c: CompanyState, i: number): boolean => {
+    const last = was[i];
+    if (last && last.x === c.x && last.y === c.y && !changedNear(fieldMoved, c.side, c.x, c.y, isoR) && !changedNear(upMoved, enemyOf(c.side), c.x, c.y, isoR)) {
+      isolation[i] = last;
+      return last.isolated;
+    }
+    const g = gridsOf();
+    const r = anyWithin(g.foes[enemyOf(c.side)], c.x, c.y, isoR) && !anyWithin(g.friends[c.side], c.x, c.y, isoR, (f) => f.id !== c.id);
+    isolation[i] = { x: c.x, y: c.y, isolated: r };
+    return r;
+  };
 
-  const companies = state.companies.map((c): CompanyState => {
+  const companies = state.companies.map((c, i): CompanyState => {
     if (c.status === 'surrendered' || c.status === 'destroyed' || c.status === 'off-map' || c.status === 'marching') return c;
     if (c.men <= 0) {
       // No men left: shot down (the recent fire says by what), taken in its dugouts, or lost in the bombardment.
@@ -133,8 +157,7 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
     const d = ctx.doctrines[c.doctrineId]!;
     const k = d.common;
     const a = pending.applied?.get(c.id);
-    const enemies = within(foes[enemyOf(c.side)], c.x, c.y, Math.max(isoR, v(k.closeRangeM)), byId);
-    const isolated = enemies.some((e) => e.d <= isoR) && !within(friends[c.side], c.x, c.y, isoR, byId).some((f) => f.item.id !== c.id);
+    const isolated = isolatedNow(c, i);
     let m = c.morale;
     if (a && a.menBefore > 0) m -= (v(k.lossShock) * a.hit) / a.menBefore;
     m -= (v(k.suppressedDrain) * c.suppression * dt) / 60;
@@ -143,8 +166,9 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
     m = clamp01(m);
     const moved: CompanyState = m === c.morale ? c : { ...c, morale: m };
 
-    const near = enemies.find((e) => e.d <= v(k.closeRangeM));
-    if (m < v(k.surrender) && near) {
+    // The nearest enemy within closeRangeM (ties by id), looked for only when morale is low enough to surrender.
+    const near = m < v(k.surrender) ? nearestWithin(gridsOf().foes[enemyOf(c.side)], c.x, c.y, v(k.closeRangeM), byId) : undefined;
+    if (near) {
       events.push(stateEvent(moved, 'surrendered', state.minute, { isolated, extra: ['morale-broke'], to: near.item, toM: near.d }));
       return { ...moved, status: 'surrendered', intent: 'hold', men: 0, captured: c.captured + c.men, officers: 0 };
     }
@@ -190,8 +214,17 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
     }
     return moved;
   });
+  memo.byAt = isolation;
   return emit({ ...state, companies }, ...events);
 }
+
+/**
+ * Each company's isolation when last worked out, and where the companies on the field and those up stood then (a
+ * numerical shortcut, not a model rule: answers never depend on it). Isolation is the same while the company stands where
+ * it stood and no company of its side on the field, nor enemy up, has come, gone or moved within isolationRadiusM.
+ */
+type IsolationMemo = { field: Tracker; up: Tracker; byAt: Array<{ x: number; y: number; isolated: boolean } | undefined> };
+const isolationMemos = new WeakMap<StepContext, IsolationMemo>();
 
 /** A morale event: the causes of the recent fire on the company and of its state, with refs to that fire. */
 function stateEvent(

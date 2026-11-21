@@ -1,6 +1,7 @@
 import { v } from '@wwi/scenario';
 import type { Doctrine, Tables, Weapon } from '@wwi/scenario';
-import { bucketsOf, within } from './buckets';
+import { bucketsOf, changedNear, changesSince, nearestAccepted, tracker } from './buckets';
+import type { Tracker } from './buckets';
 import type { Buckets } from './buckets';
 import { emit } from './causes';
 import type { Cause } from './causes';
@@ -81,6 +82,22 @@ function slotsOf(c: CompanyState, d: Doctrine, tables: Tables): Slot[] {
   return all.filter((s) => s.n > 0);
 }
 
+/**
+ * What firers last saw (a numerical shortcut, not a model rule: answers never depend on it): each firer's targets when it
+ * last looked, and where every company that could be seen stood then. A firer's targets are the same as then while it
+ * stands where it stood, with the same reach and visibility, and no company that could be seen has come, gone or moved
+ * within its reach (the places before and after both count).
+ */
+type TargetMemo = {
+  seen: Tracker;
+  /** By the firer's place in the state's companies; its targets by their places. */
+  byFirer: Array<{ x: number; y: number; reach: number; visM: number; at: number[]; r: number[] } | undefined>;
+};
+const memos = new WeakMap<StepContext, TargetMemo>();
+
+/** Men down in their dugouts cannot be seen, so are no one's target. */
+const isSeen = (c: CompanyState): boolean => onField(c) && c.posture !== 'in-dugout';
+
 /** Whether a company can fire this step: on the field, not down in its dugouts, with ammunition left. */
 const canFire = (c: CompanyState): boolean => onField(c) && c.posture !== 'in-dugout' && c.ammo > 0;
 
@@ -98,9 +115,20 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
   const densityRef = v(fx.densityRefMen);
   const unobservedBelow = v(fx.mgUnobservedBelow);
   // Men down in their dugouts cannot be seen, so are no one's target.
-  const seen = state.companies.filter((c) => onField(c) && c.posture !== 'in-dugout');
-  const grid = Object.fromEntries(SIDES.map((s) => [s, bucketsOf(seen.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>;
+  const seen = state.companies.filter(isSeen);
+  // Each side's companies that can be seen, in buckets: built when a firer first needs to look again.
+  let grid: Record<Side, Buckets<CompanyState>> | undefined;
+  const gridOf = (side: Side): Buckets<CompanyState> =>
+    (grid ??= Object.fromEntries(SIDES.map((s) => [s, bucketsOf(seen.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>)[side];
   const segs = new Map(state.segments.map((x) => [x.id, x]));
+  let memo = memos.get(ctx);
+  if (!memo) memos.set(ctx, (memo = { seen: tracker(), byFirer: [] }));
+  const moved = changesSince(memo.seen, state.companies, isSeen, (c) => c.side);
+  let index: Map<CompanyState, number> | undefined;
+  const indexOf = (c: CompanyState): number => (index ??= new Map(state.companies.map((x, i) => [x, i]))).get(c)!;
+  // What each firer looks at this step, which becomes the memo once the step is done.
+  const looked: TargetMemo['byFirer'] = [];
+  const was = memo.seen.fresh ? [] : memo.byFirer;
 
   // One fire group per target, in the order targets are first fired on; looked up by target id.
   type Group = FireGroup & { firers: string[]; minR: number; rounds: number; climbM: number };
@@ -109,17 +137,25 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
   const opened = new Map<string, number>(); // firer id -> its fire-opened event (looked up only)
   let out = state;
 
-  for (const f of state.companies) {
+  for (let fi = 0; fi < state.companies.length; fi++) {
+    const f = state.companies[fi]!;
     if (!canFire(f)) continue;
     const d = ctx.doctrines[f.doctrineId]!;
     const slots = slotsOf(f, d, ctx.tables);
     if (slots.length === 0) continue;
     const reach = Math.min(visM, Math.max(...slots.map((s) => v(s.w.maxRangeM))));
-    const targets: Array<{ t: CompanyState; r: number }> = [];
-    for (const { item: t, d: r } of within(grid[enemyOf(f.side)], f.x, f.y, reach, byId)) {
-      if (targets.length >= maxTargets) break;
-      if (visibility(r, visM) <= 0 || !lineOfSight(ctx.world, [f.x, f.y], [t.x, t.y])) continue;
-      targets.push({ t, r });
+    // The nearest enemies in reach it can see, at most maxTargets of them (the same as last time it looked, when neither
+    // it nor any enemy within its reach has moved since).
+    const foe = enemyOf(f.side);
+    const last = was[fi];
+    let targets: Array<{ t: CompanyState; r: number }>;
+    if (last && last.x === f.x && last.y === f.y && last.reach === reach && last.visM === visM && !changedNear(moved, foe, f.x, f.y, reach)) {
+      targets = last.at.map((k, i) => ({ t: state.companies[k]!, r: last.r[i]! }));
+      looked[fi] = last;
+    } else {
+      const from: [number, number] = [f.x, f.y];
+      targets = nearestAccepted(gridOf(foe), f.x, f.y, reach, byId, maxTargets, (t, r) => visibility(r, visM) > 0 && lineOfSight(ctx.world, from, [t.x, t.y])).map(({ item: t, d: r }) => ({ t, r }));
+      looked[fi] = { x: f.x, y: f.y, reach, visM, at: targets.map((x) => indexOf(x.t)), r: targets.map((x) => x.r) };
     }
     if (targets.length === 0) continue;
 
@@ -207,6 +243,7 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
     }
   }
 
+  memo.byFirer = looked;
   for (const g of groups) {
     const from = g.firers.length <= 3 ? g.firers.join(', ') : `${g.firers.length} companies`;
     g.text = `Fire from ${from}`;

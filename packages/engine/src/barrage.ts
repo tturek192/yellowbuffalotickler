@@ -22,7 +22,19 @@ function linePoints(lines: Lines, id: string): Point[] {
   return pts;
 }
 
-function legGeometry(sector: Sector, lines: Lines, legIndex: number) {
+type LegGeometry = { leg: Sector['legs'][number]; from: Point[]; to: Point[]; toId: string; depthM: number; legMin: number; liftM: number; liftMin: number };
+/** Each sector's legs worked out once per lines map (looked up only). */
+const legCache = new WeakMap<Lines, WeakMap<Sector, LegGeometry[]>>();
+
+function legGeometry(sector: Sector, lines: Lines, legIndex: number): LegGeometry {
+  let bySector = legCache.get(lines);
+  if (!bySector) legCache.set(lines, (bySector = new WeakMap()));
+  let legs = bySector.get(sector);
+  if (!legs) bySector.set(sector, (legs = []));
+  return (legs[legIndex] ??= workLeg(sector, lines, legIndex));
+}
+
+function workLeg(sector: Sector, lines: Lines, legIndex: number): LegGeometry {
   const leg = sector.legs[legIndex];
   if (!leg) throw new RangeError(`Sector ${sector.id} has no leg ${legIndex}`);
   const fromId = legIndex === 0 ? sector.startLineId : sector.legs[legIndex - 1]!.toLineId;

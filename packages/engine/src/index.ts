@@ -36,7 +36,7 @@ export { resolve } from './resolve';
 export { ammoLoad, armsOf, directFire } from './fire';
 export type { Arms } from './fire';
 export { morale, moraleEffectOf, startingMorale, withStartingMorale } from './morale';
-export { BUCKET_M, bucketsOf, within } from './buckets';
+export { anyWithin, BUCKET_M, bucketsOf, nearestWithin, within } from './buckets';
 export type { Buckets } from './buckets';
 export { ARTILLERY, commsPhase, companyReports, fireMissionEnds, hqPositionOf, initComms, messageDueTimes, send } from './comms';
 export { initRun, runScenario } from './run';

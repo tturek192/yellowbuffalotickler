@@ -66,6 +66,13 @@ import type { CommandState, Decision, FormationKind, HqState, Order, OrderTarget
 const enemyOf = (s: Side): Side => (s === 'allied' ? 'central' : 'allied');
 const byStr = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 const sorted = (xs: Iterable<string>): string[] => [...xs].sort(byStr);
+/** An object's keys in code-unit order, worked out once for each object (the command state's records are replaced, never changed). */
+const keysMemo = new WeakMap<object, string[]>();
+const sortedKeys = (o: object): string[] => {
+  let hit = keysMemo.get(o);
+  if (!hit) keysMemo.set(o, (hit = sorted(Object.keys(o))));
+  return hit;
+};
 const unique = (xs: number[]): number[] => xs.filter((x, i) => xs.indexOf(x) === i).sort((a, b) => a - b);
 /** Statuses an HQ's picture shows for a unit out of the fight. */
 const OUT: ReadonlySet<string> = new Set(['destroyed', 'surrendered', 'off-map', 'marching']);
@@ -95,6 +102,8 @@ type Topo = {
   /** The garrison segments (ids) of the companies directly in a formation, and of all companies under a division. */
   front: Map<string, string[]>;
   divisionFront: Map<string, string[]>;
+  /** The divisions (the keys of divisionFront), in id order. */
+  divisions: string[];
   /** The segments of each feature, by feature id. */
   featureSegments: Map<string, string[]>;
   /** The HQ responsible for each operation, by operation id. */
@@ -153,7 +162,7 @@ function topologyOf(state: SimState, ctx: StepContext): Topo {
   const bottomUp = [...ids].sort((a, b) => nodes.get(b)!.depth - nodes.get(a)!.depth || byStr(a, b));
   const planLine = new Map(state.companies.filter((c) => c.objectiveLineId !== undefined && c.role !== 'garrison' && c.role !== 'reserve').map((c) => [c.id, `${c.objectiveLineId}|${c.sectorId}`]));
   const plan = new Map(state.companies.map((c) => [c.id, { role: c.role, counterAttacks: c.counterAttacks, x: c.startX, y: c.startY, battalionId: c.battalionId, ...(c.segmentId !== undefined ? { segmentId: c.segmentId } : {}) }]));
-  const t: Topo = { nodes, bottomUp, reserveBattalions, front, divisionFront, featureSegments, responsible, ratings: new Map(), timetable: new Map(), planLine, plan };
+  const t: Topo = { nodes, bottomUp, reserveBattalions, front, divisionFront, divisions: sorted(divisionFront.keys()), featureSegments, responsible, ratings: new Map(), timetable: new Map(), planLine, plan };
   topologies.set(ctx, t);
   return t;
 }
@@ -209,6 +218,15 @@ function free(w: Work, h: HqState, under: string, pick: Pick): string[] {
   const key = `${h.formationId}|${under}|${pick}`;
   const hit = w.memo.get(key);
   if (hit) return hit;
+  // The answer reads only the picture's units and segments and the command model's ordered companies: the same objects
+  // (never changed once written, as for `linesBy`) give the same answer as before.
+  let m = freeMemo.get(h.picture.units);
+  if (!m) freeMemo.set(h.picture.units, (m = new Map()));
+  const before = m.get(key);
+  if (before && before.segments === h.picture.segments && before.ordered === w.state.command.ordered) {
+    w.memo.set(key, before.out);
+    return before.out;
+  }
   const out = w.topo.nodes.get(under)!.companies.filter((id) => {
     const u = h.picture.units[id];
     const p = w.topo.plan.get(id)!;
@@ -216,8 +234,10 @@ function free(w: Work, h: HqState, under: string, pick: Pick): string[] {
     return p.segmentId === undefined || h.picture.segments[p.segmentId] === undefined || h.picture.segments[p.segmentId] === h.side;
   });
   w.memo.set(key, out);
+  m.set(key, { segments: h.picture.segments, ordered: w.state.command.ordered, out });
   return out;
 }
+const freeMemo = new WeakMap<object, Map<string, { segments: object; ordered: object; out: string[] }>>();
 
 /**
  * The enemy the HQ believes is on this ground (segment ids, `place:<featureId>` or `line:<lineId>|<sectorId>` keys): on
@@ -273,7 +293,7 @@ function markOrdered(w: Work, h: HqState, ids: readonly string[], lineKey?: stri
 function hearBack(w: Work): void {
   const was = w.state.command.ordered;
   let next: CommandState['ordered'] | null = null;
-  for (const id of sorted(Object.keys(was))) {
+  for (const id of sortedKeys(was)) {
     const o = was[id]!;
     const u = hqOf(w, o.hqId)?.picture.units[id];
     if (!u || u.atMin < o.atMin) continue;
@@ -376,14 +396,29 @@ function reachable(w: Work, h: HqState, segmentId: string): boolean {
   if (hit === undefined) {
     const seg = w.state.segments.find((x) => x.id === segmentId);
     const holder = h.picture.segments[segmentId];
-    const lines = holder === undefined ? [] : Object.keys(h.picture.lines).filter((k) => typeof h.picture.lines[k] === 'number' && lineTakerOf(w.state, w.ctx, k) === holder);
+    const lines = holder === undefined ? [] : linesBy(w, h.picture.lines, holder, true);
     w.reach.set(key, (hit = seg !== undefined && !behindLines(seg, lines, w.state, w.ctx)));
   }
   return hit;
 }
 
 /** The lines in the HQ's picture its own side attacks (its picture holds the enemy's lines it has heard of too). */
-const ownLines = (w: Work, h: HqState): string[] => Object.keys(h.picture.lines).filter((k) => lineTakerOf(w.state, w.ctx, k) === h.side);
+const ownLines = (w: Work, h: HqState): string[] => linesBy(w, h.picture.lines, h.side, false);
+
+/**
+ * The lines of a picture attacked by `side` (with `taken`, only those it shows taken), in the picture's key order.
+ * Worked out once for each picture's lines: a headquarters' picture is copied when written (comms.ts `hqForWrite`) and
+ * never changed after the step that wrote it, so the same lines object always gives the same answer.
+ */
+const linesMemo = new WeakMap<object, Map<string, string[]>>();
+function linesBy(w: Work, lines: HqState['picture']['lines'], side: Side, taken: boolean): string[] {
+  let m = linesMemo.get(lines);
+  if (!m) linesMemo.set(lines, (m = new Map()));
+  const key = `${side}|${taken}`;
+  let hit = m.get(key);
+  if (!hit) m.set(key, (hit = Object.keys(lines).filter((k) => (!taken || typeof lines[k] === 'number') && lineTakerOf(w.state, w.ctx, k) === side)));
+  return hit;
+}
 
 /** When the HQ believes the segment changed hands: what its picture was told, else now. */
 const lostAt = (h: HqState, segmentId: string, now: number): number => h.picture.segmentsAt[segmentId] ?? now;
@@ -462,7 +497,7 @@ function localCounterAttacks(w: Work): void {
 
 function divisionalCounterAttacks(w: Work): void {
   const M = w.state.minute;
-  for (const fid of sorted(w.topo.divisionFront.keys())) {
+  for (const fid of w.topo.divisions) {
     const h0 = hqOf(w, fid);
     const d = doctrineOf(w, fid);
     if (!h0 || !d.defence) continue;
@@ -553,7 +588,7 @@ function armyReserves(w: Work): void {
     if (!h || !d.defence) continue;
     const last = w.state.command.divisions[fid];
     if (!pendingOf(h) && (last === undefined || M >= last + v(d.defence.counterAttackRetryMin))) {
-      const fronted = sorted(w.topo.divisionFront.keys()).filter((x) => w.topo.divisionFront.get(x)!.length > 0 && within(w, x, fid));
+      const fronted = w.topo.divisions.filter((x) => w.topo.divisionFront.get(x)!.length > 0 && within(w, x, fid));
       const own = w.state.reserves.filter((x) => x.formationId !== fid && within(w, x.formationId, fid) && !fronted.some((dv) => within(w, x.formationId, dv)));
       const waiting = own.filter((x) => x.status === 'waiting');
       const ownCompanies = new Set(own.flatMap((x) => w.topo.nodes.get(x.formationId)!.companies));

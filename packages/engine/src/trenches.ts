@@ -4,6 +4,9 @@ import { distanceTo, segmentSamples } from './artillery';
 import { counterAttackOrder } from './movement';
 import { CAUSES, emit } from './causes';
 import type { Cause, NewEvent } from './causes';
+import { bucketsOf, inBox } from './buckets';
+import type { Buckets } from './buckets';
+import { byId } from './companies';
 import type { CompanyState } from './companies';
 import { lineXAt } from './geometry';
 import { round } from './record';
@@ -40,14 +43,19 @@ function boxOf(pts: readonly Point[]): [number, number, number, number] {
   return [x0, y0, x1, y1];
 }
 
-/** Companies (in the order given) within r of a segment's trench. */
-function nearSegment(cs: readonly CompanyState[], pts: readonly Point[], r: number): Array<{ c: CompanyState; d: number }> {
+/** Companies (in the order given, or in id order from buckets) within r of a segment's trench. */
+function nearSegment(cs: readonly CompanyState[] | Buckets<CompanyState>, pts: readonly Point[], r: number): Array<{ c: CompanyState; d: number }> {
   const [x0, y0, x1, y1] = boxOf(pts);
   const out: Array<{ c: CompanyState; d: number }> = [];
-  for (const c of cs) {
-    if (c.x < x0 - r || c.x > x1 + r || c.y < y0 - r || c.y > y1 + r) continue;
+  const look = (c: CompanyState): void => {
+    if (c.x < x0 - r || c.x > x1 + r || c.y < y0 - r || c.y > y1 + r) return;
     const d = distanceTo(pts, at(c));
     if (d <= r) out.push({ c, d });
+  };
+  if (Array.isArray(cs)) for (const c of cs) look(c);
+  else {
+    inBox(cs as Buckets<CompanyState>, x0 - r, y0 - r, x1 + r, y1 + r, look);
+    out.sort((a, b) => byId(a.c, b.c));
   }
   return out;
 }
@@ -69,7 +77,10 @@ export function barrageNear(seg: SegmentState, ctx: StepContext, companies: read
 
 /** The side whose companies aim at a taken line ("lineId|sectorId"), by the first company that does; null if none. */
 export function takerOf(state: SimState, key: string): Side | null {
-  const c = state.companies.find((x) => x.objectiveLineId !== undefined && `${x.objectiveLineId}|${x.sectorId}` === key);
+  const bar = key.indexOf('|');
+  const lineId = key.slice(0, bar);
+  const sectorId = key.slice(bar + 1);
+  const c = state.companies.find((x) => x.objectiveLineId === lineId && x.sectorId === sectorId);
   return c ? c.side : null;
 }
 
@@ -115,6 +126,17 @@ export function lineTakerOf(state: Pick<SimState, 'companies'>, ctx: StepContext
  */
 export function behindLines(seg: SegmentState, keys: readonly string[], state: Pick<SimState, 'companies'>, ctx: StepContext): boolean {
   if (keys.length === 0) return false;
+  // The answer is the segment's and the lines' geometry only: worked out once for each segment and set of lines.
+  let memo = behindMemo.get(ctx);
+  if (!memo) behindMemo.set(ctx, (memo = new Map()));
+  const key = `${seg.id}#${keys.join('#')}`;
+  let hit = memo.get(key);
+  if (hit === undefined) memo.set(key, (hit = isBehindLines(seg, keys, state, ctx)));
+  return hit;
+}
+const behindMemo = new WeakMap<StepContext, Map<string, boolean>>();
+
+function isBehindLines(seg: SegmentState, keys: readonly string[], state: Pick<SimState, 'companies'>, ctx: StepContext): boolean {
   const match = v(ctx.tables.effects.lineFeatureMatchM);
   const pts = segmentSamples(ctx, seg, state.companies);
   for (const key of keys) {
@@ -169,18 +191,30 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
   const uncutBelow = v(fx.wireUncutBelow);
   let out = state;
   const upOf = (cs: readonly CompanyState[]) => cs.filter((c) => onField(c) && c.posture !== 'in-dugout');
-  let up = upOf(state.companies);
-  for (const seg0 of state.segments) {
-    const seg = out.segments.find((x) => x.id === seg0.id)!;
+  // Each side's companies up, and those of them that can take a trench (not waiting, not falling back), from `up`.
+  type Pools = { up: CompanyState[]; holders: Record<Side, CompanyState[]>; takers: Record<Side, Buckets<CompanyState>> };
+  const poolsOf = (cs: CompanyState[]): Pools => {
+    const holders: Record<Side, CompanyState[]> = { allied: [], central: [] };
+    const takers: Record<Side, CompanyState[]> = { allied: [], central: [] };
+    for (const c of cs) {
+      holders[c.side].push(c);
+      if (c.status !== 'waiting' && c.status !== 'falling-back') takers[c.side].push(c);
+    }
+    return { up: cs, holders, takers: { allied: bucketsOf(takers.allied), central: bucketsOf(takers.central) } };
+  };
+  let pools = poolsOf(upOf(state.companies));
+  for (let i = 0; i < state.segments.length; i++) {
+    // Segments keep their places in the array: a capture replaces the one it is about.
+    const seg = out.segments[i]!;
     const pts = segmentSamples(ctx, seg, out.companies);
     if (pts.length === 0) continue;
     const other = enemyOf(seg.holder);
-    const attackers = nearSegment(up.filter((c) => c.side === other && c.status !== 'waiting' && c.status !== 'falling-back'), pts, r);
+    const attackers = nearSegment(pools.takers[other], pts, r);
     const a = sum(attackers, (x) => x.c.men);
     if (!(a > 0)) continue;
     // Nobody enters a trench a barrage is falling on (as with trapping, gap.ts): only the trench near them matters.
     if (barrageNear(seg, ctx, out.companies, out.minute, attackers.map((x) => at(x.c)), r)) continue;
-    const d = segmentDefenders(seg, pts, up.filter((c) => c.side === seg.holder), ctx).men;
+    const d = segmentDefenders(seg, pts, pools.holders[seg.holder], ctx).men;
     // An ORDERED counter-attack (the command model's, Task 12) is not held off by the rear rule: reaching a segment in its
     // holder's rear with nobody there to hold it, it takes it back (with defenders, it needs the 3:1 as anyone does).
     const onOrder = attackers.flatMap((x) => {
@@ -272,7 +306,7 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
         };
       }),
     );
-    if (rejoin.length) up = upOf(out.companies);
+    if (rejoin.length) pools = poolsOf(upOf(out.companies));
   }
   return captureGuns(out, ctx);
 }

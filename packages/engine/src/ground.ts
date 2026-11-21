@@ -26,8 +26,8 @@ export type World = {
   churnGen: number;
   /** Wood and village raster at 25 m, built by the first line-of-sight query (sight.ts). */
   blockers?: { data: Uint8Array; cols: number; rows: number };
-  /** Line-of-sight results by integer key from the two 50 m cells (sight.ts). */
-  losCache: Map<number, boolean>;
+  /** Line-of-sight results by the viewer's 50 m cell, then the target's (sight.ts). */
+  losCache: Map<number, Map<number, boolean>>;
 };
 
 const USED: ReadonlySet<string> = new Set(['wood', 'village', 'crater', 'trench', 'communication-trench']);

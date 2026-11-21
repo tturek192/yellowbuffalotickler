@@ -52,7 +52,7 @@ function trace(w: World, a: Point, b: Point, eyeM: number): boolean {
 /**
  * Whether `from` can see `to`: elevation sampled every 25 m against the sight line between eyes
  * `eyeM` above the ground, and woods and villages block. Results are cached per pair of 50 m cells
- * (standing eyes) under an integer key, and computed between the cells' centres, so an answer never depends on which
+ * (standing eyes), by the one cell and then the other, and computed between the cells' centres, so an answer never depends on which
  * query came first.
  */
 export function lineOfSight(w: World, from: Point, to: Point, eyeM = DEFAULT_EYE_M): boolean {
@@ -60,10 +60,11 @@ export function lineOfSight(w: World, from: Point, to: Point, eyeM = DEFAULT_EYE
   const cb = cellOf(w, to);
   if (ca === cb) return true;
   if (eyeM !== DEFAULT_EYE_M) return trace(w, centre(w, ca), centre(w, cb), eyeM); // the cache holds standing eyes only
-  const key = ca * w.cols * w.rows + cb;
-  const hit = w.losCache.get(key);
+  let row = w.losCache.get(ca);
+  if (!row) w.losCache.set(ca, (row = new Map()));
+  const hit = row.get(cb);
   if (hit !== undefined) return hit;
   const r = trace(w, centre(w, ca), centre(w, cb), eyeM);
-  w.losCache.set(key, r);
+  row.set(cb, r);
   return r;
 }

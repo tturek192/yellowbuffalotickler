@@ -78,6 +78,14 @@ export function segmentSamples(ctx: StepContext, seg: SegmentState, companies: r
   return out;
 }
 
+/** Each company's side, which never changes during a run (looked up only; a company not seen before is looked for). */
+const sidesCache = new WeakMap<StepContext, Map<string, Side>>();
+function sideOfCompany(state: SimState, ctx: StepContext, id: string): Side | undefined {
+  let m = sidesCache.get(ctx);
+  if (!m) sidesCache.set(ctx, (m = new Map(state.companies.map((c) => [c.id, c.side]))));
+  return m.get(id) ?? state.companies.find((c) => c.id === id)?.side;
+}
+
 /** The distance from p to the nearest of the points. */
 export const distanceTo = (pts: readonly Point[], p: Point): number => {
   let d = Infinity;
@@ -112,16 +120,17 @@ export function noMansLandAt(lines: Lines, side: Side, y: number): [number, numb
   return best;
 }
 
-const nmlAtCache = new WeakMap<Scenario, Map<string, [number, number] | null>>();
+const nmlAtCache = new WeakMap<Scenario, Map<Side, Map<number, [number, number] | null>>>();
 /** `noMansLandAt` for the scenario's lines, remembered by side and y (lines are fixed for the run; looked up only). */
 function nmlAt(ctx: StepContext, side: Side, y: number): [number, number] | null {
-  let m = nmlAtCache.get(ctx.scenario);
-  if (!m) nmlAtCache.set(ctx.scenario, (m = new Map()));
-  const key = `${side}|${y}`;
-  const hit = m.get(key);
+  let bySide = nmlAtCache.get(ctx.scenario);
+  if (!bySide) nmlAtCache.set(ctx.scenario, (bySide = new Map()));
+  let m = bySide.get(side);
+  if (!m) bySide.set(side, (m = new Map()));
+  const hit = m.get(y);
   if (hit !== undefined) return hit;
   const out = noMansLandAt(ctx.scenario.lines, side, y);
-  m.set(key, out);
+  m.set(y, out);
   return out;
 }
 
@@ -480,13 +489,24 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   for (const side of SIDES) {
     const batteries = bats.filter((b) => b.side === side && b.role === 'defensive' && inAction(b));
     if (batteries.length === 0) continue;
-    const lost = state.segments.filter((x) => x.holder !== side && x.garrisonIds.some((id) => state.companies.find((c) => c.id === id)?.side === side));
+    const lost = state.segments.filter((x) => x.holder !== side && x.garrisonIds.some((id) => sideOfCompany(state, ctx, id) === side));
     const near = v(fx.captureRadiusM);
+    // Each lost segment's trench and the box around it, for a cheap first test.
+    const zones = lost.map((x) => {
+      const pts = segmentSamples(ctx, x, state.companies);
+      let x0 = Infinity;
+      let x1 = -Infinity;
+      for (const p of pts) {
+        x0 = Math.min(x0, p[0]);
+        x1 = Math.max(x1, p[0]);
+      }
+      return { x, pts, x0: x0 - near, x1: x1 + near };
+    });
     const targets = field.filter((c) => {
       if (c.side === side) return false;
       const nml = nmlAt(ctx, side, c.y);
       if (nml && c.x >= nml[0] && c.x <= nml[1]) return true;
-      return lost.some((x) => c.y >= x.yMin - near && c.y <= x.yMax + near && distanceTo(segmentSamples(ctx, x, state.companies), at(c)) <= near);
+      return zones.some((z) => c.y >= z.x.yMin - near && c.y <= z.x.yMax + near && c.x >= z.x0 && c.x <= z.x1 && distanceTo(z.pts, at(c)) <= near);
     });
     const frontage = noMansLandWidth(ctx, side) + sum(lost, (x) => x.lengthM);
     if (targets.length === 0 || !(frontage > 0)) continue;
