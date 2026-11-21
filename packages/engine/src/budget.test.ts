@@ -31,11 +31,19 @@ function timedRun(): Promise<{ ms: number; cpuMs: number; bytes: number; endedAt
   });
 }
 
+/**
+ * The Global Constraints' budget is 3000 ms for a run (and 5 min for 200 runs on 4 workers). Reaching it is Plan 3 Task 21
+ * (data-oriented hot phases, records byte-identical); until then this test guards against regression at the interim
+ * ceiling the controller set in Task 15 fix round 3: 6000 ms of CPU, the record's JSON included. The record budget, 8 MB,
+ * is met and kept.
+ */
+const INTERIM_CPU_MS = 6000;
+
 describe('performance budget (Global Constraints; Review Focus 4)', () => {
-  it('a full Vimy run takes ≤ 3 s and its record is ≤ 8 MB', async () => {
+  it('a full Vimy run stays within the interim 6000 ms of CPU (target 3000 ms, Plan 3 Task 21) and its record within 8 MB', async () => {
     const r = await timedRun();
     console.log(`Vimy seed 1: ${r.cpuMs.toFixed(0)} ms of CPU (${r.ms.toFixed(0)} ms wall), ${(r.bytes / 1e6).toFixed(2)} MB, ended at ${r.endedAt} (${r.endReason})`);
-    expect(r.cpuMs).toBeLessThanOrEqual(3000);
+    expect(r.cpuMs).toBeLessThanOrEqual(INTERIM_CPU_MS);
     expect(r.bytes).toBeLessThanOrEqual(8e6);
   }, 120000);
 });
