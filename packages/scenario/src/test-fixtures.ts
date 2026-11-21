@@ -79,6 +79,7 @@ export function minimalDoctrineV2(id = 'bef-1917'): Doctrine {
     common: params(COMMON_KEYS),
     ncoPenalty: params(['rehearsed', 'standard'] as const, 0.1),
     companyDefaults: params(COMPANY_DEFAULT_KEYS),
+    companyWeapons: { rifle: 'rifle', lightMg: 'lewis', mg: 'vickers' },
     attack: { ...params(ATTACK_KEYS), followDistanceM: param(70), maxAdvanceMPerMin: param(50), startJitterMin: param(2), speedJitterFrac: param(0.1) },
     defence: params(DEFENCE_KEYS),
   };

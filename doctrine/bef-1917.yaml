@@ -153,14 +153,15 @@ companyDefaults:
   officers:
     value: 5
     estimate: one officer at the head of each of four platoons ("Headquarters - 1 officer and 4 O. R.", ss143-1917 p. 9) and the company
-      commander; the second-in-command usually stayed out of the battle
+      commander; assumed, without a source read, that the second-in-command was left out of the battle
     description: Officers in a company when the scenario does not say.
   lewisGuns:
     value: 4
     source: ss143-1917
     page: 9, 22
     note: one Lewis gun section in each platoon (p. 9) and four platoons in a company (Appendix III, p. 22)
-    description: Lewis guns in a company when the scenario does not say.
+    description: Lewis guns (the side's light machine guns, fired as companyWeapons.lightMg) in a company when the scenario does not
+      say.
   machineGuns:
     value: 0
     estimate: British Vickers guns were in the brigade machine-gun companies, not in the infantry companies; the scenario enters them
@@ -184,12 +185,16 @@ companyDefaults:
     estimate: the British battalion of four companies; every Canadian battalion in the scenario has four. No source read prints it (SS
       143 gives the company of four platoons, ss143-1917 p. 22)
     description: Companies in a battalion when the scenario does not say.
+companyWeapons:
+  rifle: rifle
+  lightMg: lewis
+  mg: vickers
 attack:
   followDistanceM:
     value: 70
     estimate: 'kept from Plan 1 (the engine reads it). The leading wave kept as close behind the barrage as it dared: at Vimy the 2nd
       Brigade "rushed the sentries before the garrison could emerge" (boh-1917-1 p. 321), and at Passchendaele the infantry "followed
-      their barrage so closely that in most cases the Germans could not man their machine-guns" (nicholson-1962 p. 323). SS 135, which
+      their barrage so closely that in most cases the Germans could not man their machine-guns" (nicholson-1962 p. 324). SS 135, which
       would give the distance, was not found on the allowed hosts (doctrine.md, Open questions)'
     description: How many metres behind the creeping barrage the attackers stay.
     calibrated: true
@@ -257,15 +262,20 @@ defence:
     description: Share of a garrison that surrenders when attackers reach it before it emerges.
     calibrated: true
   localCounterAttackDelayMin:
-    value: 30
-    estimate: 'British troops holding captured ground counter-attacked locally to restore a lost post; with less doctrine for it than
-      the Germans: 30 minutes'
-    description: Minutes before a local reserve counter-attacks.
+    value: 10
+    estimate: 'the form-up and launch only, counted from when the battalion''s picture shows the loss (the approach is simulated movement):
+      British troops holding captured ground counter-attacked locally to restore a lost post, with less doctrine for the immediate counter-attack
+      than the Germans (de-1917 has 5): 10'
+    description: Minutes, once the reserve's headquarters knows a segment is lost, for the local reserve to form up and go in; its approach
+      is simulated movement after this delay.
     calibrated: true
   divisionalCounterAttackDelayMin:
-    value: 240
-    estimate: 'a British divisional counter-attack needed orders down two levels and a fresh barrage: about 4 hours'
-    description: Minutes before a divisional counter-attack.
+    value: 60
+    estimate: 'the form-up and launch only, counted from when the reserves have arrived and deployed (their march and deployment are
+      counted separately): a British counter-attack waited for orders down two levels and a barrage to be arranged, about an hour (de-1917
+      has 30)'
+    description: Minutes, once the reserves have arrived and deployed, before the divisional counter-attack goes in; their march and
+      deployment are counted separately (marchKmPerHour, deployMin).
     calibrated: true
   counterAttackMinRatio:
     value: 1.0

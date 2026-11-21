@@ -17,12 +17,12 @@ cover:
       value: 0.6
       estimate: trees and undergrowth hide men from aimed fire and stop some bullets, though shells burst in the branches; a little
         under half the fire is lost (order of magnitude; tables.md, Cover)
-      description: Share of fire that still hurts a man walking or running upright on a wood (1 is no protection).
+      description: Share of fire that still hurts a man walking or running upright in a wood (1 is no protection).
       calibrated: true
     village:
       value: 0.6
       estimate: walls and rubble screen men moving between houses as a wood does (order of magnitude; tables.md, Cover)
-      description: Share of fire that still hurts a man walking or running upright on a village (1 is no protection).
+      description: Share of fire that still hurts a man walking or running upright in a village (1 is no protection).
       calibrated: true
     trench:
       value: 0.5
@@ -46,12 +46,12 @@ cover:
     wood:
       value: 0.3
       estimate: 'prone among trees and roots: between open and cratered ground (order of magnitude; tables.md, Cover)'
-      description: Share of fire that still hurts a man lying down on a wood (1 is no protection).
+      description: Share of fire that still hurts a man lying down in a wood (1 is no protection).
       calibrated: true
     village:
       value: 0.25
       estimate: 'prone behind rubble and walls: about as good as a shell hole (order of magnitude; tables.md, Cover)'
-      description: Share of fire that still hurts a man lying down on a village (1 is no protection).
+      description: Share of fire that still hurts a man lying down in a village (1 is no protection).
       calibrated: true
     trench:
       value: 0.2
@@ -74,12 +74,12 @@ cover:
     wood:
       value: 0.15
       estimate: a trench in a wood adds the trees' screen against observation (order of magnitude; tables.md, Cover)
-      description: Share of fire that still hurts a man in a trench, firing or keeping watch on a wood (1 is no protection).
+      description: Share of fire that still hurts a man in a trench, firing or keeping watch in a wood (1 is no protection).
       calibrated: true
     village:
       value: 0.15
       estimate: a trench among ruins, often with cellars close by (order of magnitude; tables.md, Cover)
-      description: Share of fire that still hurts a man in a trench, firing or keeping watch on a village (1 is no protection).
+      description: Share of fire that still hurts a man in a trench, firing or keeping watch in a village (1 is no protection).
       calibrated: true
     trench:
       value: 0.15
@@ -102,12 +102,12 @@ cover:
     wood:
       value: 0.02
       estimate: as on open ground (order of magnitude; tables.md, Cover)
-      description: Share of fire that still hurts a man down in a dugout on a wood (1 is no protection).
+      description: Share of fire that still hurts a man down in a dugout in a wood (1 is no protection).
       calibrated: true
     village:
       value: 0.02
       estimate: 'cellars as dugouts: as on open ground (order of magnitude; tables.md, Cover)'
-      description: Share of fire that still hurts a man down in a dugout on a village (1 is no protection).
+      description: Share of fire that still hurts a man down in a dugout in a village (1 is no protection).
       calibrated: true
     trench:
       value: 0.02

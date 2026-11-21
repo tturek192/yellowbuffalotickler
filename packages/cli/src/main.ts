@@ -1,5 +1,5 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { runBatch, runScenario } from '@wwi/engine';
 import { buildReview, ScenarioError, v } from '@wwi/scenario';
@@ -10,7 +10,7 @@ import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-
 const USAGE = `usage:
   sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>]
   sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--doctrine-dir <dir>]
-  sim review <scenario.yaml> --out <file.md> [--notes <dir>] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
+  sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
 
 class UsageError extends Error {}
 
@@ -36,7 +36,7 @@ function main(argv: string[]): void {
         runs: { type: 'string' },
         'seed-start': { type: 'string' },
         'doctrine-dir': { type: 'string' },
-        notes: { type: 'string' },
+        notes: { type: 'string', multiple: true },
         'tables-dir': { type: 'string' },
       },
     });
@@ -66,14 +66,15 @@ function main(argv: string[]): void {
   }
   const { scenario, doctrines } = loadScenario(file, values['doctrine-dir'] ?? 'doctrine');
   if (command === 'review') {
-    const questions = values.notes
-      ? readdirSync(values.notes)
-          .filter((f) => f.endsWith('.md'))
-          .sort()
-          .map((f) => [f, readFileSync(join(values.notes!, f), 'utf8')] as const)
-          .filter(([, text]) => !text.includes(REVIEW_MARKER)) // a generated review is not a research note
-          .flatMap(([f, text]) => extractOpenQuestions(text, f))
-      : [];
+    // Each --notes directory's research notes, in the order given; a question is labelled with its directory and file.
+    const questions = (values.notes ?? []).flatMap((dir) =>
+      readdirSync(dir)
+        .filter((f) => f.endsWith('.md'))
+        .sort()
+        .map((f) => [f, readFileSync(join(dir, f), 'utf8')] as const)
+        .filter(([, text]) => !text.includes(REVIEW_MARKER)) // a generated review is not a research note
+        .flatMap(([f, text]) => extractOpenQuestions(text, `${basename(dir)}/${f}`)),
+    );
     const tables = loadTables(values['tables-dir'] ?? 'tables');
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, reviewToMarkdown(buildReview(scenario, doctrines, tables), questions));

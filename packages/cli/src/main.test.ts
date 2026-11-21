@@ -57,7 +57,7 @@ describe('cli', () => {
     expect(r.code).toBe(0);
     const md = readFileSync(out, 'utf8');
     expect(md).toMatch(/## Historical targets/);
-    expect(md).toMatch(/\[leaders\.md\]/);
+    expect(md).toMatch(/\[vimy\/leaders\.md\]/);
     expect(md).toMatch(/change `status: draft` to `status: reviewed`/);
   });
 
@@ -66,12 +66,22 @@ describe('cli', () => {
     const dir = mkdtempSync(join(tmpdir(), 'sim-'));
     const a = join(dir, 'a.md');
     const b = join(dir, 'b.md');
-    const notes = ['review', 'scenarios/vimy-1917/scenario.yaml', '--notes', 'docs/research/vimy'];
+    const notes = ['review', 'scenarios/vimy-1917/scenario.yaml', '--notes', 'docs/research/vimy', '--notes', 'docs/research/model'];
     expect(runCli([...notes, '--out', a]).code).toBe(0);
     expect(runCli([...notes, '--out', b]).code).toBe(0);
     expect(count(readFileSync(a, 'utf8'))).toBe(count(readFileSync(b, 'utf8')));
-    expect(readFileSync(a, 'utf8')).not.toMatch(/\[review\.md\]/);
+    expect(readFileSync(a, 'utf8')).not.toMatch(/review\.md\]/);
     expect(readFileSync(a, 'utf8')).toBe(readFileSync(join(repoRoot, 'docs/research/vimy/review.md'), 'utf8'));
+  });
+
+  it('review reads the open questions of every --notes directory, labelled with the directory and file', () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'review.md');
+    const r = runCli(['review', 'scenarios/vimy-1917/scenario.yaml', '--notes', 'docs/research/vimy', '--notes', 'docs/research/model', '--out', out]);
+    expect(r.code).toBe(0);
+    const md = readFileSync(out, 'utf8').split('## Open questions for the historian')[1]!;
+    expect(md).toMatch(/\[vimy\/fireplan\.md\]/);
+    expect(md).toMatch(/\[model\/tables\.md\] Hogg and Thurston/);
+    expect(md).toMatch(/\[model\/doctrine\.md\] SS 135\./);
   });
 
   it('review lists every doctrine parameter and the model tables, read from --tables-dir', () => {

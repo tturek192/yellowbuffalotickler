@@ -43,6 +43,11 @@ export const DoctrineSchema = z
     common: paramRecord('common', COMMON_KEYS),
     ncoPenalty: paramRecord('ncoPenalty', ['rehearsed', 'standard'] as const),
     companyDefaults: paramRecord('companyDefaults', COMPANY_DEFAULT_KEYS),
+    /**
+     * The weapon id (in the model tables) each of a company's counts fires: its riflemen, its `lewisGuns` (the side's
+     * light machine guns, whatever the side calls them) and its `machineGuns`. Names stay the scenario's; the weapon is the side's.
+     */
+    companyWeapons: z.strictObject({ rifle: z.string().min(1), lightMg: z.string().min(1), mg: z.string().min(1) }),
     attack: paramRecord('attack', ATTACK_KEYS, attackShape).optional(),
     defence: paramRecord('defence', DEFENCE_KEYS).optional(),
   })

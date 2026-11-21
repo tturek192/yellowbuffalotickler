@@ -32,6 +32,12 @@ describe('doctrine v2', () => {
     d.followDistanceM = d.attack.followDistanceM;
     expect(() => DoctrineSchema.parse(d)).toThrow(/followDistanceM/);
   });
+  it('names the weapon each company count fires, and rejects a doctrine without them', () => {
+    expect(DoctrineSchema.parse(minimalDoctrineV2()).companyWeapons).toEqual({ rifle: 'rifle', lightMg: 'lewis', mg: 'vickers' });
+    const d = structuredClone(minimalDoctrineV2()) as any;
+    delete d.companyWeapons.lightMg;
+    expect(() => DoctrineSchema.parse(d)).toThrow(/companyWeapons\.lightMg|lightMg/);
+  });
   it.each(['bef-1917', 'de-1917'])('the repository doctrine %s loads and keeps its attack values', (id) => {
     const d = parseDoctrine(readFileSync(resolve(repoRoot, `doctrine/${id}.yaml`), 'utf8'));
     expect(d.attack!.followDistanceM.value).toBe(id === 'bef-1917' ? 70 : 0);

@@ -128,6 +128,42 @@ weapons:
     rangeScaleM: *id001
     lethality: *id002
     suppressPerRound: *id003
+  mg08-15:
+    kind: lewis
+    rpm:
+      value: 250
+      estimate: 'no rate for the 08/15 was found in the sources read. It is the MG 08 made light, fed from belts of "either 100 or 250
+        rounds" (german-handbook-1918 p. 61), fired from a bipod by one gunner; in action, bursts and target changes. Taken as the practical
+        rate of the British light gun, the Lewis (250 in traversing fire, lewis-1917 p. 81), the same class of weapon: 250'
+      description: Rounds one weapon fires per minute over a sustained engagement (a barrage, a bombardment or a firefight of some minutes),
+        not its burst rate.
+    maxRangeM:
+      value: 4023
+      source: german-handbook-1918
+      page: '61'
+      note: '"The ballistics are similar to those of the ''08 pattern machine gun, but the light machine gun is not so accurate"; the
+        MG 08''s extreme range is 4,400 yards (german-handbook-1917 p. 51)'
+      description: Longest range in metres at which the weapon fires at all; beyond it the model gives it no effect.
+    rangeScaleM:
+      value: 600
+      estimate: 'the MG 08''s ballistics (german-handbook-1918 p. 61) from a bipod, "not so accurate": between the Lewis gun''s 500
+        m and the tripod MG 08''s 1,000 m'
+      description: Distance in metres over which the weapon's effect falls by a factor of e (about 2.7), for the spread of its fire
+        with range.
+      calibrated: true
+    lethality:
+      value: 0.01
+      estimate: '"not so accurate" as the MG 08 (german-handbook-1918 p. 61): a little under its 0.012, as the Lewis gun''s 0.01; at
+        300 m and 250 rounds a minute, 250 x 0.01 x exp(-300/600) = 1.5 men a minute'
+      description: Men hit per round, on average, when the weapon fires on a target group of full density standing in the open at close
+        range; cover, range, sight and suppression reduce it.
+      calibrated: true
+    suppressPerRound:
+      value: 0.08
+      estimate: 'automatic fire from a light gun, as the Lewis gun: between the rifle''s 0.05 and the machine gun''s 0.1'
+      description: 'Suppression one round adds to its target, before dividing by the target''s men: 100 rounds at 0.1 on a 100-man company
+        add 0.1 (1 is fully suppressed).'
+      calibrated: true
   18pdr:
     kind: field-gun
     rpm:

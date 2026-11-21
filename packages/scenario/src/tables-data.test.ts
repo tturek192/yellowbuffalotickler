@@ -64,6 +64,46 @@ describe('researched tables and doctrine (Plan 3 Task 2)', () => {
   });
 });
 
+describe('fix round 1 guards', () => {
+  it('each doctrine names company weapons that exist in the tables; the German light MG is its own weapon', () => {
+    const t = loadTables('tables');
+    const bef = loadDoctrine('doctrine/bef-1917.yaml');
+    const de = loadDoctrine('doctrine/de-1917.yaml');
+    for (const d of [bef, de]) for (const id of Object.values(d.companyWeapons)) expect(Object.keys(t.weapons)).toContain(id);
+    expect(bef.companyWeapons).toEqual({ rifle: 'rifle', lightMg: 'lewis', mg: 'vickers' });
+    expect(de.companyWeapons).toEqual({ rifle: 'rifle', lightMg: 'mg08-15', mg: 'mg08' });
+  });
+  it('the 08/15 cites the German handbook, not the Lewis manual; its rate is an estimate', () => {
+    const w = loadTables('tables').weapons['mg08-15']!;
+    expect(w.kind).toBe('lewis');
+    expect(w.maxRangeM).toMatchObject({ source: 'german-handbook-1918', page: '61' });
+    expect('estimate' in w.rpm).toBe(true);
+    expect(w.rpm.calibrated).toBeUndefined();
+    for (const k of ['lethality', 'rangeScaleM', 'suppressPerRound'] as const) expect(w[k].calibrated).toBe(true);
+    expect(JSON.stringify(w)).not.toMatch(/"source":"lewis-1917"/);
+  });
+  it('German counter-attack delays count only the form-up and launch, not the approach or the march', () => {
+    const d = loadDoctrine('doctrine/de-1917.yaml').defence!;
+    expect(d.localCounterAttackDelayMin.value).toBeLessThanOrEqual(10);
+    expect(d.divisionalCounterAttackDelayMin.value).toBeLessThan(180);
+    for (const k of ['localCounterAttackDelayMin', 'divisionalCounterAttackDelayMin'] as const) {
+      expect((d[k] as { estimate?: string }).estimate, k).toMatch(/form[- ]up and launch only/);
+    }
+  });
+  it('cover descriptions read "in a wood" and "in a village"; the Passchendaele quote cites p. 324', () => {
+    const t = loadTables('tables');
+    expect(JSON.stringify(t.cover)).not.toMatch(/on a (wood|village)/);
+    expect(t.cover.moving.wood.description).toMatch(/in a wood/);
+    expect((loadDoctrine('doctrine/bef-1917.yaml').attack!.followDistanceM as { estimate?: string }).estimate).toMatch(/nicholson-1962 p\. 324/);
+  });
+  it('German estimates that take a British figure say so', () => {
+    const de = loadDoctrine('doctrine/de-1917.yaml');
+    for (const p of [de.attack!.mopUpRateMenPerMin, de.attack!.trainingBonusRehearsed, de.attack!.ammoReserveFrac, de.companyDefaults.bombsPerMan]) {
+      expect((p as { estimate?: string }).estimate).toMatch(/taken as the British figure/);
+    }
+  });
+});
+
 describe('loadTables returns the sources registry', () => {
   it('returns every registered source with its tier', () => {
     const t = loadTables('tables');

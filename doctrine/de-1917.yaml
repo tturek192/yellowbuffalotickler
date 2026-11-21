@@ -180,10 +180,12 @@ companyDefaults:
     description: Officers in a company when the scenario does not say.
   lewisGuns:
     value: 1
-    estimate: 'light machine guns (the 08/15), which the model counts as Lewis guns: a Prussian War Ministry order of 12 March 1917
-      provided 3 to each infantry company (german-handbook-1918 p. 44), and "By the end of 1917 every infantry company on the Western
-      Front had received 3" (p. 55). In April 1917 the issue had only begun: 1'
-    description: Light machine guns (counted as Lewis guns) in a company when the scenario does not say.
+    estimate: 'the German light machine gun, the 08/15, fired as companyWeapons.lightMg (mg08-15); the count keeps the scenario''s field
+      name. "The issue of the ''08/''15 light machine gun began in March, 1917, on the scale of 3 to every infantry company" (german-handbook-1918
+      p. 61; the order of 12 March 1917, p. 44), and "By the end of 1917 every infantry company on the Western Front had received 3"
+      (p. 55). In April 1917 the issue had only begun: 1'
+    description: 'Light machine guns (the side''s, fired as companyWeapons.lightMg: here the 08/15) in a company when the scenario does
+      not say.'
   machineGuns:
     value: 1.5
     estimate: 'every infantry regiment has three machine-gun companies, one attached to each battalion (german-handbook-1917 p. 49),
@@ -192,7 +194,8 @@ companyDefaults:
     description: Machine guns in a company when the scenario does not say.
   bombsPerMan:
     value: 2
-    estimate: no German figure was found in the sources read; the British figure (ss143-1917 p. 10) is taken
+    estimate: 'taken as the British figure (2, ss143-1917 p. 10): no German figure was found in the sources read, and both armies fought
+      for trenches with the bomb'
     description: Grenades each man carries when the scenario does not say.
   strength:
     value: 187
@@ -205,6 +208,10 @@ companyDefaults:
     page: '30'
     note: '"Each battalion is divided into 4 companies and a machine gun company"'
     description: Companies in a battalion when the scenario does not say.
+companyWeapons:
+  rifle: rifle
+  lightMg: mg08-15
+  mg: mg08
 attack:
   followDistanceM:
     value: 0
@@ -236,9 +243,9 @@ attack:
     calibrated: true
   mopUpRateMenPerMin:
     value: 3
-    estimate: 'moppers-up "work in pairs", "guard the entrances to dugouts" and do not go down "before the platoon for which they are
-      mopping up arrives" (ss143-1917 p. 16): a dugout of 20-40 men, bombed and called on to surrender, comes up in some minutes; a
-      company''s pairs at several entrances clear about 3 men a minute'
+    estimate: 'taken as the British figure: no German source on clearing dugouts was found, and German troops retaking a trench face
+      the same stairways as British moppers-up, who "work in pairs" and "guard the entrances to dugouts" (ss143-1917 p. 16): about 3
+      men a minute'
     description: Men a mopping-up company clears out of dugouts per minute.
     calibrated: true
   stallToleranceMin:
@@ -254,14 +261,14 @@ attack:
     calibrated: true
   trainingBonusRehearsed:
     value: 0.1
-    estimate: 'troops who had rehearsed on a full-scale replica until "all ranks knew just where they would have to go and what to do
-      when they got there" (nicholson-1962 p. 250) start steadier: a tenth of the morale range'
+    estimate: 'taken as the British figure: no German source on the effect of rehearsal was found, and a set task practised beforehand
+      steadies any troops as it did the Canadians (nicholson-1962 p. 250): a tenth of the morale range'
     description: Starting morale added for a company that rehearsed the attack.
     calibrated: true
   ammoReserveFrac:
     value: 0.2
-    estimate: every man carried at least 120 rounds (ss143-1917 p. 10), with carrying parties for more; a fifth is kept back against
-      a counter-attack
+    estimate: 'taken as the British figure: no German figure was found, and a counter-attacking company has the same need to keep rounds
+      back against the next attack: a fifth'
     description: Share of ammunition a company keeps back and will not fire away.
     calibrated: true
 defence:
@@ -280,20 +287,25 @@ defence:
     description: Share of a garrison that surrenders when attackers reach it before it emerges.
     calibrated: true
   localCounterAttackDelayMin:
-    value: 20
-    estimate: 'German doctrine called for "immediate counter-attacks ... to recover any ground lost" (boh-1917-1 p. 316), the Gegenstoss
-      "frequently carried out in the course of the battle" as opposed to the deliberate Gegenangriff (p. 523 n.), striking before the
-      enemy can "rest or install himself" (survey-german-tactics-1918 p. 35). A sector''s counter-attack company lies close behind (p.
-      32): some minutes to form up and 500-1,000 m to cover, 20'
-    description: Minutes before a local reserve counter-attacks.
+    value: 5
+    estimate: 'the form-up and launch only, counted from when the battalion''s picture shows the loss: the report''s journey is the
+      channels'' and the approach to the lost trench is simulated movement after this delay. German doctrine called for "immediate counter-attacks
+      ... to recover any ground lost" (boh-1917-1 p. 316), the Gegenstoss "frequently carried out in the course of the battle" as opposed
+      to the deliberate Gegenangriff (p. 523 n.), before the enemy can "rest or install himself" (survey-german-tactics-1918 p. 35),
+      by a counter-attack company that lies close behind with its task known (p. 32). A few minutes to come up from its shelters, form
+      up and go: 5'
+    description: Minutes, once the reserve's headquarters knows a segment is lost, for the local reserve to form up and go in; its approach
+      is simulated movement after this delay.
     calibrated: true
   divisionalCounterAttackDelayMin:
-    value: 180
-    estimate: 'the doctrine of December 1916 put the leading units of the counter-attack (Eingreif) divisions "close behind the Second
-      Line" before an offensive (nicholson-1962 p. 240); later in 1917 they stood "some two to four thousand yards" back (p. 306). An
-      hour''s march, the orders and the deployment: about 3 hours. Where the reserves of a given battle actually stood is the scenario''s,
-      not the doctrine''s'
-    description: Minutes before a divisional counter-attack.
+    value: 30
+    estimate: 'the form-up and launch only, counted from when the reserves have arrived and deployed: their order''s journey, their
+      march and their deployment are counted separately. The counter-attack (Eingreif) divisions were to strike "the enemy in the midst
+      of his assault" (nicholson-1962 p. 306) from "close behind the Second Line" (p. 240), so they go in from the march: orders to
+      the battalions and the artillery''s support arranged in about half an hour. The deliberate Gegenangriff, prepared over days (boh-1917-1
+      p. 523 n.), is not this. Where a battle''s reserves actually stood is the scenario''s, not the doctrine''s'
+    description: Minutes, once the reserves have arrived and deployed, before the divisional counter-attack goes in; their march and
+      deployment are counted separately (marchKmPerHour, deployMin).
     calibrated: true
   counterAttackMinRatio:
     value: 0.75

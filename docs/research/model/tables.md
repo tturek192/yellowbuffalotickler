@@ -4,11 +4,12 @@ This note covers `tables/weapons-1917.yaml`, `tables/cover.yaml`, `tables/channe
 source registry `tables/sources.yaml`: the numbers the combat model of Plan 3 runs on (the plan's "The model, in one page"
 shows where each enters a formula).
 
-**Summary.** 24 weapons: the 19 the plan names, and the 13-pdr, 6-inch gun, 12-inch gun, 12-inch howitzer and 15-inch
-howitzer that the Vimy artillery also names. Each weapon has three facts (rate of fire, longest range, shell weight; small
-arms have no shell) and three calibrated coefficients (lethality, rangeScaleM, suppressPerRound). Of the 68 weapon facts,
-52 cite a source and 16 are estimates with their reasoning, almost all of them sustained rates of fire for which no source
-was found. The 20 cover factors, 16 channel values and 33 effects are estimates; all but six are calibrated coefficients
+**Summary.** 25 weapons: the 19 the plan names; the 13-pdr, 6-inch gun, 12-inch gun, 12-inch howitzer and 15-inch
+howitzer that the Vimy artillery also names; and the German light machine gun, the 08/15 (`mg08-15`), which the German
+doctrine's companies fire as their light machine guns. Each weapon has three facts (rate of fire, longest range, shell
+weight; small arms have no shell) and three calibrated coefficients (lethality, rangeScaleM, suppressPerRound). Of the 70
+weapon facts, 53 cite a source and 17 are estimates with their reasoning, almost all of them sustained rates of fire for
+which no source was found. The 20 cover factors, 16 channel values and 33 effects are estimates; all but six are calibrated coefficients
 for Plan 4, and one (`crewPerLewis`) is sourced. The table below lists the sourced values.
 
 **What is sourced and what is not.** A rate of fire, a range, a shell weight or an establishment is a fact: it cites a
@@ -79,6 +80,7 @@ Minenwerfer (1311286259), 17 cm mittlerer Minenwerfer (1359862463), Minenwerfer 
 | mg08 rpm 400 | `german-handbook-1917` | 51 | "Rate of fire .. 400-500 rounds per minute." | primary |
 | mg08 (sustained fire in training) | `german-handbook-1917` | 52 | "Sustained fire at the rate of 500 rounds per minute" | primary |
 | mg08 maxRangeM 4023 | `german-handbook-1917` | 51 | "Extreme range (at 32° elevation) .. 4,400 yards." | primary |
+| mg08-15 maxRangeM 4023 | `german-handbook-1918` | 61 | "The ballistics are similar to those of the '08 pattern machine gun, but the light machine gun is not so accurate." (with the MG 08's 4,400 yards) | primary |
 | rifle maxRangeM 2743 | `wiki-lee-enfield` | infobox | max range 3,000 yd | tertiary |
 | 77mm-fk maxRangeM 8400 | `german-handbook-1917` | 63 | "Maximum range with percussion fuze .. 9,186 yards." | primary |
 | 77mm-fk shellKg 6.8 | `german-handbook-1917` | 64 | "The long shell weighs 14.6 lbs., the other projectiles 15 lbs." | primary |
@@ -106,6 +108,7 @@ note: a weapon in action changes belts and magazines, relays and looks for targe
 | 8in-how, 9.2in-how, 210mm-mrs | 0.5 | Shells of 184-290 lb: one round in two minutes. |
 | 12in-how | 0.25 | A 750 lb shell: one round in four minutes. |
 | 12in-gun, 15in-how | 0.2 | 850-1,450 lb shells: one round in five minutes. |
+| mg08-15 | 250 | No rate found. "Belts containing either 100 or 250 rounds are used" (`german-handbook-1918` p. 61); one gunner on a bipod. Taken as the Lewis gun's practical 250 (`lewis-1917` p. 81), the same class of weapon; the 08/15 cites the German handbook, never the Lewis manual. |
 | minenwerfer-light | 4 | "up to 20 rounds a minute for short periods" (`german-handbook-1918` p. 104); sustained a fifth, a little under the Stokes's 6. |
 
 ## Coefficients
@@ -120,6 +123,9 @@ fire formula gives casualties of the right order, and Plan 4 calibrates them tog
   a machine gun is worth about 50 rifles there. That ratio is the builder's order of magnitude, not a figure from a source
   read.
 - **Lewis guns.** Lethality 0.01 and rangeScaleM 500 m: 1.4 men a minute at 300 m, a little under half a tripod gun.
+- **The 08/15.** The MG 08's ballistics but "not so accurate" (`german-handbook-1918` p. 61): lethality 0.01, under the
+  MG 08's 0.012, and rangeScaleM 600 m, between the Lewis gun's and the MG 08's; 1.5 men a minute at 300 m. Its own
+  coefficients, so Plan 4 can calibrate the two sides' light guns apart.
 - **Shells.** Lethality = 0.5 × √(shellKg / 8.4). The 18-pdr's 0.5 means one shrapnel or HE burst among a platoon in the
   open hits about one man in two rounds; heavier shells scale with the square root of their weight, because a burst's
   lethal area grows more slowly than its weight. So the 4.5-inch is 0.69, the 6-inch 1.2, the 9.2-inch 2.0, the 15-inch
@@ -229,5 +235,5 @@ p. 316). The others keep their starting values with reasoning added. Nothing was
 - **The 8-inch howitzers' marks** at Vimy (Mk I-V conversions or Mk VI-VIII), which changes the range.
 - **One rifle for both sides.** The SMLE and the Gewehr 98 share the `rifle` id; their ranges differ (3,000 yards and
   3,735 m) but their effect in the model is the same.
-- **German light machine guns.** The model counts a German company's light machine guns (the 08/15) as Lewis guns, with
-  the Lewis gun's coefficients. A separate id would need a source for the 08/15's practical rate.
+- **The 08/15's practical rate.** No source read gives it; it is taken as the Lewis gun's 250 rounds a minute. A German
+  training manual for the light machine gun would give it.
