@@ -26,6 +26,8 @@ export const EVENT_KINDS = [
   'line-lost', 'off-map-attack',
   // An order a company could not carry out (its target names no place), dropped (Task 12)
   'order-dropped',
+  // A planned divisional or army counter-attack given up (Task 13)
+  'counter-attack-dropped',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -53,7 +55,8 @@ export type Intent = 'advance' | 'hold' | 'go-to-ground' | 'fall-back' | 'mop-up
 export type CasualtyCount = { killed: number; wounded: number; captured: number; total: number };
 
 /** Where an order sends a unit. */
-export type OrderTarget = { lineId: string; sectorId: string } | { featureId: string } | { segmentId: string };
+/** Where an order sends a unit: a line in a sector, a feature, a trench segment, or (a reserve's march, Task 13) a point. */
+export type OrderTarget = { lineId: string; sectorId: string } | { featureId: string } | { segmentId: string } | { point: Point };
 
 /** An order a company or formation holds (Tasks 11–12 issue them). */
 export type Order = {
@@ -138,10 +141,22 @@ export type CutLine = { pair: string; by: 'shelling' | 'failure'; atMin: number 
 
 /**
  * A decision an HQ has taken but not yet acted on (Task 12): a divisional counter-attack, planned when the division
- * ordered its reserves forward (`atMin`), to go in once they are there. `segmentIds`: the lost segments it is to retake;
- * `reserveIds`: the off-map reserves it waits for; `eventRefs`: the `reserve-ordered` events and what led to them.
+ * ordered its reserves forward (`atMin`), to go in once they are there. `reserveIds`: the off-map reserves it waits for;
+ * `eventRefs`: the `reserve-ordered` events and what led to them.
  */
-export type Decision = { kind: 'divisional-counter-attack'; atMin: number; formationId: string; segmentIds: string[]; reserveIds: string[]; eventRefs: number[] };
+export type Decision = {
+  kind: 'divisional-counter-attack';
+  atMin: number;
+  formationId: string;
+  /** The segments lost when it was planned (its targets are chosen again from the picture each time it is checked). */
+  segmentIds: string[];
+  reserveIds: string[];
+  eventRefs: number[];
+  /** The division whose front it is to retake (Task 13: the HQ's own for a division, a division under it for an army). */
+  frontId: string;
+  /** Since when its troops have been there with no lost ground it can reach (Task 13); absent: not waiting so. */
+  blockedSinceMin?: number;
+};
 
 /**
  * What an HQ has learnt and not yet passed up (Task 11): the keys of its picture that changed, from when, whether any
@@ -317,6 +332,8 @@ export type ReserveState = {
    */
   toSegmentId: string | null;
   onMapKm: number;
+  /** The front segments it is sent to (set when ordered), south to north: its companies' places at the front spread along them. */
+  frontSegmentIds: string[];
 };
 
 /**

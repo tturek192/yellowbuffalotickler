@@ -1,5 +1,5 @@
 import { ammunitionRunsOut, batteryRecoveries, offMapWindows } from './artillery';
-import { counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, stallChecks } from './command';
+import { counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, planPatience, stallChecks } from './command';
 import { fireMissionEnds, messageDueTimes } from './comms';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
@@ -58,6 +58,8 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['counter-attack-retries', counterAttackRetries],
   // Task 13: an ordered reserve setting off (moves nobody on the map) and arriving (its companies come on to the map).
   ['reserves', reserveTimes],
+  // Task 13 fix round: a planned counter-attack with no ground it can reach is given up (a decision; moves nobody).
+  ['plan-patience', planPatience],
 ];
 
 /**

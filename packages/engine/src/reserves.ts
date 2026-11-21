@@ -1,5 +1,5 @@
 import { v } from '@wwi/scenario';
-import type { Doctrine, Formation, FORMATION_KINDS, Scenario } from '@wwi/scenario';
+import type { Doctrine, Formation, FORMATION_KINDS, Point, Scenario } from '@wwi/scenario';
 import { emit } from './causes';
 import type { NewEvent } from './causes';
 import type { CompanyState } from './companies';
@@ -10,7 +10,7 @@ import { round } from './record';
 import type { Scheduled } from './schedule';
 import type { SimState, StepContext } from './step';
 import { distanceTo, segmentSamples } from './artillery';
-import type { HqState, Order, ReserveState, SegmentState } from './types';
+import type { HqState, ReserveState, SegmentState } from './types';
 
 /*
  * Reserves off the map (spec 13.5): formations that start a set distance behind the front, off the map, until a
@@ -104,7 +104,9 @@ export function orderReserve(r: ReserveState, state: SimState, ctx: StepContext,
     const dd = distanceTo(segmentSamples(ctx, seg, state.companies), r.entryPoint);
     if (dd < d) [to, d] = [seg, dd];
   }
-  const at: ReserveState = { ...r, orderedBy: by, onMapKm: to ? d / 1000 : 0, toSegmentId: to ? to.id : null };
+  const ys = (x: SegmentState): number => (x.yMin + x.yMax) / 2;
+  const along = [...front].sort((a, b) => ys(a) - ys(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)).map((x) => x.id);
+  const at: ReserveState = { ...r, orderedBy: by, onMapKm: to ? d / 1000 : 0, toSegmentId: to ? to.id : null, frontSegmentIds: to ? along : [] };
   return { ...at, status: 'ordered', orderedMin: M, orderedEventId: eventId, arriveMin: arrivalOf(at, M, ctx).arriveMin };
 }
 
@@ -146,6 +148,7 @@ export function arrivalKnown(state: SimState, ctx: StepContext, h: HqState, form
   });
 }
 
+
 /**
  * Whether the run must wait for a reserve (run.ts: it does not end before): one under way, or one arrived whose
  * ordering headquarters does not yet know it has (`arrivalKnown`): it would act on the news.
@@ -180,19 +183,24 @@ export function marchReserves(state: SimState, ctx: StepContext): SimState {
     }
     if (r.status === 'marching' && M >= r.arriveMin!) {
       r = { ...r, status: 'arrived' };
-      const [x, y] = r.entryPoint;
-      let n = 0;
-      let men = 0;
       const eventId = state.nextEventId + events.length;
-      // On the map: at its entry point, deployed, walking on to the front it was sent to (movement.ts, a march order).
-      const march: Order | null =
-        r.toSegmentId === null ? null : { kind: 'march', target: { segmentId: r.toSegmentId }, fromFormationId: r.orderedBy ?? r.formationId, issuedMin: M, eventId };
+      const coming = companies.filter((c) => (c.status === 'marching' || c.status === 'off-map') && ofReserve(c, r.formationId));
+      const n = coming.length;
+      const men = coming.reduce((acc, c) => acc + c.men, 0);
+      // On the map: spread along a frontage across its entry point, deployed, each company walking on to its own place
+      // along the front it was sent to (movement.ts, a march order).
+      const places = frontage(r, n, ctx);
+      const ends = destinations(r, n, state, ctx);
+      const k = new Map(coming.map((c, j) => [c.id, j]));
       companies = companies.map((c) => {
-        if ((c.status !== 'marching' && c.status !== 'off-map') || !ofReserve(c, r.formationId)) return c;
-        n++;
-        men += c.men;
+        const j = k.get(c.id);
+        if (j === undefined) return c;
+        const [x, y] = places[j]!;
         const placed = { ...c, x, y, startX: x, startY: y };
-        return march ? { ...placed, status: 'advancing', intent: 'march', posture: 'moving', orders: [...c.orders, march] } : { ...placed, status: 'holding', intent: 'hold', posture: 'prone' };
+        const to = ends[j];
+        return to
+          ? { ...placed, status: 'advancing', intent: 'march', posture: 'moving', orders: [...c.orders, { kind: 'march', target: { point: to }, fromFormationId: r.orderedBy ?? r.formationId, issuedMin: M, eventId }] }
+          : { ...placed, status: 'holding', intent: 'hold', posture: 'prone' };
       });
       events.push({
         minute: M,
@@ -207,6 +215,35 @@ export function marchReserves(state: SimState, ctx: StepContext): SimState {
   });
   if (reserves === state.reserves) return state;
   return emit({ ...state, reserves, companies }, ...events);
+}
+
+/**
+ * Where a reserve's `n` companies come on to the map: in a line across its entry point (along y, the frame's edge),
+ * `companyFrontageM` apart (its doctrine), centred on the entry point; held inside the frame's extent, the line shifted
+ * along the edge, and closed up if it is longer than the edge.
+ */
+function frontage(r: ReserveState, n: number, ctx: StepContext): Point[] {
+  const [x, y0] = r.entryPoint;
+  let gap = v(doctrineOf(ctx, r.formationId).common.companyFrontageM);
+  let y = y0;
+  const e = ctx.scenario.frame?.extent;
+  if (e && n > 1) {
+    gap = Math.min(gap, (e.maxY - e.minY) / (n - 1));
+    const half = (gap * (n - 1)) / 2;
+    y = Math.min(Math.max(y0, e.minY + half), e.maxY - half);
+  }
+  return Array.from({ length: n }, (_, j) => [x, y + (j - (n - 1) / 2) * gap] as Point);
+}
+
+/**
+ * Each of a reserve's `n` companies' own place at its front (in the same order as `frontage`): along the trench of the
+ * front segments it was sent to, south to north, spread evenly by company; none when it has no front to go to.
+ */
+function destinations(r: ReserveState, n: number, state: SimState, ctx: StepContext): Array<Point | undefined> {
+  const segs = r.frontSegmentIds.flatMap((id) => state.segments.filter((x) => x.id === id));
+  const pts = segs.flatMap((x) => [...segmentSamples(ctx, x, state.companies)].sort((a, b) => a[1] - b[1]));
+  if (pts.length === 0) return Array.from({ length: n }, () => undefined);
+  return Array.from({ length: n }, (_, j) => pts[Math.min(pts.length - 1, Math.floor(((j + 0.5) * pts.length) / n))]);
 }
 
 /**

@@ -326,36 +326,43 @@ describe('the command model', () => {
     expect([next.status, next.intent, next.orders]).toEqual(['holding', 'hold', []]);
   });
 
-  it('a counter-attack cannot pass through an intact enemy line: none goes for a trench behind the taken Black Line until the line is lost', () => {
+  it('a counter-attack cannot pass through an intact enemy line, as its HQ knows the lines: none goes for a trench behind a taken line until the picture shows it lost', () => {
     // fixtureCounter with the Black Line as the attackers' objective, and a German trench on it (k3, 20 men, x 1150): c1 and c2
     // take ger-front-a (x 150) and then the Black Line with k3's trench, so ger-front-a lies 1,000 m behind a taken line.
     const f = withRearTrench(fixtureCounter({ objective: 'black' }), 1150, 'k3');
     f[0].forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!.strength = est(20);
-    const r = runStates(f, { endMinute: 120 });
+    const r = runStates(f, { endMinute: 160 });
     const s = r.states.find((x) => x.taken.includes('black|s1'))!;
     expect(s).toBeDefined();
-    // Once the Black Line is taken, no counter-attack is ordered on ger-front-a (one ordered before it was is the old picture's).
-    expect(r.states.flatMap((x) => x.events).filter((e) => e.kind === 'counter-attack-ordered' && e.minute > s.minute && e.segmentId!.startsWith('ger-front-a'))).toEqual([]);
+    // kr, 550 m off, sees the line taken and reports it: rir262's picture comes to show it, and from then on no
+    // counter-attack is ordered on ger-front-a.
+    const knows = r.states.find((x) => typeof x.hqs.find((h) => h.formationId === 'rir262')!.picture.lines['black|s1'] === 'number')!;
+    expect(knows).toBeDefined();
+    expect(knows.minute).toBeGreaterThan(s.minute);
+    expect(r.states.flatMap((x) => x.events).filter((e) => e.kind === 'counter-attack-ordered' && e.minute >= knows.minute && e.segmentId!.startsWith('ger-front-a'))).toEqual([]);
     const front = s.segments.find((x) => x.id === 'ger-front-a:001')!.id;
     const black = s.segments.find((x) => x.featureId === 'ger-rear-k3')!.id;
-    // rir262 knows ger-front-a:001 lost and holds k3's trench again, with kr free to send.
-    const decide = (st: SimState) => {
+    // rir262 knows ger-front-a:001 lost and k3's trench its own, with kr free to send; and the Black Line as `lines` says.
+    const decide = (st: SimState, lines: Record<string, number | null>) => {
       const hqs = st.hqs.map((h) =>
         h.formationId !== 'rir262'
           ? h
-          : { ...h, picture: { ...h.picture, segments: { ...h.picture.segments, [front]: 'allied' as const, [black]: 'central' as const }, segmentsAt: { [front]: 4 }, enemy: { [front]: { men: 0, atMin: 4 } }, units: { ...h.picture.units, kr: { status: 'holding', men: 300, atMin: st.minute } } } },
+          : { ...h, picture: { ...h.picture, lines, segments: { ...h.picture.segments, [front]: 'allied' as const, [black]: 'central' as const }, segmentsAt: { [front]: 4 }, enemy: { [front]: { men: 0, atMin: 4 } }, units: { ...h.picture.units, kr: { status: 'holding', men: 300, atMin: st.minute } } } },
       );
       const free = { ...st, events: [], hqs, command: { ...st.command, ordered: {}, counterAttacks: {} }, companies: st.companies.map((c) => (c.id === 'kr' ? { ...c, status: 'holding' as const, orders: [] } : c)) };
-      return commandPhase({ ...free, minute: st.minute + 2 }, r.ctx, 2).events.filter((e) => e.kind === 'counter-attack-ordered');
+      return commandPhase({ ...free, minute: st.minute + 2 }, r.ctx, 2).events.filter((e) => e.kind === 'counter-attack-ordered').map((e) => e.segmentId);
     };
-    // While the Black Line holds: nothing, though its picture shows the trench lost and kr free.
-    expect(decide(s)).toEqual([]);
-    // k3's trench back in German hands: the Black Line is lost (line-lost), and the trench behind it can be got at.
+    // The truth: the Black Line taken (s). Its picture: taken, so nothing; not heard of, so it goes for ger-front-a:001.
+    expect(decide(s, { 'black|s1': s.minute })).toEqual([]);
+    expect(decide(s, {})).toEqual([front]);
+    // The truth: k3's trench back in German hands, the Black Line lost (line-lost). Its picture: still taken (the news
+    // not yet in), so nothing; known lost (null), so it goes.
     const retook = { ...s, events: [], segments: s.segments.map((x) => (x.id === black ? { ...x, holder: 'central' as const } : x)) };
     const lost = takeLines(retook, r.ctx);
     expect(lost.events.map((e) => e.kind)).toContain('line-lost');
     expect(lost.taken).not.toContain('black|s1');
-    expect(decide(lost).map((e) => e.segmentId)).toEqual([front]);
+    expect(decide(lost, { 'black|s1': s.minute })).toEqual([]);
+    expect(decide(lost, { 'black|s1': null })).toEqual([front]);
   });
 
   it('German counter-attack odds depend on whether the attacker has consolidated', () => {

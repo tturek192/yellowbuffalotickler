@@ -7,7 +7,7 @@ export const COMMON_KEYS = [
   'lossShock', 'suppressedDrain', 'isolationDrain', 'recoveryPerHour',
   'leaderMoraleStep', 'closeRangeM', 'quietStepMin',
   'baseOrderDelayMin', 'marchKmPerHour', 'deployMin',
-  'reportEveryMin', 'fatiguePerKm', 'fatigueRecoveryPerHour',
+  'reportEveryMin', 'fatiguePerKm', 'fatigueRecoveryPerHour', 'companyFrontageM',
 ] as const;
 export const ATTACK_KEYS = [
   'followDistanceM', 'maxAdvanceMPerMin', 'startJitterMin', 'speedJitterFrac',
@@ -17,7 +17,7 @@ export const ATTACK_KEYS = [
 export const DEFENCE_KEYS = [
   'emergeMin', 'trappedSurrenderFrac',
   'localCounterAttackDelayMin', 'divisionalCounterAttackDelayMin',
-  'counterAttackMinRatio', 'commitReserveWhenLostFrac', 'counterAttackMinMen', 'counterAttackRetryMin',
+  'counterAttackMinRatio', 'commitReserveWhenLostFrac', 'counterAttackMinMen', 'counterAttackRetryMin', 'counterAttackPatienceMin',
 ] as const;
 export const COMPANY_DEFAULT_KEYS = [
   'officers', 'lewisGuns', 'machineGuns', 'bombsPerMan', 'strength', 'companiesPerBattalion', 'battalionsPerDivision', 'dugoutDepthM',

@@ -7,9 +7,10 @@ import type { CompanyState } from './companies';
 import { CELL_M } from './ground';
 import { lineXAt } from './geometry';
 import { featurePoints as featurePointsOf, pointRadiusM } from './segments';
-import { segmentDefenders, segmentsOnLine } from './trenches';
+import { lineTakerOf, segmentDefenders, segmentsOnLine } from './trenches';
 import { round } from './record';
 import type { Scheduled } from './schedule';
+import { onField } from './step';
 import type { SimState, StepContext } from './step';
 import type { BatteryState, CallForFire, CutLine, EnemyKnown, FireMission, FormationKind, HqNews, HqState, Message, Order, Report, Side } from './types';
 
@@ -893,7 +894,8 @@ export function commsPhase(state: SimState, ctx: StepContext): SimState {
 
 /**
  * The end of a step (the log phase): every company whose status changed, that took a segment, whose own segment
- * changed hands, or whose objective line was taken reports to its battalion; so does one whose men have changed since
+ * changed hands, or whose objective line was taken, or that sees an enemy line taken or lost (within `observerRangeM` of
+ * it in its sector: the enemy's lines in its HQs' pictures come only from these, Task 13) reports to its battalion; so does one whose men have changed since
  * its last report once `reportEveryMin` (its doctrine) has passed since then (a routine report: at most one a period,
  * and none while nothing changed). A company newly pinned calls for fire on the nearest segment the enemy holds within
  * `observerRangeM`. Companies in ascending id order, the report before the call. Companies off the map report nothing.
@@ -920,13 +922,27 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
   // Segments change hands only with a segment-lost or segment-retaken event: without one, no holder is looked at.
   const anySeg = took.size > 0;
   const every = (c: CompanyState): number => v(ctx.doctrines[c.doctrineId]!.common.reportEveryMin);
+  // The enemy's lines taken or lost this step, which its companies in sight of them report (Task 13: what a defender's
+  // headquarters knows of the attacker's lines comes from these reports).
+  const enemyLineEvents = [...[...linesTaken.keys()].map((k) => [k, 'taken'] as const), ...[...linesLost.keys()].map((k) => [k, 'lost'] as const)];
+  const seesLines = (c: CompanyState): Array<readonly [string, 'taken' | 'lost']> =>
+    enemyLineEvents.filter(([k]) => {
+      if (lineTakerOf(state, ctx, k) === c.side || !onField(c)) return false;
+      const [lineId, sectorId] = k.split('|') as [string, string];
+      const line = ctx.lines.get(lineId);
+      const sector = ctx.scenario.sectors.find((x) => x.id === sectorId);
+      if (!line || !sector) return false;
+      const y = Math.min(Math.max(c.y, sector.yMin), sector.yMax);
+      return Math.hypot(lineXAt(line, y) - c.x, y - c.y) <= range;
+    });
   for (const c of state.companies) {
     if (c.status === 'off-map') continue;
     const before = state.lastReport[c.id] ?? { status: c.status, men: c.men, holder: null, atMin: M };
     const routine = c.men !== before.men && M >= before.atMin + every(c);
     const aim = c.objectiveLineId === undefined ? '' : `${c.objectiveLineId}|${c.sectorId}`;
     const lostEvent = aim && linesLost.size ? linesLost.get(aim) : undefined;
-    if (!anySeg && !routine && before.status === c.status && !(c.status === 'consolidating' && linesTaken.size) && lostEvent === undefined) continue;
+    const sighted = enemyLineEvents.length ? seesLines(c) : [];
+    if (!anySeg && !routine && before.status === c.status && !(c.status === 'consolidating' && linesTaken.size) && lostEvent === undefined && sighted.length === 0) continue;
     const own = c.segmentId === undefined ? undefined : holderOf.get(c.segmentId);
     const holder = own ? own.holder : null;
     const taken = took.get(c.id) ?? [];
@@ -934,7 +950,7 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     const lineEvent = key ? linesTaken.get(key) : undefined;
     const statusChanged = before.status !== c.status;
     const segChanged = own !== undefined && before.holder !== holder;
-    if (!routine && !statusChanged && !segChanged && taken.length === 0 && lineEvent === undefined && lostEvent === undefined) continue;
+    if (!routine && !statusChanged && !segChanged && taken.length === 0 && lineEvent === undefined && lostEvent === undefined && sighted.length === 0) continue;
     w ??= begin(state, ctx);
     last ??= { ...state.lastReport };
     last[c.id] = { status: c.status, men: c.men, holder, atMin: M };
@@ -947,12 +963,15 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
       for (const x of segmentsOnLine(state, ctx, lineId, sectorId)) segments[x.id] = x.holder;
     }
     const enemy = seen(c);
+    const lines: Report['lines'] = lineEvent !== undefined ? { [key]: M } : {};
+    const lost: Record<string, number> = lostEvent !== undefined ? { [aim]: M } : {};
+    for (const [k, what] of sighted) (what === 'taken' ? lines : lost)[k] = M;
     const report: Report = {
       atMin: M,
       units: { [c.id]: { status: c.status, men: c.men, atMin: M } },
       segments,
-      lines: lineEvent !== undefined ? { [key]: M } : {},
-      ...(lostEvent !== undefined ? { lost: { [aim]: M } } : {}),
+      lines,
+      ...(Object.keys(lost).length ? { lost } : {}),
       ...(Object.keys(enemy).length ? { enemy } : {}),
     };
     const segEvent = segChanged && own!.holderEventId !== null ? own!.holderEventId : undefined;

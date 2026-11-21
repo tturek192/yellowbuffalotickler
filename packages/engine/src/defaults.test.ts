@@ -47,6 +47,11 @@ describe('defaults', () => {
     // Ends well before the time cap (Task 12: the command model's operations run it on to the Pimple, after 20:00 on 9
     // April; Task 13: the army's reserve divisions, arriving on 9 April, fight on into 10 April).
     expect(r.endMinute).toBeLessThan(2880);
+    // Task 13 fix round 1: every division and army that planned a counter-attack has it go in or give it up (none waits
+    // to the end on ground it cannot reach).
+    const planners = [...new Set(r.events.filter((e) => e.kind === 'reserve-ordered').map((e) => e.text.split(' orders ')[0]!))];
+    expect(planners.length).toBeGreaterThanOrEqual(4);
+    for (const p of planners) expect(r.events.some((e) => (e.kind === 'counter-attack-ordered' || e.kind === 'counter-attack-dropped') && e.text.startsWith(`${p} `)), p).toBe(true);
     expect(r.summary.lineTaken.length).toBeGreaterThan(0);
     // A whole Vimy run plus loading (see artillery.test.ts).
   }, 30_000);

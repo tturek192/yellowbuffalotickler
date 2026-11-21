@@ -10,6 +10,7 @@ import { runPipeline } from './pipeline';
 import { RESERVE_COLUMNS } from './record';
 import type { RunRecord } from './record';
 import { arrivalOf, reserveTimes } from './reserves';
+import { commandPhase } from './command';
 import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import { quietStep, SCHEDULES } from './schedule';
@@ -136,31 +137,32 @@ describe('reserves off the map', () => {
     expect(there.companies.find((c) => c.id === 'gres-g1')!.x).toBeCloseTo(150, -1);
   });
 
-  it('an army orders its own reserves once its picture shows a division that has committed its own and still lost its front', () => {
+  it('an army orders its own reserves only once its picture shows a division whose own reserves have arrived and gone in, and still lost its front', () => {
     const r = runStates(fixtureReserves({ armyOrderSpeed: 3 }), { endMinute: 700 });
     const events = r.states.flatMap((x) => x.events);
     const div = events.find((e) => e.kind === 'reserve-ordered' && /German Division orders/.test(e.text))!;
+    const divGo = events.find((e) => e.kind === 'counter-attack-ordered' && /German Division/.test(e.text))!;
     const army = events.find((e) => e.kind === 'reserve-ordered' && /German Army orders/.test(e.text))!;
     expect(army).toBeDefined();
     expect(army.text).toBe('German Army orders Reserve Division forward to German Division');
     expect(army.causes).toEqual(['ground-lost']);
-    expect(army.minute).toBeGreaterThan(div.minute);
-    // Only once its picture showed the division's own reserve set out (picture only: not when the division ordered it).
-    const knew = r.states.find((x) => x.minute === army.minute)!.hqs.find((h) => h.formationId === 'ga')!;
-    expect(['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4'].every((id) => knew.picture.units[id]!.status !== 'off-map')).toBe(true);
-    const before = r.states.find((x) => x.minute === army.minute - 2)!.hqs.find((h) => h.formationId === 'ga')!;
-    expect(['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4'].some((id) => before.picture.units[id]!.status === 'off-map')).toBe(true);
-    const earlier = r.states.find((x) => x.minute === div.minute + 16)!.hqs.find((h) => h.formationId === 'ga')!;
-    expect(earlier.picture.units['gres-g1']!.status).toBe('off-map');
+    // Not while the division's reserve is on its way (ordered, marching, walking on to its front): only after its
+    // divisional counter-attack has gone in, with the army's picture showing gres at its front.
+    expect(army.minute).toBeGreaterThan(divGo.minute);
+    expect(divGo.minute).toBeGreaterThan(div.minute);
+    const ga = (minute: number) => r.states.find((x) => x.minute === minute)!.hqs.find((h) => h.formationId === 'ga')!;
+    const onWay = (st: string) => st === 'off-map' || st === 'marching' || st === 'advancing';
+    expect(['gres-g1', 'gres-g2', 'gres-g3', 'gres-g4'].every((id) => !onWay(ga(army.minute).picture.units[id]!.status))).toBe(true);
+    for (const x of r.states.filter((y) => y.minute < army.minute)) expect(x.reserves.find((y) => y.formationId === 'ares')!.status).toBe('waiting');
     // The division rule's march and plan: its leader's orderSpeed, its arrival, its counter-attack plan.
     const at = r.states.find((x) => x.minute === army.minute)!;
     expect(at.reserves.find((x) => x.formationId === 'ares')).toMatchObject({ status: 'ordered', orderedBy: 'ga', orderedEventId: army.id });
-    expect(at.hqs.find((h) => h.formationId === 'ga')!.pending.map((p) => p.kind)).toEqual(['divisional-counter-attack']);
+    expect(at.hqs.find((h) => h.formationId === 'ga')!.pending.map((p) => [p.kind, p.frontId, p.reserveIds])).toEqual([['divisional-counter-attack', 'gd', ['ares']]]);
     expect(events.find((e) => e.kind === 'reserve-arrived' && /Reserve Division/.test(e.text))!.refs).toEqual([army.id]);
     const slow = runStates(fixtureReserves({ armyOrderSpeed: 1 }), { endMinute: 700 });
     const slowArmy = slow.states.flatMap((x) => x.events).find((e) => e.kind === 'reserve-ordered' && /German Army/.test(e.text))!;
     expect(slowArmy.causes).toEqual(['ground-lost', 'leader-slow']);
-    const delay = (x: typeof r, e: typeof army) => x.states.find((s) => s.minute === e.minute)!.reserves.find((y) => y.formationId === 'ares')!.arriveMin! - e.minute;
+    const delay = (x: typeof r, e: typeof army) => x.states.find((st) => st.minute === e.minute)!.reserves.find((y) => y.formationId === 'ares')!.arriveMin! - e.minute;
     expect(delay(slow, slowArmy) - delay(r, army)).toBeCloseTo(15 * (5 / 3 - 1), 6);
   });
 
@@ -172,12 +174,53 @@ describe('reserves off the map', () => {
     expect(arrived.causes).toEqual(['reserve-arrived']);
     expect(arrived.refs).toEqual([ofKind(r, 'reserve-ordered')[0]!.id]);
     expect(arrived.factors).toMatchObject({ companies: 4, men: 600 });
-    // On the map at the entry point once arrived (walking on to its front), and not before.
+    // On the map across the entry point once arrived (walking on to its front), and not before.
     const i = r.snapshots.findIndex((x) => x.minute >= arrived.minute);
     const row = r.snapshots[i]!.companies.rows.find((x) => x[0] === 'gres-g1')!;
-    expect([row[2], row[3], row[4]]).toEqual([200, 150, 'advancing']);
+    expect([row[3], row[4]]).toEqual([150, 'advancing']);
     expect(row[1] as number).toBeLessThanOrEqual(2500);
     expect(r.snapshots[i - 1]!.companies.rows.find((x) => x[0] === 'gres-g1')![4]).toBe('marching');
+  });
+
+  it('a planned counter-attack chooses its targets afresh from its picture, and gives up after counterAttackPatienceMin with none it can reach', () => {
+    // The attackers take ger-front-a and go on to the Black Line (x 1150): the division's whole front lies behind it, and kr
+    // (550 m off) reports the line taken, so once gres is there its plan has lost ground but none it can reach.
+    const run = runStates(fixtureReserves({ objective: 'black' }), { endMinute: 700 });
+    const events = run.states.flatMap((x) => x.events);
+    const gd = (x: SimState) => x.hqs.find((h) => h.formationId === 'gd')!;
+    expect(events.filter((e) => e.kind === 'counter-attack-ordered' && /German Division/.test(e.text))).toEqual([]);
+    const blocked = run.states.find((x) => gd(x).pending[0]?.blockedSinceMin !== undefined)!;
+    expect(blocked).toBeDefined();
+    expect(typeof gd(blocked).picture.lines['black|s1']).toBe('number');
+    const dropped = events.find((e) => e.kind === 'counter-attack-dropped')!;
+    expect(dropped).toMatchObject({ causes: ['out-of-reach'], minute: gd(blocked).pending[0]!.blockedSinceMin! + 120 });
+    expect(dropped.refs).toContain(events.find((e) => e.kind === 'reserve-ordered')!.id);
+    expect(run.states.find((x) => x.minute === dropped.minute)!.hqs.find((h) => h.formationId === 'gd')!.pending).toEqual([]);
+    // Chosen afresh: the same blocked plan, once its picture shows the Black Line lost, goes for the lost trench at once.
+    const known = { ...blocked, events: [], hqs: blocked.hqs.map((h) => (h.formationId === 'gd' ? { ...h, picture: { ...h.picture, lines: { ...h.picture.lines, 'black|s1': null } } } : h)) };
+    const go = commandPhase({ ...known, minute: blocked.minute + 2 }, run.ctx, 2).events.filter((e) => e.kind === 'counter-attack-ordered');
+    expect(go.map((e) => e.text)).toEqual([expect.stringMatching(/^German Division orders a counter-attack by \d+ companies on ger-front-a/)]);
+  });
+
+  it('comes on to the map spread along a frontage across its entry point, each company walking to its own place at the front', () => {
+    const run = runStates(fixtureReserves(), { endMinute: 400 });
+    const arrived = run.states.find((x) => x.events.some((e) => e.kind === 'reserve-arrived'))!;
+    const g = (st: SimState) => st.companies.filter((c) => c.battalionId === 'gres');
+    // companyFrontageM (200) apart along y, centred on the entry point (2500, 200); no two on one point.
+    expect(g(arrived).map((c) => [c.startX, c.startY])).toEqual([[2500, -100], [2500, 100], [2500, 300], [2500, 500]]);
+    const keys = g(arrived).map((c) => `${c.x}|${c.y}`);
+    expect(new Set(keys).size).toBe(4);
+    // Each to its own place along the front it was sent to, and there they stand apart.
+    const to = g(arrived).map((c) => JSON.stringify(c.orders.at(-1)!.target));
+    expect(new Set(to).size).toBe(4);
+    const there = run.states.find((x) => g(x).every((c) => c.status === 'holding'))!;
+    expect(new Set(g(there).map((c) => `${Math.round(c.x)}|${Math.round(c.y)}`)).size).toBe(4);
+    // Held inside the frame's extent: a long line closes up along the edge.
+    const f = fixtureReserves();
+    f[0].frame = { origin: { lon: 2.7, lat: 50.4 }, bearingDeg: est(75), extent: { minX: -1000, maxX: 2500, minY: 0, maxY: 450 } };
+    const inFrame = runStates(f, { endMinute: 400 });
+    const a2 = inFrame.states.find((x) => x.events.some((e) => e.kind === 'reserve-arrived'))!;
+    expect(g(a2).map((c) => c.startY)).toEqual([0, 150, 300, 450]);
   });
 
   it('a reserve with companies of its own brings them, to its entry point; nothing is made up', () => {

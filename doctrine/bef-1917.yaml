@@ -140,6 +140,13 @@ common:
     estimate: 'resting in a trench or a shelter, men recover slowly: four hours take off 0.2'
     description: Fatigue lost per hour of rest.
     calibrated: true
+  companyFrontageM:
+    value: 200
+    estimate: 'a company of 150 to 250 men in line, its platoons side by side with a pace or two between files and gaps between
+      the platoons, covers about 200 m; no figure was found in the sources read. Used to spread a reserve arriving from the map''s
+      edge along a frontage, not to fight'
+    description: Metres of frontage each company of a reserve takes when it comes on to the map, spread across its entry point.
+    calibrated: true
 ncoPenalty:
   rehearsed:
     value: 0.1
@@ -336,4 +343,11 @@ defence:
     estimate: 'taken as the German figure: a counter-attack that has failed is tried again once fresh men are gathered and the news of the first
       has come back, about an hour'
     description: Minutes after ordering a counter-attack before its headquarters may order another on the same ground, if it is still lost.
+    calibrated: true
+  counterAttackPatienceMin:
+    value: 120
+    estimate: 'a planned counter-attack whose headquarters can find no lost ground it can get at (every lost trench lies behind a line
+      the enemy holds) is given up after about two hours, the time for the news of the front to change twice over, and its troops
+      are free for a fresh plan. A judgement for Plan 4 to calibrate'
+    description: Minutes a planned counter-attack waits, its troops there, with no lost ground it can reach, before it is given up.
     calibrated: true

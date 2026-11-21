@@ -15,6 +15,8 @@ export const CAUSES = [
   // A trench taken back by a counter-attack its headquarters ordered (Task 12); a trench taken back that nobody held, its
   // takers having moved on (Task 12)
   'counter-attack', 'left-unheld',
+  // A planned counter-attack given up: all the lost ground it could retake lies behind a line the enemy holds (Task 13)
+  'out-of-reach',
   // Leadership and morale
   'officers-lost', 'led-by-ncos', 'morale-broke', 'suppressed', 'isolated',
   // No fire came in long enough for morale to recover (a company that fell back rallies, Task 10)

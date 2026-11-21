@@ -262,6 +262,7 @@ function toward(c: CompanyState, to: Point, speed: number, dt: number, wet: numb
 
 /** The place an order's target names, nearest to the company. */
 function targetPoint(c: CompanyState, target: OrderTarget, state: SimState, ctx: StepContext): Point | null {
+  if ('point' in target) return target.point;
   if ('segmentId' in target) {
     const seg = state.segments.find((s) => s.id === target.segmentId);
     if (!seg) return null;

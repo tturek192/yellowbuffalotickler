@@ -683,7 +683,7 @@ export function fixtureCounter(o: CounterOpts = {}): [Scenario, Models] {
   for (const d of Object.values(m.doctrines)) {
     d.defence = {
       ...d.defence!, localCounterAttackDelayMin: param(5), divisionalCounterAttackDelayMin: param(30), counterAttackMinRatio: param(0.75), commitReserveWhenLostFrac: param(0.25),
-      counterAttackMinMen: param(35), counterAttackRetryMin: param(60),
+      counterAttackMinMen: param(35), counterAttackRetryMin: param(60), counterAttackPatienceMin: param(120),
     };
     d.common.reportEveryMin = param(30);
   }
@@ -704,6 +704,8 @@ export type ReserveOpts = {
   rain?: boolean;
   /** gres's entry point x (default 2500; y 200). */
   entryX?: number;
+  /** The attackers' objective (fixtureCounter's; default the Front Line at x 250). */
+  objective?: CounterOpts['objective'];
   /**
    * Put the German division gd under an army `ga` (leader `al`, this orderSpeed) with an army reserve: the division `ares`,
    * no battalions (battalionsPerDivision 1 for it: four companies), 20 km back, entering at (2500, 300).
@@ -719,7 +721,7 @@ export type ReserveOpts = {
  * and 1.5 heavy machine guns), battalionsPerDivision 9; mud 0.6 in the rain.
  */
 export function fixtureReserves(o: ReserveOpts = {}): [Scenario, Models] {
-  const [s, m] = fixtureCounter({ divOrderSpeed: o.divOrderSpeed ?? 3, offMapReserve: true });
+  const [s, m] = fixtureCounter({ divOrderSpeed: o.divOrderSpeed ?? 3, offMapReserve: true, ...(o.objective ? { objective: o.objective } : {}) });
   const r = s.reserves[0]!;
   r.distanceKm = est(o.distanceKm ?? 8);
   if (o.orderedAt !== undefined) r.orderedAt = { value: o.orderedAt, estimate: 'test: a historical time, a validation target only' };
@@ -735,7 +737,7 @@ export function fixtureReserves(o: ReserveOpts = {}): [Scenario, Models] {
     s.reserves.push({ formationId: 'ares', side: 'central', distanceKm: est(20), entryPoint: [2500, 300] });
   }
   const de = m.doctrines['de-1917']!;
-  de.common = { ...de.common, baseOrderDelayMin: param(15), marchKmPerHour: param(4), deployMin: param(30) };
+  de.common = { ...de.common, baseOrderDelayMin: param(15), marchKmPerHour: param(4), deployMin: param(30), companyFrontageM: param(200) };
   de.companyDefaults = { ...de.companyDefaults, companiesPerBattalion: param(4), battalionsPerDivision: param(o.armyOrderSpeed === undefined ? 9 : 1), strength: param(150), officers: param(3), lewisGuns: param(1), machineGuns: param(1.5) };
   (m.tables.effects as Record<string, unknown>).mudSpeedFactor = param(0.6);
   return [s, m];

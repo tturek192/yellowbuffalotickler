@@ -43,6 +43,9 @@ describe('draft Vimy scenario run', () => {
     // 0.3.7 (Task 13): off-map reserves and the uphill counter-attack. The draft has no reserves, no terrain grid and no
     // German companies, so nothing marches, arrives or counter-attacks: removing the new (empty) snapshots[].reserves
     // tables and setting the version back gives 0.3.6's hash, e95e2f6f. Only the version and those tables move it.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.7', hash: '458e0fac' });
+    // 0.3.8 (Task 13 fix round 1): the defenders' picture of the attacker's lines, planned counter-attacks that re-target
+    // and give up, and reserves spread along a frontage. The draft has no German companies and no reserves: with the
+    // version set back to 0.3.7 its record hashes to 458e0fac, so only the version moves the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.8', hash: '2d202141' });
   });
 });

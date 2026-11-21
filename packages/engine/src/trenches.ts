@@ -92,18 +92,32 @@ export function inRear(seg: SegmentState, state: SimState, ctx: StepContext): bo
 }
 
 /**
- * Whether a segment lies behind a line its holder has taken and still holds (Task 13 ruling: a counter-attack cannot pass
- * through an intact enemy line): all of its trench inside that line's sector is more than `lineFeatureMatchM` behind the
- * line (on the attackers' side, lower x). A line lost again leaves `taken` (`loseLines`), and then the next line back
- * counts. Segments at or in front of the holder's furthest taken line are not behind it. `takers`: each taken line's
- * taker (`takerOf`), when the caller has them.
+ * Which side attacks each line in each sector, `lineId|sectorId`, fixed for the run: the side whose companies the plan
+ * sends at it (attackers, not garrisons or reserves), or whose operation does (Task 13). Looked up only.
  */
-export function behindTakenLine(seg: SegmentState, state: SimState, ctx: StepContext, takers?: ReadonlyMap<string, Side | null>): boolean {
-  if (state.taken.length === 0) return false;
+const lineTakers = new WeakMap<StepContext, Map<string, Side>>();
+export function lineTakerOf(state: Pick<SimState, 'companies'>, ctx: StepContext, key: string): Side | null {
+  let m = lineTakers.get(ctx);
+  if (!m) {
+    m = new Map();
+    for (const c of state.companies) if (c.objectiveLineId !== undefined && c.role !== 'garrison' && c.role !== 'reserve') m.set(`${c.objectiveLineId}|${c.sectorId}`, c.side);
+    for (const op of ctx.scenario.operations ?? []) if ('lineId' in op.target) m.set(`${op.target.lineId}|${op.target.sectorId}`, op.side);
+    lineTakers.set(ctx, m);
+  }
+  return m.get(key) ?? null;
+}
+
+/**
+ * Whether a segment lies behind one of these lines (`lineId|sectorId` keys: lines its holder has taken and holds, as a
+ * headquarters believes; Task 13 ruling, a counter-attack cannot pass through an intact enemy line): all of its trench
+ * inside that line's sector more than `lineFeatureMatchM` behind the line (on the attackers' side, lower x). A segment at
+ * or in front of the furthest of them is not behind any.
+ */
+export function behindLines(seg: SegmentState, keys: readonly string[], state: Pick<SimState, 'companies'>, ctx: StepContext): boolean {
+  if (keys.length === 0) return false;
   const match = v(ctx.tables.effects.lineFeatureMatchM);
   const pts = segmentSamples(ctx, seg, state.companies);
-  for (const key of state.taken) {
-    if ((takers ? takers.get(key) : takerOf(state, key)) !== seg.holder) continue;
+  for (const key of keys) {
     const [lineId, sectorId] = key.split('|') as [string, string];
     const line = ctx.lines.get(lineId);
     const sector = ctx.scenario.sectors.find((x) => x.id === sectorId);
