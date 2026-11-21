@@ -1,7 +1,7 @@
 # Deadlock 1916 — Design
 
 Date: 2026-11-21
-Status: draft for the owner's approval (includes the owner's answers of 2026-11-21)
+Status: approved by the owner on 2026-11-21
 Working title: **Deadlock 1916** (the owner's name for now)
 Extends: `docs/superpowers/specs/2026-11-20-wwi-battle-simulator-design.md` (the "base design"). Everything there still binds unless this document changes it, and the changes are listed in "Decisions this changes".
 
