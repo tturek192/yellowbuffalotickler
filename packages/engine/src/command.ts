@@ -118,6 +118,14 @@ type Topo = {
 };
 const topologies = new WeakMap<StepContext, Topo>();
 
+/** Each headquarters' place in the state's list, worked out once for each list (never changed once made). */
+const hqIndexMemo = new WeakMap<readonly HqState[], Map<string, number>>();
+function hqIndexOf(hqs: readonly HqState[]): Map<string, number> {
+  let m = hqIndexMemo.get(hqs);
+  if (!m) hqIndexMemo.set(hqs, (m = new Map(hqs.map((h, i) => [h.formationId, i]))));
+  return m;
+}
+
 function topologyOf(state: SimState, ctx: StepContext): Topo {
   const hit = topologies.get(ctx);
   if (hit) return hit;
@@ -323,7 +331,7 @@ function orderCompanies(w: Work, h: HqState, ids: readonly string[], o: Omit<Ord
 
 export function commandPhase(state: SimState, ctx: StepContext, dt: number): SimState {
   const topo = topologyOf(state, ctx);
-  const w: Work = { state, ctx, topo, hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map(), reach: new Map() };
+  const w: Work = { state, ctx, topo, hqAt: hqIndexOf(state.hqs), memo: new Map(), reach: new Map() };
   hearBack(w);
   offMapAttacks(w, dt);
   localCounterAttacks(w);
@@ -410,14 +418,13 @@ const ownLines = (w: Work, h: HqState): string[] => linesBy(w, h.picture.lines, 
  * Worked out once for each picture's lines: a headquarters' picture is copied when written (comms.ts `hqForWrite`) and
  * never changed after the step that wrote it, so the same lines object always gives the same answer.
  */
-const linesMemo = new WeakMap<object, Map<string, string[]>>();
+type LinesBy = { allied?: string[]; central?: string[]; alliedTaken?: string[]; centralTaken?: string[] };
+const linesMemo = new WeakMap<object, LinesBy>();
 function linesBy(w: Work, lines: HqState['picture']['lines'], side: Side, taken: boolean): string[] {
   let m = linesMemo.get(lines);
-  if (!m) linesMemo.set(lines, (m = new Map()));
-  const key = `${side}|${taken}`;
-  let hit = m.get(key);
-  if (!hit) m.set(key, (hit = Object.keys(lines).filter((k) => (!taken || typeof lines[k] === 'number') && lineTakerOf(w.state, w.ctx, k) === side)));
-  return hit;
+  if (!m) linesMemo.set(lines, (m = {}));
+  const key = taken ? (side === 'allied' ? 'alliedTaken' : 'centralTaken') : side;
+  return (m[key] ??= Object.keys(lines).filter((k) => (!taken || typeof lines[k] === 'number') && lineTakerOf(w.state, w.ctx, k) === side));
 }
 
 /** When the HQ believes the segment changed hands: what its picture was told, else now. */
@@ -866,7 +873,12 @@ function readiness(w: Work, op: Operation): { h: HqState; force: string[] } | nu
   return force.length ? { h, force } : null;
 }
 
-const notBeforeMin = (w: Work, op: Operation): number => (op.notBefore === undefined ? -Infinity : minutesBetween(v(w.ctx.scenario.zeroHour), op.notBefore));
+const notBeforeMemo = new WeakMap<Operation, number>();
+const notBeforeMin = (w: Work, op: Operation): number => {
+  let m = notBeforeMemo.get(op);
+  if (m === undefined) notBeforeMemo.set(op, (m = op.notBefore === undefined ? -Infinity : minutesBetween(v(w.ctx.scenario.zeroHour), op.notBefore)));
+  return m;
+};
 
 function operations(w: Work): void {
   const M = w.state.minute;
@@ -905,7 +917,7 @@ function operations(w: Work): void {
 
 // ---- scheduled minutes, and whether the command model has anything in hand -----------------------------------------
 
-const workOf = (state: SimState, ctx: StepContext): Work => ({ state, ctx, topo: topologyOf(state, ctx), hqAt: new Map(state.hqs.map((h, i) => [h.formationId, i])), memo: new Map(), reach: new Map() });
+const workOf = (state: SimState, ctx: StepContext): Work => ({ state, ctx, topo: topologyOf(state, ctx), hqAt: hqIndexOf(state.hqs), memo: new Map(), reach: new Map() });
 
 /** The minutes lines will count as stalled at HQs with a reserve battalion to send. A decision moves nobody (its order does, on arrival). */
 export function stallChecks(state: SimState, ctx: StepContext): Scheduled[] {

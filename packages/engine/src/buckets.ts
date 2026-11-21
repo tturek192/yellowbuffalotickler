@@ -1,3 +1,5 @@
+import { dist } from './geometry';
+
 /**
  * A uniform grid of square buckets over the field, so that "who is within r of here" looks only at nearby
  * buckets instead of at every unit (fire, contact and isolation all ask it). The bucket size is a
@@ -67,7 +69,7 @@ export function within<T extends At>(b: Buckets<T>, x: number, y: number, r: num
   if (!(r >= 0)) return [];
   const out: Array<{ item: T; d: number }> = [];
   scan(b, x, y, r, (it) => {
-    const d = Math.hypot(it.x - x, it.y - y);
+    const d = dist(it.x - x, it.y - y);
     if (d <= r) out.push({ item: it, d });
   });
   return out.length > 1 ? out.sort((a, b2) => a.d - b2.d || tie(a.item, b2.item)) : out;
@@ -78,7 +80,7 @@ export function anyWithin<T extends At>(b: Buckets<T>, x: number, y: number, r: 
   if (!(r >= 0)) return false;
   let found = false;
   scan(b, x, y, r, (it) => {
-    if (Math.hypot(it.x - x, it.y - y) <= r && ok(it)) found = true;
+    if (dist(it.x - x, it.y - y) <= r && ok(it)) found = true;
     return found;
   });
   return found;
@@ -89,7 +91,7 @@ export function nearestWithin<T extends At>(b: Buckets<T>, x: number, y: number,
   if (!(r >= 0)) return undefined;
   let best: { item: T; d: number } | undefined;
   scan(b, x, y, r, (it) => {
-    const d = Math.hypot(it.x - x, it.y - y);
+    const d = dist(it.x - x, it.y - y);
     if (d > r) return;
     if (best === undefined || d < best.d || (d === best.d && tie(it, best.item) < 0)) best = { item: it, d };
   });
@@ -113,7 +115,7 @@ export function nearestAccepted<T extends At>(
   if (!(r >= 0) || !(max > 0)) return [];
   const all: Array<{ item: T; d: number }> = [];
   scan(b, x, y, r, (it) => {
-    const d = Math.hypot(it.x - x, it.y - y);
+    const d = dist(it.x - x, it.y - y);
     if (d <= r) all.push({ item: it, d });
   });
   const out: Array<{ item: T; d: number }> = [];

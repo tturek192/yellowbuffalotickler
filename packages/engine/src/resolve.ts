@@ -105,7 +105,8 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
     const r = done[i];
     const used = usedBy.get(c.id) ?? 0;
     const ammo = used > 0 ? Math.max(0, c.ammo - used) : c.ammo;
-    const recent = c.recentFire.filter((x) => x.minute > since);
+    // Fire is noted in minute order, so nothing has gone stale while the oldest is still recent.
+    const recent = c.recentFire.length === 0 || c.recentFire[0]!.minute > since ? c.recentFire : c.recentFire.filter((x) => x.minute > since);
     let next: CompanyState = ammo === c.ammo && recent.length === c.recentFire.length ? c : { ...c, ammo, recentFire: recent };
     if (c.ammo > 0 && ammo <= 0) {
       later.push({ minute: state.minute, kind: 'ammunition-exhausted', unitId: c.id, ...(c.sectorId ? { sectorId: c.sectorId } : {}), text: `${c.name} has fired its last rounds`, causes: ['ammunition-low'] });

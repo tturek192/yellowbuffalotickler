@@ -86,12 +86,13 @@ function slotsOf(c: CompanyState, d: Doctrine, tables: Tables): Slot[] {
  * What firers last saw (a numerical shortcut, not a model rule: answers never depend on it): each firer's targets when it
  * last looked, and where every company that could be seen stood then. A firer's targets are the same as then while it
  * stands where it stood, with the same reach and visibility, and no company that could be seen has come, gone or moved
- * within its reach (the places before and after both count).
+ * within its reach (the places before and after both count) — or, once it had all the targets it can take, no nearer than
+ * the farthest of them: those further off were never looked at.
  */
 type TargetMemo = {
   seen: Tracker;
   /** By the firer's place in the state's companies; its targets by their places. */
-  byFirer: Array<{ x: number; y: number; reach: number; visM: number; at: number[]; r: number[] } | undefined>;
+  byFirer: Array<{ x: number; y: number; reach: number; visM: number; within: number; at: number[]; r: number[] } | undefined>;
 };
 const memos = new WeakMap<StepContext, TargetMemo>();
 
@@ -149,13 +150,15 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
     const foe = enemyOf(f.side);
     const last = was[fi];
     let targets: Array<{ t: CompanyState; r: number }>;
-    if (last && last.x === f.x && last.y === f.y && last.reach === reach && last.visM === visM && !changedNear(moved, foe, f.x, f.y, reach)) {
+    if (last && last.x === f.x && last.y === f.y && last.reach === reach && last.visM === visM && !changedNear(moved, foe, f.x, f.y, last.within)) {
       targets = last.at.map((k, i) => ({ t: state.companies[k]!, r: last.r[i]! }));
       looked[fi] = last;
     } else {
       const from: [number, number] = [f.x, f.y];
       targets = nearestAccepted(gridOf(foe), f.x, f.y, reach, byId, maxTargets, (t, r) => visibility(r, visM) > 0 && lineOfSight(ctx.world, from, [t.x, t.y])).map(({ item: t, d: r }) => ({ t, r }));
-      looked[fi] = { x: f.x, y: f.y, reach, visM, at: targets.map((x) => indexOf(x.t)), r: targets.map((x) => x.r) };
+      // Only enemies as near as its farthest target count once it has all it can take; else any within reach.
+      const within = targets.length >= maxTargets ? targets[targets.length - 1]!.r : reach;
+      looked[fi] = { x: f.x, y: f.y, reach, visM, within, at: targets.map((x) => indexOf(x.t)), r: targets.map((x) => x.r) };
     }
     if (targets.length === 0) continue;
 

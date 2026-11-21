@@ -1,10 +1,11 @@
 import { minutesBetween, ScenarioError, v } from '@wwi/scenario';
 import type { Point, Scenario, Weapon } from '@wwi/scenario';
 import { bandAt, barrageXAt, planReachX } from './barrage';
+import { bucketsOf, inBox } from './buckets';
 import { emit } from './causes';
 import type { Cause, NewEvent } from './causes';
 import type { CompanyState } from './companies';
-import { lineXAt } from './geometry';
+import { lineXAt, dist } from './geometry';
 import { distToSegment, groundAt, inPolygon } from './ground';
 import { visibilityM } from './light';
 import { round } from './record';
@@ -89,7 +90,12 @@ function sideOfCompany(state: SimState, ctx: StepContext, id: string): Side | un
 /** The distance from p to the nearest of the points. */
 export const distanceTo = (pts: readonly Point[], p: Point): number => {
   let d = Infinity;
-  for (const q of pts) d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1]));
+  const px = p[0];
+  const py = p[1];
+  for (let i = 0; i < pts.length; i++) {
+    const q = pts[i]!;
+    d = Math.min(d, dist(q[0] - px, q[1] - py));
+  }
   return d;
 };
 
@@ -453,10 +459,12 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     return b !== null && p[0] > b[1] && p[0] <= planReachX(sec, ctx.lines, p[1]) ? sec : null;
   };
   for (const side of SIDES) {
+    // With no band going, nothing lies ahead of one: no targets.
+    const batteries = bats.filter((b) => b.side === side && (b.role === 'standing' || b.role === 'heavy') && inAction(b));
+    if (active.length === 0 || batteries.length === 0) continue;
     const targets = state.segments.filter((seg) => seg.holder !== side && !covered.has(seg.id) && seg.lengthM > 0 && segmentSamples(ctx, seg, state.companies).some((p) => ahead(p) !== null));
     const frontage = sum(targets, (x) => x.lengthM);
-    const batteries = bats.filter((b) => b.side === side && (b.role === 'standing' || b.role === 'heavy') && inAction(b));
-    if (targets.length === 0 || batteries.length === 0) continue;
+    if (targets.length === 0) continue;
     const minOf = new Map(targets.map((seg) => [seg.id, Math.max(...segmentSamples(ctx, seg, state.companies).map((p) => { const sec = ahead(p); return sec ? firing(sec) : 0; }))]));
     const share = sum(targets, (x) => x.lengthM * (minOf.get(x.id)! / dt)) / frontage;
     const spent = spend(batteries, ctx, dt, share);
@@ -502,11 +510,20 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
       }
       return { x, pts, x0: x0 - near, x1: x1 + near };
     });
+    // The enemy companies near a lost segment's trench, found from each segment through buckets (the same test as before).
+    const onLost = new Set<CompanyState>();
+    if (zones.length) {
+      const grid = bucketsOf(field.filter((c) => c.side !== side));
+      for (const z of zones)
+        inBox(grid, z.x0, z.x.yMin - near, z.x1, z.x.yMax + near, (c) => {
+          if (!onLost.has(c) && c.y >= z.x.yMin - near && c.y <= z.x.yMax + near && c.x >= z.x0 && c.x <= z.x1 && distanceTo(z.pts, at(c)) <= near) onLost.add(c);
+        });
+    }
     const targets = field.filter((c) => {
       if (c.side === side) return false;
       const nml = nmlAt(ctx, side, c.y);
       if (nml && c.x >= nml[0] && c.x <= nml[1]) return true;
-      return zones.some((z) => c.y >= z.x.yMin - near && c.y <= z.x.yMax + near && c.x >= z.x0 && c.x <= z.x1 && distanceTo(z.pts, at(c)) <= near);
+      return onLost.has(c);
     });
     const frontage = noMansLandWidth(ctx, side) + sum(lost, (x) => x.lengthM);
     if (targets.length === 0 || !(frontage > 0)) continue;

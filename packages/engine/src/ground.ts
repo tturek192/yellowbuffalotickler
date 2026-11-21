@@ -90,8 +90,10 @@ export function cellOf(w: World, p: Point): number {
 export function inPolygon(pts: Point[], x: number, y: number): boolean {
   let inside = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const [xi, yi] = pts[i]!;
-    const [xj, yj] = pts[j]!;
+    const xi = pts[i]![0];
+    const yi = pts[i]![1];
+    const xj = pts[j]![0];
+    const yj = pts[j]![1];
     if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
   }
   return inside;

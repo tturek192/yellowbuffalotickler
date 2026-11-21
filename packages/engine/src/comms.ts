@@ -471,7 +471,15 @@ function enqueue(q: Message[], m: Message): void {
   q.splice(lo, 0, m);
 }
 
-const companyAt = (w: Work): Map<string, CompanyState> => (w.companyAt ??= new Map((w.companies ?? w.state.companies).map((c) => [c.id, c])));
+const companyAt = (w: Work): Map<string, CompanyState> => (w.companyAt ??= byIdOf(w.companies ?? w.state.companies));
+
+/** The companies by id, worked out once for each companies array (a state's array is never changed once made). */
+const byIdMemo = new WeakMap<readonly CompanyState[], Map<string, CompanyState>>();
+function byIdOf(cs: readonly CompanyState[]): Map<string, CompanyState> {
+  let m = byIdMemo.get(cs);
+  if (!m) byIdMemo.set(cs, (m = new Map(cs.map((c) => [c.id, c]))));
+  return m;
+}
 
 const posOf = (w: Work, id: string): Point | null => {
   const c = companyAt(w).get(id);
@@ -688,6 +696,25 @@ const ABOUT = 32;
 const PLANS = 64;
 const PICTURE = UNITS | SEGMENTS | LINES | ENEMY | ABOUT | PLANS;
 
+/**
+ * A copy of a picture's `about` to write to: a fresh object over the one before (its prototype), so a copy costs nothing
+ * however much the HQ knows; every LAYERS_MAX copies they are flattened into one. `about` is only ever read by key
+ * (command.ts `aboutOf`), never listed or spread, so a key reads the same either way.
+ */
+const LAYERS_MAX = 8;
+const layerDepth = new WeakMap<object, number>();
+function layered<T extends Record<string, number>>(o: T): T {
+  const depth = layerDepth.get(o) ?? 0;
+  if (depth < LAYERS_MAX) {
+    const next = Object.create(o) as T;
+    layerDepth.set(next, depth + 1);
+    return next;
+  }
+  const flat = {} as Record<string, number>;
+  for (const k in o) flat[k] = o[k]!;
+  return flat as T;
+}
+
 /** An HQ for writing the parts named (bits): each part copied once a step, the rest shared with the step before. */
 function hqForWrite(w: Work, i: number, parts: number): HqState {
   const need = parts & ~w.touched[i]!;
@@ -704,7 +731,7 @@ function hqForWrite(w: Work, i: number, parts: number): HqState {
             linesLost: need & LINES ? { ...p.linesLost } : p.linesLost,
             units: need & UNITS ? { ...p.units } : p.units,
             enemy: need & ENEMY ? { ...p.enemy } : p.enemy,
-            about: need & ABOUT ? { ...p.about } : p.about,
+            about: need & ABOUT ? layered(p.about) : p.about,
             plans: need & PLANS ? { ...p.plans } : p.plans,
           }
         : p,
@@ -990,8 +1017,8 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     const had = state.lastReport[c.id];
     const before = had ?? { status: c.status, men: c.men, holder: null, atMin: M };
     const routine = had !== undefined && c.men !== had.men && M >= had.atMin + every(c);
-    const aim = c.objectiveLineId === undefined ? '' : `${c.objectiveLineId}|${c.sectorId}`;
-    const lostEvent = aim && linesLost.size ? linesLost.get(aim) : undefined;
+    const aim = c.objectiveLineId === undefined || linesLost.size === 0 ? '' : `${c.objectiveLineId}|${c.sectorId}`;
+    const lostEvent = aim ? linesLost.get(aim) : undefined;
     const sighted = enemyLineEvents.length ? seesLines(c) : [];
     if (!anySeg && !routine && before.status === c.status && !(c.status === 'consolidating' && linesTaken.size) && lostEvent === undefined && sighted.length === 0) continue;
     const own = c.segmentId === undefined ? undefined : holderOf.get(c.segmentId);
@@ -1052,6 +1079,8 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
  * `observerRangeM` of it, with the men of the enemy up there (on the field, not down in dugouts, within `captureRadiusM`
  * of its trench), segments in order. Each segment's men are counted once a step.
  */
+const zoneMemo = new WeakMap<StepContext, Map<string, string[]>>();
+
 function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Record<string, { men: number; atMin: number }> {
   const range = v(ctx.tables.effects.observerRangeM);
   const near = v(ctx.tables.effects.captureRadiusM);
@@ -1070,7 +1099,7 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
     return n;
   };
   const zones = lineZones(state, ctx);
-  const byId = new Map(state.companies.map((x) => [x.id, x]));
+  const byId = byIdOf(state.companies);
   // The losses seen among companies: casualties in battle and men captured (not the bombardment's, which nobody saw).
   const boxes = new Map<string, [number, number, number, number]>();
   const boxOf = (id: string, pts: readonly Point[]): [number, number, number, number] => {
@@ -1090,7 +1119,9 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
     }
     return n > 0 ? { lost: n } : {};
   };
-  const zoneIds = new Map<string, string[]>();
+  // By where the plan put them at Zero, which never changes: worked out once a run.
+  let zoneIds = zoneMemo.get(ctx);
+  if (!zoneIds) zoneMemo.set(ctx, (zoneIds = new Map()));
   const zoneCompanies = (z: LineZone): string[] => {
     let ids = zoneIds.get(z.key);
     if (!ids) zoneIds.set(z.key, (ids = state.companies.filter((x) => x.side !== z.side && inZone(z, x.startX, x.startY, match)).map((x) => x.id)));

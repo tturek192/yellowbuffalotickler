@@ -97,6 +97,16 @@ function weatherVisibilityM(s: Scenario, minute: number): number {
  * the night and twilight values.
  */
 export function visibilityM(s: Scenario, tables: Tables, minuteAfterZero: number): number {
+  // Asked several times a step for the same minute: the last answer is kept (it depends on nothing else).
+  const last = lastVisibility.get(s);
+  if (last && last.tables === tables && last.minute === minuteAfterZero) return last.value;
+  const value = workVisibilityM(s, tables, minuteAfterZero);
+  lastVisibility.set(s, { tables, minute: minuteAfterZero, value });
+  return value;
+}
+const lastVisibility = new WeakMap<Scenario, { tables: Tables; minute: number; value: number }>();
+
+function workVisibilityM(s: Scenario, tables: Tables, minuteAfterZero: number): number {
   const weather = weatherVisibilityM(s, minuteAfterZero);
   const night = Math.min(weather, v(tables.effects.nightVisibilityM));
   const f = daylight(s, tables, minuteAfterZero);

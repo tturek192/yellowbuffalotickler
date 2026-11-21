@@ -31,8 +31,14 @@ const sum = <T>(xs: readonly T[], f: (x: T) => number): number => xs.reduce((t, 
 const sortedUnique = (xs: number[]): number[] => xs.filter((x, i) => xs.indexOf(x) === i).sort((a, b) => a - b);
 const ordered = (cs: Cause[]): Cause[] => CAUSES.filter((x) => cs.includes(x));
 
-/** The box around a segment's trench samples, for cheap "could it be within r" tests. */
+/** The box around a segment's trench samples, for cheap "could it be within r" tests (worked out once for each samples array). */
+const boxMemo = new WeakMap<readonly Point[], [number, number, number, number]>();
 function boxOf(pts: readonly Point[]): [number, number, number, number] {
+  let hit = boxMemo.get(pts);
+  if (!hit) boxMemo.set(pts, (hit = workBox(pts)));
+  return hit;
+}
+function workBox(pts: readonly Point[]): [number, number, number, number] {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const [x, y] of pts) {
     x0 = Math.min(x0, x);
@@ -126,15 +132,22 @@ export function lineTakerOf(state: Pick<SimState, 'companies'>, ctx: StepContext
  */
 export function behindLines(seg: SegmentState, keys: readonly string[], state: Pick<SimState, 'companies'>, ctx: StepContext): boolean {
   if (keys.length === 0) return false;
-  // The answer is the segment's and the lines' geometry only: worked out once for each segment and set of lines.
+  // The answer is the segment's and the lines' geometry only: worked out once for each segment and set of lines (by the
+  // keys array itself while the caller keeps it, as command.ts's memoised lists are; else by its contents).
+  let byArray = behindByArray.get(keys);
+  if (!byArray) behindByArray.set(keys, (byArray = new Map()));
+  let hit = byArray.get(seg.id);
+  if (hit !== undefined) return hit;
   let memo = behindMemo.get(ctx);
   if (!memo) behindMemo.set(ctx, (memo = new Map()));
   const key = `${seg.id}#${keys.join('#')}`;
-  let hit = memo.get(key);
+  hit = memo.get(key);
   if (hit === undefined) memo.set(key, (hit = isBehindLines(seg, keys, state, ctx)));
+  byArray.set(seg.id, hit);
   return hit;
 }
 const behindMemo = new WeakMap<StepContext, Map<string, boolean>>();
+const behindByArray = new WeakMap<readonly string[], Map<string, boolean>>();
 
 function isBehindLines(seg: SegmentState, keys: readonly string[], state: Pick<SimState, 'companies'>, ctx: StepContext): boolean {
   const match = v(ctx.tables.effects.lineFeatureMatchM);
@@ -192,7 +205,7 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
   let out = state;
   const upOf = (cs: readonly CompanyState[]) => cs.filter((c) => onField(c) && c.posture !== 'in-dugout');
   // Each side's companies up, and those of them that can take a trench (not waiting, not falling back), from `up`.
-  type Pools = { up: CompanyState[]; holders: Record<Side, CompanyState[]>; takers: Record<Side, Buckets<CompanyState>> };
+  type Pools = { up: CompanyState[]; holders: Record<Side, CompanyState[]>; settled: Record<Side, CompanyState[]>; takers: Record<Side, Buckets<CompanyState>> };
   const poolsOf = (cs: CompanyState[]): Pools => {
     const holders: Record<Side, CompanyState[]> = { allied: [], central: [] };
     const takers: Record<Side, CompanyState[]> = { allied: [], central: [] };
@@ -200,7 +213,12 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
       holders[c.side].push(c);
       if (c.status !== 'waiting' && c.status !== 'falling-back') takers[c.side].push(c);
     }
-    return { up: cs, holders, takers: { allied: bucketsOf(takers.allied), central: bucketsOf(takers.central) } };
+    return {
+      up: cs,
+      holders,
+      settled: { allied: holders.allied.filter(isSettled), central: holders.central.filter(isSettled) },
+      takers: { allied: bucketsOf(takers.allied), central: bucketsOf(takers.central) },
+    };
   };
   let pools = poolsOf(upOf(state.companies));
   for (let i = 0; i < state.segments.length; i++) {
@@ -214,7 +232,7 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
     if (!(a > 0)) continue;
     // Nobody enters a trench a barrage is falling on (as with trapping, gap.ts): only the trench near them matters.
     if (barrageNear(seg, ctx, out.companies, out.minute, attackers.map((x) => at(x.c)), r)) continue;
-    const d = segmentDefenders(seg, pts, pools.holders[seg.holder], ctx).men;
+    const d = segmentDefenders(seg, pts, pools.holders[seg.holder], ctx, pools.settled[seg.holder]).men;
     // An ORDERED counter-attack (the command model's, Task 12) is not held off by the rear rule: reaching a segment in its
     // holder's rear with nobody there to hold it, it takes it back (with defenders, it needs the 3:1 as anyone does).
     const onOrder = attackers.flatMap((x) => {
@@ -316,14 +334,17 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
  * quantity the fight is resolved on): `holders` (its holder's companies up on the field) within `captureRadiusM` of its
  * trench, and, except on a garrison's first loss, those of them consolidating or holding within `lineFeatureMatchM`.
  */
-export function segmentDefenders(seg: SegmentState, pts: readonly Point[], holders: readonly CompanyState[], ctx: StepContext): { men: number; ids: string[] } {
+export function segmentDefenders(seg: SegmentState, pts: readonly Point[], holders: readonly CompanyState[], ctx: StepContext, settled?: readonly CompanyState[]): { men: number; ids: string[] } {
   const fx = ctx.tables.effects;
   const firstLoss = seg.holder === seg.garrisonSide && seg.holderEventId === null;
   const close = nearSegment(holders, pts, v(fx.captureRadiusM));
-  const onLine = firstLoss ? [] : nearSegment(holders.filter((c) => c.status === 'consolidating' || c.status === 'holding'), pts, v(fx.lineFeatureMatchM));
+  // `settled`: those of the holders consolidating or holding, when the caller has them already.
+  const onLine = firstLoss ? [] : nearSegment(settled ?? holders.filter(isSettled), pts, v(fx.lineFeatureMatchM));
   const all = [...close, ...onLine.filter((x) => !close.some((y) => y.c.id === x.c.id))];
   return { men: sum(all, (x) => x.c.men), ids: all.map((x) => x.c.id) };
 }
+
+const isSettled = (c: CompanyState): boolean => c.status === 'consolidating' || c.status === 'holding';
 
 /**
  * Guns overrun: every capturable battery (`capturable`) not yet taken whose position lies within `gunCaptureRadiusM`

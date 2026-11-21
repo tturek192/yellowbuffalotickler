@@ -71,10 +71,12 @@ export type StepContext = {
   onPhase?: (name: PhaseName) => void;
 };
 
-/** Statuses of companies that are not on the field as a fighting body. */
-const GONE: ReadonlySet<string> = new Set(['surrendered', 'destroyed', 'off-map', 'marching']);
 /** On the field as a fighting body: men standing, and not surrendered, destroyed, off the map or marching. */
-export const onField = (c: CompanyState): boolean => c.men > 0 && !GONE.has(c.status);
+export const onField = (c: CompanyState): boolean => {
+  if (!(c.men > 0)) return false;
+  const s = c.status;
+  return s !== 'surrendered' && s !== 'destroyed' && s !== 'off-map' && s !== 'marching';
+};
 
 /** A company that can fight with its own weapons: on the field, up (not down in its dugouts), with ammunition left. */
 export const armed = (c: CompanyState): boolean => onField(c) && c.posture !== 'in-dugout' && c.ammo > 0;
@@ -141,7 +143,9 @@ export function takeLines(state0: SimState, ctx: StepContext): SimState {
   for (const c of state.companies) {
     if (!aimsAtLine(c)) continue;
     const key = `${c.objectiveLineId}|${c.sectorId}`;
-    groups.set(key, [...(groups.get(key) ?? []), c]);
+    const g = groups.get(key);
+    if (g) g.push(c);
+    else groups.set(key, [c]);
   }
   const uncutBelow = v(ctx.tables.effects.wireUncutBelow);
   let out = state;

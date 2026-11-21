@@ -182,8 +182,10 @@ function trenchXAt(f: Feature, y: number): number | null {
   const pts = featurePoints(f);
   let best: number | null = null;
   for (let i = 0; i < pts.length - 1; i++) {
-    const [ax, ay] = pts[i]!;
-    const [bx, by] = pts[i + 1]!;
+    const ax = pts[i]![0];
+    const ay = pts[i]![1];
+    const bx = pts[i + 1]![0];
+    const by = pts[i + 1]![1];
     if (y < Math.min(ay, by) || y > Math.max(ay, by)) continue;
     const x = ay === by ? Math.min(ax, bx) : ax + ((y - ay) / (by - ay)) * (bx - ax);
     best = best === null ? x : Math.min(best, x);
