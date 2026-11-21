@@ -1,8 +1,10 @@
+import { v } from '@wwi/scenario';
 import type { Doctrine, Point, Scenario, Tables, Terrain } from '@wwi/scenario';
 import type { World } from './ground';
 import type { BarrageState } from './barrage';
 import { emit } from './causes';
-import { isHolding } from './companies';
+import { bucketsOf, within } from './buckets';
+import { byId, isHolding } from './companies';
 import type { CompanyState } from './companies';
 import type { PhaseName } from './pipeline';
 import type { BatteryState, HqState, Message, ReserveState, SegmentState, Side, SimEvent } from './types';
@@ -61,12 +63,13 @@ export const onField = (c: CompanyState): boolean => c.men > 0 && !GONE.has(c.st
  * within its doctrine's `closeRangeM` of an enemy company on the field.
  */
 export function inContact(state: SimState, ctx: StepContext): boolean {
-  const enemies = { allied: [] as CompanyState[], central: [] as CompanyState[] };
-  for (const c of state.companies) if (onField(c)) enemies[c.side === 'allied' ? 'central' : 'allied'].push(c);
-  for (const a of state.companies) {
-    if (isHolding(a) || !onField(a)) continue;
-    const r = ctx.doctrines[a.doctrineId]!.common.closeRangeM.value;
-    for (const e of enemies[a.side]) if (Math.hypot(e.x - a.x, e.y - a.y) <= r) return true;
+  const field = state.companies.filter(onField);
+  // Each side's enemies, in buckets (buckets.ts), so contact never looks at every pair.
+  const enemies = { allied: bucketsOf(field.filter((c) => c.side === 'central')), central: bucketsOf(field.filter((c) => c.side === 'allied')) };
+  for (const a of field) {
+    if (isHolding(a)) continue;
+    const r = v(ctx.doctrines[a.doctrineId]!.common.closeRangeM);
+    if (within(enemies[a.side], a.x, a.y, r, byId).length > 0) return true;
   }
   return false;
 }
@@ -76,10 +79,15 @@ const MOVING: ReadonlySet<string> = new Set(['advancing', 'falling-back', 'count
 
 /**
  * Busy: something is happening that needs the fine step and close snapshots — contact, a barrage
- * lifting, or a company on the move. Otherwise the battle is quiet.
+ * lifting, a company on the move, fire coming in on a company this step, or a company pinned (whose
+ * recovery sets it moving again). Otherwise the battle is quiet.
  */
 export function isBusy(state: SimState, ctx: StepContext): boolean {
-  return state.barrages.some((b) => b.phase === 'lifting') || state.companies.some((c) => MOVING.has(c.status)) || inContact(state, ctx);
+  return (
+    state.barrages.some((b) => b.phase === 'lifting') ||
+    state.companies.some((c) => MOVING.has(c.status) || c.status === 'pinned' || c.recentFire.some((f) => f.minute === state.minute)) ||
+    inContact(state, ctx)
+  );
 }
 
 /**
@@ -89,7 +97,8 @@ export function isBusy(state: SimState, ctx: StepContext): boolean {
 export function takeLines(state: SimState, ctx: StepContext): SimState {
   const groups = new Map<string, CompanyState[]>();
   for (const c of state.companies) {
-    if (isHolding(c)) continue;
+    // Garrisons and reserves (and a garrison that has given up, which no longer holds) aim at no line.
+    if (isHolding(c) || c.objectiveLineId === undefined) continue;
     const key = `${c.objectiveLineId}|${c.sectorId}`;
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }

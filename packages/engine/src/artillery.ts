@@ -217,11 +217,11 @@ export function observationFactor(o: Observation, ctx: StepContext, visM: number
 /** Guns of one weapon, seen one way, firing on each 100 m of a frontage. */
 type Fire = { weapon: Weapon; per100: number; obs: number };
 
-/** A company's cover from shells: the cover table for its posture and ground; men in dugouts by the dugouts' depth too. */
+/** A company's cover from shells: the cover table for its posture and ground; men in dugouts by their dugouts' depth too (their own, else the segment's mean). */
 function shellCover(c: CompanyState, ctx: StepContext, segs: ReadonlyMap<string, SegmentState>): number {
   const cover = v(ctx.tables.cover[c.posture][groundAt(ctx.world, at(c))]);
   if (c.posture !== 'in-dugout') return cover;
-  const d = c.segmentId === undefined ? 0 : (segs.get(c.segmentId)?.dugoutDepthM ?? 0);
+  const d = c.dugoutDepthM ?? (c.segmentId === undefined ? 0 : (segs.get(c.segmentId)?.dugoutDepthM ?? 0));
   const safe = v(ctx.tables.effects.safeDepthM);
   return cover * (d + safe > 0 ? 1 - d / (d + safe) : 1);
 }

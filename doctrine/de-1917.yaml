@@ -214,6 +214,26 @@ companyDefaults:
       fifty feet down in the chalk" (boh-1917-1 p. 316). A garrison the scenario gives no depth for is taken to have the shallowest
       of them; Vimy''s garrisons each have their own depth'
     description: Depth in metres of the dugouts a garrison company shelters in when the scenario does not say.
+  roundsPerRifle:
+    value: 150
+    source: german-handbook-1917
+    page: '44'
+    note: 'the distribution of ammunition in the field, rounds per man: "Carried on the soldier ... 150"; another 70 a man are in the
+      company ammunition wagon, behind the line'
+    description: Rounds of small-arms ammunition each rifleman carries into the battle (the company's load, with its light and heavy
+      machine guns' rounds, is what its fire uses up).
+  roundsPerLightMg:
+    value: 4000
+    estimate: 'half the heavy gun''s 8,000 rounds on its limber (german-handbook-1917 p. 52): the 08/15 had no limber and its team
+      carried its belt boxes by hand, so less, but a trench garrison kept boxes at the gun. Order of magnitude, for Plan 4 to check'
+    description: Rounds each light machine gun (the side's, fired as companyWeapons.lightMg) has with it in the battle.
+  roundsPerMg:
+    value: 8000
+    source: german-handbook-1917
+    page: '52'
+    note: '"The amount now carried appears to be - 8,000 rounds per gun on the limbered gun wagons", with 1,300 more on the ammunition
+      wagons; the limbered wagons'' rounds come forward with the gun'
+    description: Rounds each machine gun has with it in the battle.
 companyWeapons:
   rifle: rifle
   lightMg: mg08-15

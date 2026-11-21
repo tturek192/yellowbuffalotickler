@@ -35,7 +35,8 @@ distance behind the barrage, was not found.
 | `ss143-1917` | primary | The platoon and company (pp. 9, 22), ammunition and bombs (p. 10), moppers-up (p. 16), sections led by their N.C.O.s (p. 12), formations in two waves (Appendixes I and III, pp. 20-22). |
 | `nicholson-1962` | official | The German defence of December 1916 (pp. 239-240), the Eingreif divisions in 1917 (p. 306); the Vimy rehearsals (p. 250) and barrage (p. 253); Passchendaele (p. 324). |
 | `boh-1917-1` | official | The Eingreif division (p. 241); the dug-outs on Vimy Ridge and the expectation of immediate counter-attacks (p. 316); the 2nd Brigade at the first trench (p. 321); prisoners in the dug-outs (p. 325); Gegenstoss and Gegenangriff (p. 523 n.). |
-| `german-handbook-1917` | primary | The battalion of four companies and a machine-gun company (p. 30); the company's war establishment and its subaltern commander (p. 39); three machine-gun companies to a regiment (p. 49), six guns each (p. 50). |
+| `german-handbook-1917` | primary | The battalion of four companies and a machine-gun company (p. 30); the company's war establishment and its subaltern commander (p. 39); three machine-gun companies to a regiment (p. 49), six guns each (p. 50); rounds carried by the soldier (p. 44) and on a machine gun's limber (p. 52). |
+| `lewis-1917` | primary | The Lewis gun's magazine of 47 rounds (p. 18), for the rounds a Lewis gun section carries. |
 | `german-handbook-1918` | primary | The Prussian War Ministry order of 12 March 1917: battalions of 750 other ranks, three light machine guns a company (p. 44); the issue complete by the end of 1917 (p. 55). |
 | `survey-german-tactics-1918` | primary | Translations of German orders of 1918 (AEF G.H.Q.): the counter-attack company in each sector (p. 32), counter-attacks (p. 35), the rate of advance behind a barrage (p. 18). A year after Vimy: a lead for 1917 practice. |
 
@@ -49,6 +50,10 @@ The three archive.org texts new to this note are fetched by `scripts/fetch-sourc
 | bef-1917 companyDefaults.bombsPerMan 2 | `ss143-1917` | 10 | "carries at least 120 rounds S. A. A. and 2 or more bombs" | primary |
 | bef-1917 companyDefaults.strength 158 | `ss143-1917` | 22 | "The Company, Taking 4 Average Strength Platoons of 36 O.R. and Coy. H.Q. 14" | primary |
 | de-1917 companyDefaults.companiesPerBattalion 4 | `german-handbook-1917` | 30 | "Each battalion is divided into 4 companies and a machine gun company." | primary |
+| bef-1917 companyDefaults.roundsPerRifle 120 | `ss143-1917` | 10 | "every man (except bombers, signalers, scouts, runners, and Lewis gunners who carry 50 rounds) carries at least 120 rounds S. A. A." | primary |
+| bef-1917 companyDefaults.roundsPerLightMg 1,410 | `ss143-1917`; `lewis-1917` | 10; 18 | "The Lewis gun section carries 30 drums"; "The magazine, which holds forty-seven rounds": 30 × 47 | primary |
+| de-1917 companyDefaults.roundsPerRifle 150 | `german-handbook-1917` | 44 | rounds per man "Carried on the soldier ... 150"; 70 more in the company ammunition wagon | primary |
+| de-1917 companyDefaults.roundsPerMg 8,000 | `german-handbook-1917` | 52 | "The amount now carried appears to be— 8,000 rounds per gun on the limbered gun wagons" | primary |
 
 ## The basis of the estimates
 
@@ -57,6 +62,7 @@ The three archive.org texts new to this note are fetched by `scripts/fetch-sourc
 | companyDefaults.officers | 5 / 3 | BEF: "Headquarters — 1 officer and 4 O. R." in each platoon (`ss143-1917` p. 9), and the company commander; assumed, without a source, that the second-in-command was left out of the battle. German: 5 on establishment, but "a company by a subaltern" (`german-handbook-1917` p. 39) | ss143-1917; german-handbook-1917 | primary |
 | de companyDefaults.machineGuns | 1.5 | "Every infantry regiment has three machine gun companies" (p. 49), one to a battalion, six guns each (p. 50), spread over four rifle companies | german-handbook-1917 | primary |
 | de companyDefaults.lewisGuns | 1 | The 08/15s, fired as `mg08-15`: "The issue of the '08/'15 light machine gun began in March, 1917, on the scale of 3 to every infantry company" (p. 61); "By the end of 1917 every infantry company ... had received 3" (p. 55) | german-handbook-1918 | primary |
+| companyDefaults.roundsPerMg (BEF) / roundsPerLightMg (German) | 8,000 / 4,000 | BEF: taken as the German figure, 8,000 a gun on its limber (`german-handbook-1917` p. 52); British companies carry no machine guns, so only a scenario that gives them Vickers guns reads it. German 08/15: half the heavy gun's limber load, its team carrying the belt boxes by hand, though a trench garrison kept boxes at the gun | german-handbook-1917 | primary |
 | de companyDefaults.strength | 187 | "to reduce the strength of a battalion to 750 other ranks" (p. 44), a quarter each; the earlier establishment was 259 (`german-handbook-1917` p. 39) | german-handbook-1918 | primary |
 | ncoPenalty.rehearsed | 0.1 / 0.1 | BEF: "Section commanders control and lead their sections" (`ss143-1917` p. 12); the Canadians "rehearsed repeatedly on this model from platoon to divisional level" (`nicholson-1962` p. 250). German: the group leader's right "within certain limits, to retire in any direction before strong enemy fire" (`nicholson-1962` p. 240) | as cited | primary / official |
 | attack.trainingBonusRehearsed | 0.1 | "By the day of the attack all ranks knew just where they would have to go and what to do when they got there." | nicholson-1962 p. 250 | official |

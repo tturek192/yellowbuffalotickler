@@ -1,7 +1,7 @@
 import { v } from '@wwi/scenario';
 import type { Doctrine, Formation, Posture, Scenario } from '@wwi/scenario';
 import { lineXAt } from './geometry';
-import type { NewEvent } from './causes';
+import type { Cause, NewEvent } from './causes';
 import type { Intent, Order, Side } from './types';
 
 export type CompanyStatus =
@@ -71,7 +71,27 @@ export type CompanyState = {
   barrageLost: boolean;
   /** The `barrage-lost` event of its present loss, for refs; null while it has its barrage. */
   barrageLostEventId: number | null;
+  /** A garrison's own dugout depth in metres (absent for companies with no dugouts given). */
+  dugoutDepthM?: number;
+  /** A garrison's `fire-opened` event, once its machine guns have fired (Task 9); null before. */
+  mgOpenedEventId: number | null;
+  /** The `officers-lost` event, once its officers are all down (Task 9); null while it has officers. */
+  officersLostEventId: number | null;
+  /**
+   * The fire that came in on it over the last `fireRefsMin` minutes, a step at a time (Task 9): the event that
+   * reported it (null when none did, e.g. fire that hit nobody) and its causes. The morale events take their causes
+   * and refs from it.
+   */
+  recentFire: Array<{ minute: number; eventId: number | null; causes: Cause[] }>;
 };
+
+/**
+ * How much of its speed and fire a company keeps under its leaders (the model, "Officers"): 1 while it has an
+ * officer; with none, `1 − ncoPenalty[training]`, the NCOs leading.
+ */
+export function leadFactor(c: Pick<CompanyState, 'officers' | 'training'>, d: Doctrine): number {
+  return c.officers > 0 ? 1 : 1 - v(d.ncoPenalty[c.training]);
+}
 
 /** Garrison and reserve companies hold; only the others attack. */
 export const isHolding = (c: Pick<CompanyState, 'status'>): boolean => c.status === 'holding';
@@ -147,11 +167,18 @@ export function initCompanies(s: Scenario, doctrines: Record<string, Doctrine>, 
       gapM: null,
       barrageLost: false,
       barrageLostEventId: null,
+      ...(c.dugoutDepthM !== undefined ? { dugoutDepthM: v(c.dugoutDepthM) } : {}),
+      mgOpenedEventId: null,
+      officersLostEventId: null,
+      recentFire: [],
     };
   });
 }
 
-/** Plan 2's barrage-following: each attacker moves toward its objective, never closer than followDistanceM to the barrage. */
+/**
+ * Plan 2's barrage-following: each attacker moves toward its objective, never closer than followDistanceM to the
+ * barrage, at its speed × `leadFactor` (slower once its officers are down).
+ */
 export function moveCompanies(
   cs: CompanyState[],
   barrageX: (sectorId: string, y: number) => number,
@@ -168,7 +195,7 @@ export function moveCompanies(
     if (!line || !d) throw new Error(`Company ${c.id}: unknown line or doctrine`);
     const objX = lineXAt(line.points, c.y);
     const target = Math.min(objX, barrageX(c.sectorId, c.y) - v(d.attack!.followDistanceM));
-    const x = Math.max(c.x, Math.min(target, c.x + c.speedMPerMin * stepMin));
+    const x = Math.max(c.x, Math.min(target, c.x + c.speedMPerMin * leadFactor(c, d) * stepMin));
     if (objX - x <= 1) {
       events.push({
         minute,

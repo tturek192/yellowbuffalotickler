@@ -5,6 +5,8 @@ import { emit } from './causes';
 import type { NewEvent } from './causes';
 import { isHolding, moveCompanies } from './companies';
 import type { CompanyState } from './companies';
+import { directFire } from './fire';
+import { morale } from './morale';
 import { resolve } from './resolve';
 import { takeLines } from './step';
 import type { SimState, StepContext } from './step';
@@ -19,9 +21,17 @@ export type Phase = (state: SimState, ctx: StepContext, dt: number, pending: Pen
 
 const none: Phase = (state) => state;
 
-/** Each company picks its intent. Plan 2's model: attackers advance until they consolidate; everyone else holds. */
+/**
+ * Each company picks its intent. Plan 2's model: attackers advance until they consolidate; everyone else holds. A
+ * pinned company goes to ground and one falling back falls back (Task 9's morale states); one that has surrendered or
+ * been destroyed does nothing.
+ */
 const behaviour: Phase = (state) => {
-  const intentOf = (c: CompanyState): Intent => (isHolding(c) || c.status === 'consolidating' ? 'hold' : 'advance');
+  const intentOf = (c: CompanyState): Intent => {
+    if (c.status === 'pinned') return 'go-to-ground';
+    if (c.status === 'falling-back') return 'fall-back';
+    return isHolding(c) || c.status === 'consolidating' || c.status === 'surrendered' || c.status === 'destroyed' ? 'hold' : 'advance';
+  };
   return { ...state, companies: state.companies.map((c) => (c.intent === intentOf(c) ? c : { ...c, intent: intentOf(c) })) };
 };
 
@@ -60,9 +70,9 @@ export const PHASES = [
   ['command', none],
   ['behaviour', behaviour],
   ['artillery', artillery],
-  ['directFire', none],
+  ['directFire', directFire],
   ['resolve', resolve],
-  ['morale', none],
+  ['morale', morale],
   ['movement', movement],
   ['log', log],
 ] as const satisfies ReadonlyArray<readonly [string, Phase]>;

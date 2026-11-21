@@ -16,6 +16,8 @@ export const EVENT_KINDS = [
   'operation-launched', 'reserve-ordered', 'reserve-arrived', 'run-ended',
   // Plan 3, artillery in battle (Task 8)
   'shelled', 'barrage-passed', 'barrage-lost', 'batteries-recovered', 'ammunition-exhausted',
+  // Plan 3, direct fire (Task 9): rifle and machine-gun fire on one company in one step
+  'direct-fire',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
@@ -176,6 +178,8 @@ export type ReserveState = {
 export type FireGroup = {
   /** Unique within the step. */
   key: string;
+  /** The event `resolve` reports it with: `shelled` (artillery, the default) or `direct-fire` (Task 9). */
+  kind?: 'shelled' | 'direct-fire';
   /** What fired, for the event's text ("Creeping barrage, Sector 1"). */
   text: string;
   sectorId?: string;
@@ -201,5 +205,15 @@ export type PendingDamage = {
   refs: number[];
   /** The fire this damage is part of. */
   fire?: FireGroup;
+  /** Direct fire: the share of the firer's ammunition load (its `ammo`) these rounds used up (Task 9). */
+  ammoUsed?: number;
 };
-export type Pending = { damage: PendingDamage[] };
+
+/** What `resolve` did to a company this step, for the morale phase (Task 9). */
+export type Applied = { menBefore: number; hit: number };
+
+export type Pending = {
+  damage: PendingDamage[];
+  /** Filled by `resolve`, by company id (looked up only, never iterated): companies some fire came in on. */
+  applied?: Map<string, Applied>;
+};

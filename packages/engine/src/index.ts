@@ -8,9 +8,9 @@ export type { Cause } from './causes';
 export { EVENT_KINDS } from './types';
 export type {
   BatteryState, CasualtyCount, Decision, EventKind, FormationKind, HqState, Intent, Message, Order, OrderTarget,
-  FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
+  Applied, FireGroup, Observation, ArtilleryRole, Pending, PendingDamage, Report, ReserveState, SegmentState, Side, SimEvent,
 } from './types';
-export { initCompanies, moveCompanies } from './companies';
+export { initCompanies, leadFactor, moveCompanies } from './companies';
 export type { CompanyState, CompanyStatus } from './companies';
 export { PHASES, runPipeline } from './pipeline';
 export type { Phase, PhaseName } from './pipeline';
@@ -28,6 +28,11 @@ export { initBatteries, runBombardment } from './bombardment';
 export { artilleryFire, noMansLandAt, noteArtilleryDefaults, observationFactor } from './artillery';
 export { emergeAtMin, emergence, trackGaps } from './gap';
 export { resolve } from './resolve';
+export { ammoLoad, armsOf, directFire } from './fire';
+export type { Arms } from './fire';
+export { morale, moraleEffectOf, startingMorale, withStartingMorale } from './morale';
+export { BUCKET_M, bucketsOf, within } from './buckets';
+export type { Buckets } from './buckets';
 export { initRun, runScenario } from './run';
 export type { Models, RunOptions } from './run';
 export { quantiles, runBatch } from './batch';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RunRecord } from './record';
 import { runScenario } from './run';
-import { doctrines, draft, fixtureWithDoctrineV3, withQuietStep } from './test-helpers';
+import { doctrines, draft, fixtureFire, fixtureWithDoctrineV3, withQuietStep } from './test-helpers';
 
 /** What the battle did: arrivals and lines taken, by minute and unit. */
 const outcome = (r: RunRecord) =>
@@ -23,5 +23,15 @@ describe('quiet steps', () => {
     const fine = runScenario(s, withQuietStep(m, 2), { seed });
     expect(outcome(coarse)).toEqual(outcome(fine));
     expect(outcome(coarse).some((o) => o[2] === 'c3')).toBe(true);
+  });
+
+  it('do not change what happens while companies fire on each other with nobody moving (Task 9)', () => {
+    // The attackers wait 550 m off for 100 minutes under the garrisons' fire, then go in.
+    const [s, m] = fixtureFire({ lagMin: 100 });
+    const coarse = runScenario(s, withQuietStep(m, 10), { seed: 1, endMinute: 160 });
+    const fine = runScenario(s, withQuietStep(m, 2), { seed: 1, endMinute: 160 });
+    expect(coarse.events.filter((e) => e.kind === 'direct-fire').length).toBeGreaterThan(0);
+    expect(JSON.stringify(coarse.events)).toBe(JSON.stringify(fine.events));
+    expect(JSON.stringify(coarse.snapshots)).toBe(JSON.stringify(fine.snapshots));
   });
 });

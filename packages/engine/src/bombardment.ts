@@ -3,6 +3,7 @@ import type { Feature, Point, Scenario, WeaponKind } from '@wwi/scenario';
 import { emit } from './causes';
 import type { Cause, NewEvent } from './causes';
 import { byId } from './companies';
+import type { CompanyState } from './companies';
 import { CELL_M, churn } from './ground';
 import type { World } from './ground';
 import { round } from './record';
@@ -261,20 +262,24 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
     return { ...seg, wireBeltDepthM, wireCut, trenchDamage, dugoutDamage, spared: sparedPs.length > 0 };
   });
 
-  // Garrison losses, in ascending company id order (two draws for each garrison that has a segment).
+  // Garrison losses, in ascending company id order (three draws for each garrison that has a segment): each at its
+  // own dugouts' depth (the segment's mean for a garrison with none of its own), its officers by the officer-exposure
+  // rule of the battle (resolve.ts).
   const segIndex = new Map(segments.map((x, k) => [x.id, k]));
   const lostIn = segments.map(() => 0);
   const lossRate = v(fx.lossRate);
   const safeDepthM = v(fx.safeDepthM);
   const killedFrac = v(fx.killedFrac);
+  const exposure = v(fx.officerExposure);
   const companies = state.companies.map((c) => {
     const k = c.segmentId === undefined ? undefined : segIndex.get(c.segmentId);
     if (k === undefined) return c;
     const seg = segments[k]!;
-    const d = seg.dugoutDepthM;
+    const d = c.dugoutDepthM ?? seg.dugoutDepthM;
     const exposed = d + safeDepthM > 0 ? 1 - d / (d + safeDepthM) : 1;
     const n = Math.min(c.men, stochasticRound(Math.min(c.men, c.men * lossRate * seg.trenchDamage * exposed), ctx.rng));
     const killed = Math.min(n, stochasticRound(n * killedFrac, ctx.rng));
+    const officers = Math.min(c.officers, n, stochasticRound(Math.min(c.officers, n * Math.min(1, (exposure * c.officers) / Math.max(c.men, 1))), ctx.rng));
     const wounded = n - killed;
     lostIn[k]! += n;
     losses.killed += killed;
@@ -286,6 +291,7 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
       men: c.men - n,
       killed: c.killed + killed,
       wounded: c.wounded + wounded,
+      officers: Math.min(c.officers - officers, c.men - n),
       bombardment: { killed: c.bombardment.killed + killed, wounded: c.bombardment.wounded + wounded },
     };
   });
@@ -318,6 +324,25 @@ export function runBombardment(state: SimState, ctx: StepContext): { state: SimS
   const first = state.nextEventId;
   // Each segment's result is the last word on fire over it until a barrage lifts off it (Task 8's emergence refs).
   const told = segments.map((seg, k): SegmentState => ({ ...seg, barrageEventId: first + k }));
-  const out = emit({ ...state, segments: told, companies, batteries: suppressAtZero(state.batteries, ctx) }, ...events);
+  // A garrison whose last officer fell in the bombardment: `officers-lost`, after the results, referring to its segment's.
+  const officerEvents: NewEvent[] = [];
+  const withEvents = companies.map((c, i): CompanyState => {
+    const before = state.companies[i]!;
+    if (!(before.officers > 0 && c.officers === 0) || c.segmentId === undefined) return c;
+    const k = segIndex.get(c.segmentId)!;
+    const id = first + events.length + officerEvents.length;
+    officerEvents.push({
+      minute: 0,
+      kind: 'officers-lost',
+      unitId: c.id,
+      segmentId: c.segmentId,
+      text: `${c.name} lost the last of its officers in the bombardment: its NCOs lead it now`,
+      causes: ['officers-lost', 'artillery-fire'],
+      refs: [first + k],
+      factors: { officersLost: before.officers, men: c.men },
+    });
+    return { ...c, officersLostEventId: id };
+  });
+  const out = emit({ ...state, segments: told, companies: withEvents, batteries: suppressAtZero(state.batteries, ctx) }, ...events, ...officerEvents);
   return { state: out, events: out.events.filter((e) => e.id >= first), losses };
 }

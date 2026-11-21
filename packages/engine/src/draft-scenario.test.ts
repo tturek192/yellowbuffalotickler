@@ -19,6 +19,9 @@ describe('draft Vimy scenario run', () => {
     // 0.3.2 (Task 8): snapshot company rows gain a gapM column (each attacker's gap to its barrage). The draft has no
     // artillery, garrisons or off-map fire, so no shell falls and nobody is trapped: its companies, events, summary
     // and defaults are unchanged, and only the version and the new column move the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.2', hash: '15c97ee8' });
+    // 0.3.3 (Task 9): direct fire, the full resolve (officers, ammunition) and morale. The draft has no German
+    // companies, so nobody fires and its companies, events and summary are unchanged; starting morale now comes from the
+    // leaders' moraleEffect, and its two leaders without ratings count as 3 (morale stays 0.8), listed in defaultsUsed.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.3', hash: '06798835' });
   });
 });

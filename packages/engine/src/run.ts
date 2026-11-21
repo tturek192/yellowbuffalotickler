@@ -9,6 +9,7 @@ import { buildWorld } from './ground';
 import { resolveDefaults } from './defaults';
 import { noteLightDefaults } from './light';
 import { sampleYs } from './geometry';
+import { withStartingMorale } from './morale';
 import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
 import { quietStep } from './schedule';
@@ -75,7 +76,7 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
   const state: SimState = {
     minute: 0,
     barrages: scenario.sectors.map(initBarrage),
-    companies: initCompanies(scenario, models.doctrines, rng).map((c) => {
+    companies: withStartingMorale(initCompanies(scenario, models.doctrines, rng), ctx).map((c) => {
       const seg = segmentOf.get(c.id);
       return seg === undefined ? c : { ...c, segmentId: seg };
     }),
@@ -136,6 +137,9 @@ function snapshot(state: SimState, ctx: StepContext): Snapshot {
   };
 }
 
+/** Statuses of a company that has nothing more to do in the attack: at its objective, or out of the fight. */
+const DONE: ReadonlySet<string> = new Set(['consolidating', 'surrendered', 'destroyed']);
+
 export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunRecord {
   const stepMin = opts.stepMin ?? 2;
   const endMinute = opts.endMinute ?? s.timeLimitMinutes;
@@ -159,7 +163,7 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
     const finished =
       stopEarly &&
       state.barrages.every((b) => b.phase === 'done') &&
-      state.companies.every((c) => isHolding(c) || c.status === 'consolidating');
+      state.companies.every((c) => isHolding(c) || DONE.has(c.status));
     const every = busy ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
     const due = opts.snapshotEveryStep || Math.floor(state.minute / every) > Math.floor(lastSnapshot / every);
     if (due || state.minute >= endMinute || finished) {

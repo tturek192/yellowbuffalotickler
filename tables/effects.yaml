@@ -263,3 +263,23 @@ effects:
     description: How much a wrecked trench slows its garrison coming up out of its dug-outs; the time to emerge is emergeMin x (1 +
       blockedExitFactor x trenchDamage).
     calibrated: true
+  isolationRadiusM:
+    value: 300
+    estimate: "a company with no other company of its side near it while the enemy is near is cut off: it cannot see its neighbours or
+      be supported by them. A company holds about 200 m of front (strongpointRadiusM), so 300 m reaches past the middle of the next
+      company's frontage on either side. A judgement, not fitted to Vimy"
+    description: Distance in metres within which a company needs another company of its side, when an enemy is that close, not to count
+      as isolated (doctrine isolationDrain then lowers its morale).
+    calibrated: true
+  mgUnobservedBelow:
+    value: 0.2
+    estimate: an explanation threshold, not a rate. A segment whose trench the bombardment wrecked less than a fifth of, or that was
+      spared on purpose, kept its machine-gun posts and their fields of fire, so the guns' first fire is said to come from posts the
+      bombardment did not find (cause mg-unobserved). A judgement, not fitted to Vimy
+    description: Trench damage below which a garrison's machine guns opening fire are said to come from a segment the bombardment did
+      not deal with (cause mg-unobserved).
+  fireRefsMin:
+    value: 10
+    estimate: an explanation window, not behaviour. A company pinned, falling back, surrendering or destroyed is said to have been brought
+      to it by the fire of the last 10 minutes, about three barrage lifts; earlier fire is reached through the refs of that fire
+    description: Minutes of earlier fire on a company that its morale events refer to (refs) and take their fire causes from.

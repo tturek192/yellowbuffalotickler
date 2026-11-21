@@ -21,6 +21,12 @@ sources:
     tier: official
     note: German tactics and the Eingreif division (p. 241); the dug-outs on Vimy Ridge and the expectation of immediate counter-attacks
       (p. 316); Gegenstoss and Gegenangriff (p. 523 n.)
+  lewis-1917:
+    title: Instruction on the Lewis Automatic Machine Gun, 3rd edition, 1917
+    year: 1917
+    url: https://archive.org/details/instructionlewisautomaticmachinegun1917
+    tier: primary
+    note: the magazine of 47 rounds (p. 18)
   ss143-1917:
     title: Instructions for the Training of Platoons for Offensive Action, 1917 (S.S. 143), U.S. War Department reprint
     author: General Staff, G.H.Q. (British Armies in France)
@@ -190,6 +196,27 @@ companyDefaults:
     estimate: taken as the German figure (de-1917, twenty feet, from boh-1917-1 p. 316); no British figure was found in the sources read.
       Only a garrison company reads it, and no scenario so far has a British garrison under bombardment
     description: Depth in metres of the dugouts a garrison company shelters in when the scenario does not say.
+  roundsPerRifle:
+    value: 120
+    source: ss143-1917
+    page: '10'
+    note: in the trench-to-trench attack "every man ... carries at least 120 rounds S.A.A."; bombers, signallers, scouts, runners and
+      Lewis gunners carry 50, and the company's load is counted by weapon, so the 50 of the Lewis gunners are not added
+    description: Rounds of small-arms ammunition each rifleman carries into the battle (the company's load, with its light and heavy
+      machine guns' rounds, is what its fire uses up).
+  roundsPerLightMg:
+    value: 1410
+    source: ss143-1917
+    page: '10'
+    note: '"The Lewis gun section carries 30 drums", each of 47 rounds ("The magazine, which holds forty-seven rounds", lewis-1917
+      p. 18): 30 x 47'
+    description: Rounds each light machine gun (the side's, fired as companyWeapons.lightMg) has with it in the battle.
+  roundsPerMg:
+    value: 8000
+    estimate: taken as the German figure (de-1917, 8,000 rounds a gun on the limbered gun wagons, german-handbook-1917 p. 52); no British
+      figure for a gun's first-line load was found in the sources read. British companies carry no machine guns (machineGuns 0), so
+      only a scenario that gives a company Vickers guns reads it
+    description: Rounds each machine gun has with it in the battle.
 companyWeapons:
   rifle: rifle
   lightMg: lewis

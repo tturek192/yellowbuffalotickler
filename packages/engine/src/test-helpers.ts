@@ -11,7 +11,7 @@ import { loadScenario, loadTables } from '@wwi/scenario/node';
 import { buildWorld } from './ground';
 import { createRng } from './rng';
 import type { RunRecord } from './record';
-import { initRun } from './run';
+import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import type { SimState, StepContext } from './step';
 import type { PhaseName } from './pipeline';
@@ -38,10 +38,22 @@ export function fixtureTables(): Tables {
 /** Doctrines with the fixture tables, as runScenario takes them. */
 export const models = (doctrines: Record<string, Doctrine>, tables: Tables = fixtureTables()): Models => ({ doctrines, tables });
 
-/** A fixture doctrine v2 with usable step and contact values (the minimal one sets every common value to 1). */
+/**
+ * A fixture doctrine v2 with usable step, contact and morale values (the minimal one sets every common value to 1):
+ * the repository doctrines' starting values for morale, the NCO penalty and the training bonus, and ammunition
+ * enough that no fixture runs out unless a test says so.
+ */
 function fixtureDoctrine(id: string): Doctrine {
   const d = minimalDoctrineV2(id);
-  d.common = { ...d.common, baseMorale: param(0.8), closeRangeM: param(50), quietStepMin: param(10) };
+  d.common = {
+    ...d.common,
+    baseMorale: param(0.8), closeRangeM: param(50), quietStepMin: param(10),
+    goToGround: param(0.5), fallBack: param(0.35), surrender: param(0.15), pinSuppression: param(0.7),
+    lossShock: param(1), suppressedDrain: param(0.3), isolationDrain: param(0.1), recoveryPerHour: param(0.2), leaderMoraleStep: param(0.03),
+  };
+  d.ncoPenalty = { rehearsed: param(0.1), standard: param(0.3) };
+  d.companyDefaults = { ...d.companyDefaults, roundsPerRifle: param(1e6), roundsPerLightMg: param(1e6), roundsPerMg: param(1e6) };
+  d.attack = { ...d.attack!, trainingBonusRehearsed: param(0.1) };
   return d;
 }
 
@@ -256,13 +268,16 @@ export type ArtilleryOpts = {
   emergeMin?: number;
   /** Extra effect keys. */
   effects?: Record<string, number>;
+  /** Whether companies fire their rifles and machine guns (default false: these fixtures measure the artillery). */
+  directFire?: boolean;
 };
 
 /**
  * fixtureWithDoctrineV3 with real-sized effect values: assault companies c1 (y 100) and c2 (y 300) behind the
  * creeping battery g1 (18 18-pdrs); German garrisons k1 and k2 on `ger-front-a` (x 150), each 120 men, in two
  * segments of 200 m; de-1917 emergeMin 3 and trappedSurrenderFrac 0.5. The barrage lifts 91 m every 3 minutes
- * from x 150 to the Black Line (x 1150), then stands 180 m beyond it for 40 minutes.
+ * from x 150 to the Black Line (x 1150), then stands 180 m beyond it for 40 minutes. Its companies fire no small
+ * arms unless `directFire` is set.
  */
 export function fixtureArtillery(o: ArtilleryOpts = {}): [Scenario, Models] {
   const [s, m] = fixtureWithDoctrineV3();
@@ -278,7 +293,9 @@ export function fixtureArtillery(o: ArtilleryOpts = {}): [Scenario, Models] {
     d.defence!.emergeMin = { ...d.defence!.emergeMin, value: o.emergeMin ?? 3 };
     d.defence!.trappedSurrenderFrac = { ...d.defence!.trappedSurrenderFrac, value: 0.5 };
   }
-  return [s, { doctrines, tables: bombTables({ ...ARTILLERY_EFFECTS, ...o.effects }) }];
+  const tables = bombTables({ ...ARTILLERY_EFFECTS, ...o.effects });
+  if (!o.directFire) for (const w of ['rifle', 'lewis', 'vickers']) tables.weapons[w] = { ...tables.weapons[w]!, rpm: param(0) };
+  return [s, { doctrines, tables }];
 }
 
 /** Add a German trench at x with one garrison company `id` (120 men) at its middle, y 0 to 400. */
@@ -303,3 +320,96 @@ export function withAlliedFront(f: [Scenario, Models], x = -100): [Scenario, Mod
 
 /** Events of a kind. */
 export const ofKind = (r: RunRecord, kind: RunRecord['events'][number]['kind']) => r.events.filter((e) => e.kind === kind);
+
+// ---- direct fire, morale and officers (Task 9) ---------------------------------------------------------------
+
+/** The direct fire's and morale's effect keys at the repository's starting values (tables/effects.yaml), for fixtures. */
+export const FIRE_EFFECTS = {
+  maxTargetsPerFirer: 2, crewPerLewis: 2, crewPerMg: 4, officerExposure: 1.5, killedFrac: 0.25,
+  isolationRadiusM: 300, mgUnobservedBelow: 0.2, fireRefsMin: 10,
+};
+
+/** The repository's cover table (tables/cover.yaml), for fixtures whose cover matters. */
+export const COVER: Record<string, Record<string, number>> = {
+  moving: { open: 1, cratered: 0.8, wood: 0.6, village: 0.6, trench: 0.5 },
+  prone: { open: 0.4, cratered: 0.25, wood: 0.3, village: 0.25, trench: 0.2 },
+  'in-trench': { open: 0.2, cratered: 0.2, wood: 0.15, village: 0.15, trench: 0.15 },
+  'in-dugout': { open: 0.02, cratered: 0.02, wood: 0.02, village: 0.02, trench: 0.02 },
+};
+
+export type FireOpts = {
+  /** Machine guns of each German garrison company (default 1). */
+  mgs?: number;
+  /**
+   * A ridge 30 m high across the whole front at x 0, between the attackers and the garrisons; the attackers then
+   * wait behind it (they start 100 minutes late unless lagMin says otherwise).
+   */
+  ridgeBetween?: boolean;
+  /** The attackers' start x (default -400) and how late they start (default 6 minutes, after the garrisons are up). */
+  startX?: number;
+  lagMin?: number;
+  /** Extra effect keys. */
+  effects?: Record<string, number>;
+};
+
+/**
+ * fixtureArtillery with no artillery at all and with small arms: the German garrisons k1 (y 100) and k2 (y 300) on
+ * `ger-front-a` (x 150) come up at minute 4 (no barrage keeps them down), and the assault companies c1 and c2 start
+ * at x -400 six minutes after Zero and walk at them behind the (gunless) barrage timetable. Cover is the
+ * repository's table; daylight (Zero 07:30 at the frame's default place).
+ */
+export function fixtureFire(o: FireOpts = {}): [Scenario, Models] {
+  const lagMin = o.lagMin ?? (o.ridgeBetween ? 100 : 6);
+  const [s, m] = fixtureArtillery({ directFire: true, startX: o.startX ?? -400, lagMin, effects: { ...FIRE_EFFECTS, ...o.effects } });
+  s.artillery = [];
+  for (const c of s.forces[1]!.formations[0]!.companies!) c.machineGuns = est(o.mgs ?? 1);
+  for (const [p, row] of Object.entries(COVER)) for (const [g, value] of Object.entries(row)) (m.tables.cover as Record<string, Record<string, unknown>>)[p]![g] = param(value);
+  if (o.ridgeBetween) {
+    const cellM = 25;
+    const originX = -1000;
+    const originY = -200;
+    const cols = 121; // -1000 to 2000 m
+    const rows = 33; // -200 to 600 m
+    const elev = new Float32Array(cols * rows);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) elev[j * cols + i] = Math.abs(originX + i * cellM) <= 50 ? 30 : 0;
+    s.terrainGrid = encodeTerrain({ cellM, originX, originY, cols, rows, elevM: elev });
+  }
+  return [s, m];
+}
+
+/** Allied casualties (killed and wounded in the battle) in each seed's run of fixtureFire, up to `endMinute` (default 40). */
+export function attackerLosses(o: FireOpts & { seeds?: number[]; endMinute?: number } = {}): number[] {
+  const seeds = o.seeds ?? Array.from({ length: 50 }, (_, i) => i + 1);
+  return seeds.map((seed) => {
+    const f = fixtureFire(o);
+    const r = runScenario(f[0], f[1], { seed, endMinute: o.endMinute ?? 40 });
+    return r.summary.casualties.battle.allied.killed + r.summary.casualties.battle.allied.wounded;
+  });
+}
+
+export const median = (xs: number[]): number => {
+  const s = [...xs].sort((a, b) => a - b);
+  const n = s.length;
+  return n % 2 ? s[(n - 1) / 2]! : (s[n / 2 - 1]! + s[n / 2]!) / 2;
+};
+
+/**
+ * Two fights 1,600 m apart on one front (beyond every fixture weapon's 1,000 m): A Company (150 men, y 100) walks at
+ * 1. Kompanie (120 men with 12 machine guns); B Company (300 men, y 1700) closes to 30 m of a weak 2. Kompanie (25
+ * men, no machine guns) on its own trench, its objective line just past it, and stays there.
+ */
+export function fixtureCrush(): [Scenario, Models] {
+  const [s, m] = fixtureFire();
+  s.sectors[0]!.yMax = 2000;
+  for (const l of s.lines) l.points = [[l.points[0]![0], 0], [l.points[0]![0], 2000]];
+  s.lines.push({ id: 'near', name: 'Near Line', kind: 'objective', color: '#777777', points: [[180, 1400], [180, 2000]] });
+  s.features.push({ id: 'ger-front-b', kind: 'trench', side: 'central', geometry: { type: 'LineString', coordinates: [[150, 1500], [150, 1900]] }, cite });
+  const [k1, k2] = s.forces[1]!.formations[0]!.companies!;
+  Object.assign(k1!, { machineGuns: est(12) });
+  Object.assign(k2!, { strength: est(25), machineGuns: est(0), lewisGuns: est(0), start: [150, 1700], trenchFeatureId: 'ger-front-b' });
+  const c2 = s.forces[0]!.formations[0]!.companies!.find((c) => c.id === 'c2')!;
+  Object.assign(c2, { strength: est(300), start: [-400, 1700], objectiveLineId: 'near' });
+  return [s, m];
+}
+
+export const runCrush = (seed = 1): RunRecord => runScenario(...fixtureCrush(), { seed, endMinute: 90 });

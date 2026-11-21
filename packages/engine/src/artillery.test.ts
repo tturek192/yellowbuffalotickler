@@ -94,15 +94,19 @@ describe('artillery in the battle', () => {
 
   it('defenders in dugouts under the creeping band lose nobody to it, and a garrison up in the open ahead of it does', () => {
     // A rear garrison outside every standing barrage (there is none) is up by minute 3; the band reaches it later.
-    const r = run(withRearTrench(fixtureArtillery({ lagMin: 12 }), 600));
-    const creeping = ofKind(r, 'shelled').filter((e) => e.text.startsWith('Creeping barrage'));
-    expect(creeping.length).toBeGreaterThan(0);
-    expect(creeping.reduce((a, e) => a + e.factors!.hit!, 0)).toBeGreaterThan(0);
-    // The front garrisons were under the band only while down in their dugouts: it took none of them.
-    for (const id of ['k1', 'k2']) expect(rowsOf(r, id).at(-1)!.killed).toBe(0);
-    expect(creeping.every((e) => e.unitId === undefined || e.unitId === 'k3')).toBe(true);
-    const k3 = rowsOf(r, 'k3').at(-1)!;
-    expect((k3.killed as number) + (k3.wounded as number)).toBeGreaterThan(0);
+    // The band passes over the rear garrison in a few minutes, for about a man hit: summed over three seeds.
+    const rs = [1, 2, 3].map((seed) => run(withRearTrench(fixtureArtillery({ lagMin: 12 }), 600), seed));
+    for (const r of rs) {
+      const creeping = ofKind(r, 'shelled').filter((e) => e.text.startsWith('Creeping barrage'));
+      expect(creeping.length).toBeGreaterThan(0);
+      // The front garrisons were under the band only while down in their dugouts: it took none of them.
+      for (const id of ['k1', 'k2']) expect(rowsOf(r, id).at(-1)!.killed).toBe(0);
+      expect(creeping.every((e) => e.unitId === undefined || e.unitId === 'k3')).toBe(true);
+    }
+    const hit = rs.flatMap((r) => ofKind(r, 'shelled').filter((e) => e.text.startsWith('Creeping barrage'))).reduce((a, e) => a + e.factors!.hit!, 0);
+    expect(hit).toBeGreaterThan(0);
+    const k3 = rs.map((r) => rowsOf(r, 'k3').at(-1)!).reduce((a, x) => a + (x.killed as number) + (x.wounded as number), 0);
+    expect(k3).toBe(hit);
   });
 
   it('a standing barrage keeps a rear garrison down until the creeping barrage has passed over it', () => {

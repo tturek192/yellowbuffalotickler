@@ -19,7 +19,10 @@ export const DEFENCE_KEYS = [
   'localCounterAttackDelayMin', 'divisionalCounterAttackDelayMin',
   'counterAttackMinRatio', 'commitReserveWhenLostFrac',
 ] as const;
-export const COMPANY_DEFAULT_KEYS = ['officers', 'lewisGuns', 'machineGuns', 'bombsPerMan', 'strength', 'companiesPerBattalion', 'dugoutDepthM'] as const;
+export const COMPANY_DEFAULT_KEYS = [
+  'officers', 'lewisGuns', 'machineGuns', 'bombsPerMan', 'strength', 'companiesPerBattalion', 'dugoutDepthM',
+  'roundsPerRifle', 'roundsPerLightMg', 'roundsPerMg',
+] as const;
 
 export type CommonKey = (typeof COMMON_KEYS)[number];
 export type AttackKey = (typeof ATTACK_KEYS)[number];

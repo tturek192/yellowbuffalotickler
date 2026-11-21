@@ -74,6 +74,7 @@ export const EFFECT_KEYS = [
   'churnAreaPerShellM2', 'crateredShare', 'wireUncutBelow',
   'strongpointRadiusM', 'villageRadiusM', 'woodRadiusM', 'craterRadiusM',
   'unobservedFireFactor', 'observerRangeM', 'batteriesRecoveredFrac', 'blockedExitFactor',
+  'isolationRadiusM', 'mgUnobservedBelow', 'fireRefsMin',
 ] as const;
 
 export type WeaponKind = (typeof WEAPON_KINDS)[number];

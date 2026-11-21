@@ -8,7 +8,7 @@ export const CAUSES = [
   // Wire and the bombardment
   'wire-uncut', 'wire-cut', 'spared-by-bombardment',
   // Fire
-  'mg-fire', 'mg-unobserved', 'artillery-fire', 'defensive-barrage', 'batteries-recovered', 'counter-battery', 'off-map-fire',
+  'mg-fire', 'rifle-fire', 'mg-unobserved', 'artillery-fire', 'defensive-barrage', 'batteries-recovered', 'counter-battery', 'off-map-fire',
   // Dugouts
   'dugouts-uncleared', 'defenders-trapped',
   // Leadership and morale

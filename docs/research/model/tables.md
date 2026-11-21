@@ -170,9 +170,9 @@ All 16 values are calibrated estimates; the scenario says which channels link wh
 
 ## Effects
 
-The 44 effects are estimates except `crewPerLewis`, which is sourced; 33 are calibrated coefficients, and `twilightMin`,
-`lineFeatureMatchM`, `gapMultiplier`, `crewPerMg`, `trenchProximityM`, `wireUncutBelow`, `batteriesRecoveredFrac` and the
-village, wood and crater radii are plain estimates (a calculation, a tolerance, an explanation threshold, a count or a
+The 47 effects are estimates except `crewPerLewis`, which is sourced; 34 are calibrated coefficients, and `twilightMin`,
+`lineFeatureMatchM`, `gapMultiplier`, `crewPerMg`, `trenchProximityM`, `wireUncutBelow`, `batteriesRecoveredFrac`,
+`mgUnobservedBelow`, `fireRefsMin` and the village, wood and crater radii are plain estimates (a calculation, a tolerance, an explanation threshold, a count or a
 map default, not fitted). The reasoning is in each entry; the ones with sources behind them:
 
 | Key | Value | Basis |
@@ -198,6 +198,12 @@ Four keys came with the artillery of the battle, all by judgement, with no sourc
 observer must see to watch the fall of shot), `blockedExitFactor` 1 (a wholly wrecked trench doubles the time its
 garrison takes to come up) and `batteriesRecoveredFrac` 0.5 (an explanation threshold: half a side's guns back in
 action).
+
+Three came with direct fire and morale, again by judgement: `isolationRadiusM` 300 m (a company with no other company of
+its side that close, while the enemy is, counts as isolated and loses morale by the doctrine's `isolationDrain`; a
+company holds about 200 m of front), `mgUnobservedBelow` 0.2 (an explanation threshold: a garrison's machine guns opening
+fire from a segment the bombardment spared, or wrecked less than a fifth of, carry the cause `mg-unobserved`) and
+`fireRefsMin` 10 (an explanation window: a company's morale events refer to the fire of the last 10 minutes on it).
 
 **Changed from the plan's starting values** (the pre-flight ruling seeded the 16 later keys with the plan's numbers for
 review here): `gasHorseRadiusM` 1,000 → 200 m (a gas shell's cloud spreads a couple of hundred metres, not a kilometre),
