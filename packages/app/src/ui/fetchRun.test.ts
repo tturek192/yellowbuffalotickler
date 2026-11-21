@@ -6,7 +6,8 @@ const record = {
   zeroHour: '1917-04-09T05:30',
   endMinute: 0,
   geometry: { lines: [], sectors: [], features: [] },
-  snapshots: [{ minute: 0, companies: [], barrages: [] }],
+  units: [],
+  snapshots: [{ minute: 0, companies: { columns: ['id', 'x', 'y', 'men', 'status'], rows: [] }, barrages: [] }],
   events: [],
 };
 

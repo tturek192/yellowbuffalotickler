@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RunRecord } from '@wwi/engine';
 import { fitView, recordBounds, worldToScreen } from './projection';
+import { companyTable, unitsFor } from '../test-record';
 
 describe('projection', () => {
   it('fits bounds and flips y so north is up', () => {
@@ -28,9 +29,10 @@ describe('projection', () => {
         sectors: [{ id: 's', yMin: -100, yMax: 1300 }],
         features: [],
       },
+      units: unitsFor([{ id: 'c', side: 'allied', x: 0, y: 0, men: 1, status: 'waiting' }]),
       snapshots: [
-        { minute: 0, companies: [{ id: 'c', side: 'allied', x: -400, y: 10, strength: 1, status: 'waiting' }], barrages: [] },
-        { minute: 10, companies: [{ id: 'c', side: 'allied', x: 900, y: 10, strength: 1, status: 'advancing' }],
+        { minute: 0, companies: companyTable([{ id: 'c', side: 'allied', x: -400, y: 10, men: 1, status: 'waiting' }]), barrages: [] },
+        { minute: 10, companies: companyTable([{ id: 'c', side: 'allied', x: 900, y: 10, men: 1, status: 'advancing' }]),
           barrages: [{ sectorId: 's', points: [[1000, 0], [1000, 1200]] }] },
       ],
     } as unknown as RunRecord;
@@ -49,7 +51,8 @@ describe('projection', () => {
           { id: 'b', kind: 'battery', geometry: { type: 'Point', coordinates: [-200, 50] } },
         ],
       },
-      snapshots: [{ minute: 0, companies: [], barrages: [] }],
+      units: [],
+      snapshots: [{ minute: 0, companies: companyTable([]), barrages: [] }],
     } as unknown as RunRecord;
     expect(recordBounds(r)).toEqual({ minX: -200, maxX: 700, minY: -300, maxY: 425 });
   });
@@ -65,7 +68,8 @@ describe('projection', () => {
           { id: 'k', kind: 'crater', geometry: { type: 'Point', coordinates: [0, 300] } },
         ],
       },
-      snapshots: [{ minute: 0, companies: [], barrages: [] }],
+      units: [],
+      snapshots: [{ minute: 0, companies: companyTable([]), barrages: [] }],
     } as unknown as RunRecord;
     expect(recordBounds(r)).toEqual({ minX: -550, maxX: 1060, minY: -10, maxY: 310 });
   });

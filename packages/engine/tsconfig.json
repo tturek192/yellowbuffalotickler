@@ -2,6 +2,6 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "lib": ["ES2022"], "types": [], "outDir": "dist", "rootDir": "src", "noEmit": false, "emitDeclarationOnly": true },
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts"],
+  "exclude": ["src/**/*.test.ts", "src/test-helpers.ts"],
   "references": [{ "path": "../scenario" }]
 }

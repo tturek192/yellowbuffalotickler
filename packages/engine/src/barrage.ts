@@ -1,6 +1,6 @@
 import type { Point, Scenario } from '@wwi/scenario';
 import { lineXAt } from './geometry';
-import type { SimEvent } from './types';
+import type { NewEvent } from './causes';
 
 type Sector = Scenario['sectors'][number];
 type Lines = Map<string, Point[]>;
@@ -41,8 +41,8 @@ export function advanceBarrage(
   sector: Sector,
   lines: Lines,
   minute: number,
-): { state: BarrageState; events: SimEvent[] } {
-  const events: SimEvent[] = [];
+): { state: BarrageState; events: NewEvent[] } {
+  const events: NewEvent[] = [];
   let state = b;
   for (;;) {
     if (state.phase === 'done') break;
@@ -86,6 +86,13 @@ export function advanceBarrage(
     }
   }
   return { state, events };
+}
+
+/** The minute the barrage's current phase ends (it lifts, pauses, resumes or finishes then); null once done. */
+export function phaseEndMin(b: BarrageState, sector: Sector, lines: Lines): number | null {
+  if (b.phase === 'done') return null;
+  const g = legGeometry(sector, lines, b.legIndex);
+  return b.phaseStartMin + (b.phase === 'lifting' ? g.legMin : g.leg.pauseMin.value);
 }
 
 export function barrageXAt(b: BarrageState, sector: Sector, lines: Lines, minute: number, y: number): number {

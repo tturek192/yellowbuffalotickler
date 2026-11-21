@@ -4,6 +4,7 @@ import { encodeTerrain, FEATURE_KINDS, type Feature, type FeatureKind, type Terr
 import { frameAt } from '../playback';
 import { drawFrame, shortId } from './draw';
 import type { View } from './projection';
+import { companyTable, unitsFor, type TestCompany } from '../test-record';
 
 type Call = { name: string; args: unknown[]; fillStyle: unknown; strokeStyle: unknown };
 
@@ -39,11 +40,11 @@ function recordingContext() {
 const view: View = { scale: 0.5, tx: 100, ty: 500 };
 const cite = { value: 'schematic', estimate: 'test fixture' };
 
-type Company = RunRecord['snapshots'][number]['companies'][number];
+type Company = TestCompany;
 
 function record(features: Feature[], companies: Company[] = []): RunRecord {
   return {
-    engineVersion: '0.2.0',
+    engineVersion: '0.3.0',
     scenarioId: 'x',
     scenarioTitle: 'X',
     scenarioStatus: 'draft',
@@ -56,10 +57,11 @@ function record(features: Feature[], companies: Company[] = []): RunRecord {
       sectors: [{ id: 's1', yMin: 0, yMax: 800 }],
       features,
     },
-    snapshots: [{ minute: 0, companies, barrages: [] }, { minute: 10, companies, barrages: [] }],
+    units: unitsFor(companies),
+    snapshots: [{ minute: 0, companies: companyTable(companies), barrages: [] }, { minute: 10, companies: companyTable(companies), barrages: [] }],
     events: [],
     summary: { lineTaken: [] },
-  };
+  } as unknown as RunRecord;
 }
 
 const line: Feature['geometry'] = { type: 'LineString', coordinates: [[100, 50], [140, 300], [120, 600]] };
@@ -85,7 +87,7 @@ function everyKind(): Feature[] {
   return FEATURE_KINDS.map((kind, i) => ({ id: `f${i}`, kind, side: 'central', name: `F${i}`, geometry: geom[kind], cite }));
 }
 
-const holding = (id: string, side: Company['side']): Company => ({ id, side, x: 200, y: 200, strength: 120, status: 'holding' });
+const holding = (id: string, side: Company['side']): Company => ({ id, side, x: 200, y: 200, men: 120, status: 'holding' });
 
 describe('drawing map features', () => {
   it('draws each feature kind without throwing on a stub context', () => {

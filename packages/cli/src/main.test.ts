@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +42,26 @@ describe('cli', () => {
     expect(r.code).toBe(0);
     expect(existsSync(out)).toBe(true);
     expect(JSON.parse(readFileSync(out, 'utf8')).summary.lineTaken).toHaveLength(4);
+  });
+
+  it('run reads the model tables from --tables-dir and records the defaults it used', () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'run.json');
+    expect(runCli(['run', draft, '--seed', '1', '--out', out, '--tables-dir', 'tables']).code).toBe(0);
+    const rec = JSON.parse(readFileSync(out, 'utf8'));
+    expect(rec.engineVersion).toBe('0.3.0');
+    expect(rec.defaultsUsed).toContain('companies[14bn-a].officers ← bef-1917.companyDefaults.officers');
+    const bad = runCli(['run', draft, '--seed', '1', '--out', out, '--tables-dir', 'no-such-dir']);
+    expect(bad.code).toBe(2);
+    expect(bad.stderr).toMatch(/cannot read tables directory no-such-dir/);
+  });
+
+  it('run exits 2 naming the doctrine when its company weapons are not in the tables', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sim-'));
+    const text = readFileSync(join(repoRoot, 'doctrine/bef-1917.yaml'), 'utf8').replace(/^  lightMg: lewis$/m, '  lightMg: lewis-mk9');
+    writeFileSync(join(dir, 'bef-1917.yaml'), text);
+    const r = runCli(['run', draft, '--seed', '1', '--out', join(dir, 'run.json'), '--doctrine-dir', dir]);
+    expect(r.code).toBe(2);
+    expect(r.stderr).toMatch(/doctrine bef-1917: companyWeapons\.lightMg names weapon "lewis-mk9"/);
   });
 
   it('batch prints a table with clock times', () => {

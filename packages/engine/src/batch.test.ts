@@ -1,10 +1,6 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { loadScenario } from '@wwi/scenario/node';
 import { quantiles, runBatch } from './batch';
-
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+import { doctrines, draft } from './test-helpers';
 
 describe('batch', () => {
   it('quantiles', () => {
@@ -13,11 +9,7 @@ describe('batch', () => {
   });
 
   it('runBatch summarises each line over the seeds, with historical minutes', () => {
-    const { scenario: s, doctrines } = loadScenario(
-      resolve(repoRoot, 'scenarios/vimy-1917/1cdn-3bde-draft.yaml'),
-      resolve(repoRoot, 'doctrine'),
-    );
-    const b = runBatch(s, doctrines, [1, 2, 3, 4, 5]);
+    const b = runBatch(draft(), doctrines(), [1, 2, 3, 4, 5]);
     const black = b.lines.find((l) => l.lineId === 'black')!;
     expect(b.runs).toBe(5);
     expect(black.takenIn).toBe(5);

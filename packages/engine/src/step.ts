@@ -1,65 +1,107 @@
-import type { Doctrine, Point, Scenario } from '@wwi/scenario';
-import { advanceBarrage, barrageXAt } from './barrage';
+import type { Doctrine, Point, Scenario, Tables, Terrain } from '@wwi/scenario';
 import type { BarrageState } from './barrage';
-import { isHolding, moveCompanies } from './companies';
+import { emit } from './causes';
+import { isHolding } from './companies';
 import type { CompanyState } from './companies';
-import type { SimEvent } from './types';
+import type { PhaseName } from './pipeline';
+import type { BatteryState, HqState, Message, ReserveState, SegmentState, SimEvent } from './types';
 
 export type SimState = {
   minute: number;
   barrages: BarrageState[];
+  /** In ascending id order, always. */
   companies: CompanyState[];
   /** "lineId|sectorId" keys of lines already taken. */
   taken: string[];
   /** Events emitted by the most recent step, in order. */
   events: SimEvent[];
+  /** Trench segments (Task 7). */
+  segments: SegmentState[];
+  /** Batteries (Tasks 7–8). */
+  batteries: BatteryState[];
+  /** Headquarters and what each knows (Tasks 11–12). */
+  hqs: HqState[];
+  /** Messages in transit (Task 11). */
+  messages: Message[];
+  /** Off-map formations (Task 13). */
+  reserves: ReserveState[];
+  /** The id the next emitted event gets. */
+  nextEventId: number;
 };
 
 export type StepContext = {
+  /** The scenario with its defaults resolved. */
   scenario: Scenario;
   lines: Map<string, Point[]>;
   doctrines: Record<string, Doctrine>;
+  tables: Tables;
+  /** The run's only source of randomness: createRng(seed), drawn in a fixed order. */
+  rng: () => number;
+  terrain?: Terrain;
+  /** Defaults applied, at setup and during the run; the record lists them sorted. */
+  defaultsUsed: Set<string>;
+  /** Called with each phase's name before it runs (tests and profiling). */
+  onPhase?: (name: PhaseName) => void;
 };
 
-export function step(state: SimState, ctx: StepContext, dtMin: number): SimState {
-  const minute = state.minute + dtMin;
-  const events: SimEvent[] = [];
+/** Statuses of companies that are not on the field as a fighting body. */
+const GONE: ReadonlySet<string> = new Set(['surrendered', 'destroyed', 'off-map', 'marching']);
+const onField = (c: CompanyState): boolean => c.men > 0 && !GONE.has(c.status);
 
-  const barrages = state.barrages.map((b) => {
-    const sector = ctx.scenario.sectors.find((x) => x.id === b.sectorId)!;
-    const r = advanceBarrage(b, sector, ctx.lines, minute);
-    events.push(...r.events);
-    return r.state;
-  });
+/**
+ * Contact, the one definition every task extends: some attacking company (any that is not holding) is
+ * within its doctrine's `closeRangeM` of an enemy company on the field.
+ */
+export function inContact(state: SimState, ctx: StepContext): boolean {
+  const enemies = { allied: [] as CompanyState[], central: [] as CompanyState[] };
+  for (const c of state.companies) if (onField(c)) enemies[c.side === 'allied' ? 'central' : 'allied'].push(c);
+  for (const a of state.companies) {
+    if (isHolding(a) || !onField(a)) continue;
+    const r = ctx.doctrines[a.doctrineId]!.common.closeRangeM.value;
+    for (const e of enemies[a.side]) if (Math.hypot(e.x - a.x, e.y - a.y) <= r) return true;
+  }
+  return false;
+}
 
-  const barrageX = (sectorId: string, y: number): number => {
-    const b = barrages.find((x) => x.sectorId === sectorId)!;
-    const sector = ctx.scenario.sectors.find((x) => x.id === sectorId)!;
-    return barrageXAt(b, sector, ctx.lines, minute, y);
-  };
-  const moved = moveCompanies(state.companies, barrageX, ctx.scenario.lines, ctx.doctrines, minute, dtMin);
-  events.push(...moved.events);
+/** Statuses of companies on the move. */
+const MOVING: ReadonlySet<string> = new Set(['advancing', 'falling-back', 'counter-attacking']);
 
-  const taken = [...state.taken];
+/**
+ * Busy: something is happening that needs the fine step and close snapshots — contact, a barrage
+ * lifting, or a company on the move. Otherwise the battle is quiet.
+ */
+export function isBusy(state: SimState, ctx: StepContext): boolean {
+  return state.barrages.some((b) => b.phase === 'lifting') || state.companies.some((c) => MOVING.has(c.status)) || inContact(state, ctx);
+}
+
+/**
+ * The line-taken check (the log phase): a line is taken in a sector once every attacking company aimed
+ * at it is consolidating. The event refers to the arrivals of this step that completed it.
+ */
+export function takeLines(state: SimState, ctx: StepContext): SimState {
   const groups = new Map<string, CompanyState[]>();
-  for (const c of moved.companies) {
+  for (const c of state.companies) {
     if (isHolding(c)) continue;
     const key = `${c.objectiveLineId}|${c.sectorId}`;
     groups.set(key, [...(groups.get(key) ?? []), c]);
   }
-  for (const [key, cs] of groups) {
-    if (taken.includes(key) || !cs.every((c) => c.status === 'consolidating')) continue;
+  let out = state;
+  for (const key of [...groups.keys()].sort()) {
+    const cs = groups.get(key)!;
+    if (out.taken.includes(key) || !cs.every((c) => c.status === 'consolidating')) continue;
     const [lineId, sectorId] = key.split('|') as [string, string];
     const line = ctx.scenario.lines.find((l) => l.id === lineId)!;
-    taken.push(key);
-    events.push({
-      minute,
+    const ids = new Set(cs.map((c) => c.id));
+    const refs = out.events.filter((e) => e.kind === 'company-reached' && e.unitId !== undefined && ids.has(e.unitId)).map((e) => e.id);
+    out = emit({ ...out, taken: [...out.taken, key] }, {
+      minute: out.minute,
       kind: 'line-taken',
       sectorId,
       lineId,
       text: `${line.name} taken`,
       causes: ['followed-barrage'],
+      refs,
     });
   }
-  return { minute, barrages, companies: moved.companies, taken, events };
+  return out;
 }

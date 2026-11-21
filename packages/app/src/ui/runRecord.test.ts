@@ -16,13 +16,20 @@ const good = () => ({
       { id: 'k', kind: 'crater', geometry: { type: 'Point', coordinates: [3, 3], radiusM: 12 } },
     ],
   },
+  units: [
+    { id: 'c', battalionId: 'bn1', name: 'A Company', side: 'allied' },
+    { id: 'g', battalionId: 'rir262', name: '1. Kompanie', side: 'central' },
+  ],
   snapshots: [
     {
       minute: 0,
-      companies: [
-        { id: 'c', side: 'allied', x: 0, y: 0, strength: 150, status: 'waiting' },
-        { id: 'g', side: 'central', x: 9, y: 9, strength: 120, status: 'holding' },
-      ],
+      companies: {
+        columns: ['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured'],
+        rows: [
+          ['c', 0, 0, 150, 'waiting', 1, 0, 'in-trench', 0, 0, 0],
+          ['g', 9, 9, 120, 'holding', 1, 0, 'in-dugout', 0, 0, 0],
+        ],
+      },
       barrages: [{ sectorId: 's', done: false, points: [[0, 0], [0, 10]] }],
     },
   ],
@@ -38,17 +45,18 @@ const withTerrain = (t: unknown) => {
   const r = good();
   return { ...r, geometry: { ...r.geometry, terrain: t } };
 };
-const withCompany = (c: unknown) => {
+const withRow = (row: unknown) => {
   const r = good();
-  return { ...r, snapshots: [{ ...r.snapshots[0]!, companies: [c] }] };
+  return { ...r, snapshots: [{ ...r.snapshots[0]!, companies: { ...r.snapshots[0]!.companies, rows: [row] } }] };
 };
+const withUnit = (u: unknown) => ({ ...good(), units: [...good().units, u] });
 
 describe('parseRunRecord', () => {
   it('accepts a well-formed record, with features and holding companies', () => {
     const r = parseRunRecord(good());
     expect(r.zeroHour).toBe('1917-04-09T05:30');
     expect(r.geometry.features.map((f) => f.kind)).toEqual(['trench', 'wood', 'crater']);
-    expect(r.snapshots[0]!.companies.map((c) => c.status)).toEqual(['waiting', 'holding']);
+    expect(r.snapshots[0]!.companies.rows.map((c) => c[4])).toEqual(['waiting', 'holding']);
   });
 
   it('accepts a record with a terrain grid', () => {
@@ -69,13 +77,18 @@ describe('parseRunRecord', () => {
     ['a line feature with one point', () => withFeature({ id: 'x', kind: 'trench', geometry: { type: 'LineString', coordinates: [[0, 0]] } }), /geometry\.features\[3\]/],
     ['a polygon with two points', () => withFeature({ id: 'x', kind: 'wood', geometry: { type: 'Polygon', coordinates: [[0, 0], [1, 1]] } }), /geometry\.features\[3\]/],
     ['a point feature with bad coordinates', () => withFeature({ id: 'x', kind: 'crater', geometry: { type: 'Point', coordinates: ['a', 0] } }), /geometry\.features\[3\]/],
-    ['a company with an unknown status', () => withCompany({ id: 'c', side: 'allied', x: 0, y: 0, strength: 1, status: 'fleeing' }), /snapshots\[0\]\.companies\[0\]/],
-    ['a company without a position', () => withCompany({ id: 'c', side: 'allied', strength: 1, status: 'waiting' }), /snapshots\[0\]\.companies\[0\]/],
-    ['a company on an unknown side', () => withCompany({ id: 'c', side: 'neutral', x: 0, y: 0, strength: 1, status: 'waiting' }), /snapshots\[0\]\.companies\[0\]/],
+    ['a company with an unknown status', () => withRow(['c', 0, 0, 1, 'fleeing', 1, 0, 'moving', 0, 0, 0]), /snapshots\[0\]\.companies\.rows\[0\]/],
+    ['a company without a position', () => withRow(['c', null, null, 1, 'waiting', 1, 0, 'moving', 0, 0, 0]), /snapshots\[0\]\.companies\.rows\[0\]/],
+    ['a row shorter than the columns', () => withRow(['c', 0, 0, 1, 'waiting']), /snapshots\[0\]\.companies\.rows\[0\]/],
+    ['a row for a company that is not a unit', () => withRow(['x', 0, 0, 1, 'waiting', 1, 0, 'moving', 0, 0, 0]), /snapshots\[0\]\.companies\.rows\[0\]/],
+    ['company columns without men', () => ({ ...good(), snapshots: [{ minute: 0, companies: { columns: ['id', 'x', 'y', 'status'], rows: [] }, barrages: [] }] }), /snapshots\[0\]\.companies\.columns lacks men/],
+    ['companies as a list of objects (a record from before engine 0.3.0)', () => ({ ...good(), snapshots: [{ minute: 0, companies: [], barrages: [] }] }), /snapshots\[0\]/],
+    ['no units (a record from before engine 0.3.0)', () => { const { units: _, ...r } = good(); return r; }, /units must be an array/],
+    ['a unit on an unknown side', () => withUnit({ id: 'n', battalionId: 'b', name: 'N', side: 'neutral' }), /units\[2\]/],
     ['empty snapshots', () => ({ ...good(), snapshots: [] }), /snapshots/],
     ['a malformed snapshot', () => ({ ...good(), snapshots: [{ minute: 0 }] }), /snapshots\[0\]/],
-    ['a barrage without done (a record from before barrage phases)', () => ({ ...good(), snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', points: [] }] }] }), /snapshots\[0\]\.barrages\[0\]/],
-    ['a barrage without points', () => ({ ...good(), snapshots: [{ minute: 0, companies: [], barrages: [{ sectorId: 's', done: true }] }] }), /snapshots\[0\]\.barrages\[0\]/],
+    ['a barrage without done (a record from before barrage phases)', () => ({ ...good(), snapshots: [{ ...good().snapshots[0]!, barrages: [{ sectorId: 's', points: [] }] }] }), /snapshots\[0\]\.barrages\[0\]/],
+    ['a barrage without points', () => ({ ...good(), snapshots: [{ ...good().snapshots[0]!, barrages: [{ sectorId: 's', done: true }] }] }), /snapshots\[0\]\.barrages\[0\]/],
     ['events not an array', () => ({ ...good(), events: {} }), /events/],
     ['a malformed event', () => ({ ...good(), events: [{ minute: 'x', text: 'a' }] }), /events\[0\]/],
     ['a terrain grid whose cells do not match cols × rows', () => withTerrain({ ...terrain(), rows: 3 }), /geometry\.terrain: .*2 × 3 = 6 cells but elevDm holds 4/],

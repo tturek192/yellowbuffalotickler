@@ -1,6 +1,7 @@
 import { minutesBetween, v } from '@wwi/scenario';
-import type { Doctrine, Scenario } from '@wwi/scenario';
+import type { Scenario } from '@wwi/scenario';
 import { runScenario } from './run';
+import type { Models } from './run';
 
 export interface BatchLine {
   lineId: string;
@@ -30,7 +31,7 @@ export function quantiles(values: number[], qs: number[]): number[] {
   });
 }
 
-export function runBatch(s: Scenario, doctrines: Record<string, Doctrine>, seeds: number[]): BatchSummary {
+export function runBatch(s: Scenario, models: Models, seeds: number[]): BatchSummary {
   const zero = v(s.zeroHour);
   const rows = new Map<string, { lineId: string; sectorId: string; times: number[]; hist: [number, number] | null }>();
   const row = (lineId: string, sectorId: string) => {
@@ -43,7 +44,7 @@ export function runBatch(s: Scenario, doctrines: Record<string, Doctrine>, seeds
     row(o.lineId, o.sectorId).hist = [minutesBetween(zero, v(o.earliest)), minutesBetween(zero, v(o.latest))];
   }
   for (const seed of seeds) {
-    for (const t of runScenario(s, doctrines, { seed }).summary.lineTaken) {
+    for (const t of runScenario(s, models, { seed }).summary.lineTaken) {
       row(t.lineId, t.sectorId).times.push(t.minute);
     }
   }

@@ -1,21 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import type { RunRecord, SimEvent } from '@wwi/engine';
 import { advancePlayhead, seek, formatClock, frameAt, isQuiet, timelineMarkers } from './index';
+import { companyTable, unitsFor, type TestCompany } from '../test-record';
 
 function recordWith(
   points: Array<{ minute: number; x: number }>,
   events: Array<Partial<SimEvent> & { minute: number; kind: SimEvent['kind'] }> = [{ minute: 0, kind: 'zero-hour' }],
 ): RunRecord {
+  const c1 = (x: number): TestCompany => ({ id: 'c1', side: 'allied', x, y: 0, men: 100, status: 'advancing' });
   return {
     engineVersion: 'test', scenarioId: 't', scenarioTitle: 't', scenarioStatus: 'draft', seed: 1,
     zeroHour: '1917-04-09T05:30', stepMin: 1, endMinute: points[points.length - 1]!.minute,
     geometry: { lines: [], sectors: [], features: [] },
+    units: unitsFor([c1(0)]),
     snapshots: points.map((p) => ({
       minute: p.minute,
-      companies: [{ id: 'c1', side: 'allied' as const, x: p.x, y: 0, strength: 100, status: 'advancing' }],
+      companies: companyTable([c1(p.x)]),
       barrages: [],
     })),
-    events: events.map((e) => ({ text: e.kind, causes: [], ...e })),
+    events: events.map((e, i) => ({ id: i, text: e.kind, causes: [], refs: [], ...e })),
     summary: { lineTaken: [] },
   } as RunRecord;
 }
@@ -52,7 +55,7 @@ describe('playback', () => {
     const r = recordWith([{ minute: 0, x: 0 }, { minute: 10, x: 10 }]);
     r.snapshots[0]!.barrages = [{ sectorId: 's', done: false, points: [[0, 0]] }];
     r.snapshots[1]!.barrages = [{ sectorId: 's', done: false, points: [[10, 20]] }];
-    r.snapshots[1]!.companies[0]!.status = 'consolidating';
+    r.snapshots[1]!.companies.rows[0]![4] = 'consolidating';
     const f = frameAt(r, 5);
     expect(f.companies[0]!.status).toBe('advancing');
     expect(f.barrages[0]!.points[0]).toEqual([5, 10]);

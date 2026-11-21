@@ -1,4 +1,5 @@
 import type { RunRecord } from '@wwi/engine';
+import { companiesOf } from '../playback/interpolate';
 import { DEFAULT_RADIUS_M } from './style';
 
 export type Point = [number, number];
@@ -47,7 +48,7 @@ export function recordBounds(r: RunRecord): Bounds {
     }
   }
   for (const s of r.snapshots) {
-    for (const c of s.companies) add(c.x, c.y);
+    for (const c of companiesOf(r, s)) add(c.x, c.y);
     for (const br of s.barrages) for (const [x, y] of br.points) add(x + BARRAGE_DEPTH_M, y);
   }
   for (const s of r.geometry.sectors) {

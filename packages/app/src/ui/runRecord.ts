@@ -1,4 +1,4 @@
-import type { RunRecord } from '@wwi/engine';
+import type { CompanyStatus, RunRecord } from '@wwi/engine';
 import { FEATURE_KINDS, isLocalDateTime, LOCAL_DATETIME_FORMAT, terrainGridProblem } from '@wwi/scenario';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -7,7 +7,12 @@ const isPoint = (v: unknown): boolean => Array.isArray(v) && v.length === 2 && i
 const isPoints = (v: unknown, min: number): boolean => Array.isArray(v) && v.length >= min && v.every(isPoint);
 
 const SIDES: readonly unknown[] = ['allied', 'central'];
-const STATUSES: readonly unknown[] = ['waiting', 'advancing', 'consolidating', 'holding'];
+const STATUSES: readonly CompanyStatus[] = [
+  'waiting', 'advancing', 'consolidating', 'holding', 'pinned', 'falling-back', 'counter-attacking',
+  'surrendered', 'destroyed', 'marching', 'off-map',
+];
+/** The company columns the player reads; a record may carry more. */
+const NEEDED_COLUMNS = ['id', 'x', 'y', 'men', 'status'] as const;
 const KINDS: readonly unknown[] = FEATURE_KINDS;
 
 /** A feature needs an id, a known kind, and a Point, LineString or Polygon geometry with usable coordinates. */
@@ -21,8 +26,8 @@ function isFeature(f: unknown): boolean {
   return false;
 }
 
-const isCompany = (c: unknown): boolean =>
-  isObject(c) && typeof c.id === 'string' && SIDES.includes(c.side) && isNum(c.x) && isNum(c.y) && isNum(c.strength) && STATUSES.includes(c.status);
+const isUnit = (u: unknown): boolean =>
+  isObject(u) && typeof u.id === 'string' && typeof u.battalionId === 'string' && typeof u.name === 'string' && SIDES.includes(u.side);
 
 /** Check the parts of a run record the player reads; throw a readable message for anything else. */
 export function parseRunRecord(data: unknown): RunRecord {
@@ -46,12 +51,32 @@ export function parseRunRecord(data: unknown): RunRecord {
     const problem = terrainGridProblem(terrain);
     if (problem) fail(`geometry.terrain: ${problem}`);
   }
+  const units = data.units;
+  if (!Array.isArray(units)) return fail('units must be an array (records from engine 0.3.0 on carry it)');
+  units.forEach((u: unknown, i) => {
+    if (!isUnit(u)) fail(`units[${i}] needs id, battalionId, name and side`);
+  });
+  const unitIds = new Set((units as Array<{ id: string }>).map((u) => u.id));
   const snapshots = data.snapshots;
   if (!Array.isArray(snapshots) || snapshots.length === 0) return fail('snapshots must be a non-empty array');
   snapshots.forEach((s: unknown, i) => {
-    if (!isObject(s) || !isNum(s.minute) || !Array.isArray(s.companies) || !Array.isArray(s.barrages)) return fail(`snapshots[${i}] needs minute, companies and barrages`);
-    s.companies.forEach((c: unknown, j) => {
-      if (!isCompany(c)) fail(`snapshots[${i}].companies[${j}] needs id, side, x, y, strength and a known status`);
+    if (!isObject(s) || !isNum(s.minute) || !isObject(s.companies) || !Array.isArray(s.barrages)) return fail(`snapshots[${i}] needs minute, companies and barrages`);
+    const { columns, rows } = s.companies;
+    if (!Array.isArray(columns) || !Array.isArray(rows)) return fail(`snapshots[${i}].companies needs columns and rows (records from engine 0.3.0 on are columnar)`);
+    const col = Object.fromEntries(NEEDED_COLUMNS.map((c) => [c, columns.indexOf(c)])) as Record<(typeof NEEDED_COLUMNS)[number], number>;
+    const missing = NEEDED_COLUMNS.filter((c) => col[c] < 0);
+    if (missing.length) fail(`snapshots[${i}].companies.columns lacks ${missing.join(', ')}`);
+    rows.forEach((row: unknown, j) => {
+      const ok =
+        Array.isArray(row) &&
+        row.length === columns.length &&
+        typeof row[col.id] === 'string' &&
+        unitIds.has(row[col.id]) &&
+        isNum(row[col.x]) &&
+        isNum(row[col.y]) &&
+        isNum(row[col.men]) &&
+        STATUSES.includes(row[col.status]);
+      if (!ok) fail(`snapshots[${i}].companies.rows[${j}] needs a value for each column: a unit's id, x, y, men and a known status`);
     });
     s.barrages.forEach((b: unknown, j) => {
       if (!isObject(b) || typeof b.sectorId !== 'string' || typeof b.done !== 'boolean' || !Array.isArray(b.points)) fail(`snapshots[${i}].barrages[${j}] needs sectorId, done and points`);

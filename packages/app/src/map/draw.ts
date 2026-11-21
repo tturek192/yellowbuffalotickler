@@ -1,5 +1,5 @@
 import type { RunRecord } from '@wwi/engine';
-import type { Frame } from '../playback';
+import { companiesOf, type Frame } from '../playback';
 import { BARRAGE_DEPTH_M, worldToScreen, type Point, type View } from './projection';
 import { declutter, type Screen } from './declutter';
 import { divisionTags, nudgeClear, objectiveLabelGroups, overlaps, placeClear, trenchLabel, type Box } from './labels';
@@ -218,7 +218,7 @@ function drawDivisionTags(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   const rearPts = (rear.length > 0 ? rear : r.geometry.lines).flatMap((l) => l.points.map((p) => worldToScreen(view, p)));
   if (rearPts.length === 0) return;
   // Behind the front, and behind the companies drawn there at the start, so the tag is not buried under markers.
-  const startPts = (r.snapshots[0]?.companies ?? []).map((c) => worldToScreen(view, [c.x, c.y])[0] - 16);
+  const startPts = (r.snapshots[0] ? companiesOf(r, r.snapshots[0]) : []).map((c) => worldToScreen(view, [c.x, c.y])[0] - 16);
   const edge = Math.min(...rearPts.map((p) => p[0]), ...startPts) - 10;
   const size = labelSize(ctx, 12);
   const margin = 16;
@@ -285,7 +285,7 @@ function drawBarrage(ctx: CanvasRenderingContext2D, view: View, points: Point[])
 }
 
 function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame): void {
-  const initial = new Map((r.snapshots[0]?.companies ?? []).map((c) => [c.id, c.strength]));
+  const initial = new Map((r.snapshots[0] ? companiesOf(r, r.snapshots[0]) : []).map((c) => [c.id, c.men]));
   const W = 26;
   const H = 16;
   const placed = declutter(frame.companies.map((c) => worldToScreen(view, [c.x, c.y])), W + 2, MARKER_PITCH, MARKER_MAX_SHIFT);
@@ -332,8 +332,8 @@ function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, 
 
     // Holding companies (garrisons, reserves) have no attack to wear them down: no strength bar.
     if (c.status === 'holding') continue;
-    const full = initial.get(c.id) ?? c.strength;
-    const ratio = full > 0 ? Math.max(0, Math.min(1, c.strength / full)) : 0;
+    const full = initial.get(c.id) ?? c.men;
+    const ratio = full > 0 ? Math.max(0, Math.min(1, c.men / full)) : 0;
     const by = y + H + 2;
     ctx.fillStyle = 'rgba(59, 51, 38, 0.25)';
     ctx.fillRect(x, by, W, 3);
