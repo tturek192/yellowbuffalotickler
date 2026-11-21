@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { v } from '@wwi/scenario';
+import type { Scenario } from '@wwi/scenario';
 import type { RunRecord } from './record';
+import { moraleThresholds } from './morale';
+import type { Models } from './run';
+import { SCHEDULES } from './schedule';
+import { inContact, isBusy } from './step';
+import type { SimState } from './step';
+import { quietStep } from './schedule';
+import { runPipeline } from './pipeline';
 import { runScenario } from './run';
 import { artilleryFire } from './artillery';
 import { initRun } from './run';
@@ -77,5 +86,98 @@ describe('quiet steps', () => {
     expect(full).toBeGreaterThan(0);
     expect(roundsOn(ended, 76) / full).toBeCloseTo(7 / 10, 9);
     expect(roundsOn(ended, 90)).toBe(0);
+  });
+});
+
+describe('quiet steps in contact with nobody able to fire (Task 15)', () => {
+  /**
+   * fixtureFire with so few rounds that every company has fired its last within minutes, and a third garrison k3 in a
+   * trench 30 m beyond the Black Line in front of A Company: once A Company has consolidated the two stand in contact with
+   * neither able to fire.
+   */
+  const dry = (): [Scenario, Models] => {
+    const [s, m] = withRearTrench(fixtureFire({ startX: -300 }), 1180, 'k3');
+    s.forces[1]!.formations[0]!.companies!.find((c) => c.id === 'k3')!.start = [1180, 100];
+    for (const d of Object.values(m.doctrines)) d.companyDefaults = { ...d.companyDefaults, roundsPerRifle: est(0.05), roundsPerLightMg: est(1), roundsPerMg: est(2) };
+    return [s, m];
+  };
+  /** The run stepped as runScenario steps it, with this quiet step: every state, and the steps taken. */
+  const stepped = (quietMin: number, endMinute: number): SimState[] => {
+    const [s, m] = dry();
+    const { state, ctx } = initRun(s, withQuietStep(m, quietMin), { seed: 1 });
+    const out = [state];
+    let st = state;
+    while (st.minute < endMinute) out.push((st = runPipeline(st, ctx, Math.min(isBusy(st, ctx) ? 2 : quietStep(st, ctx, 2, quietMin), endMinute - st.minute))));
+    return out;
+  };
+
+  it('contact counts only while one of the two companies can fire', () => {
+    const { state, ctx } = initRun(...dry(), { seed: 1 });
+    const c1 = state.companies.find((c) => c.id === 'c1')!;
+    const k1 = state.companies.find((c) => c.id === 'k1')!;
+    const near = state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'consolidating' as const, x: k1.x - 20, y: k1.y } : c.id === 'k1' ? { ...c, posture: 'in-trench' as const } : c));
+    expect(inContact({ ...state, companies: near }, ctx)).toBe(true);
+    const spent = near.map((c) => (c.id === 'c1' || c.id === 'k1' ? { ...c, ammo: 0 } : c));
+    expect(inContact({ ...state, companies: spent }, ctx)).toBe(false);
+    // Down in its dugout a garrison cannot fire either.
+    const below = near.map((c) => (c.id === 'c1' ? { ...c, ammo: 0 } : c.id === 'k1' ? { ...c, posture: 'in-dugout' as const } : c));
+    expect(inContact({ ...state, companies: below }, ctx)).toBe(false);
+    expect(c1.ammo).toBeGreaterThan(0);
+  });
+
+  it('do not change what happens: attackers and garrisons that have fired their last rounds sit in contact, stepped quietly', () => {
+    const coarse = runScenario(dry()[0], withQuietStep(dry()[1], 10), { seed: 1, endMinute: 400, stopEarly: false });
+    const fine = runScenario(dry()[0], withQuietStep(dry()[1], 2), { seed: 1, endMinute: 400, stopEarly: false });
+    expect(ofKind(coarse, 'ammunition-exhausted').length).toBe(5);
+    expect(JSON.stringify(coarse.events)).toBe(JSON.stringify(fine.events));
+    expect(JSON.stringify(coarse.summary)).toBe(JSON.stringify(fine.summary));
+    // A Company and k3 30 m apart from the consolidation on, and the run stepping quietly through it.
+    const states = stepped(10, 400);
+    const late = states.filter((x) => x.minute >= 100);
+    for (const x of late) {
+      const c1 = x.companies.find((c) => c.id === 'c1')!;
+      const k3 = x.companies.find((c) => c.id === 'k3')!;
+      expect(c1.status).toBe('consolidating');
+      expect(Math.hypot(c1.x - k3.x, c1.y - k3.y)).toBeLessThanOrEqual(50);
+    }
+    expect(late.length).toBeLessThan(40);
+    expect(stepped(2, 400).filter((x) => x.minute >= 100).length).toBe(151);
+  });
+
+  it('men mopping up dugouts keep the step fine (their clearing draws each step)', () => {
+    const { state, ctx } = initRun(...dry(), { seed: 1 });
+    const quiet = { ...state, minute: 300, events: [], barrages: state.barrages.map((b) => ({ ...b, phase: 'done' as const })) };
+    expect(isBusy(quiet, ctx)).toBe(false);
+    expect(isBusy({ ...quiet, companies: quiet.companies.map((c) => (c.id === 'c1' ? { ...c, intent: 'mop-up' as const } : c)) }, ctx)).toBe(true);
+  });
+
+  it('registers morale thresholds as minutes that start movement, at the minute the morale reaches them', () => {
+    expect(SCHEDULES.some(([name, source]) => name === 'morale-thresholds' && source === moraleThresholds)).toBe(true);
+    const { state, ctx } = initRun(...dry(), { seed: 1 });
+    const k = ctx.doctrines['bef-1917']!.common;
+    // c1 attacking and isolated as far as anyone knows (no morale phase has run), morale 0.06 above falling back, no suppression.
+    const m = v(k.fallBack) + 0.06;
+    const one = state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'advancing' as const, morale: m, moraleStart: m, suppression: 0 } : c));
+    const due = moraleThresholds({ ...state, companies: one }, ctx).filter((x) => x.startsMovement);
+    const perMin = v(k.isolationDrain) / 60;
+    expect(due.map((x) => x.minute)).toContainEqual(expect.closeTo(0.06 / perMin, 6));
+    // Recovering faster than it drains: nothing due.
+    const up = one.map((c) => (c.id === 'c1' ? { ...c, moraleStart: 1 } : c));
+    const recovers = v(k.recoveryPerHour) > v(k.isolationDrain);
+    expect(moraleThresholds({ ...state, companies: up }, ctx).some((x) => Math.abs(x.minute - 0.06 / perMin) < 1e-6)).toBe(!recovers);
+  });
+
+  it('an off-map attack opening inside a quiet stretch opens at the minute fine steps open it', () => {
+    const run = (n: number) => {
+      const [s, m] = fixtureFire({ startX: -300 });
+      s.offMap = {
+        fire: [],
+        attacks: [{ id: 'flank', side: 'allied', name: 'A flank division', window: { from: '1916-07-01T10:50', to: '1916-07-01T11:30' }, targetFeatureId: 'ger-front-a', suppressFrac: est(0.25), cite: est('test') }],
+      };
+      return runScenario(s, withQuietStep(m, n), { seed: 1, endMinute: 300, stopEarly: false });
+    };
+    const at = (r: RunRecord) => ofKind(r, 'off-map-attack').map((e) => e.minute);
+    expect(at(run(10))).toEqual(at(run(2)));
+    expect(at(run(2)).length).toBe(1);
   });
 });

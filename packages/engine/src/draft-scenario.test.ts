@@ -56,6 +56,10 @@ describe('draft Vimy scenario run', () => {
     // mop-up), each seeded from the run's seed and its name, so drawing more in one never moves another's draws. The draft's
     // companies draw their start jitter and speed from their own stream now: the Blue Line falls at 316 (318 before), the
     // other lines at the same minutes.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.11', hash: 'f87da6f4' });
+    // 0.3.12 (Task 15): contact counts only while one of the two companies can fire (step.ts inContact), men mopping up
+    // keep the step fine, morale thresholds are scheduled, and an off-map attack is due just after its window opens. The
+    // draft has no German companies: with the version set back to 0.3.11 its record hashes to f87da6f4, so only the
+    // version moves the hash. (Vimy seed 1: the same events and summary, stepped quietly where nobody can fire.)
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.3.12', hash: '1be3899f' });
   });
 });

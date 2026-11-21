@@ -3,6 +3,7 @@ import { counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts
 import { fireMissionEnds, messageDueTimes } from './comms';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
+import { moraleThresholds } from './morale';
 import { reserveTimes } from './reserves';
 import { dugoutSorties } from './trenches';
 import type { SimState, StepContext } from './step';
@@ -60,6 +61,9 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['reserves', reserveTimes],
   // Task 13 fix round: a planned counter-attack with no ground it can reach is given up (a decision; moves nobody).
   ['plan-patience', planPatience],
+  // Task 15: morale falling through surrender, fall-back or go-to-ground between fires (a company falls back, gives up or
+  // goes to ground): now that companies in contact with nobody able to fire step quietly (step.ts inContact).
+  ['morale-thresholds', moraleThresholds],
 ];
 
 /**

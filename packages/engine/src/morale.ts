@@ -11,6 +11,7 @@ import type { CompanyState, CompanyStatus } from './companies';
 import { lineXAt } from './geometry';
 import { counterAttackOrder, marchOrder } from './movement';
 import { round } from './record';
+import type { Scheduled } from './schedule';
 import { onField } from './step';
 import type { SimState, StepContext } from './step';
 import type { Intent, Pending, Side } from './types';
@@ -216,6 +217,33 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
   });
   memo.byAt = isolation;
   return emit({ ...state, companies }, ...events);
+}
+
+/**
+ * The minutes companies' morale is due to fall through a threshold it changes state at (Task 15, so a quiet step ends
+ * where fine steps would see it): `surrender` for any company up on the field, and `fallBack` and `goToGround` for an
+ * attacking one that has started. Morale falls between fires by `isolationDrain` (while isolated, as the morale phase last
+ * found it; isolated when that is not known) and `suppressedDrain · suppression`, less `recoveryPerHour` below its
+ * starting morale; suppression only decays, so the minute worked out at its present value is never late (an early guess
+ * only shortens a quiet step). A fall starts movement (falling back) or changes what a company does, so the step that
+ * sees it is a fine one.
+ */
+export function moraleThresholds(state: SimState, ctx: StepContext): Scheduled[] {
+  const memo = isolationMemos.get(ctx);
+  const known = memo !== undefined && !memo.field.fresh && !memo.up.fresh && memo.field.ids.length === state.companies.length;
+  const out: Scheduled[] = [];
+  state.companies.forEach((c, i) => {
+    if (!onField(c) || c.posture === 'in-dugout') return;
+    const k = ctx.doctrines[c.doctrineId]!.common;
+    const last = known ? memo.byAt[i] : undefined;
+    const isolated = last === undefined || last.x !== c.x || last.y !== c.y || last.isolated;
+    const recovering = c.morale < c.moraleStart ? v(k.recoveryPerHour) : 0;
+    const fall = ((isolated ? v(k.isolationDrain) : 0) + v(k.suppressedDrain) * c.suppression - recovering) / 60;
+    if (!(fall > 0)) return;
+    const at = [v(k.surrender), ...(FIGHTING.has(c.status) ? [v(k.fallBack), v(k.goToGround)] : [])];
+    for (const thr of at) if (c.morale >= thr) out.push({ minute: state.minute + (c.morale - thr) / fall, startsMovement: true });
+  });
+  return out;
 }
 
 /**

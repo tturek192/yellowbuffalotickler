@@ -502,7 +502,8 @@ describe('the command model and quiet steps', () => {
     const off = fixtureComms();
     off[0].offMap = { fire: [], attacks: [offMapAttack()] };
     const o = initRun(...off, { seed: 1 });
-    expect(offMapAttackWindows(o.state, o.ctx)).toEqual([{ minute: 101, startsMovement: true }, { minute: 131, startsMovement: false }]);
+    // The window opens at 101; the attack opens in the first step that ends after that (Task 15: due just after it).
+    expect(offMapAttackWindows(o.state, o.ctx)).toEqual([{ minute: 101 + 1e-6, startsMovement: true }, { minute: 131, startsMovement: false }]);
   });
 
   it('a stall decided inside a quiet stretch is decided at the same minute however the battle is stepped', () => {

@@ -956,7 +956,12 @@ export const orderStarts = (state: SimState): Scheduled[] =>
  * the attack's first step is a fine one; while it is under way the companies it holds down count as under fire (busy).
  */
 export const offMapAttackWindows = (_state: SimState, ctx: StepContext): Scheduled[] =>
-  offMapAttacksOf(ctx.scenario).flatMap((a) => [{ minute: a.fromMin, startsMovement: true }, { minute: a.toMin, startsMovement: false }]);
+  // An attack opens in the first step that ends after its window opens (`offMapAttacks`: M > fromMin), so its due minute is
+  // just after fromMin (Task 15: a quiet step ending exactly on fromMin would otherwise be followed by a quiet one).
+  offMapAttacksOf(ctx.scenario).flatMap((a) => [{ minute: a.fromMin + JUST_AFTER_MIN, startsMovement: true }, { minute: a.toMin, startsMovement: false }]);
+
+/** A sliver of a minute, for a scheduled minute that is due only once a step has ended strictly after it. */
+const JUST_AFTER_MIN = 1e-6;
 
 /**
  * Whether the command model has something in hand that a run must not end before: an order on its way, a company holding

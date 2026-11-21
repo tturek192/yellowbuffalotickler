@@ -76,9 +76,14 @@ const GONE: ReadonlySet<string> = new Set(['surrendered', 'destroyed', 'off-map'
 /** On the field as a fighting body: men standing, and not surrendered, destroyed, off the map or marching. */
 export const onField = (c: CompanyState): boolean => c.men > 0 && !GONE.has(c.status);
 
+/** A company that can fight with its own weapons: on the field, up (not down in its dugouts), with ammunition left. */
+export const armed = (c: CompanyState): boolean => onField(c) && c.posture !== 'in-dugout' && c.ammo > 0;
+
 /**
  * Contact, the one definition every task extends: some attacking company (any that is not holding) is
- * within its doctrine's `closeRangeM` of an enemy company on the field.
+ * within its doctrine's `closeRangeM` of an enemy company on the field, and one of the two can fight (`armed`; Task 15):
+ * two companies neither of which can fire on the other (no ammunition left, or down in their dugouts) exchange nothing,
+ * and what can still change between them is scheduled (schedule.ts: morale thresholds, emergence, sorties, orders).
  */
 export function inContact(state: SimState, ctx: StepContext): boolean {
   const field = state.companies.filter(onField);
@@ -87,7 +92,7 @@ export function inContact(state: SimState, ctx: StepContext): boolean {
   for (const a of field) {
     if (isHolding(a)) continue;
     const r = v(ctx.doctrines[a.doctrineId]!.common.closeRangeM);
-    if (anyWithin(enemies[a.side], a.x, a.y, r)) return true;
+    if (anyWithin(enemies[a.side], a.x, a.y, r, armed(a) ? undefined : armed)) return true;
   }
   return false;
 }
@@ -98,14 +103,16 @@ const MOVING: ReadonlySet<string> = new Set(['advancing', 'falling-back', 'count
 /**
  * Busy: something is happening that needs the fine step and close snapshots — contact, a barrage
  * lifting, a company on the move, fire coming in on a company this step, a company pinned (whose
- * recovery sets it moving again), or men coming up out of their dugouts this step (whose fire starts
- * next step). Otherwise the battle is quiet.
+ * recovery sets it moving again), men coming up out of their dugouts this step (whose fire starts
+ * next step), or men mopping up dugouts (Task 15). Otherwise the battle is quiet.
  */
 export function isBusy(state: SimState, ctx: StepContext): boolean {
   return (
     state.barrages.some((b) => b.phase === 'lifting') ||
     state.companies.some((c) => MOVING.has(c.status) || c.status === 'pinned' || c.recentFire.some((f) => f.minute === state.minute)) ||
     state.events.some((e) => e.kind === 'dugout-sortie') ||
+    // Task 15: men clearing dugouts draw their progress each step.
+    state.companies.some((c) => c.intent === 'mop-up') ||
     inContact(state, ctx)
   );
 }
