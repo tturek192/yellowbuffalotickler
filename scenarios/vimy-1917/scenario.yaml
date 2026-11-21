@@ -10,6 +10,7 @@ include:
   - oob-canadian.yaml
   - oob-german.yaml
   - fireplan.yaml
+  - bombardment.yaml
   - weather.yaml
   - historical.yaml
 zeroHour:

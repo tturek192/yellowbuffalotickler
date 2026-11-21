@@ -1,0 +1,125 @@
+# The preliminary bombardment of Vimy Ridge, 20 March to 9 April 1917: the rounds each artillery entry fired, by task;
+# the German wire belts; and the stretch left unshelled. Research notes, every estimate's reasoning, the conflicts and
+# the open questions: docs/research/vimy/bombardment.md.
+#
+# Conventions (bombardment.md):
+# - Rounds are the Canadian Corps' expenditure in the bombardment's two phases together, noon 20 March to noon 9 April
+#   (BOH 1917 vol. I p. 315 n.2): phase I, "about half the batteries" (p. 313), to noon 2 April; phase II, "the week of
+#   suffering", to noon 9 April. The table's OCR is legible for the field guns, whose reading two printed totals confirm
+#   (802,600 field rounds, p. 316 n.1; 190,600 in phase I, rca-ww1-history); the heavy rows are not, so the heavy
+#   rounds are BOH's heavy total split by estimate (bombardment.md, "Reading the ammunition table").
+# - An artillery entry's rounds for one task are spread by the engine over the stretches that task covers. The silent
+#   forward 18-pdrs (cdn-18pdr-forward), the 13-pdrs, the barrage machine guns and the I Corps and First Army pieces have
+#   no allocation: the forward guns did not fire (BOH p. 307), and the table has no row for the others.
+# - Wire and spared stretches are y bands in local metres on a German trench feature (geo/features.geojson).
+bombardment:
+  from:
+    value: 1917-03-20T12:00
+    source: boh-1917-1
+    page: "315 n.2"
+    note: "the expenditure table's first phase runs from 'Noon 20th March' to 'Noon 2nd April', its second to 'Noon 9th April'; Nicholson p. 250: 'The preparatory bombardment began on 20 March'; BOH p. 313: the second, 'more intense' phase from 2 April"
+
+  allocations:
+    # Field guns: 647,000 18-pdr rounds (155,000 in phase I, 492,000 in phase II; BOH p. 315 n.2), shared between the
+    # creeping and standing 18-pdr entries by guns (320 and 112; the 48 forward guns were silent), and by task as an
+    # estimate: half on wire, a quarter each on trenches and harassing fire (bombardment.md, "The 18-pdr's tasks").
+    - artilleryId: cdn-18pdr-creeping
+      task: wire
+      rounds: { value: 239630, estimate: "half of this entry's 479,260 rounds (647,000 18-pdr rounds, BOH p. 315 n.2, x 320/432 guns): both histories single out wire-cutting as the field guns' particular task (Nicholson p. 249; BOH p. 313); no source read gives the split (bombardment.md)" }
+    - artilleryId: cdn-18pdr-creeping
+      task: trench
+      rounds: { value: 119815, estimate: "a quarter of this entry's 479,260 rounds: field guns kept destroyed works under fire to stop repair (boh-1917-appendices App. 15, para. 8(b)); split an estimate (bombardment.md)" }
+    - artilleryId: cdn-18pdr-creeping
+      task: harass
+      rounds: { value: 119815, estimate: "a quarter of this entry's 479,260 rounds: night harassing fire on every approach (BOH p. 313; communication trenches 'raked with shrapnel', p. 314); split an estimate (bombardment.md)" }
+    - artilleryId: cdn-18pdr-standing
+      task: wire
+      rounds: { value: 83870, estimate: "half of this entry's 167,740 rounds (647,000 18-pdr rounds, BOH p. 315 n.2, x 112/432 guns); split as for the creeping 18-pdrs (bombardment.md)" }
+    - artilleryId: cdn-18pdr-standing
+      task: trench
+      rounds: { value: 41935, estimate: "a quarter of this entry's 167,740 rounds; split as for the creeping 18-pdrs (bombardment.md)" }
+    - artilleryId: cdn-18pdr-standing
+      task: harass
+      rounds: { value: 41935, estimate: "a quarter of this entry's 167,740 rounds; split as for the creeping 18-pdrs (bombardment.md)" }
+    # 4.5-inch howitzers: 35,600 in phase I and 101,500 in phase II on demolition, 18,500 in phase II on counter-battery
+    # (BOH p. 315 n.2; a 4.5-inch battery served in each counter-battery group, boh-1917-appendices App. 15, para. 7(b)).
+    - artilleryId: cdn-45in-how
+      task: trench
+      rounds:
+        value: 137100
+        source: boh-1917-1
+        page: "315 n.2"
+        note: "35,600 (phase I) + 101,500 (phase II, demolition), as the OCR reads; the reading is checked by p. 316 n.1's 802,600 field rounds and rca-ww1-history's 190,600 in phase I (bombardment.md). Some were wire-cutting with the 106 fuze (BOH p. 313), not split out"
+    - artilleryId: cdn-45in-how
+      task: battery
+      rounds:
+        value: 18500
+        source: boh-1917-1
+        page: "315 n.2"
+        note: "phase II, the 'Counter-Battery' column, as the OCR reads (bombardment.md)"
+    # Counter-battery: rca-ww1-history's 125,900 counter-battery rounds in the last week, less the 4.5-inch howitzers'
+    # 18,500, is 107,400 heavy rounds, shared between the two counter-battery entries by guns.
+    - artilleryId: cdn-60pdr
+      task: battery
+      rounds: { value: 93542, estimate: "107,400 heavy counter-battery rounds (rca-ww1-history: 'The counter battery fire - 125,900 rounds in the week before 9 April', less the 4.5-inch howitzers' 18,500, BOH p. 315 n.2) x 54/62 counter-battery guns; howitzers in the counter-battery groups (boh-1917-appendices App. 15, para. 7(b)) are not split out (bombardment.md)" }
+    - artilleryId: cdn-6in-gun
+      task: battery
+      rounds: { value: 13858, estimate: "107,400 heavy counter-battery rounds (as for cdn-60pdr) x 8/62 counter-battery guns (bombardment.md)" }
+    # Demolition by the heavy and medium howitzers: BOH's 333,100 heavy rounds less the 107,400 counter-battery rounds is
+    # 225,700, shared by guns times each piece's sustained rate (tables/weapons-1917.yaml rpm).
+    - artilleryId: cdn-6in-how
+      task: trench
+      rounds: { value: 165768, estimate: "225,700 heavy demolition rounds (BOH p. 316 n.1: '333,100 rounds of heavy' in the preparation, less 107,400 counter-battery) x 104 guns x 1 rpm / 141.6 (the five howitzer entries' guns x rpm); rounded so the five sum to 225,700 (bombardment.md)" }
+    - artilleryId: cdn-8in-how
+      task: trench
+      rounds: { value: 28691, estimate: "225,700 heavy demolition rounds x 36 guns x 0.5 rpm / 141.6 (as for cdn-6in-how; bombardment.md)" }
+    - artilleryId: cdn-92in-how
+      task: trench
+      rounds: { value: 28691, estimate: "225,700 heavy demolition rounds x 36 guns x 0.5 rpm / 141.6 (as for cdn-6in-how; bombardment.md)" }
+    - artilleryId: cdn-12in-how
+      task: trench
+      rounds: { value: 1594, estimate: "225,700 heavy demolition rounds x 4 guns x 0.25 rpm / 141.6 (as for cdn-6in-how); rca-ww1-history: '180 12-inch and 270 15-inch rounds were allotted' to Thelus alone (bombardment.md)" }
+    - artilleryId: cdn-15in-how
+      task: trench
+      rounds: { value: 956, estimate: "225,700 heavy demolition rounds x 3 guns x 0.2 rpm / 141.6 (as for cdn-6in-how); 270 of them allotted to Thelus (rca-ww1-history; bombardment.md)" }
+    # Trench mortars: the table's last two rows, read as the 2-inch and 9.45-inch mortars (bombardment.md).
+    - artilleryId: cdn-medium-tm
+      task: wire
+      rounds: { value: 14100, estimate: "8,190 + 5,910, the table's second-last row (BOH p. 315 n.2), read as the 2-inch mortars' because the last two rows of figures each end in an empty counter-battery column, as mortars' would; the medium mortars' task was 'principally wire-cutting' (BOH p. 314) (bombardment.md)" }
+    - artilleryId: cdn-945in-tm
+      task: trench
+      rounds: { value: 850, estimate: "244 + 606, the table's last row (BOH p. 315 n.2), read as the 9.45-inch mortars' (as for cdn-medium-tm); 'The task of the heavy mortars was demolition' (BOH p. 314) (bombardment.md)" }
+
+  # Stretches the bombardment left alone on purpose.
+  spared:
+    # The 87th Battalion's front on Hill 145. y -192 to -3 is the right (south) half of the 87th's frontage as
+    # oob-canadian.yaml lays it out (-192 to 186, the 4th Division's sector split among five battalions): the strong
+    # point's fire kept the right of the 75th, behind the 87th, in its assembly trenches (BOH pp. 328-329), while the 87th's left went forward. An estimate
+    # of the band; the reason is sourced.
+    - featureId: ger-first-position
+      yMin: -192
+      yMax: -3
+      reason:
+        value: "A stretch of German trench (a strong point and its wire) was left undestroyed at the request of the 87th Battalion's commanding officer, who meant to use it when captured; its machine guns cut down half the 87th's leading wave"
+        source: nicholson-1962
+        page: "259"
+        note: "'A portion of German trench had been left undestroyed by the heavy artillery at the request of the commanding officer' of the 87th; BOH p. 328: destroyed early in the bombardment, repaired by the 7th, and 'at the request of the infantry ... allowed to remain'. Only the heavy artillery spared it (bombardment.md)"
+
+  # German wire. One belt per stretch; where the sources give two belts, their breadths are summed.
+  wire:
+    - featureId: ger-first-position
+      yMin: -4600
+      yMax: 2552
+      beltDepthM: { value: 13.7, estimate: "15 yards. The front system's wire: 'deep belts of wire' (BOH p. 305), 'woven about with barbed wire' (Nicholson p. 246); no breadth for it was found. 15 yards is the upper end of BOH's 'ten to fifteen yards in depth' a belt for the Hindenburg Line, built in the same winter (p. 92) (bombardment.md)" }
+    - featureId: zwischen-stellung
+      yMin: -4490
+      yMax: -2945
+      beltDepthM: { value: 13.7, estimate: "15 yards, as for the first position: BOH p. 314 finds 'dense entanglements both in front of and behind Thelus' on air photographs, with no breadth (bombardment.md)" }
+    - featureId: thelus-trench
+      yMin: -3072
+      yMax: -2446
+      beltDepthM: { value: 13.7, estimate: "15 yards, as for the first position: 'the strongly wired Thelus Trench, the intermediate line' (BOH p. 333); hussey-inman-1921 p. 153: 'rather doubtful if the wire had been properly cut' there (bombardment.md)" }
+    - featureId: ger-second-position
+      yMin: -4245
+      yMax: -1920
+      beltDepthM: { value: 36.6, estimate: "two belts summed: 'The first belt of wire, in places 20 yards broad', followed the crest, 'the second lay 200 yards down the slope' (BOH p. 336; hussey-inman-1921 p. 153: 'the thick double belt of wire'); the second's breadth is not given and is taken as the first's, 2 x 20 yards (bombardment.md)" }

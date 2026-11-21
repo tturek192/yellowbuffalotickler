@@ -82,6 +82,8 @@ archive_text tenthbattalion00holluoft holland-1918         # The Story of the Te
 # Task 9: the British official history (Falls, 1917 vol. I) and the AEF's German division histories
 archive_text in.ernet.dli.2015.210683 boh-1917-1 2015.210683.Military-Operations
 archive_text historiesoftwohu00unit aef-251-divisions-1920
+# Plan 3 (the bombardment): the same history's appendices volume (the First Army artillery plan, Appendix 15)
+archive_text in.ernet.dli.2015.210681 boh-1917-appendices 2015.210681.Military-Operations
 # Plan 3: the manuals and handbooks behind the weapon tables and the doctrine (docs/research/model/*.md). A text file
 # name with a space is passed URL-encoded.
 archive_text instructionsfort00washrich ss143-1917                                       # SS 143 (US reprint)

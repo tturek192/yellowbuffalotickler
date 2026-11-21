@@ -55,9 +55,9 @@ function nameOf(el: unknown, i: number): string {
   if (!isObj(el)) return `#${i + 1}`;
   if (typeof el.name === 'string') return el.name;
   const window = windowOf(el);
-  const parts = [el.id, el.lineId, el.sectorId, el.toLineId, el.at, el.bySide, el.side, el.formationId, window].filter(
-    (p): p is string => typeof p === 'string',
-  );
+  const parts = [
+    el.id, el.artilleryId, el.task, el.featureId, el.lineId, el.sectorId, el.toLineId, el.at, el.bySide, el.side, el.formationId, window,
+  ].filter((p): p is string => typeof p === 'string');
   return parts.length ? [...new Set(parts)].join(' ') : `#${i + 1}`;
 }
 
@@ -238,6 +238,7 @@ export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {
         ...walk(s.sectors, 'sectors'),
         ...walk(s.artillery, 'artillery'),
         ...walk(s.counterBattery, 'counterBattery', ['counterBattery']),
+        ...walk(s.bombardment, 'bombardment', ['Bombardment']),
       ],
     ],
     ['Weather', walk(s.weather, 'weather')],

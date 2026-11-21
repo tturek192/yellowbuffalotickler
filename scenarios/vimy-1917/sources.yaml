@@ -98,3 +98,24 @@ sources:
     url: https://rca-arc.org/part0120-the-first-world-war-1914-18/
     tier: secondary
     note: "the regiment's own history page, unsigned and without notes (fetched 2026-11-20); its Vimy section gives the Corps heavy artillery by battery and group, the 13-pdrs and 9.45-inch mortars, and 'silenced 83%' (Task 10, fireplan.md). Local copy via scripts/fetch-sources.sh"
+  boh-1917-appendices:
+    title: "Military Operations, France and Belgium, 1917: Appendices (to the volume on the German Retreat and the Battles of Arras)"
+    author: Cyril Falls
+    year: 1940
+    url: https://archive.org/details/in.ernet.dli.2015.210681
+    tier: official
+    note: "the official history's appendices volume (Plan 3, the bombardment): Appendix 11, the First Army plan of 31 January 1917; Appendix 15, the First Army Artillery Plan of 8 February 1917 (counter-battery, wire, the preliminary bombardment); Appendix 52, First Army statistics. Cited by appendix and paragraph; local OCR text via scripts/fetch-sources.sh"
+  ss143-1917:
+    title: "Instructions for the Training of Platoons for Offensive Action, 1917 (S.S. 143), U.S. War Department reprint"
+    author: General Staff, G.H.Q. (British Armies in France)
+    year: 1917
+    url: https://archive.org/details/instructionsfort00washrich
+    tier: primary
+    note: "the February 1917 platoon manual (also in tables/sources.yaml): an officer at the head of each platoon and a Lewis gun section in each (p. 9), four platoons to the company (Appendix III, p. 22). A manual, so the establishment the Canadian companies were organized on, not a count of any one company"
+  german-handbook-1917:
+    title: "Handbook of the German Army in War, January 1917"
+    author: General Staff, War Office (Great Britain)
+    year: 1917
+    url: https://archive.org/details/hndbkgermanarmy-1917jan
+    tier: primary
+    note: "British intelligence handbook (also in tables/sources.yaml): three machine-gun companies a regiment, one attached to each battalion (p. 49), of 6 guns (p. 50). Page numbers are the book's"
