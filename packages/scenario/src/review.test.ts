@@ -12,7 +12,7 @@ describe('buildReview', () => {
     expect(r.sections[0]!.rows.map((x) => x.kind)).toEqual(['estimate', 'sourced', 'disputed']);
   });
 
-  it('has the ten sections in order, the model tables last', () => {
+  it('has the eleven sections in order, the model tables last', () => {
     expect(buildReview(fixtureWithMixedValues()).sections.map((s) => s.title)).toEqual([
       'Historical targets',
       'Leaders and ratings',
@@ -20,6 +20,7 @@ describe('buildReview', () => {
       'German order of battle and garrisons',
       'Reserves',
       'Fire plan and artillery',
+      'Command, flanks and end conditions',
       'Weather',
       'Geometry',
       'Doctrine parameters',

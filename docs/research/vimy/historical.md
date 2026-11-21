@@ -31,7 +31,9 @@ reported taken. Where the narrative gives no earlier time the timetable's minute
 reach a line before then. Those earliest times (red-3cdn, blue-1cdn, blue-2cdn, brown-1cdn, brown-2cdn, and the draft's
 blue and brown) are entered as **estimates**, lower bounds from the timetable, not reported capture times. black-4cdn's
 earliest, 18:45, is likewise an **estimate**, a lower bound: it is when the 85th Battalion's two companies "started off"
-(BOH p. 341), the attack that completed the line, not when the line fell. black-3cdn's "in the allotted time" and
+(BOH p. 341), the attack that completed the line, not when the line fell. Since Plan 3 that evening attack is not
+an input (the companies that made it are reserve companies, `command.md`), so this lower bound is also the target for
+when the engine's own decision sends the attack in. black-3cdn's "in the allotted time" and
 red-2cdn's "up to time" are reported captures, at the timetable minute, so they stay sourced.
 
 | Line | Earliest | Latest | Sources and reasoning |

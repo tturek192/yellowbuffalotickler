@@ -80,13 +80,14 @@ Battalion's companies, which mopped up for the 25th), `reserve` (holds where it 
   centre battalion at La Folie Farm on the Red (p. 256), so the same battalions went on, and the 1st Division's
   leapfrog of rear companies is assumed (an estimate).
 - **4th Division** (pp. 259-261): the 102nd, 87th, 38th, 72nd and 73rd to the Black (A, B assault; C, D support); the
-  54th through the 102nd, the 75th behind the 87th, and the 78th through the 38th to the Red; two companies of the 85th
-  (C, D, `hayes-1920` p. 51) and two of the 46th (A, B; which two is not stated) attack the Black in the evening; the
-  10th Brigade's 44th and 50th stand by (their Hill 145 attack was on 10 April, after the scenario's day).
+  54th through the 102nd, the 75th behind the 87th, and the 78th through the 38th to the Red; the 10th Brigade's 44th
+  and 50th stand by for the Pimple, whose attack is a planned operation (`command.yaml`). Two companies of the 85th (C,
+  D, `hayes-1920` p. 51) and two of the 46th (A, B; which two is not stated) attacked the Black in the evening, but that
+  attack was improvised, so they are reserve companies and its time is a target (Plan 3, `command.md`).
 - **Reserves:** each brigade's fourth battalion where Nicholson names only three as assaulting (8th, 13th, 20th, 2nd,
   49th, 5th CMR; for the 49th and 5th CMR p. 256 confirms "the reserve battalion from each brigade"); the 47th (its
   role on 9 April is not given; the 85th's history has two 85th companies attached to it on 10 April, p. 53); the
-  85th's A and B; the 9th Brigade; the British 15th and 95th Brigades.
+  whole 85th and the 46th; the 9th Brigade; the British 15th and 95th Brigades.
 
 **Start times** (`startAfterMin`, minutes after Zero, 5:30 a.m.):
 
@@ -97,8 +98,11 @@ Battalion's companies, which mopped up for the 25th), `reserve` (holds where it 
 | 0 | other following companies; the passing-through battalions (21st, 25th, 54th, 75th, 78th) and the 22nd | estimate: p. 253 names no interval between waves; p. 259 has the supporting 75th pinned in its assembly trenches by the opening fire, so the supporting battalions moved at Zero; the engine holds them behind the barrage |
 | 120 | British 13th Brigade | `hussey-inman-1921` p. 153: "moved forward at 7.30 a.m." (sourced) |
 | 120 | 1st and 6th Brigades | estimate: taken to move with the 13th Brigade, as the other reserve brigades of the same bound; p. 256 has them on the Red Line by 9:30 |
-| 750 | the 85th's C and D Companies | `hayes-1920` p. 52: "zero hour having been fixed for six o'clock" (sourced) |
-| 750 | the 46th's A and B Companies | estimate: p. 261, "as the 85th Battalion mounted its attack" |
+
+No company starts later than Zero + 120. Until Plan 3 the 85th's C and D (+750, `hayes-1920` p. 52: "zero hour having
+been fixed for six o'clock") and the 46th's A and B (+750, an estimate from p. 261) were timetabled for the evening
+attack on Hill 145; that attack was improvised on the afternoon of 9 April (BOH p. 341), so they are now reserve
+companies and the attack's time is a target (`command.md`).
 
 ## Start positions
 
@@ -126,10 +130,13 @@ extent).
    the 6th Brigade's 31st, 28th, 29th (y −2980…−2254) and the 13th Brigade's West Kents and KOSB (−2254…−1770); the
    6th Brigade 1.5 km west of the front. The 13th Brigade "assembled during the night North of Neuville-St.-Vast"
    (`hussey-inman-1921` p. 153): x 200-600 m west of the village centre (features.geojson), at those y values.
-6. **The 4th Division's evening attackers.** The 85th's C and D in the 87th's frontage, where the summit's west side
-   lay, 25 m west of the front (they formed up "in the assembly trenches at the other end" of Tottenham Tunnel, `hayes-1920`
-   p. 52); its A and B 700 m back (the Music Hall Line, p. 49). The 46th's A and B either side of the 38th/72nd
-   boundary, 25 m west; C and D 800 m back.
+6. **The 85th and the 46th.** Where they were at Zero, not where they formed up for the evening attack (Plan 3,
+   `command.md`). The 85th's A and B 700 m back (the Music Hall Line, `hayes-1920` p. 49), its C and D 100 m in front
+   of them: the whole battalion waited "back in the Music Hall Line" until the afternoon (p. 51). The 46th, in reserve
+   with the 10th Brigade until "shortly after midday" (BOH p. 341): its C and D 800 m back either side of the 38th/72nd
+   boundary, its A and B 100 m in front of them. (Until Plan 3 the 85th's C and D stood 25 m west of the front in the
+   87th's frontage, where they formed up "in the assembly trenches at the other end" of Tottenham Tunnel, p. 52, and the
+   46th's A and B 25 m west at the 38th/72nd boundary.)
 7. **The 10th Brigade** (44th, 50th): standing by for the Pimple (p. 261), so opposite the Pimple's frontage (the-pimple
    feature at y 1762; p. 262: the attack's "thousand-yard frontage"), 600 m west of the front, y 1450-2250.
 8. **Corps reserve.** The 9th Brigade: no position found; 3.5 km west of the front behind the 3rd Division (x −3500,
@@ -222,12 +229,12 @@ and the 9th (the 60th, below).
 | `87bn` | 87th Battalion | `11bde` | A assault → black-4cdn, +0 min; B assault → black-4cdn, +0 min; C support → black-4cdn, +0 min; D support → black-4cdn, +0 min | p. 259 | p. 259 | "the left assaulting battalion (the 87th)" | official |
 | `102bn` | 102nd Battalion | `11bde` | A assault → black-4cdn, +0 min; B assault → black-4cdn, +0 min; C support → black-4cdn, +0 min; D support → black-4cdn, +0 min | p. 259 | p. 259 | "the 102nd Battalion seizing its half of the forward slope" | official |
 | `47bn` | 47th Battalion (attached from the 10th Brigade) | `11bde` | A reserve; B reserve; C reserve; D reserve | p. 259 | estimate (role); p. 259 (attachment) | "strengthened by the addition of a battalion of the 10th Brigade (respectively the .47th and 46th Battalions)" | official / estimate |
-| `85bn` | 85th Battalion | `11bde` | A reserve; B reserve; C assault → black-4cdn, +750 min; D assault → black-4cdn, +750 min | p. 259 | p. 260; hayes-1920 pp. 51-53 | "The Commanding Officer selected "C" and "D" companies for the task" | official / secondary |
+| `85bn` | 85th Battalion | `11bde` | A reserve; B reserve; C reserve; D reserve (the evening attack is a target, `command.md`) | p. 259 | p. 260; hayes-1920 pp. 51-53 | "The Commanding Officer selected "C" and "D" companies for the task" | official / secondary |
 | `38bn` | 38th Battalion | `12bde` | A assault → black-4cdn, +0 min; B assault → black-4cdn, +0 min; C support → black-4cdn, +0 min; D support → black-4cdn, +0 min | p. 260 | p. 260 | "Three battalions made the assault-from right to left the 38th, 72nd and 73rd" | official |
 | `72bn` | 72nd Battalion | `12bde` | A assault → black-4cdn, +0 min; B assault → black-4cdn, +0 min; C support → black-4cdn, +0 min; D support → black-4cdn, +0 min | p. 260 | pp. 260-261 | "the 72nd Battalion successfully bombing it from a flank when frontal assault failed" | official |
 | `73bn` | 73rd Battalion | `12bde` | A assault → black-4cdn, +0 min; B assault → black-4cdn, +0 min; C support → black-4cdn, +0 min; D support → black-4cdn, +0 min | p. 260 | p. 260 | "here the 73rd consolidated to form a firm left flank" | official |
 | `78bn` | 78th Battalion | `12bde` | A assault → red-4cdn, +0 min; B assault → red-4cdn, +0 min; C support → red-4cdn, +0 min; D support → red-4cdn, +0 min | p. 261 | p. 261 | "Passing through the 38th Battalion according to plan, the 78th Battalion" | official |
-| `46bn` | 46th Battalion (attached from the 10th Brigade) | `12bde` | A assault → black-4cdn, +750 min; B assault → black-4cdn, +750 min; C reserve; D reserve | p. 259 | p. 261 | "two companies of the 46th, which was on loan from the 10th Brigade, came forward to capture a number of craters" | official |
+| `46bn` | 46th Battalion (attached from the 10th Brigade) | `12bde` | A reserve; B reserve; C reserve; D reserve (the evening attack is a target, `command.md`) | p. 259 | p. 261 | "two companies of the 46th, which was on loan from the 10th Brigade, came forward to capture a number of craters" | official |
 | `16rwarwick` | 16th Battalion, Royal Warwickshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "the 5th Division had been kept back in reserve, ready, on the 9th, to move at two hours' notice" | official / secondary / tertiary |
 | `1norfolk` | 1st Battalion, Norfolk Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "in the 15th Brigade, the Norfolks and Bedfords" | official / secondary / tertiary |
 | `1bedford` | 1st Battalion, Bedfordshire Regiment | `15bde-brit` | A reserve; B reserve; C reserve; D reserve | hussey-inman-1921 p. 158; wikipedia-vimy-oob | p. 252 note; hussey-inman-1921 p. 157 | "in the 15th Brigade, the Norfolks and Bedfords" | official / secondary / tertiary |
@@ -303,12 +310,12 @@ companies A-D.
 | `87bn` | -894, -98 (25) | -979, 91 (25) | -994, -98 (125) | -1079, 91 (125) |
 | `102bn` | -722, -475 (25) | -751, -287 (25) | -821, -476 (125) | -851, -287 (125) |
 | `47bn` | -1497, -476 (800) | -1526, -286 (800) | -1669, -97 (800) | -1753, 92 (800) |
-| `85bn` | -1570, -97 (700) | -1653, 91 (700) | -978, 91 (25) | -895, -97 (25) |
+| `85bn` | -1570, -97 (700) | -1653, 91 (700) | -1553, 91 (600) | -1470, -97 (600) |
 | `38bn` | -1034, 281 (25) | -1076, 470 (25) | -1134, 281 (125) | -1176, 470 (125) |
 | `72bn` | -1074, 658 (25) | -1008, 848 (25) | -1174, 658 (125) | -1108, 848 (125) |
 | `73bn` | -905, 1036 (25) | -889, 1225 (25) | -1005, 1036 (125) | -989, 1225 (125) |
 | `78bn` | -1309, 281 (300) | -1351, 470 (300) | -1409, 281 (400) | -1451, 470 (400) |
-| `46bn` | -1093, 504 (25) | -1081, 624 (25) | -1868, 504 (800) | -1856, 624 (800) |
+| `46bn` | -1768, 504 (700) | -1756, 624 (700) | -1868, 504 (800) | -1856, 624 (800) |
 | `16rwarwick` | -5900, -1869 (5502) | -5900, -1806 (5491) | -5900, -1744 (5495) | -5900, -1681 (5498) |
 | `1norfolk` | -5900, -1619 (5492) | -5900, -1556 (5485) | -5900, -1494 (5495) | -5900, -1431 (5519) |
 | `1bedford` | -5900, -1369 (5547) | -5900, -1306 (5543) | -5900, -1244 (5541) | -5900, -1181 (5549) |

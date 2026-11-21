@@ -7,6 +7,12 @@
 # on the Pimple by 6 a.m. (BOH p. 346; Nicholson p. 263: "by six o'clock"), and the 46th reported the left flank
 # secure "in another two hours", about 8 a.m. (Nicholson p. 263). Its losses are under casualties (46bn), and its end
 # is the lower bound of endedAt.
+#
+# The evening attack on Hill 145, 9 April, was improvised (BOH p. 341: two companies of the 85th sent forward at 3.15
+# p.m. "hoping to force the Germans back ... before dark"; two of the 46th beside them), so it is a target, not an
+# input: the scenario no longer times those companies (oob-canadian.yaml; command.md). Its time is kept here as the
+# lower bound of the 4th Division's Black Line, 18:45, when the 85th "started off across No Man's Land at 6.45 p.m."
+# (BOH p. 341); the 85th's own history fixes zero at six o'clock (command.md, Conflicts).
 historical:
   objectives:
     - lineId: black-1cdn

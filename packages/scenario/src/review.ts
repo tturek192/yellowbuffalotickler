@@ -241,6 +241,17 @@ export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {
         ...walk(s.bombardment, 'bombardment', ['Bombardment']),
       ],
     ],
+    [
+      'Command, flanks and end conditions',
+      [
+        ...walk(s.utcOffsetMin, 'utcOffsetMin', ['Local clock (minutes east of UTC)']),
+        ...walk(s.communications, 'communications', ['Communications']),
+        ...walk(s.operations, 'operations', ['Planned operations']),
+        ...walk(s.offMap, 'offMap', ['Off-map forces']),
+        ...walk(s.air, 'air', ['Air control']),
+        ...walk(s.end, 'end', ['End conditions']),
+      ],
+    ],
     ['Weather', walk(s.weather, 'weather')],
     ['Geometry', geometryEntries(s, reg)],
     ['Doctrine parameters', doctrineEntries],

@@ -104,7 +104,7 @@ sources:
     year: 1940
     url: https://archive.org/details/in.ernet.dli.2015.210681
     tier: official
-    note: "the official history's appendices volume (Plan 3, the bombardment): Appendix 11, the First Army plan of 31 January 1917; Appendix 15, the First Army Artillery Plan of 8 February 1917 (counter-battery, wire, the preliminary bombardment); Appendix 52, First Army statistics. Cited by appendix and paragraph; local OCR text via scripts/fetch-sources.sh"
+    note: "the official history's appendices volume (Plan 3, the bombardment): Appendix 11, the First Army plan of 31 January 1917; Appendix 15, the First Army Artillery Plan of 8 February 1917 (counter-battery, wire, the preliminary bombardment); Appendix 52, First Army statistics; (Plan 3, command) Appendix 12, the Canadian Corps Scheme of Operations (its communications and aircraft sections); Appendix 25, 2nd Canadian Division Instructions No. 3 (signals); Appendix 29, First Army's considerations of action after the attack; Appendix 42, First Army Order No. 103 (the Pimple and Bois en Hache). Cited by appendix and paragraph or printed page; local OCR text via scripts/fetch-sources.sh"
   german-handbook-1917:
     title: "Handbook of the German Army in War, January 1917"
     author: General Staff, War Office (Great Britain)
@@ -112,3 +112,10 @@ sources:
     url: https://archive.org/details/hndbkgermanarmy-1917jan
     tier: primary
     note: "British intelligence handbook (also in tables/sources.yaml): three machine-gun companies a regiment, one attached to each battalion (p. 49), of 6 guns (p. 50). Page numbers are the book's"
+  war-in-the-air-3:
+    title: "The War in the Air: Being the Story of the Part Played in the Great War by the Royal Air Force, vol. III"
+    author: H. A. Jones
+    year: 1931
+    url: https://archive.org/details/warinairbeingsto03rale
+    tier: official
+    note: "the official history of the air war (Plan 3, command): ch. VI, the Battles of Arras (pp. 332-350), the squadrons with the First Army, the air balance, the contact patrols and the artillery work on 9 April. Printed page numbers are cited; local OCR text via scripts/fetch-sources.sh"

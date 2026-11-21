@@ -13,6 +13,10 @@
 # - sectorId barrage-<div> and objectiveLineId <colour>-<div>; the British 13th Brigade attacks under the 2nd
 #   Canadian Division and so uses 2cdn ids.
 # - reserve companies hold where they stand for the whole run (engine status 'holding').
+# - no company is timetabled after Zero + 600 (Plan 3, docs/research/vimy/command.md): the evening attack on
+#   Hill 145 by the 85th's C and D and the 46th's A and B was improvised on the afternoon of 9 April, so those
+#   companies are reserve companies standing where they were at Zero, and the attack's time is a historical target.
+#   The 10th Brigade's planned attack on the Pimple is an operation in command.yaml, not a timetable here.
 # - officers and lewisGuns (Plan 3; docs/research/vimy/bombardment.md, "Companies") are not entered: no source read gives
 #   a company-specific figure, so the doctrine's companyDefaults (5 officers, 4 Lewis guns: S.S. 143's company in the
 #   attack) apply, and the engine lists them in defaultsUsed.
@@ -2099,24 +2103,18 @@ forces:
                         training: rehearsed
                       - id: 85bn-c
                         name: "85th Bn, Company C"
-                        role: assault
+                        role: reserve
                         strength: { value: 179, estimate: "Nicholson pp. 252-253: 15,000 in the first wave over 21 assault battalions = 714 a battalion, a quarter each; applied to every Canadian battalion (oob-canadian.md, Strength)" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
-                        start: { lonLat: [2.759957, 50.377905] }
+                        start: { lonLat: [2.752134, 50.376558] }
                         training: rehearsed
-                        sectorId: barrage-4cdn
-                        objectiveLineId: black-4cdn
-                        startAfterMin: { value: 750, source: hayes-1920, page: "52", note: "zero for the two companies' attack fixed for six o'clock in the evening (Zero + 750)" }
                       - id: 85bn-d
                         name: "85th Bn, Company D"
-                        role: assault
+                        role: reserve
                         strength: { value: 179, estimate: "Nicholson pp. 252-253: 15,000 in the first wave over 21 assault battalions = 714 a battalion, a quarter each; applied to every Canadian battalion (oob-canadian.md, Strength)" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
-                        start: { lonLat: [2.761779, 50.376457] }
+                        start: { lonLat: [2.753955, 50.375111] }
                         training: rehearsed
-                        sectorId: barrage-4cdn
-                        objectiveLineId: black-4cdn
-                        startAfterMin: { value: 750, source: hayes-1920, page: "52", note: "zero for the two companies' attack fixed for six o'clock in the evening (Zero + 750)" }
               - id: 12bde
                 name: "12th Canadian Infantry Brigade"
                 kind: brigade
@@ -2307,24 +2305,18 @@ forces:
                     companies:
                       - id: 46bn-a
                         name: "46th Bn, Company A"
-                        role: assault
+                        role: reserve
                         strength: { value: 179, estimate: "Nicholson pp. 252-253: 15,000 in the first wave over 21 assault battalions = 714 a battalion, a quarter each; applied to every Canadian battalion (oob-canadian.md, Strength)" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
-                        start: { lonLat: [2.756891, 50.381245] }
+                        start: { lonLat: [2.747706, 50.379664] }
                         training: rehearsed
-                        sectorId: barrage-4cdn
-                        objectiveLineId: black-4cdn
-                        startAfterMin: { value: 750, estimate: "Nicholson p. 261: two companies of the 46th came forward 'as the 85th Battalion mounted its attack'; that attack's time from hayes-1920 p. 52" }
                       - id: 46bn-b
                         name: "46th Bn, Company B"
-                        role: assault
+                        role: reserve
                         strength: { value: 179, estimate: "Nicholson pp. 252-253: 15,000 in the first wave over 21 assault battalions = 714 a battalion, a quarter each; applied to every Canadian battalion (oob-canadian.md, Strength)" }
                         paperStrength: { value: 250, estimate: "establishment about 1,000 all ranks a battalion (Nicholson p. 232 note: six battalions 'approximately 6000 men'), a quarter each; includes battalion HQ, so high for a rifle company" }
-                        start: { lonLat: [2.756619, 50.382322] }
+                        start: { lonLat: [2.747435, 50.380741] }
                         training: rehearsed
-                        sectorId: barrage-4cdn
-                        objectiveLineId: black-4cdn
-                        startAfterMin: { value: 750, estimate: "Nicholson p. 261: two companies of the 46th came forward 'as the 85th Battalion mounted its attack'; that attack's time from hayes-1920 p. 52" }
                       - id: 46bn-c
                         name: "46th Bn, Company C"
                         role: reserve

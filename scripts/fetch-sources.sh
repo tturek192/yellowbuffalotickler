@@ -92,6 +92,8 @@ archive_text hndbk-german-army-1918apr german-handbook-1918 %20HndbkGermanArmy19
 archive_text surveyofgermanta00unitrich survey-german-tactics-1918                       # AEF GHQ, A Survey of German Tactics
 archive_text instructionlewisautomaticmachinegun1917 lewis-1917 InstructionLewisAutomaticMachineGun1917
 archive_text handbookofartill00unitrich us-handbook-artillery-1920                       # US Ordnance, Handbook of Artillery
+# Plan 3 (command): the official air history, vol. III (Arras, the RFC with the First Army, contact patrols)
+archive_text warinairbeingsto03rale war-in-the-air-3                                    # Jones, The War in the Air, vol. III
 
 # --- Royal Regiment of Canadian Artillery, "The First World War 1914-18" (Task 10): the Vimy artillery ------
 # A heritage page on rca-arc.org; saved as the HTML the site serves (fireplan.md cites its Vimy section).

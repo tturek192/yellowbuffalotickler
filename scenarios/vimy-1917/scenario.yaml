@@ -12,11 +12,18 @@ include:
   - fireplan.yaml
   - bombardment.yaml
   - weather.yaml
+  - command.yaml
   - historical.yaml
 zeroHour:
   value: 1917-04-09T05:30
   source: nicholson-1962
   page: "253"
+# The clock every time in the scenario is on: British time, as the sources give it (command.md, "The clock").
+utcOffsetMin:
+  value: 60
+  source: boh-1917-1
+  page: "147 n.1"
+  note: "'Summer Time had come into use at midnight on the 24th' (of March 1917), so on 9 April the army's clock was GMT plus one hour; BOH gives German times converted, '2.30 a.m. (British time)' (p. 318 n.2). Check: Zero, 5:30, was 'set to coincide with first light' (Nicholson p. 253), and civil dawn at the frame origin on 9 April is 04:35 UTC, 05:35 on this clock"
 # One day of battle; a simulation setting, not a historical value.
 timeLimitMinutes: 1440
 geometrySource:
