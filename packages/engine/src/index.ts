@@ -51,3 +51,6 @@ export { buildWorld, churn, groundAt, speedFactor, wetness } from './ground';
 export type { World } from './ground';
 export { lineOfSight } from './sight';
 export { daylight, noteLightDefaults, sunTimes, utcOffsetOf, visibility, visibilityM } from './light';
+export { explain } from './explain';
+export type { Why, WhyRef } from './explain';
+export { CAUSE_TEXT } from './cause-text';

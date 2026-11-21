@@ -9,6 +9,7 @@
     "@wwi/scenario": "*"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./reader": "./src/reader.ts"
   }
 }

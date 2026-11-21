@@ -1,16 +1,19 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { runBatch, runScenario } from '@wwi/engine';
+import { explain, runBatch, runScenario } from '@wwi/engine';
+import type { RunRecord } from '@wwi/engine';
 import { buildReview, ScenarioError, v } from '@wwi/scenario';
 import { loadScenario, loadTables } from '@wwi/scenario/node';
 import { formatBatchV2 } from './format';
+import { atMinute, formatWhy } from './why';
 import { batchInWorkers } from './workers';
 import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-md';
 
 const USAGE = `usage:
   sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>] [--tables-dir <dir>]
   sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim why <record.json> (--event <n> | --unit <id> --at <HH:MM>)
   sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
 
 class UsageError extends Error {}
@@ -41,6 +44,9 @@ async function main(argv: string[]): Promise<void> {
         'tables-dir': { type: 'string' },
         workers: { type: 'string' },
         json: { type: 'boolean' },
+        event: { type: 'string' },
+        unit: { type: 'string' },
+        at: { type: 'string' },
       },
     });
   } catch (e) {
@@ -48,6 +54,18 @@ async function main(argv: string[]): Promise<void> {
   }
   const { values, positionals } = parsed;
   const [command, file] = positionals;
+  if (command === 'why') {
+    if (!file || positionals.length > 2) throw new UsageError('expected a record file');
+    const record = JSON.parse(readFileSync(file, 'utf8')) as RunRecord;
+    if (values.event !== undefined) {
+      console.log(formatWhy(explain(record, { eventId: intOpt('event', values.event) }), record.zeroHour));
+    } else if (values.unit !== undefined && values.at !== undefined) {
+      console.log(formatWhy(explain(record, { unitId: values.unit, minute: atMinute(record.zeroHour, values.at) }), record.zeroHour));
+    } else {
+      throw new UsageError('expected --event <n> or --unit <id> --at <HH:MM>');
+    }
+    return;
+  }
   if ((command !== 'run' && command !== 'batch' && command !== 'review') || !file || positionals.length > 2) {
     throw new UsageError('expected a command and a scenario file');
   }
