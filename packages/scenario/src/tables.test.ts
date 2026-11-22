@@ -1,9 +1,9 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { stringify } from 'yaml';
-import { ParamSchema, type Param, TablesSchema, EFFECT_KEYS } from './tables';
+import { parse, stringify } from 'yaml';
+import { ParamSchema, type Param, TablesSchema, EFFECT_KEYS, EFFECT_RANGES } from './tables';
 import { loadTables } from './load-node';
 import { minimalTables } from './test-fixtures';
 
@@ -83,5 +83,33 @@ describe('tables', () => {
   it('Param does not admit disputed values', () => {
     expectTypeOf<Param>().not.toMatchTypeOf<{ range: [number, number] }>();
     expect(() => ParamSchema.parse({ value: 1, range: [0, 2], sources: [{ source: 'a' }, { source: 'b' }], note: 'n', description: 'd' })).toThrow();
+  });
+});
+
+describe('every table key declares its range (final review fix)', () => {
+  const repoDir = (edit: (files: Record<string, any>) => void): string => {
+    const dir = mkdtempSync(join(tmpdir(), 'tables-range-'));
+    const files: Record<string, any> = {};
+    for (const f of readdirSync(join(repoRoot, 'tables')).filter((x) => x.endsWith('.yaml'))) files[f] = parse(readFileSync(join(repoRoot, 'tables', f), 'utf8'));
+    edit(files);
+    for (const [f, data] of Object.entries(files)) writeFileSync(join(dir, f), stringify(data));
+    return dir;
+  };
+  it('each effects key has one, and the repository tables are within them', () => {
+    expect(Object.keys(EFFECT_RANGES).sort()).toEqual([...EFFECT_KEYS].sort());
+    expect(() => loadTables(join(repoRoot, 'tables'))).not.toThrow();
+  });
+  it.each<[string, (f: Record<string, any>) => void, RegExp]>([
+    ['a negative killed share (conservation)', (f) => (f['effects.yaml'].effects.killedFrac.value = -0.2), /effects\.yaml: effects\.killedFrac\.value: .*greater than or equal to 0/],
+    ['a killed share above 1', (f) => (f['effects.yaml'].effects.killedFrac.value = 1.5), /effects\.killedFrac\.value: .*less than or equal to 1/],
+    ['a half-life of 0', (f) => (f['effects.yaml'].effects.suppressionHalfLifeMin.value = 0), /effects\.suppressionHalfLifeMin\.value: .*greater than 0/],
+    ['a mud speed factor of 0', (f) => (f['effects.yaml'].effects.mudSpeedFactor.value = 0), /effects\.mudSpeedFactor\.value: .*greater than 0/],
+    ['a negative capture radius', (f) => (f['effects.yaml'].effects.captureRadiusM.value = -1), /effects\.captureRadiusM\.value: .*greater than or equal to 0/],
+    ['a cover above 1', (f) => (f['cover.yaml'].cover.moving.open.value = 1.2), /cover\.yaml: cover\.moving\.open\.value: .*less than or equal to 1/],
+    ['a negative fail rate', (f) => (f['channels.yaml'].channels.runner.failPerHour.value = -1), /channels\.runner\.failPerHour\.value: .*greater than or equal to 0/],
+    ['a negative rate of fire', (f) => (f['weapons-1917.yaml'].weapons.rifle.rpm.value = -1), /weapons\.rifle\.rpm\.value: .*greater than or equal to 0/],
+    ['a range scale of 0', (f) => (f['weapons-1917.yaml'].weapons.rifle.rangeScaleM.value = 0), /weapons\.rifle\.rangeScaleM\.value: .*greater than 0/],
+  ])('rejects %s, naming file and path', (_, edit, message) => {
+    expect(() => loadTables(repoDir(edit))).toThrow(message);
   });
 });

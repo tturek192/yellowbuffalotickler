@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { ATTACK_KEYS, ATTACK_RANGES, COMMON_KEYS, COMMON_RANGES, COMPANY_DEFAULT_KEYS, COMPANY_DEFAULT_RANGES, DEFENCE_KEYS, DEFENCE_RANGES, NCO_RANGES } from './doctrine';
 import { parseDoctrine, parseScenario, ScenarioError } from './load';
 import { loadScenario } from './load-node';
 import { minimalScenario, minimalDoctrineV2, toYaml } from './test-fixtures';
+
+const repoRoot = resolve(__dirname, '../../..');
 
 const doctrine = (sources: object, source = 'd-src') => {
   const d = minimalDoctrineV2();
@@ -113,9 +116,27 @@ describe('doctrine parameters the engine cannot use are rejected, with their pat
     ['a negative start jitter', (d) => (d.attack.startJitterMin.value = -2), /attack\.startJitterMin\.value: .*greater than or equal to 0/],
     ['a negative speed jitter', (d) => (d.attack.speedJitterFrac.value = -0.1), /attack\.speedJitterFrac\.value: .*greater than or equal to 0/],
     ['a speed jitter of 1', (d) => (d.attack.speedJitterFrac.value = 1), /attack\.speedJitterFrac\.value: .*less than 1/],
+    // Final review fix: every key declares its range (fractions in [0, 1], rates and counts >= 0, speeds > 0).
+    ['a march rate of 0 (an arrival time of NaN)', (d) => (d.common.marchKmPerHour.value = 0), /common\.marchKmPerHour\.value: .*greater than 0/],
+    ['a quiet step of 0', (d) => (d.common.quietStepMin.value = 0), /common\.quietStepMin\.value: .*greater than 0/],
+    ['a starting morale above 1', (d) => (d.common.baseMorale.value = 1.2), /common\.baseMorale\.value: .*less than or equal to 1/],
+    ['a negative morale drain', (d) => (d.common.suppressedDrain.value = -0.3), /common\.suppressedDrain\.value: .*greater than or equal to 0/],
+    ['an NCO penalty above 1', (d) => (d.ncoPenalty.standard.value = 1.5), /ncoPenalty\.standard\.value: .*less than or equal to 1/],
+    ['a negative company strength', (d) => (d.companyDefaults.strength.value = -1), /companyDefaults\.strength\.value: .*greater than or equal to 0/],
+    ['an ammunition reserve above 1', (d) => (d.attack.ammoReserveFrac.value = 2), /attack\.ammoReserveFrac\.value: .*less than or equal to 1/],
+    ['a trapped share above 1', (d) => (d.defence!.trappedSurrenderFrac.value = 2), /defence\.trappedSurrenderFrac\.value: .*less than or equal to 1/],
+    ['a negative counter-attack delay', (d) => (d.defence!.localCounterAttackDelayMin.value = -5), /defence\.localCounterAttackDelayMin\.value: .*greater than or equal to 0/],
   ])('rejects %s', (_, mutate, message) => {
     const d = base();
     mutate(d);
     expect(() => parseDoctrine(toYaml(d))).toThrow(message);
+  });
+});
+
+describe('every doctrine key declares its range (final review fix)', () => {
+  it('each common, ncoPenalty, companyDefaults, attack and defence key has one, and the repository doctrines are within them', () => {
+    for (const [keys, ranges] of [[COMMON_KEYS, COMMON_RANGES], [['rehearsed', 'standard'], NCO_RANGES], [COMPANY_DEFAULT_KEYS, COMPANY_DEFAULT_RANGES], [ATTACK_KEYS, ATTACK_RANGES], [DEFENCE_KEYS, DEFENCE_RANGES]] as const)
+      expect(Object.keys(ranges).sort()).toEqual([...keys].sort());
+    for (const f of ['bef-1917.yaml', 'de-1917.yaml']) expect(() => parseDoctrine(readFileSync(join(repoRoot, 'doctrine', f), 'utf8'))).not.toThrow();
   });
 });
