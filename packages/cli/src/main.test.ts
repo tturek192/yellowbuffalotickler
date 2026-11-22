@@ -249,5 +249,25 @@ describe('cli', () => {
       expect(r.stderr).toMatch(/ops\[0\]\.factor/);
       expect(runCli(['batch', draft, '--runs', '1', '--drop-unresolved']).code).toBe(1);
     });
+
+    it('an overlay draws on the library (library/, or --library-dir): a library division and leader come into the record (Plan 4 Task 2)', () => {
+      const file = join(mkdtempSync(join(tmpdir(), 'sim-ov-')), 'lib.yaml');
+      writeFileSync(
+        file,
+        'id: lib\ntitle: Library\nscenarioId: vimy-1917-1cdn-3bde\nops:\n' +
+          '  - { op: add-formation, from: { libraryId: bef-9div }, side: allied, underFormationId: 1cdn-div, entryPoint: [-3000, 0], distanceKm: 8 }\n' +
+          '  - { op: swap-leader, formationId: 1cdn-div, leaderId: lukin }\n',
+      );
+      const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'lib.json');
+      const r = runCli(['run', draft, '--seed', '1', '--out', out, '--overlay', file]);
+      expect(r.code, r.stderr).toBe(0);
+      const paths = JSON.parse(readFileSync(out, 'utf8')).whatIf.changes.map((c: { path: string }) => c.path);
+      expect(paths).toEqual(expect.arrayContaining(['leader[lukin]', 'formation[bef-9div]', 'reserve[bef-9div]', 'formation[1cdn-div].leaderId']));
+      // Another library directory: here an empty one, so both ops no longer resolve.
+      const empty = runCli(['run', draft, '--seed', '1', '--out', out, '--overlay', file, '--library-dir', mkdtempSync(join(tmpdir(), 'sim-lib-'))]);
+      expect(empty.code).toBe(2);
+      expect(empty.stderr).toMatch(/ops\[0\] \(add-formation\): unknown library formation "bef-9div"/);
+      expect(runCli(['run', draft, '--seed', '1', '--out', out, '--library-dir', 'library']).code).toBe(1);
+    }, 120000);
   });
 });

@@ -1,0 +1,198 @@
+# Leaders of 1917 from other sectors of the Western Front, for a what-if to swap into a scenario (`swap-leader`) or to
+# bring in with a library division (`add-formation`). Research notes: docs/research/library/leaders.md; what each rating
+# means: docs/research/vimy/leader-rubric.md.
+#
+# Every name and rank is cited as the source prints it (initials where it gives initials; no forename added from memory).
+# Every rating is a DRAFT ESTIMATE by the builder, justified from conduct the cited source records; the ratings are the
+# owner's to set. A 3 whose justification says no conduct was found is a placeholder midpoint, not a judgement.
+# German leaders' ids start with "de-".
+sources:
+  boh-1917-1:
+    title: "Military Operations, France and Belgium, 1917: The German Retreat to the Hindenburg Line and the Battles of Arras"
+    author: Cyril Falls
+    year: 1940
+    url: https://archive.org/details/in.ernet.dli.2015.210683
+    tier: official
+    note: "the British official history; the Arras corps and divisions (chs. IX-XVII), Bullecourt (chs. XIII, XVIII), the German side from the German official account and regimental histories; the skeleton order of battle with each division's commander (pp. 562-563) and an index giving each officer's rank. Printed page numbers are cited; local OCR text via scripts/fetch-sources.sh"
+  boh-1917-3:
+    title: "Military Operations, France and Belgium, 1917, vol. III: The Battle of Cambrai"
+    author: Wilfrid Miles
+    year: 1948
+    url: https://archive.org/details/mil-op-fb-1917-v3
+    tier: official
+    note: "the British official history of Cambrai (20 November-7 December 1917); the German side 'mainly from G.O.A. xiii, Tankschlacht, Bernhardi and Zindler' (p. 47 n.3). Printed page numbers are cited; local OCR text via scripts/fetch-sources.sh"
+leaders:
+  # --- British and Dominion corps commanders ---------------------------------------------------------------------------
+  # VI Corps, Third Army, at Arras (9 April-May 1917)
+  - id: haldane
+    name: { value: "J. A. L. Haldane", source: boh-1917-1, page: "214", note: "'The task of the VI. Corps (Lieut.-General J. A. L. Haldane, headquarters, Noyelle Vion ...)'; the index: 'Haldane, Lieut.-Gen. J. A. L. (VI. Corps)'" }
+    rank: { value: "Lieutenant-General", source: boh-1917-1, page: "214" }
+    ratings:
+      planning: { value: 3, estimate: "BOH p. 214: his corps' task 'more straightforward' than the VII's, on its old trenches; no planning of his own beyond the army scheme found in the sources read; the rubric midpoint" }
+      orderSpeed: { value: 3, estimate: "BOH p. 248: on the 10th he ordered divisional headquarters forward so their commanders could control their troops; but he was 'apparently unaware till morning' that the 63rd Brigade was on Orange Hill" }
+      adaptiveness: { value: 4, estimate: "BOH p. 248: ordered every effort to turn the Wancourt-Feuchy defences from the gap the 15th Division had made; p. 286: granted a divisional request and put off the next attack to the 14th" }
+      riskTolerance: { value: 3, estimate: "BOH p. 253: asked for a division to relieve the worn 12th rather than push it again; pp. 379-380: with Snow 'not enamoured' of a local attack on Guemappe before the general offensive; within the set-piece of the day" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # VII Corps, Third Army, at Arras; at Cambrai in November 1917
+  - id: snow
+    name: { value: "T. D'O. Snow", source: boh-1917-1, page: "150", note: "'Lieut.-General Sir T. D'O. Snow, commanding the VII. Corps'; the index: 'Snow, Lieut.-Gen. Sir Thomas D'O. (VII. Corps)'" }
+    rank: { value: "Lieutenant-General", source: boh-1917-1, page: "150" }
+    ratings:
+      planning: { value: 4, estimate: "BOH p. 204: wanted to break through with his two left divisions and not attack the uncut Hindenburg Line frontally; p. 213: his view that a frontal attack 'stood small chance of success' was 'but too amply confirmed'" }
+      orderSpeed: { value: 3, estimate: "BOH p. 212: at 10.40 p.m. on the 9th ordered a dawn bombardment and an 8 a.m. attack, at the usual pace of the day" }
+      adaptiveness: { value: 4, estimate: "BOH p. 204: drew back the Brown Line on his front and let the 21st Division halt before uncut wire; BOH 1917 III p. 165: at Cambrai he 'read correctly' the signs of the coming German counter-attack" }
+      riskTolerance: { value: 2, estimate: "BOH p. 281: directed the 21st Division not to renew its attack until satisfied the preparation was complete; pp. 379-380: with Haldane 'not enamoured' of a local attack on Guemappe" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # XVII Corps, Third Army, at Arras (north of the Scarpe, next to the Canadian Corps)
+  - id: fergusson
+    name: { value: "Charles Fergusson", source: boh-1917-1, page: "225", note: "'The XVII. Corps (Lieut.-General Sir Charles Fergusson, Bt., headquarters, Aubigny ...)'" }
+    rank: { value: "Lieutenant-General", source: boh-1917-1, page: "225" }
+    ratings:
+      planning: { value: 4, estimate: "BOH p. 226 n.: weighed using two reserve divisions to breach the Oppy-Mericourt line against the long open flank it would leave; p. 282: asked a day's delay for reconnaissance before attacking Roeux" }
+      orderSpeed: { value: 3, estimate: "BOH p. 228: gave Lukin leave to call on the 4th Division during the attack; p. 269: ordered the 4th Division's advance on the evening of the 10th for the morrow; the usual pace" }
+      adaptiveness: { value: 4, estimate: "BOH p. 256: judged that infantry could not exploit Fampoux without artillery, and proposed instead a rapid cavalry advance on Greenland Hill" }
+      riskTolerance: { value: 2, estimate: "BOH p. 394: doubting the worn 51st Division could reach Delbar and Hausa Woods, asked that Roeux be the final objective; p. 441: 'protested as strongly as he could' against the 3 May plan" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # I Anzac Corps, Fifth Army: the advance to the Hindenburg Line and Bullecourt (April-May 1917)
+  - id: birdwood
+    name: { value: "William Birdwood", source: boh-1917-1, page: "363", note: "'Lieut.-General Birdwood, commanding the I. Anzac Corps'; the index: 'Birdwood, Lieut.-Gen. Sir William (I. Anzac Corps)'" }
+    rank: { value: "Lieutenant-General", source: boh-1917-1, page: "363" }
+    ratings:
+      planning: { value: 4, estimate: "BOH p. 363: 'doubtful of the scheme from the first' (the tank attack on Bullecourt of 11 April), he renewed his objections and was overruled by Gough; the attack failed as he feared" }
+      orderSpeed: { value: 3, estimate: "BOH p. 461 (3 May): ordered the advance continued to plan, and cancelled it on learning the true situation; p. 368: false reports of tanks in Riencourt misled him as they did everyone" }
+      adaptiveness: { value: 2, estimate: "BOH p. 368 (11 April): on the false report that troops were in Bullecourt, refused to sanction the protective barrage the attackers needed" }
+      riskTolerance: { value: 4, estimate: "BOH p. 146: decided to breach the German outpost line at Lagnicourt on 26 March; p. 167: undertook the capture of Hermies, Demicourt and Boursies, still held in front of the Hindenburg Line" }
+      moraleEffect: { value: 4, estimate: "BOH p. 475 n.: his representations, as administrative commander of the Australian force, kept the worn 1st Australian Division from a further relief; no direct evidence of the men's trust in him" }
+  # III Corps, Third Army, at Cambrai (20 November-7 December 1917)
+  - id: pulteney
+    name: { value: "W. P. Pulteney", source: boh-1917-3, page: "21", note: "'G.O.C., Lieut.-Gen. Sir W. P. Pulteney'; 'had commanded the corps since its formation in France in August 1914' (p. 21 n.1); the index: 'Pulteney, Lieut.-Gen. Sir William (III. Corps)'" }
+    rank: { value: "Lieutenant-General", source: boh-1917-3, page: "21" }
+    ratings:
+      planning: { value: 3, estimate: "BOH 1917 III p. 21 (III Corps O.O. No. 224, Appendix 3): his corps' break-in on 20 November succeeded, but a result alone is weak evidence of his part (rubric); the midpoint" }
+      orderSpeed: { value: 2, estimate: "BOH 1917 III p. 170: before the German counter-stroke his chief staff officer visited the brigadiers to urge vigilance, 'but no warning order was issued'" }
+      adaptiveness: { value: 2, estimate: "BOH 1917 III p. 165: neither Byng nor Pulteney 'attached as much importance to the possession of the canal crossings' as Rupprecht did, while Snow read the signs of attack correctly" }
+      riskTolerance: { value: 2, estimate: "BOH 1917 III p. 107: on the evening of 20 November proposed a strong defensive line overlooking the canal crossings, as further advance 'might be out of the question'" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # --- British and Dominion division commanders (each leads a library division but the 4th Australian's) ------------
+  # 9th (Scottish) Division, XVII Corps, at Arras
+  - id: lukin
+    name: { value: "H. T. Lukin", source: boh-1917-1, page: "227", note: "'The frontage of the 9th Division (Major-General H. T. Lukin, headquarters, Etrun) ...'; the skeleton order of battle, p. 562" }
+    rank: { value: "Major-General", source: boh-1917-1, page: "227" }
+    ratings:
+      planning: { value: 4, estimate: "BOH p. 227: his division had done its own work on tramways and cable trenches since December and 'knew the ground thoroughly'; he adopted the C.R.A.'s high-explosive creeping barrage, and it took all its objectives (p. 228)" }
+      orderSpeed: { value: 4, estimate: "BOH p. 228: learning the 15th Division was checked at the railway triangle, he had a smoke barrage put down on his exposed flank at once" }
+      adaptiveness: { value: 4, estimate: "BOH p. 228: the smoke barrage on the open flank, and leave obtained to call on the 4th Division to support his advance if necessary" }
+      riskTolerance: { value: 4, estimate: "BOH p. 227 n.2: his artillery orders were not sent up in detail, for fear of a categorical order to use the Army's half-shrapnel barrage" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # 15th (Scottish) Division, VI Corps, at Arras
+  - id: mccracken
+    name: { value: "F. W. N. McCracken", source: boh-1917-1, page: "222", note: "'The 15th Division (Major-General F. W. N. McCracken, headquarters, Duisans) ...'; the skeleton order of battle, p. 562" }
+    rank: { value: "Major-General", source: boh-1917-1, page: "222" }
+    ratings:
+      planning: { value: 4, estimate: "BOH p. 390 (23 April): gave one battalion the single task of taking Guemappe, with two in support to pass north of it once taken" }
+      orderSpeed: { value: 4, estimate: "BOH p. 223: at 11.30 a.m. on the 9th ordered the barrage brought back to deal with the railway triangle; p. 268: put the 44th Brigade through at 11 a.m. on the 11th" }
+      adaptiveness: { value: 4, estimate: "BOH p. 225: had his suggestion that the 46th Brigade go on been taken, 'a full hour would have been gained and Monchy would probably have been captured that night'" }
+      riskTolerance: { value: 4, estimate: "BOH p. 225: proposed pushing his reserve brigade on beyond the plan on the evening of the 9th; p. 390: renewed the attack under a fresh barrage at noon on the 23rd" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # 34th Division, XVII Corps, at Arras
+  - id: nicholson-cl
+    name: { value: "C. L. Nicholson", source: boh-1917-1, page: "231", note: "'The 34th Division (Major-General C. L. Nicholson, headquarters on the Lille road east of Maroeuil) ...'; the skeleton order of battle, p. 562" }
+    rank: { value: "Major-General", source: boh-1917-1, page: "231" }
+    ratings:
+      planning: { value: 4, estimate: "BOH p. 414 (28 April): made 'special arrangements' for the barrage, a bound of 100 yards after each four minutes' rest; p. 202 n.: had his men wear great-coats and leave the waterproof sheets behind" }
+      orderSpeed: { value: 3, estimate: "BOH p. 233: once he knew his left brigade was short of the Brown Line he ordered it, at 9.45 p.m., to take it before morning" }
+      adaptiveness: { value: 3, estimate: "BOH p. 269: on the 11th sent patrols to find whether the enemy held the Fampoux-Bailleul road, to occupy it if the 4th Division's attack succeeded; the obvious adjustment" }
+      riskTolerance: { value: 3, estimate: "BOH p. 269: kept his infantry back until the patrols reported; within the set-piece of the day" }
+      moraleEffect: { value: 4, estimate: "BOH p. 293: acted on his medical officer's report that the troops were exhausted, and the relief was 'well carried out', with soup on arrival; p. 202 n.: the great-coats" }
+  # 51st (Highland) Division, XVII Corps, at Arras (on the Canadian Corps' right on 9 April)
+  - id: harper
+    name: { value: "G. M. Harper", source: boh-1917-1, page: "234", note: "'the 51st Division (Major-General G. M. Harper, headquarters, Maroeuil) had a task more than ordinarily complicated'; the skeleton order of battle, p. 563" }
+    rank: { value: "Major-General", source: boh-1917-1, page: "234" }
+    ratings:
+      planning: { value: 2, estimate: "BOH p. 234: his scheme split his brigades, against the corps commander's three brigades in line, who assented only because it was 'unusual to deprive divisional commanders of liberty'; the final advance broke down (p. 235)" }
+      orderSpeed: { value: 2, estimate: "BOH p. 255: his headquarters believed the 154th Brigade on its objective until 9.35 a.m. on the 10th; only then did he order the Point du Jour line taken by 2 p.m." }
+      adaptiveness: { value: 3, estimate: "BOH p. 396 (23 April): brought up two battalions of the 34th Division placed at his disposal, and relieved the 153rd Brigade with the 103rd at night" }
+      riskTolerance: { value: 3, estimate: "no conduct beyond the set-piece found in the sources read; the rubric midpoint" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # 62nd (2nd West Riding) Division, V Corps, Fifth Army, at Bullecourt
+  - id: braithwaite
+    name: { value: "W. P. Braithwaite", source: boh-1917-1, page: "463", note: "'the 62nd Division (Major-General W. P. Braithwaite) attacked with all three brigades in line'; the skeleton order of battle, p. 563" }
+    rank: { value: "Major-General", source: boh-1917-1, page: "463" }
+    ratings:
+      planning: { value: 4, estimate: "BOH p. 463: the division, never before in a major action, 'had, however, constantly rehearsed this attack' of 3 May" }
+      orderSpeed: { value: 3, estimate: "no conduct bearing on the speed of his orders found in the sources read; the rubric midpoint" }
+      adaptiveness: { value: 3, estimate: "no conduct bearing on a change of plan found in the sources read; the rubric midpoint" }
+      riskTolerance: { value: 4, estimate: "BOH pp. 95-96: in the German retreat of February 1917 gave his brigadier leave to push forward when a patrol found the enemy's front empty" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # 4th Australian Division, I Anzac Corps, at Bullecourt (11 April 1917); at Messines in June
+  - id: holmes-w
+    name: { value: "W. Holmes", source: boh-1917-1, page: "361", note: "'Major-General W. Holmes, decided to attack with two brigades'; the skeleton order of battle, p. 563" }
+    rank: { value: "Major-General", source: boh-1917-1, page: "361" }
+    ratings:
+      planning: { value: 3, estimate: "BOH p. 361: allotted his two brigades to the Hindenburg Line and Riencourt to the corps plan; nothing beyond the routine found" }
+      orderSpeed: { value: 5, estimate: "BOH p. 362: when the tanks were late before dawn on 10 April, 'It was a case for instant decision, and Major-General Holmes took it without referring to higher authority'; there was 'just time'" }
+      adaptiveness: { value: 4, estimate: "BOH p. 362: postponed the assault and withdrew six battalions lying in the snow before they were seen" }
+      riskTolerance: { value: 3, estimate: "BOH p. 362: would not let the infantry wait in the open for the tanks; within the set-piece of the day" }
+      moraleEffect: { value: 3, estimate: "BOH p. 362: his verdict, 'I think there is just time to get the boys back'; no record of his effect on the men's confidence; the rubric midpoint" }
+  # --- German corps (Gruppe) commanders --------------------------------------------------------------------------------
+  # Gruppe Arras (IX Reserve Corps), Sixth Army, south of Gruppe Vimy, April 1917
+  - id: de-dieffenbach
+    name: { value: "Dieffenbach", source: boh-1917-1, page: "197", note: "'the Arras Group, which had the staff of the IX. Reserve Corps (Lieut.-General Dieffenbach)'; no forename in the sources read" }
+    rank: { value: "Lieutenant-General", source: boh-1917-1, page: "197", note: "the index has 'Dieffenbach, Gen. (IX. Res. Corps)'; the text's rank is entered" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct of his found in the sources read (BOH names him once, p. 197); the rubric midpoint" }
+      orderSpeed: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      adaptiveness: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      riskTolerance: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      moraleEffect: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+  # Gruppe Queant (XIV Reserve Corps), opposite Bullecourt in April-May 1917; the Arras Group at Cambrai in November
+  - id: de-moser
+    name: { value: "von Moser", source: boh-1917-3, page: "49", note: "'The Arras Group (Lieut.-General von Moser, XIV Reserve Corps)'; BOH 1917 I lists his memoirs under 'General Otto von Moser' (bibliography); the forename is not entered" }
+    rank: { value: "Lieutenant-General", source: boh-1917-3, page: "49", note: "BOH 1917 I p. 376 has 'General von Moser' (index: 'Gen. v.'); BOH 1917 III pp. 49, 141 'Lieut.-General' (leaders.md, Conflicts)" }
+    ratings:
+      planning: { value: 2, estimate: "BOH 1917 I p. 376: the Lagnicourt counter-attack of 15 April was 'a hasty improvisation', with 'hitches due to lack of preparation and knowledge of the ground'; Rupprecht faulted its single final objective (p. 377)" }
+      orderSpeed: { value: 4, estimate: "BOH 1917 I p. 376: conceived the attack on the 13th and delivered it on the 15th; BOH 1917 III p. 49: his Group warned on the night of 19/20 November of an attack with tanks next day" }
+      adaptiveness: { value: 4, estimate: "BOH 1917 III p. 141: when his Group's front was extended to Bourlon Wood he named the 21st Reserve Division his counter-attack division and asked for the 3rd Guard; p. 138 n.: entrenched the railway behind the Bourlon ridge" }
+      riskTolerance: { value: 5, estimate: "BOH 1917 I p. 376: proposed the Lagnicourt counter-stroke himself with four divisions; p. 477 n.: protested being made to wait, wanting to attack while the 3rd Guard Division was fresh" }
+      moraleEffect: { value: 3, estimate: "no conduct bearing on his troops' confidence found in the sources read; the rubric midpoint" }
+  # The Caudry Group (XIII Corps), Second Army, at Cambrai, November 1917
+  - id: de-watter-xiii
+    name: { value: "Freiherr von Watter", source: boh-1917-3, page: "47", note: "'the Caudry Group (XIII. Corps) commanded by General Freiherr von Watter'; not the 54th Division's commander, 'another Freiherr von Watter' (same page); no forename in the sources read" }
+    rank: { value: "General", source: boh-1917-3, page: "47" }
+    ratings:
+      planning: { value: 3, estimate: "BOH 1917 III p. 48: his Group was reinforced by a regiment and batteries from Army reserve on the 19th; nothing of his own found; the rubric midpoint" }
+      orderSpeed: { value: 4, estimate: "BOH 1917 III p. 49: his Group issued an order at midnight on 19/20 November warning the troops that tanks might be used in the expected attack" }
+      adaptiveness: { value: 3, estimate: "BOH 1917 III p. 174: his Group took its part in the Second Army's plan for the counter-stroke; nothing of his own found; the rubric midpoint" }
+      riskTolerance: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      moraleEffect: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+  # --- German division commanders (each leads a library division) ------------------------------------------------------
+  # 54th Division, the Caudry Group, at Cambrai (Havrincourt-Flesquieres), November 1917
+  - id: de-watter-54
+    name: { value: "Freiherr von Watter", source: boh-1917-3, page: "47", note: "'the 54th Division, commanded by another Freiherr von Watter, Lieut.-General'; no forename in the sources read" }
+    rank: { value: "Lieutenant-General", source: boh-1917-3, page: "47" }
+    ratings:
+      planning: { value: 4, estimate: "BOH 1917 III p. 48: his sector at readiness from noon on the 18th, his 27th Reserve Regiment restored from corps reserve and two battalions moved forward; the division's measures, not tied to him by name" }
+      orderSpeed: { value: 3, estimate: "BOH 1917 III p. 49: the newly arrived 107th Division's troops placed under his orders in case of attack; no timing of his orders found; the rubric midpoint" }
+      adaptiveness: { value: 3, estimate: "no change of plan of his found in the sources read; the rubric midpoint" }
+      riskTolerance: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      moraleEffect: { value: 3, estimate: "BOH 1917 III p. 99: the division 'was almost destroyed' on 20 November; nothing of his effect on it found; the rubric midpoint" }
+  # 9th Reserve Division, the Caudry Group, at Cambrai, November 1917
+  - id: de-hildermann
+    name: { value: "Hildermann", source: boh-1917-3, page: "48", note: "'the 9th Reserve Division (Lieutenant-General Hildermann)'; no forename in the sources read" }
+    rank: { value: "Lieutenant-General", source: boh-1917-3, page: "48" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct of his found in the sources read (BOH 1917 III names him once, p. 48); the rubric midpoint" }
+      orderSpeed: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      adaptiveness: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      riskTolerance: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      moraleEffect: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+  # 107th Division, from Russia to Cambrai, November 1917
+  - id: de-havenstein
+    name: { value: "Havenstein", source: boh-1917-3, page: "48", note: "'The 107th Division (Major-General Havenstein), brought from Russia'; no forename in the sources read" }
+    rank: { value: "Major-General", source: boh-1917-3, page: "48" }
+    ratings:
+      planning: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      orderSpeed: { value: 3, estimate: "BOH 1917 III p. 142: on the morning of 22 November he 'was uncertain whether the British were in Fontaine'; too little to rate; the rubric midpoint" }
+      adaptiveness: { value: 3, estimate: "BOH 1917 III p. 142: the troops of the 119th Division coming into action between Bourlon Wood and la Folie Wood passed under his command; nothing of his own found; the rubric midpoint" }
+      riskTolerance: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }
+      moraleEffect: { value: 3, estimate: "no conduct of his found in the sources read; the rubric midpoint" }

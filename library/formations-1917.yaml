@@ -1,0 +1,895 @@
+# Divisions of 1917 from other sectors of the Western Front, complete to companies, for a what-if to add to a scenario
+# with `add-formation` (it comes in as an off-map reserve: every company a reserve at the op's entry point, so the
+# `start` here is a placeholder the op replaces). Research notes, with each division's sources, membership and the
+# reasoning of every estimate: docs/research/library/leaders.md ("The divisions"). Leaders: leaders-1917.yaml.
+#
+# leaders.md ("The divisions") lists what this file holds, division by division; keep the two in step.
+# - Ids: British divisions bef-<n>div, German de-<n>div (de-9rd: 9th Reserve). Battalions <division>-<battalion>,
+#   companies A-D; German regiments <division>-<regiment>, battalions -i, -ii, -iii, companies numbered through the
+#   regiment, 1-4 in the I Battalion, 5-8 in the II, 9-12 in the III (as in the Vimy scenario's German order of battle).
+# - Battalion names as the source prints them. Pioneer battalions, machine-gun companies and the artillery are not entered.
+# - strength: every company an estimate (leaders.md, "Strength"); no source read gives a 1917 company figure for these units.
+sources:
+  aef-251-divisions:
+    title: "Histories of Two Hundred and Fifty-One Divisions of the German Army which Participated in the War (1914-1918)"
+    author: "General Staff, American Expeditionary Forces (G-2)"
+    year: 1920
+    url: https://archive.org/details/historiesoftwohu00unit
+    tier: primary
+    note: "compiled from Allied intelligence, not German records; each division's regiments and its 1917 service. The composition tables are illegible in the OCR text; the regiments are read from the narrative. Printed page numbers are cited; local OCR text via scripts/fetch-sources.sh"
+  ewing-1921:
+    title: "The History of the 9th (Scottish) Division, 1914-1919"
+    author: John Ewing
+    year: 1921
+    url: https://archive.org/details/9thscottishdivision-19141919
+    tier: secondary
+    note: "divisional history; Appendix I, the order of battle with each battalion's dates of joining and leaving (pp. 397-399). Local OCR text via scripts/fetch-sources.sh"
+  stewart-buchan-1926:
+    title: "The Fifteenth (Scottish) Division, 1914-1919"
+    author: J. Stewart and John Buchan
+    year: 1926
+    url: https://archive.org/details/fifteenthscottishdivision-19141919
+    tier: secondary
+    note: "divisional history; Appendix A, the order of battle with transfers and amalgamations (pp. 285-288). Local OCR text via scripts/fetch-sources.sh"
+  shakespear-1921:
+    title: "The Thirty-Fourth Division, 1915-1919: The Story of its Career from Ripon to the Rhine"
+    author: J. Shakespear
+    year: 1921
+    url: https://archive.org/details/thirtyfourthdivision19151919
+    tier: secondary
+    note: "divisional history; the units as raised (pp. 2-4) and the Battle of Arras (chs. VI-VII, pp. 95-132). Local OCR text via scripts/fetch-sources.sh"
+  bewsher-1921:
+    title: "The History of the 51st (Highland) Division, 1914-1918"
+    author: F. W. Bewsher
+    year: 1921
+    url: https://archive.org/details/historyof51sthig00bews
+    tier: secondary
+    note: "divisional history; the Battles of Arras, April-May 1917 (chs. IX-X, pp. 138-192). Local OCR text via scripts/fetch-sources.sh"
+  wyrall-1924-62nd:
+    title: "The History of the 62nd (West Riding) Division, 1914-1919, vol. I"
+    author: Everard Wyrall
+    year: 1924
+    url: https://archive.org/details/62nddivisionvol1
+    tier: secondary
+    note: "divisional history; Appendix I, the order of battle on arrival in France, January 1917 (pp. 239-241). Local OCR text via scripts/fetch-sources.sh"
+formations:
+  # 9th (Scottish) Division, XVII Corps, Third Army, at Arras on 9 April 1917. Brigades: BOH 1917 I p. 562; battalions: ewing-1921 Appendix I, p. 398 (each battalion's dates of joining and leaving cover April 1917).
+  - id: bef-9div
+    name: "9th (Scottish) Division"
+    kind: division
+    leaderId: lukin
+    children:
+      - id: bef-9div-26bde
+        name: "26th (Highland) Brigade"
+        kind: brigade
+        children:
+          - id: bef-9div-8bw
+            name: "8/Black Watch"
+            kind: battalion
+            companies:
+              - { id: bef-9div-8bw-a, name: "8/Black Watch, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-8bw-b, name: "8/Black Watch, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-8bw-c, name: "8/Black Watch, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-8bw-d, name: "8/Black Watch, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-7sea
+            name: "7/Seaforth Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-9div-7sea-a, name: "7/Seaforth Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-7sea-b, name: "7/Seaforth Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-7sea-c, name: "7/Seaforth Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-7sea-d, name: "7/Seaforth Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-5cam
+            name: "5/Cameron Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-9div-5cam-a, name: "5/Cameron Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-5cam-b, name: "5/Cameron Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-5cam-c, name: "5/Cameron Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-5cam-d, name: "5/Cameron Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-10ash
+            name: "10/Argyll & Sutherland Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-9div-10ash-a, name: "10/Argyll & Sutherland Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 120, estimate: "BOH 1917 I p. 228: the 10/Argyll & Sutherland Highlanders 'was weak originally' on 9 April; 120 a company, a fifth below the 150 taken for the division's other battalions (docs/research/library/leaders.md, Strength)" } }
+              - { id: bef-9div-10ash-b, name: "10/Argyll & Sutherland Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 120, estimate: "BOH 1917 I p. 228: the 10/Argyll & Sutherland Highlanders 'was weak originally' on 9 April; 120 a company, a fifth below the 150 taken for the division's other battalions (docs/research/library/leaders.md, Strength)" } }
+              - { id: bef-9div-10ash-c, name: "10/Argyll & Sutherland Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 120, estimate: "BOH 1917 I p. 228: the 10/Argyll & Sutherland Highlanders 'was weak originally' on 9 April; 120 a company, a fifth below the 150 taken for the division's other battalions (docs/research/library/leaders.md, Strength)" } }
+              - { id: bef-9div-10ash-d, name: "10/Argyll & Sutherland Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 120, estimate: "BOH 1917 I p. 228: the 10/Argyll & Sutherland Highlanders 'was weak originally' on 9 April; 120 a company, a fifth below the 150 taken for the division's other battalions (docs/research/library/leaders.md, Strength)" } }
+      - id: bef-9div-27bde
+        name: "27th (Lowland) Brigade"
+        kind: brigade
+        children:
+          - id: bef-9div-11rs
+            name: "11/Royal Scots"
+            kind: battalion
+            companies:
+              - { id: bef-9div-11rs-a, name: "11/Royal Scots, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-11rs-b, name: "11/Royal Scots, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-11rs-c, name: "11/Royal Scots, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-11rs-d, name: "11/Royal Scots, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-12rs
+            name: "12/Royal Scots"
+            kind: battalion
+            companies:
+              - { id: bef-9div-12rs-a, name: "12/Royal Scots, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-12rs-b, name: "12/Royal Scots, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-12rs-c, name: "12/Royal Scots, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-12rs-d, name: "12/Royal Scots, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-6kosb
+            name: "6/King's Own Scottish Borderers"
+            kind: battalion
+            companies:
+              - { id: bef-9div-6kosb-a, name: "6/King's Own Scottish Borderers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-6kosb-b, name: "6/King's Own Scottish Borderers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-6kosb-c, name: "6/King's Own Scottish Borderers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-6kosb-d, name: "6/King's Own Scottish Borderers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-9sr
+            name: "9/Scottish Rifles"
+            kind: battalion
+            companies:
+              - { id: bef-9div-9sr-a, name: "9/Scottish Rifles, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-9sr-b, name: "9/Scottish Rifles, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-9sr-c, name: "9/Scottish Rifles, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-9sr-d, name: "9/Scottish Rifles, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-9div-sabde
+        name: "South African Brigade"
+        kind: brigade
+        children:
+          - id: bef-9div-1sai
+            name: "1st South African Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-9div-1sai-a, name: "1st South African Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-1sai-b, name: "1st South African Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-1sai-c, name: "1st South African Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-1sai-d, name: "1st South African Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-2sai
+            name: "2nd South African Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-9div-2sai-a, name: "2nd South African Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-2sai-b, name: "2nd South African Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-2sai-c, name: "2nd South African Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-2sai-d, name: "2nd South African Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-3sai
+            name: "3rd South African Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-9div-3sai-a, name: "3rd South African Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-3sai-b, name: "3rd South African Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-3sai-c, name: "3rd South African Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-3sai-d, name: "3rd South African Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-9div-4sai
+            name: "4th South African Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-9div-4sai-a, name: "4th South African Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-4sai-b, name: "4th South African Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-4sai-c, name: "4th South African Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-9div-4sai-d, name: "4th South African Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+  # 15th (Scottish) Division, VI Corps, Third Army, at Arras. Brigades: BOH 1917 I p. 562; battalions: stewart-buchan-1926 Appendix A, pp. 286-287 (amalgamations of May 1916 entered as the merged battalions).
+  - id: bef-15div
+    name: "15th (Scottish) Division"
+    kind: division
+    leaderId: mccracken
+    children:
+      - id: bef-15div-44bde
+        name: "44th (Highland) Brigade"
+        kind: brigade
+        children:
+          - id: bef-15div-9bw
+            name: "9/Black Watch"
+            kind: battalion
+            companies:
+              - { id: bef-15div-9bw-a, name: "9/Black Watch, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-9bw-b, name: "9/Black Watch, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-9bw-c, name: "9/Black Watch, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-9bw-d, name: "9/Black Watch, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-8sea
+            name: "8/Seaforth Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-15div-8sea-a, name: "8/Seaforth Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-8sea-b, name: "8/Seaforth Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-8sea-c, name: "8/Seaforth Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-8sea-d, name: "8/Seaforth Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-8-10gor
+            name: "8/10th Gordon Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-15div-8-10gor-a, name: "8/10th Gordon Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-8-10gor-b, name: "8/10th Gordon Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-8-10gor-c, name: "8/10th Gordon Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-8-10gor-d, name: "8/10th Gordon Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-7cam
+            name: "7/Cameron Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-15div-7cam-a, name: "7/Cameron Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-7cam-b, name: "7/Cameron Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-7cam-c, name: "7/Cameron Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-7cam-d, name: "7/Cameron Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-15div-45bde
+        name: "45th Brigade"
+        kind: brigade
+        children:
+          - id: bef-15div-13rs
+            name: "13/Royal Scots"
+            kind: battalion
+            companies:
+              - { id: bef-15div-13rs-a, name: "13/Royal Scots, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-13rs-b, name: "13/Royal Scots, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-13rs-c, name: "13/Royal Scots, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-13rs-d, name: "13/Royal Scots, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-6-7rsf
+            name: "6/7th Royal Scots Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-15div-6-7rsf-a, name: "6/7th Royal Scots Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-6-7rsf-b, name: "6/7th Royal Scots Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-6-7rsf-c, name: "6/7th Royal Scots Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-6-7rsf-d, name: "6/7th Royal Scots Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-6cam
+            name: "6/Cameron Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-15div-6cam-a, name: "6/Cameron Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-6cam-b, name: "6/Cameron Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-6cam-c, name: "6/Cameron Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-6cam-d, name: "6/Cameron Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-11ash
+            name: "11/Argyll & Sutherland Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-15div-11ash-a, name: "11/Argyll & Sutherland Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-11ash-b, name: "11/Argyll & Sutherland Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-11ash-c, name: "11/Argyll & Sutherland Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-11ash-d, name: "11/Argyll & Sutherland Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-15div-46bde
+        name: "46th Brigade"
+        kind: brigade
+        children:
+          - id: bef-15div-7-8kosb
+            name: "7/8th King's Own Scottish Borderers"
+            kind: battalion
+            companies:
+              - { id: bef-15div-7-8kosb-a, name: "7/8th King's Own Scottish Borderers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-7-8kosb-b, name: "7/8th King's Own Scottish Borderers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-7-8kosb-c, name: "7/8th King's Own Scottish Borderers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-7-8kosb-d, name: "7/8th King's Own Scottish Borderers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-10sr
+            name: "10/Scottish Rifles"
+            kind: battalion
+            companies:
+              - { id: bef-15div-10sr-a, name: "10/Scottish Rifles, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-10sr-b, name: "10/Scottish Rifles, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-10sr-c, name: "10/Scottish Rifles, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-10sr-d, name: "10/Scottish Rifles, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-10-11hli
+            name: "10/11th Highland Light Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-15div-10-11hli-a, name: "10/11th Highland Light Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-10-11hli-b, name: "10/11th Highland Light Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-10-11hli-c, name: "10/11th Highland Light Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-10-11hli-d, name: "10/11th Highland Light Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-15div-12hli
+            name: "12/Highland Light Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-15div-12hli-a, name: "12/Highland Light Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-12hli-b, name: "12/Highland Light Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-12hli-c, name: "12/Highland Light Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-15div-12hli-d, name: "12/Highland Light Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+  # 34th Division, XVII Corps, Third Army, at Arras. Brigades: BOH 1917 I p. 562; battalions: shakespear-1921 pp. 2-4 (as raised), each named again in the Arras chapter (pp. 99-105) or by BOH 1917 I pp. 231-233; the 24th and 27th Northumberland Fusiliers were amalgamated only after Arras, in June 1917 (shakespear-1921 p. 132).
+  - id: bef-34div
+    name: "34th Division"
+    kind: division
+    leaderId: nicholson-cl
+    children:
+      - id: bef-34div-101bde
+        name: "101st Brigade"
+        kind: brigade
+        children:
+          - id: bef-34div-15rs
+            name: "15/Royal Scots"
+            kind: battalion
+            companies:
+              - { id: bef-34div-15rs-a, name: "15/Royal Scots, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-15rs-b, name: "15/Royal Scots, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-15rs-c, name: "15/Royal Scots, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-15rs-d, name: "15/Royal Scots, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-16rs
+            name: "16/Royal Scots"
+            kind: battalion
+            companies:
+              - { id: bef-34div-16rs-a, name: "16/Royal Scots, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-16rs-b, name: "16/Royal Scots, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-16rs-c, name: "16/Royal Scots, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-16rs-d, name: "16/Royal Scots, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-10lin
+            name: "10/Lincolnshire"
+            kind: battalion
+            companies:
+              - { id: bef-34div-10lin-a, name: "10/Lincolnshire, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-10lin-b, name: "10/Lincolnshire, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-10lin-c, name: "10/Lincolnshire, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-10lin-d, name: "10/Lincolnshire, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-11suf
+            name: "11/Suffolk"
+            kind: battalion
+            companies:
+              - { id: bef-34div-11suf-a, name: "11/Suffolk, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-11suf-b, name: "11/Suffolk, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-11suf-c, name: "11/Suffolk, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-11suf-d, name: "11/Suffolk, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-34div-102bde
+        name: "102nd (Tyneside Scottish) Brigade"
+        kind: brigade
+        children:
+          - id: bef-34div-20nf
+            name: "20/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-20nf-a, name: "20/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-20nf-b, name: "20/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-20nf-c, name: "20/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-20nf-d, name: "20/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-21nf
+            name: "21/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-21nf-a, name: "21/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-21nf-b, name: "21/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-21nf-c, name: "21/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-21nf-d, name: "21/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-22nf
+            name: "22/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-22nf-a, name: "22/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-22nf-b, name: "22/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-22nf-c, name: "22/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-22nf-d, name: "22/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-23nf
+            name: "23/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-23nf-a, name: "23/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-23nf-b, name: "23/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-23nf-c, name: "23/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-23nf-d, name: "23/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-34div-103bde
+        name: "103rd (Tyneside Irish) Brigade"
+        kind: brigade
+        children:
+          - id: bef-34div-24nf
+            name: "24/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-24nf-a, name: "24/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-24nf-b, name: "24/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-24nf-c, name: "24/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-24nf-d, name: "24/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-25nf
+            name: "25/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-25nf-a, name: "25/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-25nf-b, name: "25/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-25nf-c, name: "25/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-25nf-d, name: "25/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-26nf
+            name: "26/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-26nf-a, name: "26/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-26nf-b, name: "26/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-26nf-c, name: "26/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-26nf-d, name: "26/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-34div-27nf
+            name: "27/Northumberland Fusiliers"
+            kind: battalion
+            companies:
+              - { id: bef-34div-27nf-a, name: "27/Northumberland Fusiliers, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-27nf-b, name: "27/Northumberland Fusiliers, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-27nf-c, name: "27/Northumberland Fusiliers, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-34div-27nf-d, name: "27/Northumberland Fusiliers, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+  # 51st (Highland) Division, XVII Corps, Third Army, on the Canadian Corps' right on 9 April. Brigades: BOH 1917 I p. 563; battalions: BOH 1917 I pp. 234-235 (152nd, 154th) and bewsher-1921 pp. 153, 164 (153rd).
+  - id: bef-51div
+    name: "51st (Highland) Division"
+    kind: division
+    leaderId: harper
+    children:
+      - id: bef-51div-152bde
+        name: "152nd Brigade"
+        kind: brigade
+        children:
+          - id: bef-51div-5sea
+            name: "5/Seaforth Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-5sea-a, name: "5/Seaforth Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-5sea-b, name: "5/Seaforth Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-5sea-c, name: "5/Seaforth Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-5sea-d, name: "5/Seaforth Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-6sea
+            name: "6/Seaforth Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-6sea-a, name: "6/Seaforth Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6sea-b, name: "6/Seaforth Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6sea-c, name: "6/Seaforth Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6sea-d, name: "6/Seaforth Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-6gor
+            name: "6/Gordon Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-6gor-a, name: "6/Gordon Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6gor-b, name: "6/Gordon Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6gor-c, name: "6/Gordon Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6gor-d, name: "6/Gordon Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-8ash
+            name: "8/Argyll & Sutherland Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-8ash-a, name: "8/Argyll & Sutherland Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-8ash-b, name: "8/Argyll & Sutherland Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-8ash-c, name: "8/Argyll & Sutherland Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-8ash-d, name: "8/Argyll & Sutherland Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-51div-153bde
+        name: "153rd Brigade"
+        kind: brigade
+        children:
+          - id: bef-51div-6bw
+            name: "6/Black Watch"
+            kind: battalion
+            companies:
+              - { id: bef-51div-6bw-a, name: "6/Black Watch, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6bw-b, name: "6/Black Watch, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6bw-c, name: "6/Black Watch, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-6bw-d, name: "6/Black Watch, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-7bw
+            name: "7/Black Watch"
+            kind: battalion
+            companies:
+              - { id: bef-51div-7bw-a, name: "7/Black Watch, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7bw-b, name: "7/Black Watch, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7bw-c, name: "7/Black Watch, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7bw-d, name: "7/Black Watch, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-5gor
+            name: "5/Gordon Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-5gor-a, name: "5/Gordon Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-5gor-b, name: "5/Gordon Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-5gor-c, name: "5/Gordon Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-5gor-d, name: "5/Gordon Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-7gor
+            name: "7/Gordon Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-7gor-a, name: "7/Gordon Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7gor-b, name: "7/Gordon Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7gor-c, name: "7/Gordon Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7gor-d, name: "7/Gordon Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-51div-154bde
+        name: "154th Brigade"
+        kind: brigade
+        children:
+          - id: bef-51div-9rs
+            name: "9/Royal Scots"
+            kind: battalion
+            companies:
+              - { id: bef-51div-9rs-a, name: "9/Royal Scots, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-9rs-b, name: "9/Royal Scots, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-9rs-c, name: "9/Royal Scots, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-9rs-d, name: "9/Royal Scots, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-4sea
+            name: "4/Seaforth Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-4sea-a, name: "4/Seaforth Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-4sea-b, name: "4/Seaforth Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-4sea-c, name: "4/Seaforth Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-4sea-d, name: "4/Seaforth Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-4gor
+            name: "4/Gordon Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-4gor-a, name: "4/Gordon Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-4gor-b, name: "4/Gordon Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-4gor-c, name: "4/Gordon Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-4gor-d, name: "4/Gordon Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-51div-7ash
+            name: "7/Argyll & Sutherland Highlanders"
+            kind: battalion
+            companies:
+              - { id: bef-51div-7ash-a, name: "7/Argyll & Sutherland Highlanders, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7ash-b, name: "7/Argyll & Sutherland Highlanders, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7ash-c, name: "7/Argyll & Sutherland Highlanders, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-51div-7ash-d, name: "7/Argyll & Sutherland Highlanders, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+  # 62nd (2nd West Riding) Division, V Corps, Fifth Army, at Bullecourt (3 May 1917). Brigades: BOH 1917 I p. 563; battalions: wyrall-1924-62nd Appendix I, pp. 239-240 (on arrival in France, January 1917).
+  - id: bef-62div
+    name: "62nd (2nd West Riding) Division"
+    kind: division
+    leaderId: braithwaite
+    children:
+      - id: bef-62div-185bde
+        name: "185th Brigade"
+        kind: brigade
+        children:
+          - id: bef-62div-2-5wyr
+            name: "2/5th West Yorkshire"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-5wyr-a, name: "2/5th West Yorkshire, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5wyr-b, name: "2/5th West Yorkshire, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5wyr-c, name: "2/5th West Yorkshire, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5wyr-d, name: "2/5th West Yorkshire, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-6wyr
+            name: "2/6th West Yorkshire"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-6wyr-a, name: "2/6th West Yorkshire, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-6wyr-b, name: "2/6th West Yorkshire, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-6wyr-c, name: "2/6th West Yorkshire, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-6wyr-d, name: "2/6th West Yorkshire, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-7wyr
+            name: "2/7th West Yorkshire"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-7wyr-a, name: "2/7th West Yorkshire, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-7wyr-b, name: "2/7th West Yorkshire, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-7wyr-c, name: "2/7th West Yorkshire, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-7wyr-d, name: "2/7th West Yorkshire, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-8wyr
+            name: "2/8th West Yorkshire"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-8wyr-a, name: "2/8th West Yorkshire, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-8wyr-b, name: "2/8th West Yorkshire, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-8wyr-c, name: "2/8th West Yorkshire, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-8wyr-d, name: "2/8th West Yorkshire, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-62div-186bde
+        name: "186th Brigade"
+        kind: brigade
+        children:
+          - id: bef-62div-2-4dwr
+            name: "2/4th West Riding (Duke of Wellington's)"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-4dwr-a, name: "2/4th West Riding (Duke of Wellington's), A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4dwr-b, name: "2/4th West Riding (Duke of Wellington's), B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4dwr-c, name: "2/4th West Riding (Duke of Wellington's), C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4dwr-d, name: "2/4th West Riding (Duke of Wellington's), D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-5dwr
+            name: "2/5th West Riding (Duke of Wellington's)"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-5dwr-a, name: "2/5th West Riding (Duke of Wellington's), A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5dwr-b, name: "2/5th West Riding (Duke of Wellington's), B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5dwr-c, name: "2/5th West Riding (Duke of Wellington's), C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5dwr-d, name: "2/5th West Riding (Duke of Wellington's), D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-6dwr
+            name: "2/6th West Riding (Duke of Wellington's)"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-6dwr-a, name: "2/6th West Riding (Duke of Wellington's), A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-6dwr-b, name: "2/6th West Riding (Duke of Wellington's), B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-6dwr-c, name: "2/6th West Riding (Duke of Wellington's), C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-6dwr-d, name: "2/6th West Riding (Duke of Wellington's), D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-7dwr
+            name: "2/7th West Riding (Duke of Wellington's)"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-7dwr-a, name: "2/7th West Riding (Duke of Wellington's), A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-7dwr-b, name: "2/7th West Riding (Duke of Wellington's), B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-7dwr-c, name: "2/7th West Riding (Duke of Wellington's), C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-7dwr-d, name: "2/7th West Riding (Duke of Wellington's), D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+      - id: bef-62div-187bde
+        name: "187th Brigade"
+        kind: brigade
+        children:
+          - id: bef-62div-2-4koyli
+            name: "2/4th King's Own Yorkshire Light Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-4koyli-a, name: "2/4th King's Own Yorkshire Light Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4koyli-b, name: "2/4th King's Own Yorkshire Light Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4koyli-c, name: "2/4th King's Own Yorkshire Light Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4koyli-d, name: "2/4th King's Own Yorkshire Light Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-5koyli
+            name: "2/5th King's Own Yorkshire Light Infantry"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-5koyli-a, name: "2/5th King's Own Yorkshire Light Infantry, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5koyli-b, name: "2/5th King's Own Yorkshire Light Infantry, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5koyli-c, name: "2/5th King's Own Yorkshire Light Infantry, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5koyli-d, name: "2/5th King's Own Yorkshire Light Infantry, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-4yl
+            name: "2/4th York & Lancaster"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-4yl-a, name: "2/4th York & Lancaster, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4yl-b, name: "2/4th York & Lancaster, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4yl-c, name: "2/4th York & Lancaster, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-4yl-d, name: "2/4th York & Lancaster, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+          - id: bef-62div-2-5yl
+            name: "2/5th York & Lancaster"
+            kind: battalion
+            companies:
+              - { id: bef-62div-2-5yl-a, name: "2/5th York & Lancaster, A Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5yl-b, name: "2/5th York & Lancaster, B Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5yl-c, name: "2/5th York & Lancaster, C Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+              - { id: bef-62div-2-5yl-d, name: "2/5th York & Lancaster, D Company", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found for this battalion in 1917; as the Vimy scenario's British battalions (docs/research/vimy/oob-canadian.md, Strength): about 600 of a battalion in the fighting line (Nicholson 1962 p. 232 n., of 1918), a quarter each" } }
+  # 54th Division, the Caudry Group, Second Army, at Cambrai (Havrincourt-Flesquieres) on 20 November 1917. Regiments: aef-251-divisions p. 512; BOH 1917 III pp. 47-48 (its own 27th Reserve Regiment; one battalion of each regiment in the line, one in support, one in reserve).
+  - id: de-54div
+    name: "54th Division"
+    kind: division
+    leaderId: de-watter-54
+    children:
+      - id: de-54div-rir27
+        name: "RIR 27"
+        kind: regiment
+        children:
+          - id: de-54div-rir27-i
+            name: "I./RIR 27"
+            kind: battalion
+            companies:
+              - { id: de-54div-rir27-1, name: "1./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-2, name: "2./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-3, name: "3./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-4, name: "4./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-54div-rir27-ii
+            name: "II./RIR 27"
+            kind: battalion
+            companies:
+              - { id: de-54div-rir27-5, name: "5./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-6, name: "6./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-7, name: "7./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-8, name: "8./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-54div-rir27-iii
+            name: "III./RIR 27"
+            kind: battalion
+            companies:
+              - { id: de-54div-rir27-9, name: "9./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-10, name: "10./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-11, name: "11./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir27-12, name: "12./RIR 27", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+      - id: de-54div-ir84
+        name: "IR 84"
+        kind: regiment
+        children:
+          - id: de-54div-ir84-i
+            name: "I./IR 84"
+            kind: battalion
+            companies:
+              - { id: de-54div-ir84-1, name: "1./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-2, name: "2./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-3, name: "3./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-4, name: "4./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-54div-ir84-ii
+            name: "II./IR 84"
+            kind: battalion
+            companies:
+              - { id: de-54div-ir84-5, name: "5./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-6, name: "6./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-7, name: "7./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-8, name: "8./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-54div-ir84-iii
+            name: "III./IR 84"
+            kind: battalion
+            companies:
+              - { id: de-54div-ir84-9, name: "9./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-10, name: "10./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-11, name: "11./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-ir84-12, name: "12./IR 84", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+      - id: de-54div-rir90
+        name: "RIR 90"
+        kind: regiment
+        children:
+          - id: de-54div-rir90-i
+            name: "I./RIR 90"
+            kind: battalion
+            companies:
+              - { id: de-54div-rir90-1, name: "1./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-2, name: "2./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-3, name: "3./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-4, name: "4./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-54div-rir90-ii
+            name: "II./RIR 90"
+            kind: battalion
+            companies:
+              - { id: de-54div-rir90-5, name: "5./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-6, name: "6./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-7, name: "7./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-8, name: "8./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-54div-rir90-iii
+            name: "III./RIR 90"
+            kind: battalion
+            companies:
+              - { id: de-54div-rir90-9, name: "9./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-10, name: "10./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-11, name: "11./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-54div-rir90-12, name: "12./RIR 90", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+  # 107th Division, brought from Russia to Cambrai, 19-22 November 1917. Regiments: aef-251-divisions p. 593; BOH 1917 III pp. 48, 118-119.
+  - id: de-107div
+    name: "107th Division"
+    kind: division
+    leaderId: de-havenstein
+    children:
+      - id: de-107div-rir52
+        name: "RIR 52"
+        kind: regiment
+        children:
+          - id: de-107div-rir52-i
+            name: "I./RIR 52"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir52-1, name: "1./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-2, name: "2./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-3, name: "3./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-4, name: "4./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+          - id: de-107div-rir52-ii
+            name: "II./RIR 52"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir52-5, name: "5./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-6, name: "6./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-7, name: "7./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-8, name: "8./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+          - id: de-107div-rir52-iii
+            name: "III./RIR 52"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir52-9, name: "9./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-10, name: "10./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-11, name: "11./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir52-12, name: "12./RIR 52", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+      - id: de-107div-rir227
+        name: "RIR 227"
+        kind: regiment
+        children:
+          - id: de-107div-rir227-i
+            name: "I./RIR 227"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir227-1, name: "1./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-2, name: "2./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-3, name: "3./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-4, name: "4./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+          - id: de-107div-rir227-ii
+            name: "II./RIR 227"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir227-5, name: "5./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-6, name: "6./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-7, name: "7./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-8, name: "8./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+          - id: de-107div-rir227-iii
+            name: "III./RIR 227"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir227-9, name: "9./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-10, name: "10./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-11, name: "11./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir227-12, name: "12./RIR 227", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+      - id: de-107div-rir232
+        name: "RIR 232"
+        kind: regiment
+        children:
+          - id: de-107div-rir232-i
+            name: "I./RIR 232"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir232-1, name: "1./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-2, name: "2./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-3, name: "3./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-4, name: "4./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+          - id: de-107div-rir232-ii
+            name: "II./RIR 232"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir232-5, name: "5./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-6, name: "6./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-7, name: "7./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-8, name: "8./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+          - id: de-107div-rir232-iii
+            name: "III./RIR 232"
+            kind: battalion
+            companies:
+              - { id: de-107div-rir232-9, name: "9./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-10, name: "10./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-11, name: "11./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+              - { id: de-107div-rir232-12, name: "12./RIR 232", role: reserve, start: [0, 0], strength: { value: 150, estimate: "no strength found; the division came fresh from the Eastern Front (BOH 1917 III p. 48: 'brought from Russia'); 150 a company, the resting battalions' figure in the Vimy scenario (BOH 1917 I p. 317: '3,000 men'; docs/research/vimy/oob-german.md, Strength)" } }
+  # 9th Reserve Division, the Caudry Group, at Cambrai (south of the 54th Division); in 1917 also at Arras (May) and Ypres (September). Regiments: aef-251-divisions p. 173 (its 6th Reserve, 19th Reserve and 395th Regiments' companies in 1917); BOH 1917 III pp. 48, 99.
+  - id: de-9rd
+    name: "9th Reserve Division"
+    kind: division
+    leaderId: de-hildermann
+    children:
+      - id: de-9rd-rir6
+        name: "RIR 6"
+        kind: regiment
+        children:
+          - id: de-9rd-rir6-i
+            name: "I./RIR 6"
+            kind: battalion
+            companies:
+              - { id: de-9rd-rir6-1, name: "1./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-2, name: "2./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-3, name: "3./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-4, name: "4./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-9rd-rir6-ii
+            name: "II./RIR 6"
+            kind: battalion
+            companies:
+              - { id: de-9rd-rir6-5, name: "5./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-6, name: "6./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-7, name: "7./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-8, name: "8./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-9rd-rir6-iii
+            name: "III./RIR 6"
+            kind: battalion
+            companies:
+              - { id: de-9rd-rir6-9, name: "9./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-10, name: "10./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-11, name: "11./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir6-12, name: "12./RIR 6", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+      - id: de-9rd-rir19
+        name: "RIR 19"
+        kind: regiment
+        children:
+          - id: de-9rd-rir19-i
+            name: "I./RIR 19"
+            kind: battalion
+            companies:
+              - { id: de-9rd-rir19-1, name: "1./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-2, name: "2./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-3, name: "3./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-4, name: "4./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-9rd-rir19-ii
+            name: "II./RIR 19"
+            kind: battalion
+            companies:
+              - { id: de-9rd-rir19-5, name: "5./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-6, name: "6./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-7, name: "7./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-8, name: "8./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-9rd-rir19-iii
+            name: "III./RIR 19"
+            kind: battalion
+            companies:
+              - { id: de-9rd-rir19-9, name: "9./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-10, name: "10./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-11, name: "11./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-rir19-12, name: "12./RIR 19", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+      - id: de-9rd-ir395
+        name: "IR 395"
+        kind: regiment
+        children:
+          - id: de-9rd-ir395-i
+            name: "I./IR 395"
+            kind: battalion
+            companies:
+              - { id: de-9rd-ir395-1, name: "1./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-2, name: "2./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-3, name: "3./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-4, name: "4./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-9rd-ir395-ii
+            name: "II./IR 395"
+            kind: battalion
+            companies:
+              - { id: de-9rd-ir395-5, name: "5./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-6, name: "6./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-7, name: "7./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-8, name: "8./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+          - id: de-9rd-ir395-iii
+            name: "III./IR 395"
+            kind: battalion
+            companies:
+              - { id: de-9rd-ir395-9, name: "9./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-10, name: "10./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-11, name: "11./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }
+              - { id: de-9rd-ir395-12, name: "12./IR 395", role: reserve, start: [0, 0], strength: { value: 125, estimate: "no strength found for this regiment in 1917; as the Vimy scenario's German companies (docs/research/vimy/oob-german.md, Strength): at most 125 all ranks a company in the line (BOH 1917 I p. 317), the range 75-150" } }

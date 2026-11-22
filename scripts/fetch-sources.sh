@@ -94,6 +94,21 @@ archive_text instructionlewisautomaticmachinegun1917 lewis-1917 InstructionLewis
 archive_text handbookofartill00unitrich us-handbook-artillery-1920                       # US Ordnance, Handbook of Artillery
 # Plan 3 (command): the official air history, vol. III (Arras, the RFC with the First Army, contact patrols)
 archive_text warinairbeingsto03rale war-in-the-air-3                                    # Jones, The War in the Air, vol. III
+# Plan 4 Task 2 (the leader and formation library, library/): Becke's Order of Battle of Divisions (the official
+# history's order-of-battle volumes), the British official history's Cambrai volume, and Bean's 1917 volume.
+archive_text order-battle-divisions-p-1 becke-1935-part1 OrderBattleDivisionsP1               # Part 1, the Regular divisions
+archive_text order-battle-divisions-p-2-a becke-1936-part2a OrderBattleDivisionsP2A           # Part 2A, 1st-line TF divisions
+archive_text order-battle-divisions-p-2-b becke-1937-part2b OrderBattleDivisionsP2B           # Part 2B, 2nd-line TF divisions
+archive_text order-battle-divisions-p-3-a becke-1938-part3a OrderBattleDivisionsP3A           # Part 3A, New Army 9-26
+archive_text order-battle-divisions-pt3b becke-1945-part3b OrderBattleDivisionsPt3B           # Part 3B, New Army 30-41
+archive_text order-battle-divisions-p-4 becke-1945-part4 OrderBattleDivisionsP4               # Part 4, armies and corps
+archive_text mil-op-fb-1917-v3 boh-1917-3 MilOpFB1917V3                                       # Miles, 1917 vol. III (Cambrai)
+archive_text in.ernet.dli.2015.206600 bean-1933-iv 2015.206600.The-Australian                 # Bean, vol. IV (1917)
+archive_text 9thscottishdivision-19141919 ewing-1921 9thScottishDivision19141919               # Ewing, 9th (Scottish) Division
+archive_text fifteenthscottishdivision-19141919 stewart-buchan-1926 FifteenthScottishDivision19141919 # 15th (Scottish) Division
+archive_text thirtyfourthdivision19151919 shakespear-1921 ThirtyFourthDivision19151919         # Shakespear, 34th Division
+archive_text 62nddivisionvol1 wyrall-1924-62nd 62nddivisionvol1                                 # Wyrall, 62nd (West Riding) Division, vol. 1
+archive_text historyof51sthig00bews bewsher-1921                                               # Bewsher, 51st (Highland) Division
 
 # --- Royal Regiment of Canadian Artillery, "The First World War 1914-18" (Task 10): the Vimy artillery ------
 # A heritage page on rca-arc.org; saved as the HTML the site serves (fireplan.md cites its Vimy section).

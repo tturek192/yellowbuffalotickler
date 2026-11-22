@@ -5,7 +5,7 @@ import { extractRun, runScenario, summarizeBatch } from '@wwi/engine';
 import type { BatchSummary, Models, RunExtract, WhatIf } from '@wwi/engine';
 import { applyOverlay, emptyLibrary, ScenarioError } from '@wwi/scenario';
 import type { Doctrine, Scenario, Unresolved } from '@wwi/scenario';
-import { loadDoctrine, loadOverlay, loadScenario, loadTables } from '@wwi/scenario/node';
+import { loadDoctrine, loadLibrary, loadOverlay, loadScenario, loadTables } from '@wwi/scenario/node';
 
 /*
  * Batches on worker threads (Task 15): the seeds are shared out among N workers, each loading the scenario itself and
@@ -14,8 +14,11 @@ import { loadDoctrine, loadOverlay, loadScenario, loadTables } from '@wwi/scenar
  * this process: the engine reads nothing but its scenario, doctrines, tables and seed.
  */
 
-/** `overlayFile`: a what-if overlay applied as the scenario loads; `dropUnresolved`: run without its ops that no longer resolve. */
-export type Files = { scenarioFile: string; doctrineDir: string; tablesDir: string; overlayFile?: string; dropUnresolved?: boolean };
+/**
+ * `overlayFile`: a what-if overlay applied as the scenario loads; `dropUnresolved`: run without its ops that no longer
+ * resolve; `libraryDir`: the leader, formation and weather-preset library the overlay may draw on (absent: an empty one).
+ */
+export type Files = { scenarioFile: string; doctrineDir: string; tablesDir: string; overlayFile?: string; dropUnresolved?: boolean; libraryDir?: string };
 
 type Job = Files & ({ kind: 'extracts'; seeds: number[] } | { kind: 'record'; seed: number });
 /** A failure carries a ScenarioError's problems, so the parent throws the same error (exit 2, every problem listed). */
@@ -23,8 +26,8 @@ type Reply = { ok: true; extracts?: RunExtract[]; record?: string } | { ok: fals
 
 /**
  * Load the tables, the scenario and its doctrines; with an overlay, every doctrine in the doctrine directory too (a
- * `doctrine` op may name any of them), and the overlay applied (scenario overlay.ts `applyOverlay`, with the empty
- * library until the library is filled from files). Ops that no longer resolve stop the run (ScenarioError, listing each)
+ * `doctrine` op may name any of them), and the overlay applied (scenario overlay.ts `applyOverlay`, with the library
+ * read from `libraryDir`, or an empty one). Ops that no longer resolve stop the run (ScenarioError, listing each)
  * unless `dropUnresolved`; then they are left out and returned as `dropped`. `whatIf` is for `runScenario`'s options.
  */
 export function loadFiles(f: Files): { scenario: Scenario; models: Models; whatIf?: WhatIf; dropped: Unresolved[] } {
@@ -34,7 +37,8 @@ export function loadFiles(f: Files): { scenario: Scenario; models: Models; whatI
   const overlay = loadOverlay(f.overlayFile);
   const all: Record<string, Doctrine> = {};
   for (const file of readdirSync(f.doctrineDir).filter((x) => x.endsWith('.yaml')).sort()) all[basename(file, '.yaml')] = loadDoctrine(join(f.doctrineDir, file));
-  const r = applyOverlay(scenario, overlay, emptyLibrary(), Object.keys(all));
+  const library = f.libraryDir === undefined ? emptyLibrary() : loadLibrary(f.libraryDir);
+  const r = applyOverlay(scenario, overlay, library, Object.keys(all));
   if (r.unresolved.length && !f.dropUnresolved) {
     throw new ScenarioError([
       `${f.overlayFile}: ${r.unresolved.length} op(s) no longer resolve against ${scenario.id} (run with --drop-unresolved to leave them out):`,
@@ -65,13 +69,14 @@ function onWorker(job: Job): Promise<Reply & { ok: true }> {
 export const shareOut = (seeds: readonly number[], n: number): number[][] =>
   Array.from({ length: Math.max(1, Math.min(n, seeds.length)) }, (_, k) => seeds.filter((_, i) => i % Math.max(1, Math.min(n, seeds.length)) === k));
 
-/** The files a job carries, as absolute paths: the scenario's, and the overlay's when there is one (each worker applies it as it loads). */
+/** The files a job carries, as absolute paths: the scenario's, and the overlay's and the library's when there is one (each worker applies it as it loads). */
 const filesOf = (o: Files): Files => ({
   scenarioFile: resolve(o.scenarioFile),
   doctrineDir: resolve(o.doctrineDir),
   tablesDir: resolve(o.tablesDir),
   ...(o.overlayFile !== undefined ? { overlayFile: resolve(o.overlayFile) } : {}),
   ...(o.dropUnresolved ? { dropUnresolved: true } : {}),
+  ...(o.libraryDir !== undefined ? { libraryDir: resolve(o.libraryDir) } : {}),
 });
 
 /** A batch of these seeds on `workers` worker threads, summarised in seed order. */

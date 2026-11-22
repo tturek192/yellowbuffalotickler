@@ -1,0 +1,420 @@
+# Weather presets for a what-if (`{ op: weather, preset: <id> }`): each a timeline of entries `afterMin` minutes
+# after the battle's Zero (negative: before), which the op turns into dated entries for the scenario it is applied to.
+# Each spans five days, from the evening before Zero to the evening of the fourth day after it (-720 to 6510), so it
+# fits any battle of at least that length; Vimy's runs to Zero + 13050. Research notes: docs/research/library/weather.md.
+#
+# Every value is an ESTIMATE: no source gives the weather of a battle not fought in it. Each names the documented day
+# it resembles and quotes what the source says of it; where the source is silent (a wind, a visibility figure, any
+# temperature) it says so. Entries: the evening before (17:30 for a 05:30 Zero), then each day at dawn (Zero), late
+# morning (Zero + 330) and evening (Zero + 750). weather.md lists the same values; keep the two in step.
+weatherPresets:
+  # Fine, dry spring days; like mid-March 1917 in the advance to the Hindenburg Line (BOH 1917 I p. 140) and 28 April at Arras (p. 413).
+  dry-spring:
+    - afterMin: -720
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 10000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: clear air on a fine evening" }
+      tempC: { value: 9, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring evening" }
+    - afterMin: 0
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 3000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn haze; BOH p. 413 has a 'bright day, though visibility was poor'" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold dawn after a clear night" }
+    - afterMin: 330
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 12000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: good observation on a fine day" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring afternoon" }
+    - afterMin: 750
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 8000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a fine evening" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 1440
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 5000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn haze; BOH p. 413 has a 'bright day, though visibility was poor'" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold dawn after a clear night" }
+    - afterMin: 1770
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 12000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: good observation on a fine day" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring afternoon" }
+    - afterMin: 2190
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 8000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a fine evening" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 2880
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 3000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn haze; BOH p. 413 has a 'bright day, though visibility was poor'" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold dawn after a clear night" }
+    - afterMin: 3210
+      precipitation: { value: none, estimate: "BOH 1917 I p. 413 (Arras): 'The 28th April was a mild, bright day, though visibility was poor'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 12000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: good observation on a fine day" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring afternoon" }
+    - afterMin: 3630
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 8000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a fine evening" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 4320
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 5000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn haze; BOH p. 413 has a 'bright day, though visibility was poor'" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold dawn after a clear night" }
+    - afterMin: 4650
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 12000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: good observation on a fine day" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring afternoon" }
+    - afterMin: 5070
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 8000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a fine evening" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 5760
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 3000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn haze; BOH p. 413 has a 'bright day, though visibility was poor'" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold dawn after a clear night" }
+    - afterMin: 6090
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 12000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: good observation on a fine day" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring afternoon" }
+    - afterMin: 6510
+      precipitation: { value: none, estimate: "BOH 1917 I p. 140 (mid-March 1917, the advance to the Hindenburg Line): 'It had been fine now for four days', with 'an occasional foretaste of spring sunshine'" }
+      windFromDeg: { value: 230, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a light south-westerly" }
+      visibilityM: { value: 8000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a fine evening" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+  # Cold drizzle and rain on and off, on a south-westerly; like 20 and 26 March 1917 at Noreuil and Lagnicourt (Bean 1933 IV pp. 181, 192; BOH 1917 I p. 140).
+  wet-spring:
+    - afterMin: -720
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 192 (Lagnicourt, 26 March 1917): 'The night was one of drizzling rain, and so dark' that troops off the roads were lost" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly, the wet wind of the sources' other days (BOH 1917 I p. 245)" }
+      visibilityM: { value: 2000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle at dusk" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold wet spring evening" }
+    - afterMin: 0
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 181 (Noreuil, 20 March 1917): 'A cold rain was drizzling' as the support companies moved up" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle before dawn" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold wet dawn" }
+    - afterMin: 330
+      precipitation: { value: rain, estimate: "BOH 1917 I p. 140: late March 1917 had 'only two more really wet ones, the 26th and 29th'" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 2000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady rain" }
+      tempC: { value: 9, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring day" }
+    - afterMin: 750
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (8 April 1917): the sun drying the roads; a dry spell between the showers" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 6000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a dry spell" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 1440
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 181 (Noreuil, 20 March 1917): 'A cold rain was drizzling' as the support companies moved up" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 1200, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle before dawn" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold wet dawn" }
+    - afterMin: 1770
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (8 April 1917): the sun drying the roads; a dry spell between the showers" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 5000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a dry spell between showers" }
+      tempC: { value: 10, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring day" }
+    - afterMin: 2190
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 192 (Lagnicourt, 26 March 1917): 'The night was one of drizzling rain, and so dark' that troops off the roads were lost" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle at dusk" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 2880
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 181 (Noreuil, 20 March 1917): 'A cold rain was drizzling' as the support companies moved up" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle before dawn" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold wet dawn" }
+    - afterMin: 3210
+      precipitation: { value: rain, estimate: "BOH 1917 I p. 140: late March 1917 had 'only two more really wet ones, the 26th and 29th'" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 2000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady rain" }
+      tempC: { value: 9, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring day" }
+    - afterMin: 3630
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (8 April 1917): the sun drying the roads; a dry spell between the showers" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 6000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a dry spell" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 4320
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 181 (Noreuil, 20 March 1917): 'A cold rain was drizzling' as the support companies moved up" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 1200, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle before dawn" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold wet dawn" }
+    - afterMin: 4650
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (8 April 1917): the sun drying the roads; a dry spell between the showers" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 5000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a dry spell between showers" }
+      tempC: { value: 10, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring day" }
+    - afterMin: 5070
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 192 (Lagnicourt, 26 March 1917): 'The night was one of drizzling rain, and so dark' that troops off the roads were lost" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle at dusk" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+    - afterMin: 5760
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 181 (Noreuil, 20 March 1917): 'A cold rain was drizzling' as the support companies moved up" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: drizzle before dawn" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold wet dawn" }
+    - afterMin: 6090
+      precipitation: { value: rain, estimate: "BOH 1917 I p. 140: late March 1917 had 'only two more really wet ones, the 26th and 29th'" }
+      windFromDeg: { value: 225, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 2000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady rain" }
+      tempC: { value: 9, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a mild spring day" }
+    - afterMin: 6510
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (8 April 1917): the sun drying the roads; a dry spell between the showers" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a south-westerly" }
+      visibilityM: { value: 6000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a dry spell" }
+      tempC: { value: 8, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a spring evening" }
+  # Squalls of snow and sleet on a strong westerly, with bright intervals; like 9-12 April 1917 at Arras and Vimy (BOH 1917 I pp. 202, 245, 345).
+  snow-and-sleet:
+    - afterMin: -720
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202: Easter Sunday's 'promise of an improvement in the weather was belied'; 'The night was cold'" }
+      windFromDeg: { value: 270, estimate: "no wind in the sources for the day it resembles; the builder's estimate: the westerly before the squalls" }
+      visibilityM: { value: 8000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a clear evening before the squalls" }
+      tempC: { value: 2, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April evening, near freezing by night" }
+    - afterMin: 0
+      precipitation: { value: sleet, estimate: "BOH 1917 I p. 202 (9 April 1917): 'squalls of rain, sleet and snow, with a long and heavy snow-shower at night'" }
+      windFromDeg: { value: 270, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 300, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; a squall in the half-light taken as a few hundred metres" }
+      tempC: { value: 0, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for an April dawn in snow, near freezing" }
+    - afterMin: 330
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (9 April 1917): 'the intervals between the showers were often bright and clear'" }
+      windFromDeg: { value: 270, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 6000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a bright interval" }
+      tempC: { value: 4, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April day" }
+    - afterMin: 750
+      precipitation: { value: snow, estimate: "BOH 1917 I p. 202 (9 April 1917): 'squalls of rain, sleet and snow, with a long and heavy snow-shower at night'" }
+      windFromDeg: { value: 260, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 200, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; the heavy snow-shower at night taken as 200 m" }
+      tempC: { value: 1, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April evening" }
+    - afterMin: 1440
+      precipitation: { value: snow, estimate: "BOH 1917 I p. 245 (10 April 1917): 'violent squalls out of the south-west brought with them showers of snow or sleet'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 I p. 245: squalls 'out of the south-west' (10 April)" }
+      visibilityM: { value: 250, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; a squall in the half-light taken as a few hundred metres" }
+      tempC: { value: -1, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for an April dawn in snow, near freezing" }
+    - afterMin: 1770
+      precipitation: { value: sleet, estimate: "BOH 1917 I p. 245 (10 April 1917): 'violent squalls out of the south-west brought with them showers of snow or sleet'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 I p. 245: squalls 'out of the south-west' (10 April)" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a sleet squall by day" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April day" }
+    - afterMin: 2190
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (9 April 1917): 'the intervals between the showers were often bright and clear'" }
+      windFromDeg: { value: 240, estimate: "BOH 1917 I p. 245: squalls 'out of the south-west' (10 April)" }
+      visibilityM: { value: 4000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a clear spell" }
+      tempC: { value: 1, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April evening" }
+    - afterMin: 2880
+      precipitation: { value: sleet, estimate: "BOH 1917 I p. 202 (9 April 1917): 'squalls of rain, sleet and snow, with a long and heavy snow-shower at night'" }
+      windFromDeg: { value: 270, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 300, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; a squall in the half-light taken as a few hundred metres" }
+      tempC: { value: 0, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for an April dawn in snow, near freezing" }
+    - afterMin: 3210
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (9 April 1917): 'the intervals between the showers were often bright and clear'" }
+      windFromDeg: { value: 270, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 6000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a bright interval" }
+      tempC: { value: 4, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April day" }
+    - afterMin: 3630
+      precipitation: { value: snow, estimate: "BOH 1917 I p. 202 (9 April 1917): 'squalls of rain, sleet and snow, with a long and heavy snow-shower at night'" }
+      windFromDeg: { value: 260, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 200, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; the heavy snow-shower at night taken as 200 m" }
+      tempC: { value: 1, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April evening" }
+    - afterMin: 4320
+      precipitation: { value: snow, estimate: "BOH 1917 I p. 245 (10 April 1917): 'violent squalls out of the south-west brought with them showers of snow or sleet'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 I p. 245: squalls 'out of the south-west' (10 April)" }
+      visibilityM: { value: 250, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; a squall in the half-light taken as a few hundred metres" }
+      tempC: { value: -1, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for an April dawn in snow, near freezing" }
+    - afterMin: 4650
+      precipitation: { value: sleet, estimate: "BOH 1917 I p. 245 (10 April 1917): 'violent squalls out of the south-west brought with them showers of snow or sleet'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 I p. 245: squalls 'out of the south-west' (10 April)" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a sleet squall by day" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April day" }
+    - afterMin: 5070
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (9 April 1917): 'the intervals between the showers were often bright and clear'" }
+      windFromDeg: { value: 240, estimate: "BOH 1917 I p. 245: squalls 'out of the south-west' (10 April)" }
+      visibilityM: { value: 4000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a clear spell" }
+      tempC: { value: 1, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April evening" }
+    - afterMin: 5760
+      precipitation: { value: sleet, estimate: "BOH 1917 I p. 202 (9 April 1917): 'squalls of rain, sleet and snow, with a long and heavy snow-shower at night'" }
+      windFromDeg: { value: 270, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 300, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; a squall in the half-light taken as a few hundred metres" }
+      tempC: { value: 0, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for an April dawn in snow, near freezing" }
+    - afterMin: 6090
+      precipitation: { value: none, estimate: "BOH 1917 I p. 202 (9 April 1917): 'the intervals between the showers were often bright and clear'" }
+      windFromDeg: { value: 270, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 6000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: a bright interval" }
+      tempC: { value: 4, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April day" }
+    - afterMin: 6510
+      precipitation: { value: snow, estimate: "BOH 1917 I p. 202 (9 April 1917): 'squalls of rain, sleet and snow, with a long and heavy snow-shower at night'" }
+      windFromDeg: { value: 260, estimate: "BOH 1917 I p. 202: 'snow driven by a high westerly wind into the faces of the Germans' (9 April)" }
+      visibilityM: { value: 200, estimate: "BOH 1917 I p. 345 (the Pimple, 12 April): 'Darkness and snow limited visibility to ten or fifteen yards'; the heavy snow-shower at night taken as 200 m" }
+      tempC: { value: 1, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a cold April evening" }
+  # Dull, misty days, fog at dawn, a light south-westerly, dry; like Cambrai, 10-20 November 1917 (BOH 1917 III pp. 36, 48, 49).
+  fog-at-dawn:
+    - afterMin: -720
+      precipitation: { value: none, estimate: "BOH 1917 III p. 36: 'from the 10th November onward, the weather remained dull and misty, poor visibility helping to screen work and movement'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 2000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: mist at dusk on a dull day" }
+      tempC: { value: 6, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November evening" }
+    - afterMin: 0
+      precipitation: { value: none, estimate: "BOH 1917 III p. 49 (Cambrai, 20 November 1917): 'The morning of Tuesday the 20th November broke dull and misty, with a light wind from the south-west'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 100, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn fog taken as 100-150 m; on 20 November 'the infantry surged forward in smoke and mist' (p. 49)" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November dawn" }
+    - afterMin: 330
+      precipitation: { value: none, estimate: "BOH 1917 III p. 48: 'From the 10th November onwards foggy weather made air reconnaissance out of the question'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thinned by day to about 1.5 km, still too thick for air reconnaissance (p. 48)" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a dull November day" }
+    - afterMin: 750
+      precipitation: { value: none, estimate: "BOH 1917 III p. 36: 'from the 10th November onward, the weather remained dull and misty, poor visibility helping to screen work and movement'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 600, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thickening again at dusk" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November evening" }
+    - afterMin: 1440
+      precipitation: { value: none, estimate: "BOH 1917 III p. 49 (Cambrai, 20 November 1917): 'The morning of Tuesday the 20th November broke dull and misty, with a light wind from the south-west'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 150, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn fog taken as 100-150 m; on 20 November 'the infantry surged forward in smoke and mist' (p. 49)" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November dawn" }
+    - afterMin: 1770
+      precipitation: { value: none, estimate: "BOH 1917 III p. 48: 'From the 10th November onwards foggy weather made air reconnaissance out of the question'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thinned by day to about 1.5 km, still too thick for air reconnaissance (p. 48)" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a dull November day" }
+    - afterMin: 2190
+      precipitation: { value: none, estimate: "BOH 1917 III p. 36: 'from the 10th November onward, the weather remained dull and misty, poor visibility helping to screen work and movement'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 600, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thickening again at dusk" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November evening" }
+    - afterMin: 2880
+      precipitation: { value: none, estimate: "BOH 1917 III p. 49 (Cambrai, 20 November 1917): 'The morning of Tuesday the 20th November broke dull and misty, with a light wind from the south-west'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 100, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn fog taken as 100-150 m; on 20 November 'the infantry surged forward in smoke and mist' (p. 49)" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November dawn" }
+    - afterMin: 3210
+      precipitation: { value: none, estimate: "BOH 1917 III p. 48: 'From the 10th November onwards foggy weather made air reconnaissance out of the question'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thinned by day to about 1.5 km, still too thick for air reconnaissance (p. 48)" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a dull November day" }
+    - afterMin: 3630
+      precipitation: { value: none, estimate: "BOH 1917 III p. 36: 'from the 10th November onward, the weather remained dull and misty, poor visibility helping to screen work and movement'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 600, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thickening again at dusk" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November evening" }
+    - afterMin: 4320
+      precipitation: { value: none, estimate: "BOH 1917 III p. 49 (Cambrai, 20 November 1917): 'The morning of Tuesday the 20th November broke dull and misty, with a light wind from the south-west'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 150, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn fog taken as 100-150 m; on 20 November 'the infantry surged forward in smoke and mist' (p. 49)" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November dawn" }
+    - afterMin: 4650
+      precipitation: { value: none, estimate: "BOH 1917 III p. 48: 'From the 10th November onwards foggy weather made air reconnaissance out of the question'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thinned by day to about 1.5 km, still too thick for air reconnaissance (p. 48)" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a dull November day" }
+    - afterMin: 5070
+      precipitation: { value: none, estimate: "BOH 1917 III p. 36: 'from the 10th November onward, the weather remained dull and misty, poor visibility helping to screen work and movement'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 600, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thickening again at dusk" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November evening" }
+    - afterMin: 5760
+      precipitation: { value: none, estimate: "BOH 1917 III p. 49 (Cambrai, 20 November 1917): 'The morning of Tuesday the 20th November broke dull and misty, with a light wind from the south-west'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 100, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: dawn fog taken as 100-150 m; on 20 November 'the infantry surged forward in smoke and mist' (p. 49)" }
+      tempC: { value: 3, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November dawn" }
+    - afterMin: 6090
+      precipitation: { value: none, estimate: "BOH 1917 III p. 48: 'From the 10th November onwards foggy weather made air reconnaissance out of the question'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 1500, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thinned by day to about 1.5 km, still too thick for air reconnaissance (p. 48)" }
+      tempC: { value: 7, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a dull November day" }
+    - afterMin: 6510
+      precipitation: { value: none, estimate: "BOH 1917 III p. 36: 'from the 10th November onward, the weather remained dull and misty, poor visibility helping to screen work and movement'" }
+      windFromDeg: { value: 225, estimate: "BOH 1917 III p. 49: 'a light wind from the south-west' (20 November)" }
+      visibilityM: { value: 600, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: the mist thickening again at dusk" }
+      tempC: { value: 5, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a raw November evening" }
+  # Steady heavy rain for days, on a westerly; like 31 July-4 August 1917 at Ypres (Bean 1933 IV pp. 710, 721-722).
+  heavy-rain:
+    - afterMin: -720
+      precipitation: { value: none, estimate: "Bean 1933 IV p. 710 (31 July 1917, the opening of Third Ypres): rain 'all day had been threatening' before it came" }
+      windFromDeg: { value: 240, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly, for rain coming in off the sea" }
+      visibilityM: { value: 5000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: an overcast evening" }
+      tempC: { value: 15, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a summer evening" }
+    - afterMin: 0
+      precipitation: { value: rain, estimate: "Bean 1933 IV p. 710 (31 July 1917): 'At 4 o'clock rain, which all day had been threatening, began to fall steadily'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain in the half-light" }
+      tempC: { value: 12, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer dawn" }
+    - afterMin: 330
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 1000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain by day" }
+      tempC: { value: 15, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer day" }
+    - afterMin: 750
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain at dusk" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer evening" }
+    - afterMin: 1440
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain in the half-light" }
+      tempC: { value: 12, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer dawn" }
+    - afterMin: 1770
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 1000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain by day" }
+      tempC: { value: 15, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer day" }
+    - afterMin: 2190
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain at dusk" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer evening" }
+    - afterMin: 2880
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain in the half-light" }
+      tempC: { value: 12, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer dawn" }
+    - afterMin: 3210
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 1000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain by day" }
+      tempC: { value: 15, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer day" }
+    - afterMin: 3630
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain at dusk" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer evening" }
+    - afterMin: 4320
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain in the half-light" }
+      tempC: { value: 12, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer dawn" }
+    - afterMin: 4650
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 1000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain by day" }
+      tempC: { value: 15, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer day" }
+    - afterMin: 5070
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain at dusk" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer evening" }
+    - afterMin: 5760
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain in the half-light" }
+      tempC: { value: 12, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer dawn" }
+    - afterMin: 6090
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 1000, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain by day" }
+      tempC: { value: 15, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer day" }
+    - afterMin: 6510
+      precipitation: { value: rain, estimate: "Bean 1933 IV pp. 721-722 (early August 1917): 'the rain continued to pour beyond all reasonable expectation'; 'The battlefield became a bog'" }
+      windFromDeg: { value: 250, estimate: "no wind in the sources for the day it resembles; the builder's estimate: a westerly" }
+      visibilityM: { value: 800, estimate: "no visibility figure in the sources for the day it resembles; the builder's estimate: steady heavy rain at dusk" }
+      tempC: { value: 13, estimate: "no temperature figure in the sources read for the day it resembles; the builder's estimate for a wet summer evening" }

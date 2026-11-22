@@ -3,7 +3,7 @@ import { basename, dirname, resolve } from 'node:path';
 import { parse, YAMLParseError } from 'yaml';
 import type { Scenario } from './schema';
 import type { Doctrine } from './doctrine';
-import { parseScenarioData, parseDoctrine, ScenarioError } from './load';
+import { formatIssues, parseScenarioData, parseDoctrine, ScenarioError } from './load';
 import { mergeScenarioParts, locateProblem } from './include';
 import { FrameSchema, projectLonLatPlacements, type Frame } from './frame';
 import { terrainGridProblem, type TerrainGrid } from './terrain';
@@ -11,7 +11,7 @@ import { TablesSchema, type Tables } from './tables';
 import { SourcesSchema, type Sources } from './schema';
 import { collectSourceRefs } from './references';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
-import { parseOverlay, type Overlay } from './overlay';
+import { emptyLibrary, LibrarySchema, parseOverlay, type Library, type Overlay } from './overlay';
 
 const fmt = (n: number): string => String(Math.round(n * 10) / 10);
 
@@ -256,6 +256,90 @@ export function loadDoctrine(file: string): Doctrine {
     throw new ScenarioError([`cannot read ${file}`]);
   }
   return parseDoctrine(text);
+}
+
+const LIBRARY_SECTIONS = ['sources', 'leaders', 'formations', 'weatherPresets'] as const;
+
+/**
+ * Load the leader, formation and weather-preset library (Plan 4 Task 2): every `*.yaml` file in `dir`, in name order,
+ * each holding any of `sources`, `leaders`, `formations` and `weatherPresets`. The files' source registries are merged
+ * into one, and every citation in a leader, formation or preset must resolve in it. An id (a source, leader, formation
+ * or preset) may be defined in one file only. Every problem names its file, and an item by its index and id.
+ */
+export function loadLibrary(dir: string): Library {
+  let files: string[];
+  try {
+    files = readdirSync(dir).filter((f) => f.endsWith('.yaml')).sort();
+  } catch {
+    throw new ScenarioError([`cannot read library directory ${dir}`]);
+  }
+  const problems: string[] = [];
+  const merged: Library = emptyLibrary();
+  const owner = new Map<string, string>(); // `<kind> "<id>"` -> the file that defined it
+  /** Each item with its file and its path in that file, for naming it in a problem. */
+  const items: Array<{ file: string; path: string; item: unknown }> = [];
+  /** Record that `file` defines this id; false (and a problem) if another file already did. */
+  const claim = (kind: string, id: string, file: string, path: string): boolean => {
+    const key = `${kind} "${id}"`;
+    const first = owner.get(key);
+    if (first === undefined) {
+      owner.set(key, file);
+      return true;
+    }
+    problems.push(kind === 'source' ? `${path}: "${id}" is defined in ${first} and ${file}` : `${file}: ${path}: ${key} is defined in ${first} and ${file}`);
+    return false;
+  };
+  for (const file of files) {
+    let data: unknown;
+    try {
+      data = parse(readFileSync(resolve(dir, file), 'utf8'));
+    } catch (e) {
+      problems.push(e instanceof YAMLParseError ? `${file}: invalid YAML: ${e.message}` : `${file}: cannot read`);
+      continue;
+    }
+    if (data === null) continue;
+    if (typeof data !== 'object' || Array.isArray(data)) {
+      problems.push(`${file}: expected a mapping at the top level`);
+      continue;
+    }
+    const part: Record<string, unknown> = {};
+    for (const [section, entries] of Object.entries(data)) {
+      if ((LIBRARY_SECTIONS as readonly string[]).includes(section)) part[section] = entries;
+      else problems.push(`${file}: ${section}: unknown section (expected ${LIBRARY_SECTIONS.join(', ')})`);
+    }
+    const r = LibrarySchema.safeParse({ ...emptyLibrary(), ...part });
+    if (!r.success) {
+      problems.push(...formatIssues(r.error).map((p) => `${file}: ${p}`));
+      continue;
+    }
+    const lib = r.data;
+    for (const [id, s] of Object.entries(lib.sources)) if (claim('source', id, file, `sources.${id}`)) merged.sources[id] = s;
+    lib.leaders.forEach((l, i) => {
+      const path = `leaders[${i}] (${l.id})`;
+      if (!claim('leader', l.id, file, path)) return;
+      merged.leaders.push(l);
+      items.push({ file, path, item: l });
+    });
+    lib.formations.forEach((f, i) => {
+      const path = `formations[${i}] (${f.id})`;
+      if (!claim('formation', f.id, file, path)) return;
+      merged.formations.push(f);
+      items.push({ file, path, item: f });
+    });
+    for (const [id, p] of Object.entries(lib.weatherPresets)) {
+      const path = `weatherPresets.${id}`;
+      if (!claim('weather preset', id, file, path)) continue;
+      merged.weatherPresets[id] = p;
+      items.push({ file, path, item: p });
+    }
+  }
+  for (const { file, path, item } of items) {
+    for (const ref of collectSourceRefs(item, path)) {
+      if (!Object.hasOwn(merged.sources, ref.id)) problems.push(`${file}: ${ref.path.replace(/\.source$/, '')}: unknown source "${ref.id}"`);
+    }
+  }
+  if (problems.length) throw new ScenarioError(problems);
+  return merged;
 }
 
 /** Read and check a what-if overlay file (overlay.ts `parseOverlay`); problems name their path, e.g. `ops[0].km: …`. */

@@ -11,14 +11,15 @@ import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-
 import { extractCommentary, reportToMarkdown } from './report-md';
 
 const USAGE = `usage:
-  sim run <scenario.yaml> --seed <n> --out <file.json> [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
-  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim run <scenario.yaml> --seed <n> --out <file.json> [--overlay <file> [--drop-unresolved] [--library-dir <dir>]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--overlay <file> [--drop-unresolved] [--library-dir <dir>]] [--doctrine-dir <dir>] [--tables-dir <dir>]
   sim why <record.json> (--event <n> | --unit <id> --at <HH:MM>)
-  sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
-  sim report <scenario.yaml> --runs <n> --out <file.md> [--seed-start <n>] [--workers <n>] [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--overlay <file> [--drop-unresolved] [--library-dir <dir>]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim report <scenario.yaml> --runs <n> --out <file.md> [--seed-start <n>] [--workers <n>] [--overlay <file> [--drop-unresolved] [--library-dir <dir>]] [--doctrine-dir <dir>] [--tables-dir <dir>]
 
   --overlay <file>     run a what-if: apply the overlay (overlays/README.md) to the scenario; the record lists its changes (whatIf)
-  --drop-unresolved    leave out the overlay's ops that no longer resolve against the scenario (otherwise they stop the run, exit 2)`;
+  --drop-unresolved    leave out the overlay's ops that no longer resolve against the scenario (otherwise they stop the run, exit 2)
+  --library-dir <dir>  the leader, formation and weather-preset library an overlay may draw on (default: library)`;
 
 class UsageError extends Error {}
 
@@ -53,6 +54,7 @@ async function main(argv: string[]): Promise<void> {
         at: { type: 'string' },
         overlay: { type: 'string' },
         'drop-unresolved': { type: 'boolean' },
+        'library-dir': { type: 'string' },
       },
     });
   } catch (e) {
@@ -76,6 +78,7 @@ async function main(argv: string[]): Promise<void> {
     throw new UsageError('expected a command and a scenario file');
   }
   if (values['drop-unresolved'] && values.overlay === undefined) throw new UsageError('--drop-unresolved needs --overlay');
+  if (values['library-dir'] !== undefined && values.overlay === undefined) throw new UsageError('--library-dir needs --overlay');
   let seed = 0;
   let out = '';
   let runs = 0;
@@ -105,6 +108,8 @@ async function main(argv: string[]): Promise<void> {
     tablesDir: values['tables-dir'] ?? 'tables',
     ...(values.overlay !== undefined ? { overlayFile: values.overlay } : {}),
     ...(values['drop-unresolved'] ? { dropUnresolved: true } : {}),
+    // The library an overlay draws on (library/, Plan 4 Task 2), read only with an overlay.
+    ...(values.overlay !== undefined ? { libraryDir: values['library-dir'] ?? 'library' } : {}),
   };
   // The tables first (the scenario's weapon ids are checked against them as it loads), then the overlay, if any.
   const { scenario, models, whatIf, dropped } = loadFiles(files);

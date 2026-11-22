@@ -1,0 +1,16 @@
+# What if the Canadian Corps had had the British 9th (Scottish) Division in corps reserve, 12 km back, and the 4th
+# Canadian Division had been led by the 4th Australian Division's commander, W. Holmes? Both come from the library
+# (library/formations-1917.yaml and leaders-1917.yaml) and keep their own sourcing.
+id: vimy-9th-division
+title: 9th (Scottish) Division in reserve, Holmes for Watson
+scenarioId: vimy-1917
+ops:
+  - op: add-formation
+    from: { libraryId: bef-9div }
+    side: allied
+    underFormationId: cdn-corps
+    entryPoint: [-6000, -1000]   # the western edge of the frame, behind the Canadian line
+    distanceKm: 12
+  - op: swap-leader
+    formationId: 4cdn
+    leaderId: holmes-w

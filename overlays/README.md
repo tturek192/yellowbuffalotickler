@@ -78,6 +78,19 @@ every reserve of the side (every reserve if neither is given).
 **move** `unitId`, `by` `[dx, dy]`. Moves a company, or each company of a battalion, by that many metres along the
 scenario map's x and y axes (its local frame). The setup screen's map writes this op.
 
+## The library
+
+`add-formation` with a `libraryId`, `swap-leader` with a leader the scenario lacks, and `weather` with a `preset` draw on
+the library in `library/` (`--library-dir <dir>` reads another): leaders and divisions of 1917 from other sectors of the
+Western Front, and five weather presets (`dry-spring`, `wet-spring`, `snow-and-sleet`, `fog-at-dawn`, `heavy-rain`).
+Its research notes are in `docs/research/library/`. British and Dominion ids are plain (`lukin`, `bef-9div`), German
+ones start with `de-` (`de-moser`, `de-54div`). `overlays/vimy-9th-division.yaml` adds one library division and swaps
+in one library leader:
+
+```sh
+npm run sim -- run scenarios/vimy-1917/scenario.yaml --seed 1 --out /tmp/x.json --overlay overlays/vimy-9th-division.yaml
+```
+
 ## When an overlay does not fit the scenario
 
 - **A broken overlay fails before any run**, naming the op and its index: a `factor` or `km` out of range is rejected
