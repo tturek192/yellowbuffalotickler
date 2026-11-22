@@ -11,7 +11,7 @@ import { repoRoot } from './test-helpers';
  * the wall time is printed too.
  */
 type Timed = { ms: number; cpuMs: number; bytes: number; endedAt: number; endReason: string };
-function timedRuns(): Promise<{ cold: Timed; warm: Timed[] }> {
+function timedRuns(n: number): Promise<{ cold: Timed; warm: Timed[] }> {
   const script = `
     const { workerData, parentPort } = await import('node:worker_threads');
     const { loadScenario, loadTables } = await import('file://' + workerData.root + '/packages/scenario/src/load-node.ts');
@@ -19,7 +19,7 @@ function timedRuns(): Promise<{ cold: Timed; warm: Timed[] }> {
     const { scenario, doctrines } = loadScenario(workerData.root + '/scenarios/vimy-1917/scenario.yaml', workerData.root + '/doctrine');
     const models = { doctrines, tables: loadTables(workerData.root + '/tables') };
     const runs = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < workerData.n; i++) {
       const t0 = performance.now();
       const c0 = process.threadCpuUsage();
       const r = runScenario(scenario, models, { seed: 1 });
@@ -31,7 +31,7 @@ function timedRuns(): Promise<{ cold: Timed; warm: Timed[] }> {
     parentPort.postMessage({ cold: runs[0], warm: runs.slice(1) });
   `;
   return new Promise((done, fail) => {
-    const w = new Worker(new URL(`data:text/javascript,${encodeURIComponent(script)}`), { workerData: { root: repoRoot }, execArgv: ['--import', 'tsx'] });
+    const w = new Worker(new URL(`data:text/javascript,${encodeURIComponent(script)}`), { workerData: { root: repoRoot, n }, execArgv: ['--import', 'tsx'] });
     w.once('message', done);
     w.once('error', fail);
   });
@@ -46,24 +46,32 @@ function timedRuns(): Promise<{ cold: Timed; warm: Timed[] }> {
  * runs ≤ 3500 ms, and the record (met and kept) ≤ 8 MB.
  * Plan 4 Task 0 (engine 0.4.9, provisional ruling, for the owner to see): companies report enemy lines only when they
  * see them, a correctness fix that makes the simulated battle do more work (Vimy seed 1: 687 → 1029 busy steps, most of
- * them the corps committing reserves to the stalled 4th Division Red Line on 10–11 April), not a slower step. Measured
- * then at about 4.7–4.8 s cold and 4.0 s warm best, the guards are re-baselined to about 10% over that: cold ≤ 5300 ms,
- * warm best of three ≤ 4400 ms, the record still ≤ 8 MB. The 3 s target is still unmet, pending the owner's decision.
+ * them the corps committing reserves to the stalled 4th Division Red Line on 10–11 April), not a slower step. It then
+ * measured about 4.7–4.9 s cold and 4.0–4.2 s warm best, and a first re-baseline (5300 / 4400 ms) failed about one run
+ * in six on noise alone, and always beside the rest of the suite (cold 5429 ms there). So the guard is made stable (Task
+ * 0 follow-up ruling): it runs in its own vitest project (`engine-budget`, vitest.config.ts), whose group runs after
+ * every other project has finished, so nothing runs beside it; the cold figure is the best of two fresh worker threads
+ * (one noisy first run no longer fails it), the warm one the best of three runs in the first thread; and the limits are
+ * cold ≤ 5600 ms, warm ≤ 4700 ms, the record still ≤ 8 MB. The 3 s target is still unmet, pending the owner's decision.
  */
-const COLD_CPU_MS = 5300;
-const WARM_CPU_MS = 4400;
+const COLD_CPU_MS = 5600;
+const WARM_CPU_MS = 4700;
 
 describe('performance budget (Global Constraints; Review Focus 4)', () => {
-  it('a full Vimy run stays within 5300 ms of CPU cold and 4400 ms warm (target 3000 ms unmet, owner to decide), its record within 8 MB', async () => {
-    const { cold, warm } = await timedRuns();
+  it('a full Vimy run stays within 5600 ms of CPU cold (best of 2 fresh threads) and 4700 ms warm (best of 3) (target 3000 ms unmet, owner to decide), its record within 8 MB', async () => {
+    // One after the other, never side by side: a cold run and three warm ones in one thread, then a second cold thread.
+    const first = await timedRuns(4);
+    const second = await timedRuns(1);
+    const warm = first.warm;
+    const cold = first.cold.cpuMs <= second.cold.cpuMs ? first.cold : second.cold;
     const best = Math.min(...warm.map((r) => r.cpuMs));
     console.log(
-      `Vimy seed 1: cold ${cold.cpuMs.toFixed(0)} ms of CPU (${cold.ms.toFixed(0)} ms wall); warm ${warm.map((r) => r.cpuMs.toFixed(0)).join(' / ')} ms (best ${best.toFixed(0)}); ${(cold.bytes / 1e6).toFixed(2)} MB, ended at ${cold.endedAt} (${cold.endReason})`,
+      `Vimy seed 1: cold ${first.cold.cpuMs.toFixed(0)} / ${second.cold.cpuMs.toFixed(0)} ms (best ${cold.cpuMs.toFixed(0)}) of CPU (${cold.ms.toFixed(0)} ms wall); warm ${warm.map((r) => r.cpuMs.toFixed(0)).join(' / ')} ms (best ${best.toFixed(0)}); ${(cold.bytes / 1e6).toFixed(2)} MB, ended at ${cold.endedAt} (${cold.endReason})`,
     );
     expect(cold.cpuMs).toBeLessThanOrEqual(COLD_CPU_MS);
     expect(best).toBeLessThanOrEqual(WARM_CPU_MS);
     expect(cold.bytes).toBeLessThanOrEqual(8e6);
     // The warm runs are the same run.
-    for (const r of warm) expect([r.bytes, r.endedAt, r.endReason]).toEqual([cold.bytes, cold.endedAt, cold.endReason]);
+    for (const r of [...warm, first.cold, second.cold]) expect([r.bytes, r.endedAt, r.endReason]).toEqual([cold.bytes, cold.endedAt, cold.endReason]);
   }, 180000);
 });

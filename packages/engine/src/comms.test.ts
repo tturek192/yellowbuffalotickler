@@ -494,8 +494,10 @@ describe('what a company reports of enemy lines taken or lost (Plan 4 Task 0)', 
   it('does not report a line taken within 1.5 km with no line of sight to any point of it in the sector', () => {
     expect(linesReported(lineTakenFixture({ ridgeBetween: true }), OBSERVER)).toEqual([]);
   });
-  it('does not report it in mist (the weather) or at night (nightVisibilityM)', () => {
+  it('does not report it in mist (the weather)', () => {
     expect(linesReported(lineTakenFixture({ visibilityM: 300 }), OBSERVER)).toEqual([]);
+  });
+  it('does not report it at night (nightVisibilityM)', () => {
     expect(linesReported(lineTakenFixture({ zeroHour: '1916-07-01T01:00' }), OBSERVER)).toEqual([]);
   });
   it('sees the line at some point in the sector even where the trace at its own y is hidden', () => {
