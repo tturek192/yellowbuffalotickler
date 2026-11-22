@@ -84,6 +84,10 @@ sources:
     url: https://data.geopf.fr/wfs/ows
     tier: secondary
     note: "modern built-up areas (fetched 2026-11-20); a village's position is the mean of its outline's vertices, good to a few hundred metres for the 1917 village (Task 9 reserve distances)"
+  wikipedia-divisions:
+    title: English Wikipedia articles on the Canadian and British divisions at Vimy (their patches and insignia)
+    tier: tertiary
+    note: "each citation's page names the article and section read (fetched 2026-11-22; revisions in docs/research/vimy/insignia.md); the patch history in the 3rd Canadian Division's article cites Law, Distinguishing Patches (2008), and the 5th Division's cites Osprey MAA 182, neither of which was read"
   wikipedia-de-german-army:
     title: German Wikipedia articles on the German divisions and commanders at Vimy
     tier: tertiary

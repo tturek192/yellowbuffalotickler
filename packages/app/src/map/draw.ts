@@ -10,10 +10,11 @@ import { markerStyleAt } from './zoom';
 import { MARKER_STYLE, drawUnitMarker } from './unitMarkers';
 import { frontAt } from './front';
 import {
-  bursts, craters, drawBursts, drawCaptured, drawCraters, drawCreeping, drawFronts, drawMgZones, drawReserves, drawSegmentStates, drawStanding,
+  bursts, craters, drawBursts, drawCaptured, drawCraters, drawCreeping, drawFronts, drawMgZones, drawReserves, drawSegmentStates, drawStanding, labelReserves,
   fireEventsAt, mgZones, reserveColumns, segmentStates, standingBarrages,
 } from './effects';
 import { drawSky } from './sky';
+import { blockPaint, drawCompassRose, drawPaperGrain, drawTerritory, drawVignettes, labelVignettes, PERIOD_STYLE, placeVignettes, territoryFills, vignetteBox, vignettes } from './period';
 
 export { crenellatedPath, MAP_COLORS } from './style';
 
@@ -104,10 +105,12 @@ function labelAtNorthEnd(
   ctx.restore();
 }
 
-function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, settled: boolean): void {
+function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, settled: boolean, period: boolean): void {
   const { w, h } = cssSize(ctx);
-  ctx.fillStyle = MAP_COLORS.paper;
+  ctx.fillStyle = period ? PERIOD_STYLE.paper : MAP_COLORS.paper;
   ctx.fillRect(0, 0, w, h);
+  // The period sheet's grain: one cached tile, repeated.
+  if (period) drawPaperGrain(ctx, w, h);
 
   // Age the sheet: a soft darkening towards the edges.
   const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.hypot(w, h) * 0.6);
@@ -160,7 +163,8 @@ function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, sett
   }
   ctx.restore();
 
-  // Neatline.
+  // Neatline (the period sheet's frame is its own, in PeriodFrame).
+  if (period) return;
   ctx.strokeStyle = 'rgba(59, 51, 38, 0.7)';
   ctx.lineWidth = 1;
   ctx.strokeRect(6.5, 6.5, w - 13, h - 13);
@@ -263,6 +267,11 @@ export type DrawOptions = {
   speed?: number;
   /** Wall-clock seconds for the falling weather; null or absent holds it still. */
   wallSec?: number | null;
+  /**
+   * The period style (Task 20): parchment and grain, each side's held ground washed in, battalion blocks in their
+   * division's patch colour, vignettes, and a compass rose; the scale bar and clock are in the frame, not on the map.
+   */
+  period?: boolean;
 };
 
 /** What a click on the map can pick: a company marker (zoomed in) or a battalion marker (corps zoom). */
@@ -300,12 +309,12 @@ export function placeChips(view: View, bns: readonly { x: number; y: number; lab
  * Corps zoom (`markerStyleAt`): a text-free chip per battalion, small enough to tell apart at fit-all. Returns what was
  * drawn so the labels can be placed once the line names are down.
  */
-function drawChips(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, size: { w: number; h: number }, hits: Hit[]): PlacedChip[] {
+function drawChips(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, size: { w: number; h: number }, hits: Hit[], period: boolean): PlacedChip[] {
   const bns = aggregateBattalions(frame.companies, r);
   const placed = placeChips(view, bns, size.w, size.h);
   for (const c of [...placed].sort((a, b) => a.at[1] - b.at[1])) {
     const b = bns[c.index]!;
-    drawUnitMarker(ctx, { at: c.at, w: c.w, h: c.h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, chip: true, phase });
+    drawUnitMarker(ctx, { at: c.at, w: c.w, h: c.h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, chip: true, phase, ...(period ? { paint: blockPaint(b.side, b.status, b.insignia) } : {}) });
     hits.push({ box: chipBox(c), pick: { kind: 'battalion', id: b.id } });
   }
   return placed;
@@ -332,6 +341,7 @@ function labelChips(ctx: CanvasRenderingContext2D, chips: readonly PlacedChip[],
     const box = placeClear(want, all, size + 2, 3, 6, 6, margin, sheetW - margin, margin);
     if (all.some((p) => overlaps(box, p))) continue;
     all.push(box);
+    placed.push(box);
     ctx.strokeStyle = MAP_COLORS.paper;
     ctx.lineWidth = 3;
     ctx.strokeText(c.label, box.x0 + 1, box.y1 - 1);
@@ -342,13 +352,13 @@ function labelChips(ctx: CanvasRenderingContext2D, chips: readonly PlacedChip[],
 }
 
 /** Between the chip threshold and the company switch: one labelled marker per battalion. */
-function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, hits: Hit[]): void {
+function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, hits: Hit[], period: boolean): void {
   const { minW, h, padX } = MARKER_STYLE.battalion;
   ctx.font = `600 11px ${MARKER_FONT}`;
   const wOf = (label: string): number => Math.max(minW, Math.ceil(ctx.measureText(label).width) + 2 * padX);
   for (const { item: b, at } of placeMarkers(view, aggregateBattalions(frame.companies, r), (b) => wOf(b.label), h)) {
     const w = wOf(b.label);
-    drawUnitMarker(ctx, { at, w, h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, battalion: true, phase });
+    drawUnitMarker(ctx, { at, w, h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, battalion: true, phase, ...(period ? { paint: blockPaint(b.side, b.status, b.insignia) } : {}) });
     hits.push({ box: markerBox(at, w, h), pick: { kind: 'battalion', id: b.id } });
   }
 }
@@ -357,18 +367,30 @@ function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord,
 const markerBox = (at: Screen, w: number, h: number): Box => ({ x0: at[0] - w / 2, x1: at[0] + w / 2, y0: at[1] - h / 2, y1: at[1] + h / 2 + MARKER_STYLE.barGap + MARKER_STYLE.barH });
 
 /** Zoomed in: one marker per company on the map. */
-function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, hits: Hit[]): void {
+function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, hits: Hit[], period: boolean): void {
   const initial = new Map((r.snapshots[0] ? companiesOf(r, r.snapshots[0]) : []).map((c) => [c.id, c.men]));
+  const insignia = period ? new Map(r.units.map((u) => [u.id, u.insignia])) : null;
   const { w, h } = MARKER_STYLE.company;
   for (const { item: c, at } of placeMarkers(view, frame.companies.filter((c) => c.status !== 'off-map'), () => w, h)) {
-    drawUnitMarker(ctx, { at, w, h, label: shortId(c.id), side: c.side, status: c.status, morale: c.morale, suppression: c.suppression, men: c.men, full: initial.get(c.id) ?? c.men, phase });
+    drawUnitMarker(ctx, { at, w, h, label: shortId(c.id), side: c.side, status: c.status, morale: c.morale, suppression: c.suppression, men: c.men, full: initial.get(c.id) ?? c.men, phase, ...(insignia ? { paint: blockPaint(c.side, c.status, insignia.get(c.id)) } : {}) });
     hits.push({ box: markerBox(at, w, h), pick: { kind: 'company', id: c.id } });
   }
 }
 
-/** Scale bar (bottom left) and north arrow (top right). */
-function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
+/** Where the period style's compass rose stands (top right), and its radius. */
+export function roseAt(w: number): { x: number; y: number; r: number } {
+  const r = w < 600 ? 26 : 40;
+  return { x: w - r - 14, y: r + 14, r };
+}
+
+/** Scale bar (bottom left) and north arrow (top right); in the period style a compass rose, the scale bar being in the frame. */
+function drawFurniture(ctx: CanvasRenderingContext2D, view: View, period: boolean): void {
   const { w, h } = cssSize(ctx);
+  if (period) {
+    const rose = roseAt(w);
+    drawCompassRose(ctx, rose.x, rose.y, rose.r);
+    return;
+  }
   const metres = niceScaleLength(view.scale, 160);
   const len = metres * view.scale;
   const x = 24;
@@ -426,12 +448,16 @@ const boundsOf = (r: RunRecord): ReturnType<typeof recordBounds> => {
  */
 export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, opts: DrawOptions = {}): Hit[] {
   const settled = opts.settled ?? true;
-  drawPaper(ctx, view, r, settled);
+  const period = opts.period === true;
+  drawPaper(ctx, view, r, settled, period);
   const labels: Box[] = [];
   drawFeatures(ctx, view, r.geometry.features, labels);
   const soft = labels.length; // map names: a line label may overlap one of these only when nothing else is free
   const front = frontAt(r, frame.minute);
-  if (settled) drawCaptured(ctx, view, front);
+  // Period: each side's held ground washed in up to its front (a handful of polygons, drawn during gestures too);
+  // plain: the ground taken since Zero.
+  if (period) drawTerritory(ctx, view, territoryFills(r, frame.minute));
+  else if (settled) drawCaptured(ctx, view, front);
   const trenches = r.geometry.lines.filter((l) => l.kind === 'trench');
   for (const l of trenches) drawTrench(ctx, view, l);
   drawSegmentStates(ctx, view, segmentStates(r, frame.minute));
@@ -445,24 +471,40 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   const band = r.geometry.barrageDepthM?.band ?? BARRAGE_DEPTH_M;
   for (const b of frame.barrages) if (!b.done) drawCreeping(ctx, view, b.points, band);
   drawFronts(ctx, view, front);
-  drawReserves(ctx, view, reserveColumns(r, frame.minute, boundsOf(r)));
+  const reserves = reserveColumns(r, frame.minute, boundsOf(r));
+  drawReserves(ctx, view, reserves);
   if (settled) drawBursts(ctx, view, bursts(fireEventsAt(r, frame.minute), opts.speed ?? 1, frame, front, r.geometry.barrageDepthM));
+  // Vignettes (period): under the markers, so a drawing never hides a unit.
+  const placedVignettes = period ? placeVignettes(view, vignettes(r, frame.minute)) : [];
+  drawVignettes(ctx, placedVignettes);
   const style = markerStyleAt(view);
   const phase = opts.pulse ?? 0;
   const hits: Hit[] = [];
   let chips: PlacedChip[] = [];
-  if (style.kind === 'company') drawCompanies(ctx, view, r, frame, phase, hits);
-  else if (style.kind === 'chip') chips = drawChips(ctx, view, r, frame, phase, style, hits);
-  else drawBattalions(ctx, view, r, frame, phase, hits);
+  if (style.kind === 'company') drawCompanies(ctx, view, r, frame, phase, hits, period);
+  else if (style.kind === 'chip') chips = drawChips(ctx, view, r, frame, phase, style, hits, period);
+  else drawBattalions(ctx, view, r, frame, phase, hits, period);
   const sheet = cssSize(ctx);
   drawSky(ctx, r, frame.minute, sheet.w, sheet.h, opts.wallSec ?? null, settled);
-  // The clock card (HTML, .clock-card in styles.css) hides the sheet's top-left corner: keep labels out from under it.
-  labels.push({ x0: 0, x1: cssSize(ctx).w < 600 ? 230 : 300, y0: 0, y1: 86 });
+  // The zoom buttons (HTML, .zoom-controls) sit over the bottom-right corner: no label goes under them.
+  labels.push({ x0: sheet.w - 64, x1: sheet.w, y0: sheet.h - 132, y1: sheet.h });
+  if (period) {
+    // The compass rose stands at the top right: keep labels clear of it. The clock is in the frame, not on the map.
+    const rose = roseAt(sheet.w);
+    labels.push({ x0: rose.x - rose.r - 4, x1: sheet.w, y0: 0, y1: rose.y + rose.r + 4 });
+  } else {
+    // The clock card (HTML, .clock-card in styles.css) hides the sheet's top-left corner: keep labels out from under it.
+    labels.push({ x0: 0, x1: cssSize(ctx).w < 600 ? 230 : 300, y0: 0, y1: 86 });
+  }
   // Line labels go on top of the markers so a stack of companies never hides a name.
   for (const l of trenches) labelTrench(ctx, view, l, labels, soft);
   labelObjectives(ctx, view, objectives, labels, soft);
   drawDivisionTags(ctx, view, r, objectives, labels);
   labelChips(ctx, chips, labels);
-  drawFurniture(ctx, view);
+  // Reserve and vignette names last, each only where it fits clear of every name and marker already down.
+  const taken = [...labels, ...hits.map((x) => x.box), ...placedVignettes.map(vignetteBox)];
+  labelReserves(ctx, view, reserves, taken, sheet.w);
+  if (period) labelVignettes(ctx, placedVignettes, taken, sheet.w);
+  drawFurniture(ctx, view, period);
   return hits;
 }

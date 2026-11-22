@@ -38,6 +38,10 @@ forces:
             name: "1st Canadian Division"
             kind: division
             leaderId: currie
+            insignia:
+              # The divisional patch, a rectangle on the upper sleeve (Nicholson p. 155; docs/research/vimy/insignia.md). The colour is sourced; the hex is the shade drawn.
+              colour: { value: "#b3261e", source: nicholson-1962, page: "155", note: "'red for the 1st Division'; the hex is the map's red, not a measured shade" }
+              shape: rectangle
             children:
               - id: 1bde
                 name: "1st Canadian Infantry Brigade"
@@ -556,6 +560,9 @@ forces:
             name: "2nd Canadian Division"
             kind: division
             leaderId: burstall
+            insignia:
+              colour: { value: "#24427a", source: nicholson-1962, page: "155", note: "'dark blue for the 2nd'; the hex is a dark blue chosen for the map, not a measured shade" }
+              shape: rectangle
             children:
               - id: 4bde
                 name: "4th Canadian Infantry Brigade"
@@ -1102,6 +1109,9 @@ forces:
                 name: "British 13th Infantry Brigade (attached)"
                 kind: brigade
                 leaderId: jones-low
+                insignia:
+                  # A brigade of the British 5th Division under the 2nd Canadian Division: it did not wear the Canadian patch.
+                  colour: { value: none, source: wikipedia-divisions, page: "5th Infantry Division (United Kingdom), Insignia", note: "the 5th Division wore no battle patches (citing Osprey MAA 182 p. 9, not read); New Army battalions briefly kept their former division's (insignia.md, Open questions)" }
                 # Of the British 5th Division, attached to the 2nd Canadian Division (Nicholson p. 256; hussey-inman-1921 pp. 149, 153-154)
                 children:
                   - id: 1rwk
@@ -1284,6 +1294,10 @@ forces:
             name: "3rd Canadian Division"
             kind: division
             leaderId: lipsett
+            insignia:
+              # Black at Vimy: French grey replaced it only in May 1917 (insignia.md, Conflicts).
+              colour: { value: "#1f1f1f", source: nicholson-1962, page: "155", note: "'black (later changed to French grey) for the 3rd'; the change came in May 1917, after Vimy (wikipedia-divisions, 3rd Canadian Division, citing Law, Distinguishing Patches, pp. 5-6)" }
+              shape: rectangle
             children:
               - id: 7bde
                 name: "7th Canadian Infantry Brigade"
@@ -1797,6 +1811,9 @@ forces:
             name: "4th Canadian Division"
             kind: division
             leaderId: watson
+            insignia:
+              colour: { value: "#3f7a3a", source: nicholson-1962, page: "155", note: "'green for the 4th'; the hex is a mid green chosen for the map, not a measured shade" }
+              shape: rectangle
             children:
               - id: 10bde
                 name: "10th Canadian Infantry Brigade"
@@ -2335,6 +2352,9 @@ forces:
             name: "British 5th Division (corps reserve: 15th and 95th Brigades)"
             kind: group
             leaderId: stephens
+            insignia:
+              # No patch: its battalions take the side's colour on the map (insignia.md).
+              colour: { value: none, source: wikipedia-divisions, page: "5th Infantry Division (United Kingdom), Insignia", note: "'no battle patches were worn on their tunics or helmets' (citing Osprey MAA 182 p. 9, not read)" }
             # A division in fact, "in corps reserve" (Nicholson p. 252 note; hussey-inman-1921 p. 157); kind "group" so the corps lists only the four attacking Canadian divisions (oob-canadian.md)
             children:
               - id: 15bde-brit

@@ -5,6 +5,7 @@ import { holdersAt, segmentPieces } from './front';
 import { BARRAGE_DEPTH_M, worldToScreen, type Bounds, type Point, type View } from './projection';
 import { MAP_COLORS, MARKER_FONT, sideColor, tracePath } from './style';
 import type { Screen } from './declutter';
+import { overlaps, placeClear, type Box } from './labels';
 
 /*
  * The battle's effects on the map (spec 9.2, Task 18): the fronts and captured ground, trench segments' holders and wire,
@@ -609,16 +610,38 @@ export function drawReserves(ctx: CanvasRenderingContext2D, view: View, cols: re
     ctx.lineTo(tx - ux * s.head + uy * s.head * 0.6, ty - uy * s.head - ux * s.head * 0.6);
     ctx.closePath();
     ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.font = s.font;
-    ctx.textAlign = ux < 0 ? 'right' : 'left';
-    ctx.textBaseline = 'bottom';
-    ctx.lineJoin = 'round';
+  }
+  ctx.restore();
+}
+
+/**
+ * Name each reserve column at its tail, where the name fits clear of every label and marker already placed (`placed`,
+ * which it joins); a name that fits nowhere is left off (zoom in to read it).
+ */
+export function labelReserves(ctx: CanvasRenderingContext2D, view: View, cols: readonly ReserveColumn[], placed: Box[], sheetW: number): void {
+  const s = EFFECT_STYLE.reserve;
+  ctx.save();
+  ctx.font = s.font;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.lineJoin = 'round';
+  for (const c of cols) {
+    const [fx, fy] = worldToScreen(view, c.from);
+    const [tx, ty] = worldToScreen(view, c.to);
+    const len = Math.hypot(tx - fx, ty - fy);
+    if (len < 2) continue;
+    const ux = (tx - fx) / len;
+    const width = ctx.measureText(c.label).width;
+    const x0 = ux < 0 ? fx + ux * 4 - width : fx + ux * 4;
+    const want: Box = { x0: x0 - 1, x1: x0 + width + 1, y0: fy - 4 - 12, y1: fy - 3 };
+    const box = placeClear(want, placed, 13, 3, 8, 4, 12, sheetW - 12, 12);
+    if (placed.some((p) => overlaps(box, p))) continue;
+    placed.push(box);
     ctx.strokeStyle = MAP_COLORS.paper;
     ctx.lineWidth = 3;
-    const lx = fx + ux * 4;
-    ctx.strokeText(c.label, lx, fy - 4);
-    ctx.fillText(c.label, lx, fy - 4);
+    ctx.strokeText(c.label, box.x0 + 1, box.y1 - 2);
+    ctx.fillStyle = sideColor(c.side);
+    ctx.fillText(c.label, box.x0 + 1, box.y1 - 2);
   }
   ctx.restore();
 }

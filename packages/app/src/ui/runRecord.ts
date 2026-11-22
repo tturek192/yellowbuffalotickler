@@ -51,7 +51,18 @@ const isSegment = (x: unknown): boolean =>
   x.lengthM >= 0;
 
 const isUnit = (u: unknown): boolean =>
-  isObject(u) && typeof u.id === 'string' && typeof u.battalionId === 'string' && typeof u.name === 'string' && SIDES.includes(u.side);
+  isObject(u) &&
+  typeof u.id === 'string' &&
+  typeof u.battalionId === 'string' &&
+  typeof u.name === 'string' &&
+  SIDES.includes(u.side) &&
+  (u.insignia === undefined || typeof u.insignia === 'string');
+
+/** The period style's data (engine 0.4.6 on; each optional): a battery's place, a division and its patch, a contact patrol. */
+const isBattery = (b: unknown): boolean => isObject(b) && typeof b.id === 'string' && SIDES.includes(b.side) && typeof b.weapon === 'string' && isNum(b.count) && isPoint(b.at);
+const isDivision = (d: unknown): boolean =>
+  isObject(d) && typeof d.id === 'string' && typeof d.name === 'string' && SIDES.includes(d.side) && (d.insignia === undefined || typeof d.insignia === 'string');
+const isPatrol = (p: unknown): boolean => isObject(p) && typeof p.fromId === 'string' && SIDES.includes(p.side) && isNum(p.sentMin) && isNum(p.dueMin);
 
 /** Check the parts of a run record the player reads; throw a readable message for anything else. */
 export function parseRunRecord(data: unknown): RunRecord {
@@ -89,6 +100,16 @@ export function parseRunRecord(data: unknown): RunRecord {
     if (!isUnit(u)) fail(`units[${i}] needs id, battalionId, name and side`);
   });
   const unitIds = new Set((units as Array<{ id: string }>).map((u) => u.id));
+  const optionalList = (v: unknown, name: string, ok: (x: unknown) => boolean, what: string): void => {
+    if (v === undefined) return;
+    if (!Array.isArray(v)) return void fail(`${name} must be an array`);
+    v.forEach((x, i) => {
+      if (!ok(x)) fail(`${name}[${i}] needs ${what}`);
+    });
+  };
+  optionalList((g as Record<string, unknown>).batteries, 'geometry.batteries', isBattery, 'an id, a side, a weapon, a count and a point `at`');
+  optionalList(data.divisions, 'divisions', isDivision, 'an id, a name, a side and, if any, an insignia colour');
+  optionalList(data.contactPatrols, 'contactPatrols', isPatrol, 'a fromId, a side, sentMin and dueMin');
   const snapshots = data.snapshots;
   if (!Array.isArray(snapshots) || snapshots.length === 0) return fail('snapshots must be a non-empty array');
   snapshots.forEach((s: unknown, i) => {

@@ -3,6 +3,8 @@ import type { RunRecord } from '@wwi/engine';
 import { encodeTerrain, FEATURE_KINDS, type Feature, type FeatureKind, type TerrainGrid } from '@wwi/scenario';
 import { frameAt } from '../playback';
 import { chipBox, drawFrame, placeChips, shortId } from './draw';
+import { drawFeatures } from './features';
+import { recordingContext as stubContext } from '../test-canvas';
 import { markerStyleAt } from './zoom';
 import type { View } from './projection';
 import { companyTable, unitsFor, type TestCompany } from '../test-record';
@@ -84,6 +86,7 @@ function everyKind(): Feature[] {
     railway: line,
     strongpoint: point,
     battery: point,
+    balloon: point,
   };
   return FEATURE_KINDS.map((kind, i) => ({ id: `f${i}`, kind, side: 'central', name: `F${i}`, geometry: geom[kind], cite }));
 }
@@ -91,6 +94,16 @@ function everyKind(): Feature[] {
 const holding = (id: string, side: Company['side']): Company => ({ id, side, x: 200, y: 200, men: 120, status: 'holding' });
 
 describe('drawing map features', () => {
+  it('a wood or village name with no clear room is left off, never printed over another name', () => {
+    const at = (id: string, name: string): Feature => ({ id, kind: 'village', name, geometry: { type: 'Point', coordinates: [0, 0] }, cite });
+    const { ctx, calls } = stubContext();
+    // Lifting a row at a time finds no room: a box already fills the four rows above.
+    const labels = [{ x0: -500, x1: 500, y0: -200, y1: -9 }];
+    drawFeatures(ctx, { scale: 1, tx: 0, ty: 0 }, [at('a', 'Avion'), at('b', 'Bailleul')], labels);
+    const names = calls.filter((c) => c.name === 'fillText').map((c) => c.args[0]);
+    expect(names).toEqual(['Avion']);
+  });
+
   it('draws each feature kind without throwing on a stub context', () => {
     const r = record(everyKind());
     const calls = recordingContext();

@@ -21,6 +21,7 @@ import { createStreams } from './rng';
 import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './record';
 import { offMapAtZero } from './reserves';
 import { initTanks } from './smaller';
+import { insigniaOf } from './insignia';
 import type { EndReason, RunRecord } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
@@ -145,6 +146,18 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
   const quietMin = quietStepMin(ctx);
   let busy = isBusy(state, ctx);
 
+  // Contact-patrol messages as they are sent (each read off the queue once, by id), for the map's aircraft.
+  const patrols: NonNullable<RunRecord['contactPatrols']> = [];
+  const seenPatrols = new Set<number>();
+  const notePatrols = (): void => {
+    for (const m of state.messages) {
+      if (m.channel !== 'contact-patrol' || seenPatrols.has(m.id)) continue;
+      seenPatrols.add(m.id);
+      patrols.push({ fromId: m.fromFormationId, side: m.side, sentMin: round(m.sentMin, 1), dueMin: round(m.dueMin, 1) });
+    }
+  };
+  notePatrols();
+
   let reason: EndReason = 'time-cap';
   while (state.minute < endMinute) {
     // stepMin while busy; otherwise a quiet step, cut at whatever is scheduled next (schedule.ts).
@@ -157,6 +170,7 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
       state = endRun(state, ctx, reason);
     }
     events.push(...state.events);
+    notePatrols();
     busy = isBusy(state, ctx);
     const every = busy ? SNAPSHOT_BUSY_MIN : SNAPSHOT_QUIET_MIN;
     const due = opts.snapshotEveryStep || Math.floor(state.minute / every) > Math.floor(lastSnapshot / every);
@@ -173,6 +187,7 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
   }
 
   const sc = ctx.scenario;
+  const insignia = insigniaOf(sc, state.companies, ctx.defaultsUsed);
   return {
     engineVersion: ENGINE_VERSION,
     scenarioId: sc.id,
@@ -201,10 +216,18 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
         lengthM: round(x.lengthM, 1),
       })),
       barrageDepthM: { band: v(ctx.tables.effects.barrageBandDepthM), mg: v(ctx.tables.effects.mgBarrageDepthM) },
+      batteries: sc.artillery.flatMap((a) =>
+        Array.isArray(a.position) ? [{ id: a.id, side: a.side, weapon: a.weapon, count: v(a.count), at: [a.position[0], a.position[1]] as Point }] : [],
+      ),
     },
     conditions: conditionsOf(sc, ctx),
     // Task 15: each company's formations, battalion up, so the batch can set formations' casualties beside targets.
-    units: state.companies.map((c) => ({ id: c.id, battalionId: c.battalionId, name: c.name, side: c.side, formationPath: c.formationPath })),
+    units: state.companies.map((c) => {
+      const colour = insignia.byUnit.get(c.id);
+      return { id: c.id, battalionId: c.battalionId, name: c.name, side: c.side, formationPath: c.formationPath, ...(colour ? { insignia: colour } : {}) };
+    }),
+    divisions: insignia.divisions,
+    ...(patrols.length > 0 ? { contactPatrols: patrols } : {}),
     snapshots,
     events,
     summary: summarize(state, ctx, events, reason),

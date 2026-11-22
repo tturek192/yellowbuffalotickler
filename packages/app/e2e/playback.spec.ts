@@ -4,6 +4,24 @@ import { fileURLToPath } from 'node:url';
 
 const out = (name: string): string => fileURLToPath(new URL(`./out/${name}`, import.meta.url));
 
+/** Where the viewer's map style is kept (ui/periodStyle.ts STYLE_KEY). */
+const STYLE_KEY = 'wwi-sim.mapStyle';
+
+/**
+ * The period style is the default (Task 20). The tests written for the plain trench map read its clock text, key and
+ * labels, so they start in the plain style; the period style's own tests (titled "period style …") start as a new viewer.
+ */
+test.beforeEach(async ({ page }, info) => {
+  if (info.title.startsWith('period style')) return;
+  await page.addInitScript((key) => {
+    try {
+      localStorage.setItem(key, 'plain');
+    } catch {
+      /* storage blocked: the app falls back to the period style */
+    }
+  }, STYLE_KEY);
+});
+
 /** The map key sits wholly below the map canvas, inside the sheet, so it hides none of the map. */
 async function expectKeyClearOfMap(page: Page): Promise<void> {
   const map = await page.getByRole('img', { name: /^Trench map of / }).boundingBox();
@@ -300,4 +318,65 @@ test.describe('Vimy: the battle on the map, totals and the why panel', () => {
       await page.screenshot({ path: out(`task-18-why-${width}.png`) });
     });
   }
+});
+
+test('period style is the default: the Explanatory Notes and the cartouche frame the map, never over it', async ({ page }) => {
+  await page.goto('/?run=vimy');
+  const notes = page.getByRole('group', { name: 'Explanatory Notes' });
+  const cartouche = page.getByRole('group', { name: 'Title cartouche' });
+  await expect(notes).toBeVisible();
+  await expect(cartouche).toBeVisible();
+  await expect(cartouche).toContainText('Vimy Ridge');
+  await expect(notes).toContainText('1st Canadian Division');
+  await expect(page.getByTestId('battle-clock')).toHaveText('Monday, 9th April · 5.30 a.m.');
+  await expect(page.getByRole('checkbox', { name: 'Period style' })).toBeChecked();
+  // The frame is laid out round the map: neither panel covers it.
+  const map = (await page.getByRole('img', { name: /^Trench map of / }).boundingBox())!;
+  for (const panel of [notes, cartouche]) {
+    const b = (await panel.boundingBox())!;
+    const apart = b.x >= map.x + map.width - 0.5 || b.x + b.width <= map.x + 0.5 || b.y >= map.y + map.height - 0.5 || b.y + b.height <= map.y + 0.5;
+    expect(apart).toBe(true);
+  }
+  // The Notes fold away.
+  await page.getByText('Explanatory Notes', { exact: true }).click();
+  await expect(notes).toBeHidden();
+});
+
+test('period style switched off shows the plain trench map; the choice survives a reload', async ({ page }) => {
+  await page.goto('/?run=vimy');
+  await expect(page.getByRole('group', { name: 'Explanatory Notes' })).toBeVisible();
+  await page.getByText('Period style', { exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Explanatory Notes' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Title cartouche' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Map key' })).toBeVisible();
+  await expect(page.getByTestId('battle-clock')).toHaveText('Mon 9 Apr · 05:30');
+  await page.reload();
+  await expect(page.getByTestId('battle-clock')).toHaveText('Mon 9 Apr · 05:30');
+  await expect(page.getByRole('group', { name: 'Explanatory Notes' })).toHaveCount(0);
+  await expect(page.getByRole('checkbox', { name: 'Period style' })).not.toBeChecked();
+  // And back again.
+  await page.getByText('Period style', { exact: true }).click();
+  await page.reload();
+  await expect(page.getByRole('group', { name: 'Explanatory Notes' })).toBeVisible();
+});
+
+test('period style still renders when browser storage throws', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get: () => { throw new Error('blocked'); } });
+  });
+  await page.goto('/?run=sample');
+  await expect(page.getByRole('group', { name: 'Title cartouche' })).toBeVisible();
+  await page.getByText('Period style', { exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Map key' })).toBeVisible();
+});
+
+test('period style at phone width: the cartouche above the map, the Notes below it, no sideways scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?run=vimy');
+  const map = (await page.getByRole('img', { name: /^Trench map of / }).boundingBox())!;
+  const cart = (await page.getByRole('group', { name: 'Title cartouche' }).boundingBox())!;
+  const notes = (await page.getByRole('group', { name: 'Explanatory Notes' }).boundingBox())!;
+  expect(cart.y + cart.height).toBeLessThanOrEqual(map.y);
+  expect(notes.y).toBeGreaterThanOrEqual(map.y + map.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });

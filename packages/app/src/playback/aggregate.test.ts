@@ -24,6 +24,17 @@ function setup(now: Spec[], initial: Spec[] = now): { rows: FrameCompany[]; reco
 }
 
 describe('aggregateBattalions', () => {
+  it("carries its division's insignia colour from the record's units (the period style's block colour)", () => {
+    const { rows, record } = setup([
+      { id: 'a', bn: 'bn1', men: 100 },
+      { id: 'g', bn: 'gbn', men: 100, side: 'central' },
+    ]);
+    record.units.find((u) => u.id === 'a')!.insignia = '#3f7a3a';
+    const [b, g] = aggregateBattalions(rows, record);
+    expect(b!.insignia).toBe('#3f7a3a');
+    expect(g!.insignia).toBeUndefined();
+  });
+
   it('sums men and weights morale and suppression by men', () => {
     const { rows, record } = setup([
       { id: 'a', bn: 'bn1', men: 100, morale: 0.8, suppression: 0.1 },

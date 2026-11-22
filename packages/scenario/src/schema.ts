@@ -33,6 +33,8 @@ const LinePoints = z
 export const FEATURE_KINDS = [
   'trench', 'communication-trench', 'wire', 'crater', 'subway', 'tunnel',
   'wood', 'village', 'road', 'railway', 'strongpoint', 'battery',
+  // An observation balloon's place (the period map draws one); entered only where a source places one.
+  'balloon',
 ] as const;
 
 const FeatureSchema = z.object({
@@ -99,6 +101,18 @@ export type Company = z.infer<typeof CompanyBase>;
 
 export const FORMATION_KINDS = ['army', 'corps', 'group', 'division', 'brigade', 'regiment', 'battalion'] as const;
 
+export const INSIGNIA_SHAPES = ['rectangle', 'circle', 'diamond', 'triangle', 'semicircle'] as const;
+/**
+ * A formation's sleeve insignia (the period map draws its battalions in this colour): a lower-case hex colour, or
+ * `none` where a source says the formation wore no patch (its battalions then take the side's colour, and do not
+ * inherit a parent's patch: an attached brigade). The shape, where a source gives it.
+ */
+export const InsigniaSchema = z.strictObject({
+  colour: sourced(z.string().regex(/^(#[0-9a-f]{6}|none)$/, 'a lower-case hex colour (#rrggbb) or "none"')),
+  shape: z.enum(INSIGNIA_SHAPES).optional(),
+});
+export type Insignia = z.infer<typeof InsigniaSchema>;
+
 export interface Formation {
   id: string;
   name: string;
@@ -106,6 +120,7 @@ export interface Formation {
   leaderId?: string;
   /** Where its headquarters stands (local, or lon/lat projected by the loader); absent: behind its companies (engine default). */
   hqPosition?: z.infer<typeof PlacedPoint>;
+  insignia?: Insignia;
   children?: Formation[];
   companies?: Company[];
 }
@@ -117,6 +132,7 @@ const Formation: z.ZodType<Formation> = z.lazy(() =>
     kind: z.enum(FORMATION_KINDS),
     leaderId: z.string().optional(),
     hqPosition: PlacedPoint.optional(),
+    insignia: InsigniaSchema.optional(),
     children: z.array(Formation).optional(),
     companies: z.array(Company).optional(),
   }),

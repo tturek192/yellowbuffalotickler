@@ -85,6 +85,10 @@ describe('draft Vimy scenario run', () => {
     // sides of the companies hit (so playback never guesses whose men they were); a mine-fired event carries where it was
     // blown (`at`), and each sector in the geometry how far its fire plan reaches (`reach`, barrage.ts planReachX). The
     // battle is unchanged: the same events, snapshots and summary, each fire event only gaining its `losses`.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.5', hash: 'b9071c30' });
+    // 0.4.6 (Task 20): for the period map style, units carry their division's patch colour (`insignia`), the record
+    // lists the divisions (`divisions`), the geometry the batteries' places (`geometry.batteries`), and a run that sent
+    // contact-patrol messages lists them (`contactPatrols`); defaultsUsed names formations drawn in the side's colour.
+    // The battle is unchanged: the same events, snapshots and summary.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.6', hash: 'f0c74277' });
   });
 });

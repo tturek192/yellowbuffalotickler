@@ -1,7 +1,7 @@
 import type { Feature, FeatureKind } from '@wwi/scenario';
 import type { Screen } from './declutter';
 import { worldToScreen, type View } from './projection';
-import { liftClear, type Box } from './labels';
+import { liftClear, overlaps, type Box } from './labels';
 import { alongPath, crenellatedPath, DEFAULT_RADIUS_M, LABEL_FONT, MAP_COLORS, sideColor, tracePath } from './style';
 
 /** Drawing order, bottom first: ground cover, then communications, craters, trenches, then positions. */
@@ -18,6 +18,7 @@ const LAYER: Record<FeatureKind, number> = {
   trench: 6,
   strongpoint: 7,
   battery: 7,
+  balloon: 7,
 };
 
 type AreaStyle = { fill: string; hatch: string; edge: string; spacing: number; cross: boolean };
@@ -233,6 +234,11 @@ function labelArea(ctx: CanvasRenderingContext2D, f: Feature, pts: Screen[], pla
   ctx.font = `italic ${AREA_LABEL_SIZE}px ${LABEL_FONT}`;
   const half = ctx.measureText(f.name).width / 2;
   const box = liftClear({ x0: x - half - 2, x1: x + half + 2, y0: y - AREA_LABEL_SIZE / 2 - 2, y1: y + AREA_LABEL_SIZE / 2 + 2 }, placed, AREA_LABEL_SIZE + 3, 4);
+  // Crowded (a small sheet): a name with no clear room is left off rather than printed over another.
+  if (placed.some((p) => overlaps(box, p))) {
+    ctx.restore();
+    return;
+  }
   placed.push(box);
   const ly = (box.y0 + box.y1) / 2;
   ctx.textAlign = 'center';

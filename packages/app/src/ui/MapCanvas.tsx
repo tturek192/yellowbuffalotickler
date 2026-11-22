@@ -15,6 +15,8 @@ import { TERRAIN_SETTLE_MS } from '../map/hillshade';
  */
 const INSET_TOP = 92;
 const INSET_BOTTOM = 40;
+/** The period style keeps its clock and scale bar in the frame, so the map needs only a margin. */
+const PERIOD_INSET = 12;
 
 /** Button zoom step, and how often the suppression rings are redrawn while they pulse (ms). */
 const ZOOM_STEP = 1.6;
@@ -24,7 +26,7 @@ const STILL_PHASE = 0.25;
 /** A press that moves less than this (CSS px) before it lifts is a click, not a drag. */
 const CLICK_SLOP_PX = 5;
 
-const CANVAS_FONTS = ['italic 15px "EB Garamond"', '600 11px "Barlow Condensed"'];
+const CANVAS_FONTS = ['italic 15px "EB Garamond"', '600 11px "Barlow Condensed"', 'italic 12px "IM Fell English"', '12px "IM Fell English SC"'];
 
 const prefersStill = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -32,7 +34,25 @@ const prefersStill = (): boolean => typeof window.matchMedia === 'function' && w
  * The trench map: a devicePixelRatio-aware canvas that tracks its container's size. Wheel and pinch zoom about the
  * pointer, drag pans, and the buttons zoom about the middle; battalions show at corps zoom and companies when zoomed in.
  */
-export function MapCanvas({ record, minute, label, speed = 1, onPick }: { record: RunRecord; minute: number; label: string; speed?: number; onPick?: (pick: MapPick) => void }) {
+export function MapCanvas({
+  record,
+  minute,
+  label,
+  speed = 1,
+  onPick,
+  period = false,
+  onScale,
+}: {
+  record: RunRecord;
+  minute: number;
+  label: string;
+  speed?: number;
+  onPick?: (pick: MapPick) => void;
+  /** Draw in the period style (Task 20). */
+  period?: boolean;
+  /** Told the map's scale (px per metre) whenever it changes: the period frame's scale bar. */
+  onScale?: (pxPerM: number) => void;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -41,9 +61,10 @@ export function MapCanvas({ record, minute, label, speed = 1, onPick }: { record
   const [zoomed, setZoomed] = useState<View | null>(null);
   const bounds = useMemo(() => recordBounds(record), [record]);
   const fit = useMemo(() => {
-    const f = fitView(bounds, size.w, Math.max(size.h - INSET_TOP - INSET_BOTTOM, 1), 24);
-    return { ...f, ty: f.ty + INSET_TOP };
-  }, [bounds, size]);
+    const [top, bottom] = period ? [PERIOD_INSET, PERIOD_INSET] : [INSET_TOP, INSET_BOTTOM];
+    const f = fitView(bounds, size.w, Math.max(size.h - top - bottom, 1), 24);
+    return { ...f, ty: f.ty + top };
+  }, [bounds, size, period]);
   const view = zoomed ? clampView(zoomed, fit, bounds, size) : fit;
   const markers = markerStyleAt(view).kind;
   const frame = useMemo(() => frameAt(record, minute), [record, minute]);
@@ -53,7 +74,10 @@ export function MapCanvas({ record, minute, label, speed = 1, onPick }: { record
   /** The markers as last drawn, for picking one with a click. */
   const hitsRef = useRef<Hit[]>([]);
 
-  useEffect(() => setZoomed(null), [record, size]);
+  useEffect(() => setZoomed(null), [record, size, period]);
+  useEffect(() => {
+    if (size.w > 0) onScale?.(view.scale);
+  }, [view.scale, size.w, onScale]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -112,11 +136,12 @@ export function MapCanvas({ record, minute, label, speed = 1, onPick }: { record
         wallSec: now === null ? null : now / 1000,
         settled: settledRef.current,
         speed,
+        period,
       });
     },
     // `view` is rebuilt every render; its parts are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [size, view.scale, view.tx, view.ty, record, frame, fontsReady, settledTick, speed],
+    [size, view.scale, view.tx, view.ty, record, frame, fontsReady, settledTick, speed, period],
   );
 
   // Redraw on every change; while a marker is suppressed, or snow or rain falls, keep redrawing from wall time (never battle time).

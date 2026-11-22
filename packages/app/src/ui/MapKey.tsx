@@ -115,16 +115,20 @@ function KeyRow({ children, label }: { children: ReactNode; label: string }) {
   );
 }
 
-/** The map key, styled as part of the paper sheet. Feature and terrain entries appear only when the run has them. */
-export function MapKey({ record }: { record: RunRecord }) {
+/**
+ * The map key, styled as part of the paper sheet. Feature and terrain entries appear only when the run has them. It
+ * folds away under its heading (`collapsible`, the default), so it never takes the map's room; the period style shows it
+ * inside its Explanatory Notes instead, with its own label.
+ */
+export function MapKey({ record, label = 'Map key', collapsible = true }: { record: RunRecord; label?: string; collapsible?: boolean }) {
   const first = new Map<FeatureKind, Feature>();
   for (const f of record.geometry.features) if (!first.has(f.kind)) first.set(f.kind, f);
   const segments = (record.geometry.segments?.length ?? 0) > 0;
   const barrages = record.geometry.barrageDepthM !== undefined && (record.snapshots ?? []).some((x) => x.barrages.length > 0);
   const mines = (record.events ?? []).some((e) => e.kind === 'mine-fired' && e.at !== undefined);
   const reserves = (record.snapshots ?? []).some((x) => (x.reserves?.rows.length ?? 0) > 0);
-  return (
-    <div className="map-key" aria-label="Map key" role="group">
+  const key = (
+    <div className="map-key" aria-label={label} role="group">
       <KeyRow label="Allied trench">
         <path d="M0 3h4v4h4V3h4v4h4V3h4v4h4V3h4" fill="none" stroke={MAP_COLORS.allied} strokeWidth="1.6" />
       </KeyRow>
@@ -251,5 +255,12 @@ export function MapKey({ record }: { record: RunRecord }) {
         </KeyRow>
       )}
     </div>
+  );
+  if (!collapsible) return key;
+  return (
+    <details className="map-key-fold" open>
+      <summary>Map key</summary>
+      {key}
+    </details>
   );
 }

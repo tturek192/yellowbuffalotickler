@@ -64,6 +64,21 @@ const withReserves = (reserves: unknown = { columns: ['formationId', 'status', '
 const resRows = (rows: unknown[]) => withReserves({ columns: ['formationId', 'status', 'orderedMin', 'arriveMin'], rows });
 
 describe('parseRunRecord', () => {
+  it('accepts the period style\'s fields (engine 0.4.6 on) and rejects malformed ones', () => {
+    const r = good() as Record<string, unknown> & ReturnType<typeof good>;
+    (r.units[0] as Record<string, unknown>).insignia = '#b3261e';
+    (r.geometry as Record<string, unknown>).batteries = [{ id: 'b', side: 'allied', weapon: '18pdr', count: 10, at: [-100, 5] }];
+    r.divisions = [{ id: 'd', name: '1st Division', side: 'allied', insignia: '#b3261e' }];
+    r.contactPatrols = [{ fromId: 'bn1', side: 'allied', sentMin: 2, dueMin: 20 }];
+    expect(() => parseRunRecord(r)).not.toThrow();
+    expect(() => parseRunRecord({ ...r, contactPatrols: [{ fromId: 'bn1', sentMin: 2 }] })).toThrow(/contactPatrols\[0\]/);
+    expect(() => parseRunRecord({ ...r, divisions: [{ id: 'd' }] })).toThrow(/divisions\[0\]/);
+    expect(() => parseRunRecord({ ...r, geometry: { ...r.geometry, batteries: [{ id: 'b', at: [1] }] } })).toThrow(/geometry.batteries\[0\]/);
+    const bad = good();
+    (bad.units[0] as Record<string, unknown>).insignia = 7;
+    expect(() => parseRunRecord(bad)).toThrow(/units\[0\]/);
+  });
+
   it('accepts a well-formed record, with features and holding companies', () => {
     const r = parseRunRecord(good());
     expect(r.zeroHour).toBe('1917-04-09T05:30');

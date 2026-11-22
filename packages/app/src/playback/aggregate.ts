@@ -21,6 +21,8 @@ export type BattalionMarker = {
   status: CompanyStatus;
   /** Companies on the map. */
   companies: number;
+  /** Its division's patch colour (engine 0.4.6 on), where it has one: the period style's block colour. */
+  insignia?: string;
 };
 
 /** Tie order for the dominant status: the worst news first; every other status ranks equal, after these. */
@@ -39,7 +41,16 @@ const mean = (xs: readonly number[]): number => xs.reduce((a, b) => a + b, 0) / 
  * A status votes with the men its companies started with, so a battalion with three companies surrendered and one
  * advancing shows the white flag; the largest body of starting men decides, ties by the order above.
  */
+const insigniaCache = new WeakMap<RunRecord, Map<string, string>>();
+/** Each company's insignia colour, by id (cached per record). */
+function insigniaOf(record: RunRecord): Map<string, string> {
+  let m = insigniaCache.get(record);
+  if (!m) insigniaCache.set(record, (m = new Map(record.units.flatMap((u) => (u.insignia ? [[u.id, u.insignia] as [string, string]] : [])))));
+  return m;
+}
+
 export function aggregateBattalions(rows: readonly FrameCompany[], record: RunRecord): BattalionMarker[] {
+  const insignia = insigniaOf(record);
   const initial = new Map((record.snapshots[0] ? companiesOf(record, record.snapshots[0]) : []).map((c) => [c.id, c.men]));
   const byBattalion = new Map<string, FrameCompany[]>();
   for (const c of rows) {
@@ -71,6 +82,7 @@ export function aggregateBattalions(rows: readonly FrameCompany[], record: RunRe
       suppression: weighted((c) => c.suppression),
       status,
       companies: cs.length,
+      ...(insignia.has(cs[0]!.id) ? { insignia: insignia.get(cs[0]!.id)! } : {}),
     });
   }
   return out;

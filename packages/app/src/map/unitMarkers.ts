@@ -22,6 +22,8 @@ export const MARKER_STYLE = {
   flag: '#ffffff',
   arrow: MAP_COLORS.ink,
   suppression: '#d9822b',
+  /** The inside of an open (waiting or reserve) period block: the paper. */
+  openFill: '#efe2bf',
   /** Seconds a suppression ring takes to pulse once. */
   pulseSeconds: 1.4,
 } as const;
@@ -89,6 +91,11 @@ export type UnitMarker = {
   chip?: boolean;
   /** Pulse phase in cycles (wall time, not battle time). */
   phase: number;
+  /**
+   * The period style's paint (Task 20): the block's colour (its division's patch), open (outline only: waiting or in
+   * reserve) or filled, and its edge. Absent: the plain style, the side's ink.
+   */
+  paint?: { fill: string; open: boolean; edge: string; edgeWidth: number };
 };
 
 /** Draw one marker (a company or a battalion): fill, edge, label, strength bar, and the state marks. */
@@ -97,7 +104,8 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
   const x = Math.round(m.at[0] - w / 2);
   const y = Math.round(m.at[1] - h / 2);
   const look = markerLook(m.status);
-  const color = look === 'destroyed' ? MARKER_STYLE.destroyed : sideColor(m.side);
+  const color = look === 'destroyed' ? MARKER_STYLE.destroyed : (m.paint?.fill ?? sideColor(m.side));
+  const open = m.paint?.open === true && look !== 'destroyed';
 
   // Suppression: a ring that spreads from the edge and fades, drawn under the box.
   const ring = look === 'destroyed' ? null : pulseRing(m.suppression, m.phase);
@@ -114,8 +122,8 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
   ctx.shadowColor = 'rgba(40, 30, 10, 0.35)';
   ctx.shadowBlur = 3;
   ctx.shadowOffsetY = 1;
-  ctx.globalAlpha = look === 'destroyed' ? 0.55 : moraleAlpha(m.morale);
-  ctx.fillStyle = color;
+  ctx.globalAlpha = look === 'destroyed' ? 0.55 : open ? 1 : moraleAlpha(m.morale);
+  ctx.fillStyle = open ? MARKER_STYLE.openFill : color;
   ctx.fillRect(x, y, w, h);
   ctx.restore();
 
@@ -124,7 +132,7 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
-    ctx.strokeStyle = MARKER_STYLE.hatch;
+    ctx.strokeStyle = open ? color : MARKER_STYLE.hatch;
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     for (let k = -h; k <= w; k += MARKER_STYLE.hatchStep) {
@@ -142,6 +150,12 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
     ctx.strokeStyle = 'rgba(20, 16, 8, 0.4)';
     ctx.lineWidth = 1;
     ctx.strokeRect(x - 2.5, y - 2.5, w + 5, h + 5);
+  } else if (m.paint && look !== 'destroyed') {
+    // Period blocks: an open block is drawn in its colour's outline; a filled one keeps its edge (German: red).
+    const lw = open ? Math.max(2, m.paint.edgeWidth) : m.paint.edgeWidth;
+    ctx.strokeStyle = open && m.side !== 'central' ? color : m.paint.edge;
+    ctx.lineWidth = lw;
+    ctx.strokeRect(x + lw / 2, y + lw / 2, w - lw, h - lw);
   } else if (m.side === 'central' && look !== 'destroyed') {
     ctx.strokeStyle = MAP_COLORS.centralEdge;
     ctx.lineWidth = 1.5;
@@ -153,7 +167,7 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
   }
 
   if (!m.chip) {
-    ctx.fillStyle = look === 'destroyed' ? 'rgba(255, 255, 255, 0.7)' : '#ffffff';
+    ctx.fillStyle = look === 'destroyed' ? 'rgba(255, 255, 255, 0.7)' : open ? MAP_COLORS.ink : '#ffffff';
     ctx.font = `600 11px ${MARKER_FONT}`;
     // Longer labels step down a size to stay inside the marker.
     if (ctx.measureText(m.label).width > w - 4) ctx.font = `600 9.5px ${MARKER_FONT}`;

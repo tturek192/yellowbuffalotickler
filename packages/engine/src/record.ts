@@ -1,8 +1,9 @@
 import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
 import type { CompanyState, CompanyStatus } from './companies';
+import type { DivisionInsignia } from './insignia';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.5';
+export const ENGINE_VERSION = '0.4.6';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -107,11 +108,23 @@ export type RunRecord = {
     segments: SegmentGeometry[];
     /** How deep the creeping barrage's band and the machine-gun barrage's zone beyond it are, in metres (absent before engine 0.4.4). */
     barrageDepthM?: { band: number; mg: number };
+    /** Every battery the scenario places (engine 0.4.6 on): the period map draws a gun there. `count` is the working value. */
+    batteries?: Array<{ id: string; side: Side; weapon: string; count: number; at: Point }>;
   };
   /** What playback needs for weather and light (absent before engine 0.4.4). */
   conditions?: RunConditions;
   /** Every company, in ascending id order: the battalion it belongs to, its name and side; its formations, battalion up (engine 0.4.0 on). */
-  units: Array<{ id: string; battalionId: string; name: string; side: Side; formationPath?: string[] }>;
+  units: Array<{ id: string; battalionId: string; name: string; side: Side; formationPath?: string[]; insignia?: string }>;
+  /**
+   * The divisions (and division-sized groups), with their sleeve-patch colour where the scenario gives one (engine
+   * 0.4.6 on): the period map's notes. A unit's `insignia` is its nearest formation's patch (insignia.ts).
+   */
+  divisions?: DivisionInsignia[];
+  /**
+   * Contact-patrol messages (engine 0.4.6 on; absent when the run sent none): the formation that sent each and its side, the minute
+   * it left and the minute it was due (to 0.1). The period map draws an aircraft while one is in flight.
+   */
+  contactPatrols?: Array<{ fromId: string; side: Side; sentMin: number; dueMin: number }>;
   /**
    * Every SNAPSHOT_BUSY_MIN minutes while anything is happening, otherwise every SNAPSHOT_QUIET_MIN; always the first and
    * last state. A keyframe every KEYFRAME_EVERY snapshots, the first among them, and between them deltas (`delta`).

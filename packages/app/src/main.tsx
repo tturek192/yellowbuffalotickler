@@ -4,11 +4,20 @@ import type { RunRecord } from '@wwi/engine';
 import { fetchRun } from './ui/fetchRun';
 import { Playback } from './ui/Playback';
 import { parseRunRecord } from './ui/runRecord';
+import { useMapStyle } from './ui/periodStyle';
+// The period style's lettering, bundled (no runtime fetch): IM Fell English and its small capitals, and EB Garamond.
+import '@fontsource/im-fell-english/latin-400.css';
+import '@fontsource/im-fell-english/latin-400-italic.css';
+import '@fontsource/im-fell-english-sc/latin-400.css';
+import '@fontsource/eb-garamond/latin-400.css';
+import '@fontsource/eb-garamond/latin-400-italic.css';
+import '@fontsource/eb-garamond/latin-600.css';
 import './styles.css';
 
 type State = { kind: 'empty' } | { kind: 'loading'; name: string } | { kind: 'error'; message: string } | { kind: 'ready'; record: RunRecord };
 
 function App() {
+  const [mapStyle, setMapStyle] = useMapStyle();
   const [state, setState] = useState<State>(() => {
     const name = new URLSearchParams(window.location.search).get('run');
     return name ? { kind: 'loading', name } : { kind: 'empty' };
@@ -38,13 +47,18 @@ function App() {
 
   const record = state.kind === 'ready' ? state.record : null;
   return (
-    <div className="app">
+    <div className={mapStyle === 'period' ? 'app is-period' : 'app'}>
       <header className="app-header">
         <div className="titles">
           <div className="eyebrow">WWI Battle Simulator · Time-lapse</div>
           <h1>{record ? record.scenarioTitle : 'No run loaded'}</h1>
         </div>
         <div className="header-actions">
+          <label className="switch style-switch">
+            <input type="checkbox" checked={mapStyle === 'period'} onChange={(e) => setMapStyle(e.currentTarget.checked ? 'period' : 'plain')} />
+            <span className="switch-track" aria-hidden="true" />
+            <span>Period style</span>
+          </label>
           {record && (
             <dl className="run-meta">
               <div>
@@ -64,7 +78,7 @@ function App() {
         </div>
       </header>
 
-      {state.kind === 'ready' && <Playback record={state.record} />}
+      {state.kind === 'ready' && <Playback record={state.record} mapStyle={mapStyle} />}
       {state.kind === 'loading' && <div className="panel notice">Loading run “{state.name}”…</div>}
       {state.kind === 'error' && (
         <div className="panel notice notice-error" role="alert">

@@ -12,6 +12,8 @@ export const MAP_COLORS = {
   hatch: '#c9a24a',
   wood: '#56642e',
   sepia: '#7a6034',
+  /** German battalion blocks in the period style: dark field grey, edged in red. */
+  german: '#454a44',
 } as const;
 
 /** Radius a point feature is drawn with when it gives none, metres. */
