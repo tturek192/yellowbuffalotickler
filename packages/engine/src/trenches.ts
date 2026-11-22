@@ -662,6 +662,14 @@ export function segmentsOnLine(state: SimState, ctx: StepContext, lineId: string
     }
     cache.set(key, ids);
   }
-  const want = ids;
-  return state.segments.filter((s) => want.includes(s.id));
+  // The same segments array gives the same answer (segments are never changed once made): kept for each array and key.
+  let byKey = onLineBySegments.get(state.segments);
+  if (!byKey) onLineBySegments.set(state.segments, (byKey = new Map()));
+  let hit = byKey.get(key);
+  if (!hit || hit.ids !== ids) {
+    const want = ids;
+    byKey.set(key, (hit = { ids, segs: state.segments.filter((s) => want.includes(s.id)) }));
+  }
+  return hit.segs.slice();
 }
+const onLineBySegments = new WeakMap<readonly SegmentState[], Map<string, { ids: string[]; segs: SegmentState[] }>>();
