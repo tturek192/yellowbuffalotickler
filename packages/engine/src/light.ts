@@ -19,6 +19,15 @@ export function noteLightDefaults(s: Scenario, defaultsUsed: Set<string>): void 
   if (!s.utcOffsetMin) defaultsUsed.add('utcOffsetMin ← 0 (no clock offset given; sun times taken as UTC)');
 }
 
+/** Sun times, worked out once for each place, date and clock offset (they depend on nothing else). */
+const sunMemo = new Map<string, { sunrise: number; sunset: number }>();
+function sunTimesOf(lat: number, lon: number, date: string, utcOffsetMin: number): { sunrise: number; sunset: number } {
+  const key = `${lat}|${lon}|${date}|${utcOffsetMin}`;
+  let hit = sunMemo.get(key);
+  if (!hit) sunMemo.set(key, (hit = sunTimes(lat, lon, date, utcOffsetMin)));
+  return hit;
+}
+
 /** Share of a clear day's light at a minute (0 night, 1 day), linear through `twilightMin` before sunrise and after sunset. */
 export function daylight(s: Scenario, tables: Tables, minuteAfterZero: number): number {
   const at = addMinutes(v(s.zeroHour), minuteAfterZero); // the local wall clock, read through UTC fields
@@ -26,7 +35,7 @@ export function daylight(s: Scenario, tables: Tables, minuteAfterZero: number): 
   const min = (((at.getTime() % 86_400_000) + 86_400_000) % 86_400_000) / 60_000; // positive before 1970 too
   const lat = s.frame?.origin.lat ?? 0;
   const lon = s.frame?.origin.lon ?? 0;
-  const { sunrise, sunset } = sunTimes(lat, lon, date, utcOffsetOf(s));
+  const { sunrise, sunset } = sunTimesOf(lat, lon, date, utcOffsetOf(s));
   const tw = Math.max(v(tables.effects.twilightMin), 1e-9);
   if (min >= sunrise && min <= sunset) return 1;
   if (min < sunrise) return Math.max(0, 1 - (sunrise - min) / tw);
@@ -40,11 +49,19 @@ function clearM(s: Scenario): number {
   return g ? Math.hypot(g.cols * g.cellM, g.rows * g.cellM) : FALLBACK_CLEAR_M;
 }
 
+/** Each scenario's clear-weather bound and the minutes of its weather entries, worked out once. */
+const weatherMemo = new WeakMap<Scenario, { clear: number; at: number[] }>();
+
 /** Weather visibility: each entry's value holds until the next, and is interpolated when the next gives one too. */
 function weatherVisibilityM(s: Scenario, minute: number): number {
-  const clear = clearM(s);
-  const zero = v(s.zeroHour);
-  const at = (i: number) => minutesBetween(zero, s.weather[i]!.at);
+  let w = weatherMemo.get(s);
+  if (!w) {
+    const zero = v(s.zeroHour);
+    weatherMemo.set(s, (w = { clear: clearM(s), at: s.weather.map((x) => minutesBetween(zero, x.at)) }));
+  }
+  const clear = w.clear;
+  const ats = w.at;
+  const at = (i: number) => ats[i]!;
   const val = (i: number) => (s.weather[i]!.visibilityM ? v(s.weather[i]!.visibilityM!) : clear);
   const n = s.weather.length;
   if (n === 0 || minute < at(0)) return clear;

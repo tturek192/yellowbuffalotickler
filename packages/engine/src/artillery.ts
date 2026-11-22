@@ -374,8 +374,15 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
   // Batteries whose silence has run out fire again; "batteries recovered" once a side has the share of its guns back.
   const thr = v(fx.batteriesRecoveredFrac);
   const shareOf = (side: Side) => {
-    const all = gunsIn(bats, side);
-    return all > 0 ? gunsIn(bats, side, (b) => b.suppressedUntilMin === null && !b.captured) / all : 1;
+    // One pass, summing in the batteries' order as `gunsIn` does.
+    let all = 0;
+    let up = 0;
+    for (const b of bats) {
+      if (b.side !== side) continue;
+      all += b.guns;
+      if (b.suppressedUntilMin === null && !b.captured) up += b.guns;
+    }
+    return all > 0 ? up / all : 1;
   };
   const before = SIDES.map(shareOf);
   for (const b of bats) if (b.suppressedUntilMin !== null && b.suppressedUntilMin <= minute) b.suppressedUntilMin = null;
@@ -427,8 +434,12 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     const had = onSamples.get(seg.id) ?? [];
     onSamples.set(seg.id, [...had, ...idx.filter((i) => !had.includes(i))].sort((a, b) => a - b));
   };
-  const samplesWhere = (seg: SegmentState, f: (p: Point) => boolean): number[] =>
-    segmentSamples(ctx, seg, state.companies).flatMap((p, i) => (f(p) ? [i] : []));
+  const samplesWhere = (seg: SegmentState, f: (p: Point) => boolean): number[] => {
+    const pts = segmentSamples(ctx, seg, state.companies);
+    const out: number[] = [];
+    for (let i = 0; i < pts.length; i++) if (f(pts[i]!)) out.push(i);
+    return out;
+  };
   for (const side of SIDES) {
     const spent = spend(bats.filter((b) => b.side === side && b.role === 'creeping' && inAction(b)), ctx, dt, activeShare);
     if (!(sum(spent, (x) => x.guns) > 0) || allWidth <= 0) continue;
