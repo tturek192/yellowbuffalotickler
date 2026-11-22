@@ -1,0 +1,8 @@
+# What if the German reserves had stood 5 km behind the front, instead of 6 to 50 km? Every German off-map reserve 5 km off.
+id: vimy-reserves-5km
+title: German reserves at 5 km
+scenarioId: vimy-1917
+ops:
+  - op: reserve-distance
+    side: central
+    km: 5

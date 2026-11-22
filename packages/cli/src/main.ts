@@ -1,22 +1,24 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { explain, runBatch, runScenario } from '@wwi/engine';
 import type { RunRecord } from '@wwi/engine';
 import { buildReview, ScenarioError, v } from '@wwi/scenario';
-import { loadScenario, loadTables } from '@wwi/scenario/node';
 import { formatBatchV2 } from './format';
 import { atMinute, formatWhy } from './why';
-import { batchInWorkers } from './workers';
+import { batchInWorkers, loadFiles, type Files } from './workers';
 import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-md';
 import { extractCommentary, reportToMarkdown } from './report-md';
 
 const USAGE = `usage:
-  sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>] [--tables-dir <dir>]
-  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim run <scenario.yaml> --seed <n> --out <file.json> [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
   sim why <record.json> (--event <n> | --unit <id> --at <HH:MM>)
-  sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--doctrine-dir <dir>] [--tables-dir <dir>]
-  sim report <scenario.yaml> --runs <n> --out <file.md> [--seed-start <n>] [--workers <n>] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
+  sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim report <scenario.yaml> --runs <n> --out <file.md> [--seed-start <n>] [--workers <n>] [--overlay <file> [--drop-unresolved]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+
+  --overlay <file>     run a what-if: apply the overlay (overlays/README.md) to the scenario; the record lists its changes (whatIf)
+  --drop-unresolved    leave out the overlay's ops that no longer resolve against the scenario (otherwise they stop the run, exit 2)`;
 
 class UsageError extends Error {}
 
@@ -49,6 +51,8 @@ async function main(argv: string[]): Promise<void> {
         event: { type: 'string' },
         unit: { type: 'string' },
         at: { type: 'string' },
+        overlay: { type: 'string' },
+        'drop-unresolved': { type: 'boolean' },
       },
     });
   } catch (e) {
@@ -71,6 +75,7 @@ async function main(argv: string[]): Promise<void> {
   if ((command !== 'run' && command !== 'batch' && command !== 'review' && command !== 'report') || !file || positionals.length > 2) {
     throw new UsageError('expected a command and a scenario file');
   }
+  if (values['drop-unresolved'] && values.overlay === undefined) throw new UsageError('--drop-unresolved needs --overlay');
   let seed = 0;
   let out = '';
   let runs = 0;
@@ -93,9 +98,19 @@ async function main(argv: string[]): Promise<void> {
   }
   const workers = values.workers === undefined ? null : intOpt('workers', values.workers);
   if (workers !== null && workers < 1) throw new UsageError('--workers must be at least 1');
-  // The tables first: the scenario's weapon ids are checked against them as it loads.
-  const tables = loadTables(values['tables-dir'] ?? 'tables');
-  const { scenario, doctrines } = loadScenario(file, values['doctrine-dir'] ?? 'doctrine', tables);
+  // The files a worker loads too (as absolute paths, workers.ts): the scenario's, and the overlay's (each worker applies it as it loads).
+  const files: Files = {
+    scenarioFile: file,
+    doctrineDir: values['doctrine-dir'] ?? 'doctrine',
+    tablesDir: values['tables-dir'] ?? 'tables',
+    ...(values.overlay !== undefined ? { overlayFile: values.overlay } : {}),
+    ...(values['drop-unresolved'] ? { dropUnresolved: true } : {}),
+  };
+  // The tables first (the scenario's weapon ids are checked against them as it loads), then the overlay, if any.
+  const { scenario, models, whatIf, dropped } = loadFiles(files);
+  const { doctrines, tables } = models;
+  for (const u of dropped) console.error(`dropped ops[${u.index}] (${u.op.op}): unknown ${u.reason}`);
+  const runOpts = whatIf ? { whatIf } : {};
   if (command === 'review') {
     // Each --notes directory's research notes, in the order given; a question is labelled with its directory and file.
     const questions = (values.notes ?? []).flatMap((dir) =>
@@ -116,22 +131,22 @@ async function main(argv: string[]): Promise<void> {
     if (existsSync(out) && commentary === null) throw new Error(`${out} exists and has no builder commentary block: move it away, or add the markers, before the report is written`);
     const seeds = Array.from({ length: runs }, (_, i) => seedStart + i);
     const started = performance.now();
-    const b = await batchInWorkers({ scenarioFile: resolve(file), doctrineDir: resolve(values['doctrine-dir'] ?? 'doctrine'), tablesDir: resolve(values['tables-dir'] ?? 'tables'), seeds, workers: workers ?? 1 });
-    const record = runScenario(scenario, { doctrines, tables }, { seed: seedStart });
+    const b = await batchInWorkers({ ...files, seeds, workers: workers ?? 1 });
+    const record = runScenario(scenario, models, { seed: seedStart, ...runOpts });
     const wallMs = performance.now() - started;
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, reportToMarkdown(b, record, { tables, doctrines }, { wallMs, workers: workers ?? 1, seedStart, scenarioFile: file, commentary }));
     console.log(`report written to ${out}: ${runs} runs in ${(wallMs / 1000).toFixed(1)} s`);
   } else if (command === 'run') {
     mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, JSON.stringify(runScenario(scenario, { doctrines, tables }, { seed })));
+    writeFileSync(out, JSON.stringify(runScenario(scenario, models, { seed, ...runOpts })));
   } else {
     const seeds = Array.from({ length: runs }, (_, i) => seedStart + i);
     // On worker threads with --workers (the same summary for any number of them), else in this process.
     const b =
       workers === null
-        ? runBatch(scenario, { doctrines, tables }, seeds)
-        : await batchInWorkers({ scenarioFile: resolve(file), doctrineDir: resolve(values['doctrine-dir'] ?? 'doctrine'), tablesDir: resolve(values['tables-dir'] ?? 'tables'), seeds, workers });
+        ? runBatch(scenario, models, seeds)
+        : await batchInWorkers({ ...files, seeds, workers });
     console.log(values.json ? JSON.stringify(b, null, 2) : formatBatchV2(b, v(scenario.zeroHour)));
   }
 }

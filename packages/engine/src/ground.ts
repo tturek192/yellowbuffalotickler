@@ -1,5 +1,5 @@
 import { minutesBetween, v } from '@wwi/scenario';
-import type { Feature, Ground, Point, Scenario, Tables, Terrain } from '@wwi/scenario';
+import type { EffectKey, Feature, Ground, GroundCondition, Point, Scenario, Tables, Terrain } from '@wwi/scenario';
 
 /** Side of a churn cell and of a line-of-sight cache cell, in metres (numerical-method constant). */
 export const CELL_M = 50;
@@ -15,6 +15,8 @@ export type World = {
   shapes: Shape[];
   /** Weather changes in minutes after Zero, ascending; `wet` is whether it is precipitating. */
   weather: Array<{ min: number; wet: boolean }>;
+  /** The ground's factor on wetness (`tables.effects.groundDry` … `groundQuagmire` by `groundCondition`; absent: `groundNormal`). */
+  groundFactor: number;
   /** The 50 m grid (churn and the line-of-sight cache): origin and size. */
   originX: number;
   originY: number;
@@ -47,6 +49,8 @@ function boxOf(g: Feature['geometry']): [number, number, number, number] {
   ];
 }
 
+const GROUND_FACTOR: Record<GroundCondition, EffectKey> = { dry: 'groundDry', normal: 'groundNormal', wet: 'groundWet', quagmire: 'groundQuagmire' };
+
 /** The world for a run: features, weather clock, terrain and an empty churn grid over the scenario's extent. */
 export function buildWorld(s: Scenario, tables: Tables, terrain?: Terrain): World {
   const shapes: Shape[] = s.features
@@ -69,6 +73,7 @@ export function buildWorld(s: Scenario, tables: Tables, terrain?: Terrain): Worl
     terrain,
     shapes,
     weather: s.weather.map((w) => ({ min: minutesBetween(zero, w.at), wet: v(w.precipitation) !== 'none' })),
+    groundFactor: v(tables.effects[GROUND_FACTOR[s.groundCondition ? v(s.groundCondition) : 'normal']]),
     originX,
     originY,
     cols,
@@ -149,8 +154,9 @@ export function churn(w: World, p: Point, rounds: number): void {
 }
 
 /**
- * Share (0 to 1) of the 24 minutes-hours before `minute` that it was precipitating. Before the first
- * weather entry it is taken as dry.
+ * How wet the ground is (0 to 1): the share of the 24 hours before `minute` that it was precipitating, times the
+ * ground's factor (`World.groundFactor`, 1 for normal ground), clamped to [0, 1]. Before the first weather entry it
+ * is taken as dry.
  */
 export function wetness(w: World, minute: number): number {
   const from = minute - MIN_PER_DAY;
@@ -168,7 +174,7 @@ export function wetness(w: World, minute: number): number {
     state = e.wet;
   }
   if (state) wet += minute - t;
-  return wet / MIN_PER_DAY;
+  return Math.min(1, Math.max(0, (wet / MIN_PER_DAY) * w.groundFactor));
 }
 
 /**

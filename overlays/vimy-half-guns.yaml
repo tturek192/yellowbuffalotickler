@@ -1,0 +1,8 @@
+# What if the Canadian Corps had attacked with half its guns? Every Allied gun count halved; the ammunition stays as it was.
+id: vimy-half-guns
+title: Half the guns
+scenarioId: vimy-1917
+ops:
+  - op: scale-guns
+    side: allied
+    factor: 0.5

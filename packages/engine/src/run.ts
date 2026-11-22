@@ -22,7 +22,7 @@ import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './
 import { offMapAtZero } from './reserves';
 import { initTanks } from './smaller';
 import { insigniaOf } from './insignia';
-import type { EndReason, RunRecord } from './record';
+import type { EndReason, RunRecord, WhatIf } from './record';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
 import type { ReserveState } from './types';
@@ -40,6 +40,8 @@ export type RunOptions = {
   snapshotEveryStep?: boolean;
   /** Snapshots from one keyframe to the next (default KEYFRAME_EVERY; 1: every snapshot in full, tests). */
   keyframeEvery?: number;
+  /** The what-if overlay the scenario was made with (scenario overlay.ts `applyOverlay`), written into the record as `whatIf`. */
+  whatIf?: WhatIf;
 };
 
 const WEAPON_SLOTS = ['rifle', 'lightMg', 'mg'] as const;
@@ -232,6 +234,7 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
     events,
     summary: summarize(state, ctx, events, reason),
     defaultsUsed: [...ctx.defaultsUsed].sort(),
+    ...(opts.whatIf ? { whatIf: opts.whatIf } : {}),
   };
 }
 

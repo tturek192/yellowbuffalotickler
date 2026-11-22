@@ -1,8 +1,11 @@
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
+import { readdirSync } from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import { extractRun, runScenario, summarizeBatch } from '@wwi/engine';
-import type { BatchSummary, RunExtract } from '@wwi/engine';
-import { ScenarioError } from '@wwi/scenario';
-import { loadScenario, loadTables } from '@wwi/scenario/node';
+import type { BatchSummary, Models, RunExtract, WhatIf } from '@wwi/engine';
+import { applyOverlay, emptyLibrary, ScenarioError } from '@wwi/scenario';
+import type { Doctrine, Scenario, Unresolved } from '@wwi/scenario';
+import { loadDoctrine, loadOverlay, loadScenario, loadTables } from '@wwi/scenario/node';
 
 /*
  * Batches on worker threads (Task 15): the seeds are shared out among N workers, each loading the scenario itself and
@@ -11,16 +14,39 @@ import { loadScenario, loadTables } from '@wwi/scenario/node';
  * this process: the engine reads nothing but its scenario, doctrines, tables and seed.
  */
 
-export type Files = { scenarioFile: string; doctrineDir: string; tablesDir: string };
+/** `overlayFile`: a what-if overlay applied as the scenario loads; `dropUnresolved`: run without its ops that no longer resolve. */
+export type Files = { scenarioFile: string; doctrineDir: string; tablesDir: string; overlayFile?: string; dropUnresolved?: boolean };
 
 type Job = Files & ({ kind: 'extracts'; seeds: number[] } | { kind: 'record'; seed: number });
 /** A failure carries a ScenarioError's problems, so the parent throws the same error (exit 2, every problem listed). */
 type Reply = { ok: true; extracts?: RunExtract[]; record?: string } | { ok: false; error: string; problems?: string[] };
 
-function load(f: Files) {
+/**
+ * Load the tables, the scenario and its doctrines; with an overlay, every doctrine in the doctrine directory too (a
+ * `doctrine` op may name any of them), and the overlay applied (scenario overlay.ts `applyOverlay`, with the empty
+ * library until the library is filled from files). Ops that no longer resolve stop the run (ScenarioError, listing each)
+ * unless `dropUnresolved`; then they are left out and returned as `dropped`. `whatIf` is for `runScenario`'s options.
+ */
+export function loadFiles(f: Files): { scenario: Scenario; models: Models; whatIf?: WhatIf; dropped: Unresolved[] } {
   const tables = loadTables(f.tablesDir);
   const { scenario, doctrines } = loadScenario(f.scenarioFile, f.doctrineDir, tables);
-  return { scenario, models: { doctrines, tables } };
+  if (f.overlayFile === undefined) return { scenario, models: { doctrines, tables }, dropped: [] };
+  const overlay = loadOverlay(f.overlayFile);
+  const all: Record<string, Doctrine> = {};
+  for (const file of readdirSync(f.doctrineDir).filter((x) => x.endsWith('.yaml')).sort()) all[basename(file, '.yaml')] = loadDoctrine(join(f.doctrineDir, file));
+  const r = applyOverlay(scenario, overlay, emptyLibrary(), Object.keys(all));
+  if (r.unresolved.length && !f.dropUnresolved) {
+    throw new ScenarioError([
+      `${f.overlayFile}: ${r.unresolved.length} op(s) no longer resolve against ${scenario.id} (run with --drop-unresolved to leave them out):`,
+      ...r.unresolved.map((u) => `ops[${u.index}] (${u.op.op}): unknown ${u.reason}`),
+    ]);
+  }
+  return {
+    scenario: r.scenario,
+    models: { doctrines: { ...all, ...doctrines }, tables },
+    whatIf: { overlayId: overlay.id, title: overlay.title, changes: r.changes },
+    dropped: r.unresolved,
+  };
 }
 
 /** Run one job on a new worker thread (this same module, under the TypeScript loader the tests and the CLI use). */
@@ -39,16 +65,24 @@ function onWorker(job: Job): Promise<Reply & { ok: true }> {
 export const shareOut = (seeds: readonly number[], n: number): number[][] =>
   Array.from({ length: Math.max(1, Math.min(n, seeds.length)) }, (_, k) => seeds.filter((_, i) => i % Math.max(1, Math.min(n, seeds.length)) === k));
 
+/** The files a job carries, as absolute paths: the scenario's, and the overlay's when there is one (each worker applies it as it loads). */
+const filesOf = (o: Files): Files => ({
+  scenarioFile: resolve(o.scenarioFile),
+  doctrineDir: resolve(o.doctrineDir),
+  tablesDir: resolve(o.tablesDir),
+  ...(o.overlayFile !== undefined ? { overlayFile: resolve(o.overlayFile) } : {}),
+  ...(o.dropUnresolved ? { dropUnresolved: true } : {}),
+});
+
 /** A batch of these seeds on `workers` worker threads, summarised in seed order. */
 export async function batchInWorkers(o: Files & { seeds: number[]; workers: number }): Promise<BatchSummary> {
-  const { scenarioFile, doctrineDir, tablesDir } = o;
-  const parts = await Promise.all(shareOut(o.seeds, o.workers).map((seeds) => onWorker({ kind: 'extracts', scenarioFile, doctrineDir, tablesDir, seeds })));
-  return summarizeBatch(load(o).scenario, parts.flatMap((p) => p.extracts ?? []));
+  const parts = await Promise.all(shareOut(o.seeds, o.workers).map((seeds) => onWorker({ kind: 'extracts', ...filesOf(o), seeds })));
+  return summarizeBatch(loadFiles(o).scenario, parts.flatMap((p) => p.extracts ?? []));
 }
 
 /** One run on a worker thread: its record as JSON, exactly as `sim run` writes it. */
 export async function runInWorker(o: Files & { seed: number }): Promise<string> {
-  const r = await onWorker({ kind: 'record', scenarioFile: o.scenarioFile, doctrineDir: o.doctrineDir, tablesDir: o.tablesDir, seed: o.seed });
+  const r = await onWorker({ kind: 'record', ...filesOf(o), seed: o.seed });
   return r.record!;
 }
 
@@ -56,10 +90,10 @@ export async function runInWorker(o: Files & { seed: number }): Promise<string> 
 if (!isMainThread && parentPort && (workerData as Job | undefined)?.kind) {
   const job = workerData as Job;
   try {
-    const { scenario, models } = load(job);
+    const { scenario, models, whatIf } = loadFiles(job);
     const reply: Reply =
       job.kind === 'record'
-        ? { ok: true, record: JSON.stringify(runScenario(scenario, models, { seed: job.seed })) }
+        ? { ok: true, record: JSON.stringify(runScenario(scenario, models, { seed: job.seed, ...(whatIf ? { whatIf } : {}) })) }
         : { ok: true, extracts: job.seeds.map((seed) => extractRun(scenario, runScenario(scenario, models, { seed }))) };
     parentPort.postMessage(reply);
   } catch (e) {

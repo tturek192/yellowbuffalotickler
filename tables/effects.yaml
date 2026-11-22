@@ -435,3 +435,27 @@ effects:
       Plan 4 to calibrate"
     description: How many times counterAttackMinRatio a counter-attack needs once the attackers have consolidated the trench.
     calibrated: true
+  groundDry:
+    value: 0.5
+    estimate: "a what-if setting (Plan 4 Task 1), not a figure from any source: ground dried out by a dry spell takes up rain, so the past
+      day's weather leaves it half as wet. A judgement, for Plan 4 to calibrate"
+    description: Multiplies how wet the past day's weather leaves the ground (wetness, 0 to 1, clamped) when a what-if sets the ground dry.
+    calibrated: true
+  groundNormal:
+    value: 1
+    estimate: "the ground as the scenario's weather leaves it, with no what-if: the past day's weather alone sets how wet it is. Not a
+      fitted figure: 1 leaves every scenario's run as it was"
+    description: Multiplies how wet the past day's weather leaves the ground (wetness, 0 to 1, clamped) for normal ground (no groundCondition).
+    calibrated: true
+  groundWet:
+    value: 2
+    estimate: "a what-if setting (Plan 4 Task 1), not a figure from any source: ground already sodden by earlier rain holds water, so the
+      past day's weather leaves it twice as wet. A judgement, for Plan 4 to calibrate"
+    description: Multiplies how wet the past day's weather leaves the ground (wetness, 0 to 1, clamped) when a what-if sets the ground wet.
+    calibrated: true
+  groundQuagmire:
+    value: 4
+    estimate: "a what-if setting (Plan 4 Task 1), not a figure from any source: a waterlogged, shell-churned waste where a few hours of
+      rain leave it as deep as a full day's would on normal ground. A judgement, for Plan 4 to calibrate"
+    description: Multiplies how wet the past day's weather leaves the ground (wetness, 0 to 1, clamped) when a what-if sets it a quagmire.
+    calibrated: true

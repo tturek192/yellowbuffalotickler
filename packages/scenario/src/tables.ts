@@ -97,6 +97,7 @@ export const EFFECT_KEYS = [
   'runnerMinPerKm', 'runnerDelayCoversKm', 'callForFireGuns',
   'hqRearOffsetBattalionM', 'hqRearOffsetBrigadeM', 'hqRearOffsetDivisionM', 'hqRearOffsetCorpsM', 'hqRearOffsetArmyM',
   'counterAttackConsolidateMin', 'counterAttackConsolidatedFactor',
+  'groundDry', 'groundNormal', 'groundWet', 'groundQuagmire',
 ] as const;
 
 /** Each effects key's range (`Range`). */
@@ -121,6 +122,7 @@ export const EFFECT_RANGES: Record<(typeof EFFECT_KEYS)[number], Range> = {
   runnerMinPerKm: 'nonnegative', runnerDelayCoversKm: 'nonnegative', callForFireGuns: 'nonnegative',
   hqRearOffsetBattalionM: 'nonnegative', hqRearOffsetBrigadeM: 'nonnegative', hqRearOffsetDivisionM: 'nonnegative', hqRearOffsetCorpsM: 'nonnegative', hqRearOffsetArmyM: 'nonnegative',
   counterAttackConsolidateMin: 'nonnegative', counterAttackConsolidatedFactor: 'nonnegative',
+  groundDry: 'positive', groundNormal: 'positive', groundWet: 'positive', groundQuagmire: 'positive',
 };
 
 export type WeaponKind = (typeof WEAPON_KINDS)[number];

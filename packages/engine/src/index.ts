@@ -27,7 +27,7 @@ export type { SimState, StepContext } from './step';
 export { resolveDefaults } from './defaults';
 export { COMPANY_COLUMNS, ENGINE_VERSION, SEGMENT_COLUMNS, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './record';
 export type {
-  Columnar, CompanyColumn, CompanyRow, EndReason, PeriodCasualties, RunConditions, RunRecord, WeatherEntry, SegmentColumn, SegmentGeometry, SegmentRow, SideCasualties, Snapshot,
+  Columnar, CompanyColumn, CompanyRow, EndReason, PeriodCasualties, RunConditions, RunRecord, WeatherEntry, SegmentColumn, SegmentGeometry, SegmentRow, SideCasualties, Snapshot, WhatIf,
 } from './record';
 export { deriveSegments } from './segments';
 export { initBatteries, runBombardment } from './bombardment';

@@ -71,7 +71,8 @@ const hasCompanies = (f: Formation): boolean => (f.companies?.length ?? 0) > 0 |
  * `companiesPerBattalion` companies of `strength` men, `<battalion>-g1`, `-g2`, …; a division with no battalions
  * `battalionsPerDivision` battalions `<division>-bn1`, … of those. Each company is a reserve standing at the reserve's
  * entry point, with the doctrine's officers, light and heavy machine guns and standard training, so fire, morale and
- * command treat it as any other. One `defaultsUsed` line per reserve says what was made. A reserve that has companies
+ * command treat it as any other; its strength is multiplied by the reserve's `strengthFactor` where one is set (whole men,
+ * at least one). One `defaultsUsed` line per reserve says what was made. A reserve that has companies
  * keeps them; one of another kind with none cannot be made up and is rejected.
  */
 function withReserveCompanies(f: Formation, r: Scenario['reserves'][number], d: Doctrine | undefined, doctrineId: string, made: string[]): Formation {
@@ -83,12 +84,15 @@ function withReserveCompanies(f: Formation, r: Scenario['reserves'][number], d: 
   const k = d.companyDefaults;
   const at: [number, number] = [r.entryPoint[0], r.entryPoint[1]];
   const est = (value: number, key: string) => ({ value, estimate: `doctrine default (${doctrineId}.companyDefaults.${key})` });
+  // A what-if's scale-men (Plan 4 Task 1) scales the made-up companies by the reserve's strengthFactor: whole men, at least one.
+  const factor = r.strengthFactor ? v(r.strengthFactor) : 1;
+  const strength = factor === 1 ? v(k.strength) : Math.max(1, Math.round(v(k.strength) * factor));
   const companiesOf = (b: { id: string; name: string }): Company[] =>
     Array.from({ length: v(k.companiesPerBattalion) }, (_, i) => ({
       id: `${b.id}-g${i + 1}`,
       name: `${b.name}, company ${i + 1} (made up)`,
       role: 'reserve',
-      strength: est(v(k.strength), 'strength'),
+      strength: factor === 1 ? est(strength, 'strength') : { value: strength, estimate: `doctrine default (${doctrineId}.companyDefaults.strength) × the reserve's strengthFactor ${factor}` },
       start: at,
       officers: est(v(k.officers), 'officers'),
       lewisGuns: est(v(k.lewisGuns), 'lewisGuns'),
@@ -96,7 +100,8 @@ function withReserveCompanies(f: Formation, r: Scenario['reserves'][number], d: 
       training: 'standard',
     }));
   const p = `${doctrineId}.companyDefaults`;
-  const each = `${v(k.companiesPerBattalion)} companies (${p}.companiesPerBattalion) of ${v(k.strength)} men (${p}.strength); officers, lewisGuns, machineGuns from ${p}, training standard`;
+  const men = factor === 1 ? `${v(k.strength)} men (${p}.strength)` : `${strength} men (${p}.strength ${v(k.strength)} × strengthFactor ${factor})`;
+  const each = `${v(k.companiesPerBattalion)} companies (${p}.companiesPerBattalion) of ${men}; officers, lewisGuns, machineGuns from ${p}, training standard`;
   const hasBattalions = (x: Formation): boolean => x.kind === 'battalion' || (x.children ?? []).some(hasBattalions);
   if (f.kind === 'battalion') {
     made.push(`reserves[${f.id}] ← ${each}`);

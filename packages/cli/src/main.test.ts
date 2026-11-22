@@ -193,4 +193,53 @@ describe('cli', () => {
   it('review exits 1 without --out', () => {
     expect(runCli(['review', draft]).code).toBe(1);
   });
+
+  describe('what-if overlays (Plan 4 Task 1)', () => {
+    /** An overlay file in a fresh directory: a scale-men op, then a swap-leader on a formation the scenario lacks. */
+    const staleOverlay = (): string => {
+      const file = join(mkdtempSync(join(tmpdir(), 'sim-ov-')), 'stale.yaml');
+      writeFileSync(
+        file,
+        'id: stale\ntitle: Stale\nscenarioId: vimy-1917\nops:\n  - op: scale-men\n    side: allied\n    factor: 0.5\n  - op: swap-leader\n    formationId: gone\n    leaderId: currie\n',
+      );
+      return file;
+    };
+
+    it('run --overlay writes the what-if into the record', () => {
+      const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'x2.json');
+      const r = runCli(['run', 'scenarios/vimy-1917/scenario.yaml', '--seed', '1', '--out', out, '--overlay', 'overlays/vimy-germans-x2.yaml']);
+      expect(r.code, r.stderr).toBe(0);
+      const record = JSON.parse(readFileSync(out, 'utf8'));
+      expect(record.whatIf).toMatchObject({ overlayId: 'vimy-germans-x2', title: 'Germans ×2' });
+      expect(record.whatIf.changes.length).toBeGreaterThan(0);
+    }, 120000);
+
+    it('an overlay naming a missing formation exits 2 listing it; with --drop-unresolved it runs without that op', () => {
+      const overlay = staleOverlay();
+      const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'stale.json');
+      const stopped = runCli(['run', draft, '--seed', '1', '--out', out, '--overlay', overlay]);
+      expect(stopped.code).toBe(2);
+      expect(stopped.stderr).toMatch(/ops\[1\] \(swap-leader\): unknown formation "gone"/);
+      expect(existsSync(out)).toBe(false);
+      const dropped = runCli(['run', draft, '--seed', '1', '--out', out, '--overlay', overlay, '--drop-unresolved']);
+      expect(dropped.code, dropped.stderr).toBe(0);
+      expect(dropped.stderr).toMatch(/dropped ops\[1\] \(swap-leader\)/);
+      const record = JSON.parse(readFileSync(out, 'utf8'));
+      expect(record.whatIf.changes.length).toBeGreaterThan(0);
+      expect(record.whatIf.changes.some((c: { index: number }) => c.index === 1)).toBe(false);
+      // batch on worker threads stops the same way, before any run.
+      const batch = runCli(['batch', draft, '--runs', '2', '--workers', '2', '--overlay', overlay]);
+      expect(batch.code).toBe(2);
+      expect(batch.stderr).toMatch(/unknown formation "gone"/);
+    }, 120000);
+
+    it('a broken overlay exits 2 naming the op and its field; --drop-unresolved without --overlay is a usage error', () => {
+      const file = join(mkdtempSync(join(tmpdir(), 'sim-ov-')), 'bad.yaml');
+      writeFileSync(file, 'id: bad\ntitle: Bad\nscenarioId: vimy-1917\nops:\n  - op: scale-men\n    factor: 0\n');
+      const r = runCli(['batch', draft, '--runs', '1', '--overlay', file]);
+      expect(r.code).toBe(2);
+      expect(r.stderr).toMatch(/ops\[0\]\.factor/);
+      expect(runCli(['batch', draft, '--runs', '1', '--drop-unresolved']).code).toBe(1);
+    });
+  });
 });

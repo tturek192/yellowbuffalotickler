@@ -99,6 +99,7 @@ describe('draft Vimy scenario run', () => {
     // 0.4.9 (Plan 4 Task 0): a company reports an enemy line taken or lost only when it sees some point of it in the
     // sector, by the sight-line and visibility tests enemySeen uses (eyesOf). The draft has no enemy: only the version
     // moves its record.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.9', hash: '1d5752dd' });
+    // 0.4.10 (Plan 4 Task 1): an optional what-if block (whatIf), an optional groundCondition read by wetness(), and a reserve's strengthFactor on made-up companies. A run with no overlay is unchanged but for the version.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.10', hash: 'be2e390f' });
   });
 });

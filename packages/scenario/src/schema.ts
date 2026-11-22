@@ -8,6 +8,10 @@ import { CHANNEL_KINDS, WEAPON_KINDS } from './tables';
 
 const Side = z.enum(['allied', 'central']);
 
+/** The states of the ground a what-if may set (`groundCondition`); each has its factor in `tables.effects` (`groundDry`, …). */
+export const GROUND_CONDITIONS = ['dry', 'normal', 'wet', 'quagmire'] as const;
+export type GroundCondition = (typeof GROUND_CONDITIONS)[number];
+
 export const SourcesSchema = z.record(
   z.object({
     title: z.string(),
@@ -125,7 +129,7 @@ export interface Formation {
   companies?: Company[];
 }
 
-const Formation: z.ZodType<Formation> = z.lazy(() =>
+export const FormationSchema: z.ZodType<Formation> = z.lazy(() =>
   z.strictObject({
     id: z.string(),
     name: z.string(),
@@ -133,13 +137,13 @@ const Formation: z.ZodType<Formation> = z.lazy(() =>
     leaderId: z.string().optional(),
     hqPosition: PlacedPoint.optional(),
     insignia: InsigniaSchema.optional(),
-    children: z.array(Formation).optional(),
+    children: z.array(FormationSchema).optional(),
     companies: z.array(Company).optional(),
   }),
 );
 
 const Rating = sourced(z.number().int().min(1).max(5));
-const LeaderSchema = z.object({
+export const LeaderSchema = z.object({
   id: z.string(),
   name: sourced(z.string()),
   rank: sourced(z.string()),
@@ -147,6 +151,8 @@ const LeaderSchema = z.object({
     .object({ planning: Rating, orderSpeed: Rating, adaptiveness: Rating, riskTolerance: Rating, moraleEffect: Rating })
     .optional(),
 });
+
+export type Leader = z.infer<typeof LeaderSchema>;
 
 const Window = z.strictObject({ from: LocalDateTimeSchema, to: LocalDateTimeSchema });
 const Count = sourcedOrDisputed(z.number().nonnegative());
@@ -158,6 +164,11 @@ const ReserveSchema = z.strictObject({
   entryPoint: PlacedPoint,
   orderedAt: sourcedOrDisputed(LocalDateTimeSchema).optional(),
   note: z.string().optional(),
+  /**
+   * Multiplies the strength of every company the engine makes up for this reserve (one listed with no companies,
+   * engine defaults.ts `withReserveCompanies`); absent: 1. A what-if's `scale-men` sets it (Plan 4 Task 1).
+   */
+  strengthFactor: sourced(z.number().positive()).optional(),
 });
 
 const ArtillerySchema = z.strictObject({
@@ -174,7 +185,7 @@ const ArtillerySchema = z.strictObject({
   horseDrawn: z.boolean().optional(),
 });
 
-const WeatherSchema = z.strictObject({
+export const WeatherSchema = z.strictObject({
   at: LocalDateTimeSchema,
   precipitation: sourced(z.enum(['none', 'rain', 'sleet', 'snow'])),
   windFromDeg: sourced(z.number()).optional(),
@@ -312,7 +323,7 @@ export const ScenarioSchema = z.strictObject({
   ),
   leaders: z.array(LeaderSchema).default([]),
   forces: z.array(
-    z.object({ side: Side, doctrine: z.string(), formations: z.array(Formation) }),
+    z.object({ side: Side, doctrine: z.string(), formations: z.array(FormationSchema) }),
   ),
   /** Off-map formations that arrive later; used by Plan 3. */
   reserves: z.array(ReserveSchema).default([]),
@@ -321,6 +332,8 @@ export const ScenarioSchema = z.strictObject({
     .object({ side: z.literal('allied'), suppressedAtZeroFrac: sourcedOrDisputed(z.number().min(0).max(1)), note: z.string() })
     .optional(),
   weather: z.array(WeatherSchema).default([]),
+  /** The state of the ground (Plan 4 Task 1): scales how wet the past day's weather leaves it (engine ground.ts `wetness`); absent: normal. */
+  groundCondition: sourced(z.enum(GROUND_CONDITIONS)).optional(),
   bombardment: BombardmentSchema.optional(),
   communications: CommunicationsSchema.optional(),
   operations: z.array(OperationSchema).optional(),

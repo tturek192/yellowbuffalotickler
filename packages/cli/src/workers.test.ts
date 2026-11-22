@@ -1,10 +1,12 @@
 import { createHash } from 'node:crypto';
-import { dirname, resolve } from 'node:path';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { runBatch, runScenario } from '@wwi/engine';
 import { loadScenario, loadTables } from '@wwi/scenario/node';
-import { batchInWorkers, runInWorker } from './workers';
+import { batchInWorkers, loadFiles, runInWorker } from './workers';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const files = (scenario: string) => ({ scenarioFile: resolve(repoRoot, scenario), doctrineDir: resolve(repoRoot, 'doctrine'), tablesDir: resolve(repoRoot, 'tables') });
@@ -40,5 +42,23 @@ describe('batches on worker threads (Task 15)', () => {
   it('a run inside a worker is byte-identical to the same seed run in-process', async () => {
     const { s, m } = models(VIMY);
     expect(hash(await runInWorker({ ...files(VIMY), seed: 7 }))).toBe(hash(JSON.stringify(runScenario(s, m, { seed: 7 }))));
+  }, 120000);
+
+  it('a batch with an overlay on 2 workers gives the same summary as in-process, and a worker run carries the what-if (Plan 4 Task 1)', async () => {
+    // The draft has no enemy: the overlay halves its attackers.
+    const overlayFile = join(mkdtempSync(join(tmpdir(), 'sim-ov-')), 'half.yaml');
+    writeFileSync(overlayFile, 'id: half\ntitle: Half the attackers\nscenarioId: draft\nops:\n  - op: scale-men\n    side: allied\n    factor: 0.5\n');
+    const f = { ...files(DRAFT), overlayFile };
+    const { scenario, models: m, whatIf } = loadFiles(f);
+    const s3 = [1, 2, 3];
+    const inProcess = runBatch(scenario, m, s3);
+    expect(await batchInWorkers({ ...f, seeds: s3, workers: 2 })).toEqual(inProcess);
+    const record = await runInWorker({ ...f, seed: 2 });
+    // The worker applied it: the run is not the scenario's own.
+    const { s, m: m0 } = models(DRAFT);
+    const { whatIf: _w, ...run } = JSON.parse(record);
+    expect(run).not.toEqual(JSON.parse(JSON.stringify(runScenario(s, m0, { seed: 2 }))));
+    expect(hash(record)).toBe(hash(JSON.stringify(runScenario(scenario, m, { seed: 2, whatIf: whatIf! }))));
+    expect(JSON.parse(record).whatIf.overlayId).toBe('half');
   }, 120000);
 });

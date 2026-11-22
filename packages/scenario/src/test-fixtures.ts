@@ -1,5 +1,9 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { stringify } from 'yaml';
 import type { Scenario } from './schema';
+import { loadScenario } from './load-node';
+import { allCompanies } from './all-companies';
 import type { Doctrine } from './doctrine';
 import { CHANNEL_KINDS, EFFECT_KEYS, GROUNDS, POSTURES, type Tables } from './tables';
 import { COMMON_KEYS, ATTACK_KEYS, DEFENCE_KEYS, COMPANY_DEFAULT_KEYS } from './doctrine';
@@ -237,3 +241,16 @@ export function fixtureWithLeaders(): Scenario {
   return s;
 }
 
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+let vimyCache: Scenario | undefined;
+/** The full Vimy scenario, loaded once with its doctrines (scenario-package tests; a fresh deep copy each call). */
+export function vimyScenario(): Scenario {
+  vimyCache ??= loadScenario(resolve(repoRoot, 'scenarios/vimy-1917/scenario.yaml'), resolve(repoRoot, 'doctrine')).scenario;
+  return structuredClone(vimyCache);
+}
+
+/** The men of every company of one side the scenario lists (not the companies the engine makes up for empty reserves). */
+export function totalMen(s: Scenario, side: 'allied' | 'central'): number {
+  return s.forces.filter((f) => f.side === side).reduce((n, f) => n + allCompanies({ ...s, forces: [f] }).reduce((m, c) => m + c.strength.value, 0), 0);
+}

@@ -11,6 +11,7 @@ import { TablesSchema, type Tables } from './tables';
 import { SourcesSchema, type Sources } from './schema';
 import { collectSourceRefs } from './references';
 import { geoToScenarioParts, type GeoJsonFeatureCollection } from './geo';
+import { parseOverlay, type Overlay } from './overlay';
 
 const fmt = (n: number): string => String(Math.round(n * 10) / 10);
 
@@ -255,4 +256,15 @@ export function loadDoctrine(file: string): Doctrine {
     throw new ScenarioError([`cannot read ${file}`]);
   }
   return parseDoctrine(text);
+}
+
+/** Read and check a what-if overlay file (overlay.ts `parseOverlay`); problems name their path, e.g. `ops[0].km: …`. */
+export function loadOverlay(path: string): Overlay {
+  let text: string;
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch {
+    throw new ScenarioError([`cannot read ${path}`]);
+  }
+  return parseOverlay(text);
 }

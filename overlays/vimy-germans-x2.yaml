@@ -1,0 +1,9 @@
+# What if the Germans had held Vimy Ridge with twice the men? Every German company, and every company the engine makes
+# up for a German reserve, at twice its strength.
+id: vimy-germans-x2
+title: Germans ×2
+scenarioId: vimy-1917
+ops:
+  - op: scale-men
+    side: central
+    factor: 2

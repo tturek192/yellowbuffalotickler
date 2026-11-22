@@ -1,9 +1,9 @@
-import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
+import type { Change, Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
 import type { CompanyState, CompanyStatus, Role } from './companies';
 import type { DivisionInsignia } from './insignia';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.9';
+export const ENGINE_VERSION = '0.4.10';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -84,6 +84,9 @@ export type SideCasualties = CasualtyCount & { formations: Record<string, Casual
 export type PeriodCasualties = Record<Side, SideCasualties>;
 export type EndReason = 'objectives-held' | 'lull' | 'time-cap';
 
+/** The what-if a run was made with (Plan 4 Task 1): the overlay's id and title, and every value it changed, by op index. */
+export type WhatIf = { overlayId: string; title: string; changes: Change[] };
+
 export type RunRecord = {
   engineVersion: string;
   scenarioId: string;
@@ -149,6 +152,8 @@ export type RunRecord = {
   };
   /** Every default the run applied, sorted (Review Focus 2). */
   defaultsUsed: string[];
+  /** The what-if overlay the scenario was run with (engine 0.4.10 on); absent for the scenario as it stands. */
+  whatIf?: WhatIf;
 };
 
 /** Round to the given number of decimals (0 = whole units). */
