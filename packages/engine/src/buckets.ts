@@ -317,7 +317,9 @@ export function inBox<T extends At>(b: Buckets<T>, x0: number, y0: number, x1: n
 /**
  * One side's items of a list in buckets, by their places in the list (a numerical shortcut, Task 21: answers never depend
  * on it). The buckets of the list as last seen are kept, and reused while every item stands where it stood, on the same
- * side, with the same id (the items themselves may be new copies: the buckets give the list's own). A caller that wants
+ * side, with the same id (the items themselves may be new copies: the buckets give the list's own). This rests on the
+ * engine's rule that a list or an item is never changed in place once made (a list met again by identity, or an item by
+ * identity, is taken as unchanged): code that writes companies in place must not use it. A caller that wants
  * only some of a side's items passes a `keep` test to the search: the same items, in the same order, as buckets of the
  * side's list filtered by it.
  */

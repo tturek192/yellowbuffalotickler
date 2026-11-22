@@ -347,6 +347,9 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
  * quantity the fight is resolved on): `holders` (its holder's companies up on the field) within `captureRadiusM` of its
  * trench, and, except on a garrison's first loss, those of them consolidating or holding within `lineFeatureMatchM`.
  */
+export function segmentDefenders(seg: SegmentState, pts: readonly Point[], holders: readonly CompanyState[], ctx: StepContext, settled?: readonly CompanyState[]): { men: number; ids: string[] };
+/** Given a pool of holders, the settled ones must come as a pool too. */
+export function segmentDefenders(seg: SegmentState, pts: readonly Point[], holders: Pool, ctx: StepContext, settled: Pool): { men: number; ids: string[] };
 export function segmentDefenders(
   seg: SegmentState,
   pts: readonly Point[],
@@ -454,8 +457,10 @@ function overrunGuns(state: SimState, ctx: StepContext): SimState {
   for (const key of keys) {
     const b = at.get(key)![0]!;
     const [px, py] = b.position!;
-    // Those in the box around the position first (a cheap test that only skips companies further off than rad).
-    const within = up.filter((c) => c.x >= px - rad && c.x <= px + rad && c.y >= py - rad && c.y <= py + rad && Math.hypot(c.x - px, c.y - py) <= rad);
+    // Those in the box around the position first (a cheap test, padded by a metre so that it only ever skips companies
+    // further off than rad, whatever the rounding).
+    const box = rad + 1;
+    const within = up.filter((c) => c.x >= px - box && c.x <= px + box && c.y >= py - box && c.y <= py + box && Math.hypot(c.x - px, c.y - py) <= rad);
     const attackers = within.filter((c) => c.side !== b.side && c.status !== 'waiting' && c.status !== 'falling-back');
     const a = sum(attackers, (c) => c.men);
     const d = sum(within.filter((c) => c.side === b.side), (c) => c.men);
