@@ -32,10 +32,11 @@ function timedRun(): Promise<{ ms: number; cpuMs: number; bytes: number; endedAt
 }
 
 /**
- * The Global Constraints' budget is 3000 ms for a run (and 5 min for 200 runs on 4 workers). Reaching it is Plan 3 Task 21
- * (data-oriented hot phases, records byte-identical); until then this test guards against regression at the interim
- * ceiling the controller set in Task 15 fix round 3: 6000 ms of CPU, the record's JSON included. The record budget, 8 MB,
- * is met and kept.
+ * The Global Constraints' budget is 3000 ms for a run (and 5 min for 200 runs on 4 workers, cli workers.test.ts). Plan 3
+ * Task 21 (hot phases rewritten, records byte-identical) brought a run from about 4.6 s to about 4.0 s of CPU here and the
+ * batch within its 5 min, but not the run within 3000 ms (its report says why); so this test still guards against
+ * regression at the interim ceiling the controller set in Task 15 fix round 3: 6000 ms of CPU, the record's JSON included.
+ * The record budget, 8 MB, is met and kept.
  */
 const INTERIM_CPU_MS = 6000;
 
