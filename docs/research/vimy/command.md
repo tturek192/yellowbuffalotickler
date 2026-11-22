@@ -280,10 +280,12 @@ recorded, with its minute:
   `sealDistanceM` behind the gun line, or in front of it: the reserve has come up to seal the gap;
 - **surrender:** the German men taken prisoner reach `surrenderFrac` of all the German men in the battle at Zero, the
   off-map reserves included. The number is fixed at Zero, so a reserve's arrival does not move it;
-- **collapse:** in some sector, the German men the sector has or has coming fall below `collapseFrac` of those it had at
-  Zero. It has the men fit to fight there. It has coming the men of the reserves ordered or marching to one of its
-  trench segments and not yet arrived. It had at Zero the men fit there, and the reserves assigned to it: each reserve
-  by its entry point's y (`reserveSectors`, left to that default and listed in `defaultsUsed`);
+- **collapse:** in some sector, the German men the sector has, or can still be refilled with, fall below
+  `collapseFrac` of those it had at Zero: the defender can no longer refill it. It has the men fit to fight there. It
+  can be refilled with the men of each German off-map reserve not yet arrived: in the sector it is sent to once ordered,
+  and until then in the sector it is assigned to, each reserve by its entry point's y (`reserveSectors`, left to that
+  default and listed in `defaultsUsed`). Once a reserve arrives its companies count where they stand, so no man counts
+  twice;
 - **stronghold:** the Canadians hold every stronghold.
 
 **Which conditions apply** is left to the default, all four; the scenario does not list them, and `defaultsUsed`
@@ -321,10 +323,10 @@ Artillery). Stretch by stretch, south to north:
 the 3rd and 4th Divisions' sectors the line stands 1.5 to 2 km beyond the final objectives, so a breakthrough there
 needs an advance the plan never ordered. In the runs so far (Vimy seed 1), the German resting battalions come within a
 kilometre of the gun line in every sector by about 08:40 on 9 April, hours before the Brown Line falls, so no run has
-broken through. And because the army reserves (the 17th and 111th Divisions) are assigned to the 1st and 3rd Divisions'
-sectors by their entry points, those sectors' baselines are large, and the 3rd Division's sector collapses within
-minutes of Zero, while the 111th Division is still waiting to be sent. Which reserves a sector's baseline should hold is
-the owner's to set (`reserveSectors`).
+broken through. The army reserves (the 17th and 111th Divisions) are assigned to the 1st and 3rd Divisions' sectors by their entry
+points; while they wait they still count as able to refill those sectors, so a sector collapses only once its reserves
+have been sent elsewhere, or have come up and been worn down. Which reserves a sector's baseline should hold is the
+owner's to set (`reserveSectors`).
 
 ## Targets for the command model
 

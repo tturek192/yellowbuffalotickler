@@ -10,7 +10,7 @@ import type { RunRecord } from './record';
 import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import type { SimState } from './step';
-import { fixtureFire, fixtureReserves, fixtureWithDoctrineV3, vimy, vimyDoctrines } from './test-helpers';
+import { fixtureFire, fixtureReserves, fixtureWithDoctrineV3, runStates, vimy, vimyDoctrines } from './test-helpers';
 
 /*
  * Deadlock scoring (Plan 4 Task 3). The fixtures are the v3 fixture (two assault companies, 300 men, against two garrison
@@ -70,20 +70,6 @@ function runFrom(f: [Scenario, Models], at?: (s: SimState) => SimState, endMinut
   return { events, summary: { deadlock: deadlockSummary(s) }, last: s };
 }
 
-/** gres on the map at Zero, holding where it stands (x 3000, in s1): a German reserve that has arrived (staged). */
-const reserveArrived = (s: SimState): SimState => ({
-  ...s,
-  reserves: s.reserves.map((r) => ({ ...r, status: 'arrived' as const })),
-  companies: s.companies.map((c) => (c.id.startsWith('gres-') ? { ...c, status: 'holding' as const, intent: 'hold' as const } : c)),
-});
-
-/** gres ordered at Zero and marching (never arriving in the test's span) to the first segment of `featureId` (staged). */
-const reserveMarching = (featureId = 'ger-front-a') => (s: SimState): SimState => ({
-  ...s,
-  reserves: s.reserves.map((r) => ({ ...r, status: 'marching' as const, orderedMin: 0, arriveMin: 1e6, toSegmentId: s.segments.find((x) => x.featureId === featureId)!.id })),
-  companies: s.companies.map((c) => (c.id.startsWith('gres-') ? { ...c, status: 'marching' as const, intent: 'march' as const } : c)),
-});
-
 /**
  * The seal, with a real order and arrival: fixtureReserves (the German division orders its resting battalion gres, two
  * companies of 100 men, at minute 6 once its front is lost; gres comes on to the map at (2500, 200) at minute 8 and walks
@@ -106,12 +92,39 @@ function sealRun(o: { sealDistanceM: number; entryY?: number }): RunRecord {
   return runScenario(s, m, { seed: 1, endMinute: 120 });
 }
 
+/**
+ * fixtureReserves with real orders: the division orders gres (two companies, 100 men each, off the map at Zero, entering
+ * at (2500, 200)) forward once its front is lost, at minute 50 (minute 6 with `fast`), to a segment of ger-front-a in s1;
+ * gres arrives at minute 96 (8) and walks to the front. With `sector2`, a sector s2 (y 800 to 1200) with no defenders of
+ * its own, and with `toS2` gres assigned to it (`reserveSectors`). Scored on collapse only; the states to `endMinute`.
+ */
+function reserveStates(o: { fast?: boolean; sector2?: boolean; toS2?: boolean; endMinute?: number }) {
+  const [s, m] = fixtureReserves({ objective: 'black', distanceKm: 0, noCompanies: false });
+  if (o.fast) {
+    const de = m.doctrines['de-1917']!;
+    const fast = (value: number) => ({ value, estimate: 'test', description: 'test' });
+    de.common = { ...de.common, baseOrderDelayMin: fast(1), deployMin: fast(1), reportEveryMin: fast(2) };
+    m.tables.channels.runner = { delayMin: fast(1), failPerHour: fast(0) };
+  }
+  s.features.push({ id: 'guns', kind: 'battery', side: 'central', geometry: { type: 'LineString', coordinates: [[5000, -100], [5000, 1300]] }, cite });
+  if (o.sector2) s.sectors.push({ ...structuredClone(s.sectors[0]!), id: 's2', name: 'Sector 2', yMin: 800, yMax: 1200 });
+  s.deadlock = { attacker: 'allied', artilleryLine: { featureId: 'guns' }, strongholds: [], conditions: ['collapse'], ...(o.toS2 ? { reserveSectors: [{ formationId: 'gres', sectorId: 's2' }] } : {}) };
+  return { f: [s, m] as [Scenario, Models], ...runStates([s, m], { endMinute: o.endMinute ?? 200 }) };
+}
+
+/** The German men fit on the map in a y-band, counted by hand (the statuses deadlock.ts counts as unfit or off the map). */
+const UNFIT_TEST = ['pinned', 'surrendered', 'falling-back', 'destroyed', 'off-map', 'marching'];
+const onMapFit = (s: SimState, yMin: number, yMax: number): number =>
+  s.companies.filter((c) => c.side === 'central' && c.men > 0 && !UNFIT_TEST.includes(c.status) && c.y >= yMin && c.y <= yMax).reduce((a, c) => a + c.men, 0);
+/** gres's men still off the map (waiting, ordered or marching). */
+const gresOff = (s: SimState): number => s.companies.filter((c) => c.id.startsWith('gres-') && (c.status === 'off-map' || c.status === 'marching')).reduce((a, c) => a + c.men, 0);
+
 /** Breakthrough, then stronghold: gres comes within 1,600 m behind the gun line on arrival (minute 8), or 100 m only at about minute 30. */
 const runBreak = (o: { reserveArrivesFirst: boolean }) => sealRun({ sealDistanceM: o.reserveArrivesFirst ? 1600 : 100 });
 /** The garrisons all taken prisoner at minute 4. */
 const runSurrender = () => runScenario(...scored(), { seed: 1 });
-/** The same, collapse checked first: no German left fit in s1, nor on its way (gres, assigned to s1, is never sent). */
-const runCollapse = (o: Opts = {}) => runScenario(...scored({ conditions: ['collapse', 'surrender', 'stronghold'], reserve: true, ...o }), { seed: 1 });
+/** The same, collapse checked first: no German left fit in s1, and no reserve to refill it. */
+const runCollapse = (o: Opts = {}) => runScenario(...scored({ conditions: ['collapse', 'surrender', 'stronghold'], ...o }), { seed: 1 });
 /** Breakthrough excluded: the knoll is taken once the attackers stand on it. */
 const runStronghold = () => runScenario(...scored({ conditions: ['stronghold'] }), { seed: 1 });
 /** fixtureFire: four machine guns to each garrison hold the attackers off until the time cap. */
@@ -172,11 +185,18 @@ describe('deadlock scoring (Plan 4 Task 3)', () => {
   });
 
   it("surrender's denominator is every defender's men at Zero, off-map reserves included: a reserve's arrival does not change it", () => {
-    // k1 and k2 (240) are all taken; gres (200) is off the map throughout, or on it from Zero.
-    const frac = (at?: (s: SimState) => SimState) => runFrom(scored({ conditions: [], reserve: true }), at).summary.deadlock!.margins.surrender.capturedFrac;
-    expect(frac()).toBeCloseTo(240 / 440, 4);
-    expect(frac(reserveArrived)).toBe(frac());
-    expect(frac(reserveMarching())).toBe(frac());
+    // gres (200 men) off the map until minute 8, a real order and arrival; k1 and k2 taken prisoner.
+    const { states } = reserveStates({ fast: true, endMinute: 40 });
+    const all = (s: SimState) => s.companies.filter((c) => c.side === 'central').reduce((a, c) => a + c.men + c.killed + c.wounded + c.captured, 0);
+    const captured = (s: SimState) => s.companies.filter((c) => c.side === 'central').reduce((a, c) => a + c.captured, 0);
+    const before = states.find((s) => s.minute === 6)!;
+    const after = states.at(-1)!;
+    expect(before.reserves[0]!.status).not.toBe('arrived');
+    expect(after.reserves[0]!.status).toBe('arrived');
+    expect(all(before)).toBe(all(after));
+    // Every margin step at the fixed denominator, gres's men in it from Zero.
+    for (const s of [before, after]) expect(deadlockSummary(s)!.margins.surrender.capturedFrac).toBeCloseTo(captured(s) / all(states[0]!), 4);
+    expect(captured(after)).toBeGreaterThan(0);
   });
 
   it('records collapse per sector when fewer than collapseFrac of the on-map defenders in a sector remain fit, naming the sector', () => {
@@ -184,29 +204,51 @@ describe('deadlock scoring (Plan 4 Task 3)', () => {
     expect(runCollapse().summary.deadlock!.margins.collapse).toMatchObject({ minFitFrac: 0, sectorId: 's1' });
   });
 
-  it('a sector does not collapse while a reserve is on its way to it: the baseline counts the reserves assigned to it', () => {
-    // (b) gres never sent: s1's baseline is k1, k2 and gres (440), and with k1 and k2 taken it collapses.
-    const { state, ctx } = initRun(...scored({ reserve: true }), { seed: 1 });
-    expect(state.deadlock!.zeroFit).toEqual({ s1: 440 });
-    expect(runFrom(scored({ conditions: ['collapse'], reserve: true })).summary.deadlock).toMatchObject({ broken: true, by: 'collapse', sectorId: 's1' });
-    // (a) gres ordered and marching to s1: 200 of 440 still to come, no collapse.
-    expect(runFrom(scored({ conditions: ['collapse'], reserve: true }), reserveMarching()).summary.deadlock).toMatchObject({ broken: false, margins: { collapse: { minFitFrac: expect.closeTo(200 / 440, 4) } } });
-    // (c) s1's fit men with gres waiting, marching to s1, and arrived in s1: counted once each time.
-    expect(fitBySector(state, ctx)).toEqual({ s1: 240 });
-    expect(fitBySector(reserveMarching()(state), ctx)).toEqual({ s1: 440 });
-    expect(fitBySector(reserveArrived(state), ctx)).toEqual({ s1: 440 });
+  it('a sector whose garrison is lost while its assigned reserve still waits off the map is not collapsed', () => {
+    // v3 with gres (200 men), assigned to s1 by its entry point and never sent (no headquarters orders it): k1 and k2
+    // (240) are taken at minute 4, and s1 keeps 200 of its 440.
+    const r = runFrom(scored({ conditions: ['collapse'], reserve: true }));
+    expect(r.last.reserves[0]!.status).toBe('waiting');
+    expect(r.last.deadlock!.zeroFit).toEqual({ s1: 440 });
+    expect(r.summary.deadlock).toMatchObject({ broken: false, margins: { collapse: { minFitFrac: expect.closeTo(200 / 440, 4), sectorId: 's1' } } });
   });
 
-  it('a reserve on its way counts in the sector of the segment it is sent to; the assignment defaults to its entry point', () => {
-    // (d) gres sent to ger-front-b in s2: it counts there, not in s1.
+  it('once its assigned reserve is sent to another sector, the sector collapses, and the reserve weighs in the other (real order)', () => {
+    // gres assigned to s2 (which has no men of its own), sent by its division to ger-front-a in s1 at minute 6.
+    const { states, ctx } = reserveStates({ fast: true, sector2: true, toS2: true, endMinute: 40 });
+    expect(states[0]!.deadlock!.zeroFit.s2).toBe(200);
+    const waiting = states.find((s) => s.reserves[0]!.status === 'waiting' && s.minute > 0)!;
+    const sent = states.find((s) => s.reserves[0]!.status === 'ordered')!;
+    expect(fitBySector(waiting, ctx)).toEqual({ s1: onMapFit(waiting, 0, 400), s2: 200 });
+    expect(fitBySector(sent, ctx)).toEqual({ s1: onMapFit(sent, 0, 400) + 200, s2: 0 });
+    const d = deadlockSummary(states.at(-1)!)!;
+    expect(d).toMatchObject({ broken: true, by: 'collapse', sectorId: 's2', minute: sent.minute });
+  });
+
+  it('a reserve counts once, wherever it is: waiting, ordered, marching and arrived (real order and arrival)', () => {
+    const { states, ctx } = reserveStates({});
+    expect(new Set(states.map((s) => s.reserves[0]!.status))).toEqual(new Set(['waiting', 'ordered', 'marching', 'arrived']));
+    for (const s of states) expect(fitBySector(s, ctx).s1).toBe(onMapFit(s, 0, 400) + gresOff(s));
+  });
+
+  it('once its reserve has arrived and been worn down below the threshold, the sector is collapsed', () => {
+    // A real arrival; then (staged) every German company in s1 pinned: nothing left to refill it.
+    const { states, ctx } = reserveStates({ fast: true, endMinute: 40 });
+    const s = states.at(-1)!;
+    expect(s.reserves[0]!.status).toBe('arrived');
+    expect(scoreDeadlock(s, ctx)).toEqual({ broken: false });
+    const worn: SimState = { ...s, companies: s.companies.map((c) => (c.side === 'central' && c.men > 0 && c.status !== 'surrendered' ? { ...c, status: 'pinned' as const } : c)) };
+    expect(scoreDeadlock(worn, ctx)).toMatchObject({ broken: true, by: 'collapse', sectorId: 's1' });
+  });
+
+  it('the assignment defaults to the entry point, listed; reserveSectors sets it', () => {
     const f = scored({ reserve: true, sector2: true });
     const { state, ctx } = initRun(...f, { seed: 1 });
-    expect(fitBySector(reserveMarching('ger-front-b')(state), ctx)).toEqual({ s1: 240, s2: 250 });
-    // (e) the baseline: gres assigned to s1 by its entry point (3000, 200), the default listed; or to s2 by reserveSectors.
     expect(state.deadlock!.zeroFit).toEqual({ s1: 440, s2: 50 });
     expect(ctx.defaultsUsed).toContain("deadlock.reserveSectors ← each reserve by its entry point's y: gres → s1");
     const g = initRun(...scored({ reserve: true, sector2: true, reserveSectors: [{ formationId: 'gres', sectorId: 's2' }] }), { seed: 1 });
     expect(g.state.deadlock!.zeroFit).toEqual({ s1: 240, s2: 250 });
+    expect(fitBySector(g.state, g.ctx)).toEqual({ s1: 240, s2: 250 });
     expect([...g.ctx.defaultsUsed].some((d) => d.startsWith('deadlock.reserveSectors'))).toBe(false);
   });
 
