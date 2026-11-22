@@ -52,6 +52,13 @@ describe('cli', () => {
     expect(existsSync(join(dir, 'run.json'))).toBe(false);
   });
 
+  it('a misspelt scenario section fails validation, naming its file, instead of silently dropping the section', () => {
+    const scenario = vimyCopy((d) => replaceIn(join(d, 'command.yaml'), '\ntanks:', '\ntank:'));
+    const r = runCli(['run', scenario, '--seed', '1', '--out', join(mkdtempSync(join(tmpdir(), 'sim-')), 'run.json')]);
+    expect(r.code).toBe(2);
+    expect(r.stderr).toMatch(/command\.yaml.*unknown section "tank"/);
+  });
+
   it('exits 1 with usage on bad arguments', () => {
     const r = runCli(['run', draft]);
     expect(r.code).toBe(1);

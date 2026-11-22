@@ -148,10 +148,10 @@ const LeaderSchema = z.object({
     .optional(),
 });
 
-const Window = z.object({ from: LocalDateTimeSchema, to: LocalDateTimeSchema });
+const Window = z.strictObject({ from: LocalDateTimeSchema, to: LocalDateTimeSchema });
 const Count = sourcedOrDisputed(z.number().nonnegative());
 
-const ReserveSchema = z.object({
+const ReserveSchema = z.strictObject({
   formationId: z.string(),
   side: Side,
   distanceKm: sourcedOrDisputed(z.number().nonnegative()),
@@ -174,7 +174,7 @@ const ArtillerySchema = z.strictObject({
   horseDrawn: z.boolean().optional(),
 });
 
-const WeatherSchema = z.object({
+const WeatherSchema = z.strictObject({
   at: LocalDateTimeSchema,
   precipitation: sourced(z.enum(['none', 'rain', 'sleet', 'snow'])),
   windFromDeg: sourced(z.number()).optional(),
@@ -271,7 +271,8 @@ const MineSchema = z.strictObject({
   cite: sourced(z.string()),
 });
 
-export const ScenarioSchema = z.object({
+/** Strict at the root (final review fix): a misspelt section fails with its path instead of being dropped. */
+export const ScenarioSchema = z.strictObject({
   id: z.string(),
   title: z.string(),
   status: z.enum(['draft', 'reviewed']),
@@ -336,9 +337,9 @@ export const ScenarioSchema = z.object({
       lullMin: sourced(z.number().positive()),
     })
     .optional(),
-  historical: z.object({
+  historical: z.strictObject({
     objectives: z.array(
-      z.object({
+      z.strictObject({
         lineId: z.string(),
         sectorId: z.string(),
         earliest: sourcedOrDisputed(LocalDateTimeSchema),
@@ -347,7 +348,7 @@ export const ScenarioSchema = z.object({
     ),
     casualties: z
       .array(
-        z.object({
+        z.strictObject({
           side: Side,
           formationId: z.string().optional(),
           window: Window,
@@ -359,12 +360,12 @@ export const ScenarioSchema = z.object({
         }),
       )
       .default([]),
-    prisonersTaken: z.array(z.object({ bySide: Side, window: Window, count: Count })).default([]),
+    prisonersTaken: z.array(z.strictObject({ bySide: Side, window: Window, count: Count })).default([]),
     gunsCaptured: z
-      .object({ window: Window, field: Count, trenchMortars: Count.optional(), machineGuns: Count.optional() })
+      .strictObject({ window: Window, field: Count, trenchMortars: Count.optional(), machineGuns: Count.optional() })
       .optional(),
     reserveArrivals: z
-      .array(z.object({ formationId: z.string(), at: sourcedOrDisputed(LocalDateTimeSchema), where: z.string() }))
+      .array(z.strictObject({ formationId: z.string(), at: sourcedOrDisputed(LocalDateTimeSchema), where: z.string() }))
       .default([]),
     endedAt: sourcedOrDisputed(LocalDateTimeSchema).optional(),
     /** The side that won (Task 15): the batch reports the share of runs it won. */

@@ -13,9 +13,11 @@ export class ScenarioError extends Error {
 }
 
 const issues = (e: z.ZodError, locate: (path: string) => string = (p) => p) =>
-  e.issues.map(
-    (i) =>
-      `${i.path.length ? locate(i.path.reduce<string>((a, p) => (typeof p === 'number' ? `${a}[${p}]` : a ? `${a}.${String(p)}` : String(p)), '')) : '(root)'}: ${i.message}`,
+  e.issues.flatMap((i) =>
+    // An unknown section at the root: one problem per key, located in the file that holds it.
+    i.code === 'unrecognized_keys' && i.path.length === 0
+      ? i.keys.map((k) => `${locate(k)}: unknown section "${k}" (misspelt?)`)
+      : [`${i.path.length ? locate(i.path.reduce<string>((a, p) => (typeof p === 'number' ? `${a}[${p}]` : a ? `${a}.${String(p)}` : String(p)), '')) : '(root)'}: ${i.message}`],
   );
 
 function parseYaml(text: string): unknown {

@@ -119,6 +119,32 @@ describe('scenario v3 strictness', () => {
     a.artillery[0].ammo = e(1);
     expect(() => ScenarioSchema.parse(a)).toThrow(/ammo/);
   });
+  it('a misspelled section, or key of a reserve, a weather entry or the historical targets, fails with its path (final review fix)', () => {
+    const top: any = minimalScenarioV3();
+    top.tank = [];
+    expect(() => ScenarioSchema.parse(top)).toThrow(/tank/);
+    const res: any = minimalScenarioV3();
+    res.reserves = [{ formationId: 'bn1', side: 'allied', distanceKm: e(1), entryPoint: [0, 0], orderAt: e('1916-07-01T08:00') }];
+    expect(() => ScenarioSchema.parse(res)).toThrow(/orderAt/);
+    const w: any = minimalScenarioV3();
+    w.weather = [{ at: '1916-07-01T07:00', precipitation: e('none'), visibilty: e(500) }];
+    expect(() => ScenarioSchema.parse(w)).toThrow(/visibilty/);
+    const h: any = minimalScenarioV3();
+    h.historical.winer = e('allied');
+    expect(() => ScenarioSchema.parse(h)).toThrow(/winer/);
+    const ho: any = minimalScenarioV3();
+    ho.historical.objectives = [{ lineId: 'black', sectorId: 's1', earliest: e('1916-07-01T08:00'), latest: e('1916-07-01T09:00'), latst: 1 }];
+    expect(() => ScenarioSchema.parse(ho)).toThrow(/latst/);
+  });
+  it('a misspelled section names its file through the loader', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'v3s-'));
+    mkdirSync(join(dir, 'doctrine'));
+    writeFileSync(join(dir, 'doctrine', 'bef-1917.yaml'), toYaml(minimalDoctrineV2()));
+    const s: any = minimalScenarioV3();
+    s.tank = [];
+    writeFileSync(join(dir, 'scenario.yaml'), toYaml(s));
+    expect(() => loadScenario(join(dir, 'scenario.yaml'), join(dir, 'doctrine'))).toThrow(/scenario\.yaml.*tank/);
+  });
   it('the error names the file and path through the loader', () => {
     const dir = mkdtempSync(join(tmpdir(), 'v3s-'));
     mkdirSync(join(dir, 'doctrine'));
