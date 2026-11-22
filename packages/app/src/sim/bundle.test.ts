@@ -29,15 +29,43 @@ describe('parseBundle', () => {
     expect(() => parseBundle(null)).toThrow(/JSON object/);
   });
 
+  const bad = (edit: (b: any) => void): string => {
+    const b = raw();
+    edit(b);
+    try {
+      parseBundle(b);
+    } catch (e) {
+      return (e as Error).message;
+    }
+    throw new Error('parseBundle accepted a bad bundle');
+  };
+
   it('names the part that is wrong', () => {
-    const bad = raw();
-    bad.models.tables.extra = 1;
-    expect(() => parseBundle(bad)).toThrow(/models\.tables/);
-    const noLib = raw();
-    delete noLib.library;
-    expect(() => parseBundle(noLib)).toThrow(/library/);
-    const badRef = raw();
-    badRef.models.doctrines = {};
-    expect(() => parseBundle(badRef)).toThrow(/doctrine/i);
+    expect(bad((b) => (b.models.tables.extra = 1))).toMatch(/models\.tables/);
+    expect(bad((b) => delete b.library)).toMatch(/library/);
+  });
+
+  it('checks a weapon id against the bundle tables', () => {
+    const w = bad((b) => {
+      const find = (o: any): any => (o && typeof o === 'object' ? (typeof o.weapon === 'string' ? o : Object.values(o).map(find).find(Boolean)) : undefined);
+      find(b.scenario).weapon = 'no-such-gun';
+    });
+    expect(w).toMatch(/no-such-gun/);
+  });
+
+  it('checks a unit reference against the bundle doctrines', () => {
+    expect(bad((b) => (b.scenario.forces[0].doctrine = 'no-such-doctrine'))).toMatch(/no-such-doctrine/);
+  });
+
+  it('validates each doctrine with DoctrineSchema, naming it', () => {
+    const m = bad((b) => (b.models.doctrines['bef-1917'] = { nonsense: 1 }));
+    expect(m).toMatch(/models\.doctrines\.bef-1917/);
+  });
+
+  it('validates tableSources, notes, createdFrom and the scenario', () => {
+    expect(bad((b) => (b.tableSources = { x: 1 }))).toMatch(/tableSources/);
+    expect(bad((b) => (b.notes = 5))).toMatch(/notes: expected a string/);
+    expect(bad((b) => (b.createdFrom = null))).toMatch(/createdFrom: expected a string/);
+    expect(bad((b) => (b.scenario.zeroHour = 'not a time'))).toMatch(/zeroHour/);
   });
 });

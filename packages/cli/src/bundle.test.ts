@@ -39,6 +39,17 @@ describe('sim bundle', () => {
     expect(vimy.scenario.terrain).toBeDefined();
   });
 
+  it('createdFrom is repo-relative, or the basename outside the repo, never an absolute path', () => {
+    const inRepo = bundleOf(join(repoRoot, 'scenarios/vimy-1917/scenario.yaml'), 'abs');
+    expect(inRepo.createdFrom).toBe('scenarios/vimy-1917/scenario.yaml');
+    expect(JSON.stringify(inRepo)).not.toContain(repoRoot);
+    const dir = join(mkdtempSync(join(tmpdir(), 'sim-out-')), 'vimy-1917');
+    cpSync(join(repoRoot, 'scenarios/vimy-1917'), dir, { recursive: true });
+    const outside = bundleOf(join(dir, 'scenario.yaml'), 'outside');
+    expect(outside.createdFrom).toBe('scenario.yaml');
+    expect(JSON.stringify(outside)).not.toContain(dir);
+  });
+
   it("carries the scenario folder's notes.md when there is one", () => {
     const dir = join(mkdtempSync(join(tmpdir(), 'sim-notes-')), 'vimy-1917');
     cpSync(join(repoRoot, 'scenarios/vimy-1917'), dir, { recursive: true });

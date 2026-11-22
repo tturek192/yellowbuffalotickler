@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Doctrine, Library, Scenario, Sources, Tables } from '@wwi/scenario';
 import { loadDoctrine, loadLibrary, loadScenario, loadTables } from '@wwi/scenario/node';
 
@@ -16,6 +17,14 @@ export type Bundle = {
   notes: string;
   createdFrom: string;
 };
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+
+/** The scenario's path relative to the repository root (POSIX separators), or its basename if it lies outside the repo: never a local absolute path. */
+function createdFromOf(file: string): string {
+  const rel = relative(repoRoot, resolve(file));
+  return rel === '' || rel.startsWith('..') || isAbsolute(rel) ? basename(file) : rel.split(/[\\/]/).join('/');
+}
 
 export type BundleFiles = { scenarioFile: string; doctrineDir: string; tablesDir: string; libraryDir: string };
 
@@ -35,6 +44,6 @@ export function buildBundle(f: BundleFiles): Bundle {
     tableSources: sources,
     library: loadLibrary(f.libraryDir),
     notes: existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : '',
-    createdFrom: f.scenarioFile,
+    createdFrom: createdFromOf(f.scenarioFile),
   };
 }
