@@ -41,6 +41,8 @@ export default function globalSetup(): void {
   }
   const index = spawnSync('node', ['packages/app/scripts/scenario-index.mjs'], { cwd: repoRoot, stdio: 'inherit' });
   if (index.status !== 0) throw new Error(`writing the scenario index failed with status ${index.status}`);
+  const presets = spawnSync('node', ['packages/app/scripts/overlay-index.mjs'], { cwd: repoRoot, stdio: 'inherit' });
+  if (presets.status !== 0) throw new Error(`writing the what-if presets failed with status ${presets.status}`);
   // The CLI's record of the what-if run, hashed as written (`sim run` writes JSON.stringify(record)).
   const whatIf = 'packages/app/e2e/out/vimy-germans-x2.json';
   mkdirSync(`${repoRoot}packages/app/e2e/out`, { recursive: true });

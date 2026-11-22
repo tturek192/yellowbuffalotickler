@@ -9,7 +9,7 @@ type Fetcher = (url: string) => Promise<Response>;
  */
 export async function fetchRun(name: string, fetcher: Fetcher = (url) => fetch(url)): Promise<RunRecord> {
   if (!/^[\w.-]+$/.test(name)) throw new Error(`“${name}” is not a valid run name.`);
-  const url = `/runs/${encodeURIComponent(name)}.json`;
+  const url = `${import.meta.env.BASE_URL}runs/${encodeURIComponent(name)}.json`;
   const res = await fetcher(url);
   const json = (res.headers.get('content-type') ?? '').includes('json');
   if (res.status === 404 || (res.ok && !json)) {

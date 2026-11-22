@@ -8,3 +8,4 @@ test-results/
 playwright-report/
 .cache/
 packages/app/public/scenarios/
+packages/app/public/overlays/

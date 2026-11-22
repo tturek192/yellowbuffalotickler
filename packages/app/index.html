@@ -5,16 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>WWI Battle Simulator</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Loaded without blocking render; system fallbacks in styles.css keep the app usable offline. The map lettering
-         (IM Fell English, EB Garamond) is bundled from @fontsource (main.tsx). -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-      media="print"
-      onload="this.media='all'"
-    />
+    <!-- No request leaves the page's own files: the map lettering (IM Fell English, EB Garamond) is bundled from @fontsource
+         (main.tsx) and the interface falls back to system fonts (styles.css). -->
   </head>
   <body>
     <div id="root"></div>

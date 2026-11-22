@@ -400,3 +400,36 @@ test('period style at phone width: the cartouche above the map, the Notes below 
   expect(notes.y).toBeGreaterThanOrEqual(map.y + map.height);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('runs a battle with a what-if from the panel and plays it', async ({ page }) => {
+  await page.goto('/');
+  // Before anyone presses Run the page shows the pre-computed Vimy run.
+  await expect(page.getByTestId('run-result')).toContainText(/Deadlock (broken|held)/, { timeout: 30_000 });
+  const panel = page.getByRole('region', { name: 'Run a battle' });
+  await panel.getByLabel('Battle').selectOption({ label: 'Vimy Ridge, 9 April 1917' });
+  await panel.getByLabel('What if').selectOption({ label: 'Germans ×2' });
+  await expect(panel.getByLabel('Seed')).toHaveValue('1');
+  await panel.getByRole('button', { name: 'Run', exact: true }).click();
+  await expect(panel.getByText('Running…')).toBeVisible();
+  await expect(panel.getByText('Running…')).toBeHidden({ timeout: 120_000 });
+  await expect(page.getByTestId('run-result')).toContainText(/(Allied|German) win|No winner/);
+  await expect(page.getByTestId('run-result')).toContainText(/Deadlock (broken by \w+ at \d\d:\d\d|held)/);
+  // The what-if run replaced the one on screen and plays.
+  await expect(page.getByRole('img', { name: /^Trench map of / })).toBeVisible();
+  const clock = page.getByTestId('battle-clock');
+  const zero = await clock.textContent();
+  await page.getByRole('button', { name: '1 s = 1 h', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(clock).not.toHaveText(zero!, { timeout: 5000 });
+});
+
+test('Cancel stops a run in progress', async ({ page }) => {
+  await page.goto('/');
+  const panel = page.getByRole('region', { name: 'Run a battle' });
+  await panel.getByRole('button', { name: 'Run', exact: true }).click();
+  await expect(panel.getByText('Running…')).toBeVisible();
+  await panel.getByRole('button', { name: 'Cancel' }).click();
+  await expect(panel.getByText('Running…')).toBeHidden();
+  await expect(panel.getByRole('button', { name: 'Run', exact: true })).toBeEnabled();
+  await expect(panel.getByRole('alert')).toHaveCount(0);
+});
