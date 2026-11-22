@@ -412,6 +412,9 @@ export function fireMines(state: SimState, ctx: StepContext, pending: Pending): 
       text: `Mine ${m.id} is blown: ${lost} men killed or buried`,
       causes: ['mine'],
       factors: { menLost: lost, companies: hit, craterRadiusM: r },
+      // Everyone it buried was of the other side; where it was blown, for the crater on the map.
+      losses: { [m.side === 'allied' ? 'central' : 'allied']: { killed: lost, wounded: 0 } },
+      at: [mx, my],
     });
   }
   return emit({ ...state, minesFired: [...state.minesFired, ...due.map((m) => m.id)] }, ...events);

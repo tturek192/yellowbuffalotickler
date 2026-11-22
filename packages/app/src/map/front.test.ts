@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { battleRecord, trenchAt } from '../battle-record';
 import type { TestCompany } from '../test-record';
-import { FRONT_BIN_M, frontAt } from './front';
+import { FRONT_BIN_M, FRONT_BREAK_M, frontAt } from './front';
 
 const co = (id: string, side: TestCompany['side'], x: number, y: number, extra: Partial<TestCompany> = {}): TestCompany => ({ id, side, x, y, men: 100, status: 'holding', ...extra });
 
@@ -91,6 +91,24 @@ describe('the front (frontAt)', () => {
     });
     expect(xAt(frontAt(r, 0).central, 350)).toBe(500);
     expect(xAt(frontAt(r, 0).allied, 450)).toBe(300);
+  });
+
+  it('a deep gap breaks the line: no piece runs further than FRONT_BREAK_M between neighbouring bins', () => {
+    // Germans hold the ridge (x 500) to the north and south; in the middle 300 m only a reserve far back (x 4000) is left.
+    const r = battleRecord({
+      features: [],
+      snapshots: [
+        {
+          minute: 0,
+          companies: [co('n1', 'central', 500, 50), co('n2', 'central', 500, 100), co('s1', 'central', 500, 750), co('s2', 'central', 500, 790), co('far', 'central', 4000, 400)],
+        },
+      ],
+    });
+    const pieces = frontAt(r, 0).central;
+    expect(pieces.length).toBeGreaterThan(1);
+    for (const p of pieces) for (let i = 1; i < p.length; i++) expect(Math.abs(p[i]![0] - p[i - 1]![0])).toBeLessThanOrEqual(FRONT_BREAK_M);
+    // The reserve's stretch is still drawn, as its own piece.
+    expect(pieces.some((p) => p.every(([x]) => x === 4000))).toBe(true);
   });
 
   it('is pure and cached by minute: the same minute gives the same front object', () => {

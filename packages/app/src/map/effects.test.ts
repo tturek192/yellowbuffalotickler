@@ -3,7 +3,8 @@ import type { SimEvent } from '@wwi/engine';
 import { frameAt } from '../playback';
 import { battleRecord, trenchAt } from '../battle-record';
 import type { TestCompany } from '../test-record';
-import { bursts, FIRE_WINDOW_MIN, fireEventsAt, reserveColumns, segmentStates, standingBarrages } from './effects';
+import { bursts, craters, FIRE_WINDOW_MIN, fireEventsAt, reserveColumns, segmentStates, standingBarrages } from './effects';
+import { frontAt } from './front';
 
 const co = (id: string, side: TestCompany['side'], x: number, y: number): TestCompany => ({ id, side, x, y, men: 100, status: 'holding' });
 
@@ -116,5 +117,66 @@ describe('reserve columns', () => {
     expect(at(20)[0]!.from).toEqual([1000, 400]);
     expect(at(60)[0]!.to[0]).toBeLessThan(at(20)[0]!.to[0]);
     expect(at(100)).toEqual([]);
+  });
+});
+
+describe('fire with no company named (Task 18 fix round)', () => {
+  it('falls along the front of the side its event says it hit, whatever its cause', () => {
+    const companies = [co('1a', 'allied', 300, 400), co('g1', 'central', 500, 400)];
+    const unnamed = (cause: 'defensive-barrage' | 'off-map-fire', side: 'allied' | 'central') => ({
+      kind: 'shelled' as const,
+      minute: 10,
+      causes: [cause],
+      factors: { hit: 40 },
+      losses: { [side]: { killed: 10, wounded: 30 } },
+    });
+    // An allied defensive barrage (on the Germans) and German off-map fire (on the Canadians).
+    const r = battleRecord({
+      features: [trenchAt('front', 500)],
+      snapshots: [{ minute: 0, companies }, { minute: 20, companies }],
+      events: [unnamed('defensive-barrage', 'central'), unnamed('off-map-fire', 'allied')],
+    });
+    const front = frontAt(r, 10);
+    const marks = (i: number) => bursts([fireEventsAt(r, 10)[i]!], 1, frameAt(r, 10), front);
+    expect(marks(0).length).toBeGreaterThan(0);
+    for (const m of marks(0)) expect(Math.abs(m.x - 500)).toBeLessThan(80);
+    for (const m of marks(1)) expect(Math.abs(m.x - 300)).toBeLessThan(80);
+  });
+
+  it('a fire event without a side (a record before engine 0.4.5) and no company draws no marks', () => {
+    const companies = [co('1a', 'allied', 300, 400), co('g1', 'central', 500, 400)];
+    const r = battleRecord({ features: [], snapshots: [{ minute: 0, companies }], events: [{ kind: 'shelled', minute: 0, causes: ['artillery-fire'], factors: { hit: 9 } }] });
+    expect(bursts(fireEventsAt(r, 0), 1, frameAt(r, 0), frontAt(r, 0))).toEqual([]);
+  });
+});
+
+describe('mine craters', () => {
+  it('appear where a mine was blown, from the minute it was, at its radius', () => {
+    const r = battleRecord({
+      features: [],
+      snapshots: [{ minute: 0, companies: [co('1a', 'allied', 300, 400)] }],
+      events: [{ kind: 'mine-fired', minute: 5, at: [480, 410], factors: { craterRadiusM: 30, menLost: 20 }, losses: { central: { killed: 20, wounded: 0 } } }],
+      endMinute: 30,
+    });
+    expect(craters(r, 4)).toEqual([]);
+    expect(craters(r, 5)).toEqual([{ x: 480, y: 410, radiusM: 30 }]);
+  });
+});
+
+describe('the standing barrage reaches as far as the fire plan', () => {
+  it('uses the sector\'s recorded reach rather than the furthest objective', () => {
+    const base = battleRecord({
+      features: [trenchAt('front', 500), trenchAt('second', 800), trenchAt('far', 2000)],
+      snapshots: [{ minute: 0, companies: [co('1a', 'allied', 300, 200)], segments: [['allied'], ['central'], ['central']], barrages: [{ sectorId: 's1', done: false, points: [[450, 0], [450, 800]] }] }],
+    });
+    const r = {
+      ...base,
+      geometry: {
+        ...base.geometry,
+        lines: [{ id: 'blue', name: 'Blue Line', kind: 'objective', points: [[1000, 0], [1000, 800]] }],
+        sectors: [{ id: 's1', yMin: 0, yMax: 800, reach: [[2100, 0], [2100, 800]] }],
+      },
+    } as unknown as typeof base;
+    expect(standingBarrages(r, frameAt(r, 0)).map((p) => p[0]![0])).toEqual([800, 2000]);
   });
 });

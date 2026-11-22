@@ -81,6 +81,10 @@ describe('draft Vimy scenario run', () => {
     // scenario's weather by minute, and the sun's place and clock as the light model reads them) and the barrage band's
     // and machine-gun zone's depths in `geometry.barrageDepthM`. The battle is unchanged: events, snapshots and summary
     // are those of 0.4.3.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.4', hash: 'd9c250f0' });
+    // 0.4.5 (Task 18 fix round 1): fire and mine events carry `losses`, the men killed and wounded on each side by the
+    // sides of the companies hit (so playback never guesses whose men they were); a mine-fired event carries where it was
+    // blown (`at`), and each sector in the geometry how far its fire plan reaches (`reach`, barrage.ts planReachX). The
+    // battle is unchanged: the same events, snapshots and summary, each fire event only gaining its `losses`.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.5', hash: 'b9071c30' });
   });
 });

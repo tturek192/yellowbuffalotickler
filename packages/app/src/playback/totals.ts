@@ -1,28 +1,10 @@
-import type { RunRecord, Side, SimEvent } from '@wwi/engine';
+import type { RunRecord, Side } from '@wwi/engine';
 
 export type Losses = { killed: number; wounded: number; captured: number };
 /** Running totals at a minute: each side's casualties since Zero, the prisoners each side took, and the guns captured. */
 export type Totals = { casualties: Record<Side, Losses>; prisoners: Record<Side, number>; guns: number };
 
 const other = (s: Side): Side => (s === 'allied' ? 'central' : 'allied');
-
-/**
- * The side a fire event's losses fall on. Fire on one company names it (`unitId`). Fire on several names none: the
- * German defensive barrage falls on the attackers; fire called for by a company (its ref names the caller) falls on that
- * company's enemy; any other unnamed fire is the attackers' fire plan (creeping, standing and machine-gun barrages,
- * off-map fire) and falls on the defenders. For Vimy seed 1 these sum to the summary's battle casualties exactly.
- */
-export function victimSide(e: Pick<SimEvent, 'unitId' | 'causes' | 'refs'>, sideOf: (id: string) => Side | undefined, eventOf?: (id: number) => Pick<SimEvent, 'unitId'> | undefined): Side {
-  const own = e.unitId !== undefined ? sideOf(e.unitId) : undefined;
-  if (own) return own;
-  if (e.causes.includes('defensive-barrage')) return 'allied';
-  for (const id of e.refs ?? []) {
-    const caller = eventOf?.(id)?.unitId;
-    const side = caller !== undefined ? sideOf(caller) : undefined;
-    if (side) return other(side);
-  }
-  return 'central';
-}
 
 /** The columns of the prefix sums, in order. */
 const FIELDS = ['aK', 'aW', 'aC', 'cK', 'cW', 'cC', 'guns'] as const;
@@ -38,7 +20,6 @@ function prefixOf(r: RunRecord): Prefix {
   if (hit) return hit;
   const units = new Map(r.units.map((u) => [u.id, u.side]));
   const sideOf = (id: string): Side | undefined => units.get(id);
-  const byId = (id: number): SimEvent | undefined => (r.events[id]?.id === id ? r.events[id] : r.events.find((e) => e.id === id));
   const events = [...r.events].sort((a, b) => a.minute - b.minute || a.id - b.id);
   const n = events.length;
   const sums = Object.fromEntries(FIELDS.map((f) => [f, new Float64Array(n)])) as Record<Field, Float64Array>;
@@ -56,11 +37,17 @@ function prefixOf(r: RunRecord): Prefix {
     switch (e.kind) {
       case 'direct-fire':
       case 'shelled':
-        add(victimSide(e, sideOf, byId), num('killed'), num('wounded'), 0);
-        break;
       case 'mine-fired':
-        // Killed or buried under the enemy's trench (the mine is the attackers').
-        add('central', num('menLost'), 0, 0);
+        if (e.losses) {
+          // Engine 0.4.5 on: the event says whose men it hit (by the sides of the companies it fell on).
+          for (const side of ['allied', 'central'] as const) {
+            const l = e.losses[side];
+            if (l) add(side, l.killed, l.wounded, 0);
+          }
+        } else if (unitSide && e.kind !== 'mine-fired') {
+          // An older record: only fire on one named company can be put to a side.
+          add(unitSide, num('killed'), num('wounded'), 0);
+        }
         break;
       case 'company-surrendered':
         if (unitSide) add(unitSide, 0, 0, num('men'));
@@ -97,7 +84,7 @@ function lastAtOrBefore(minutes: Float64Array, minute: number): number {
 }
 
 /**
- * Cumulative from the events up to the playhead, by prefix sums built once per record (each frame is a binary search).
+ * Cumulative from the events up to the playhead (fire and mines by the sides their events name, engine 0.4.5 on), by prefix sums built once per record (each frame is a binary search).
  * The preliminary bombardment before Zero is left out, as the summary keeps it apart from the battle.
  */
 export function totalsAt(r: RunRecord, minute: number): Totals {

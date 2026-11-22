@@ -24,6 +24,7 @@ export const EFFECT_STYLE = {
   standing: { band: 'rgba(214, 120, 48, 0.28)', tick: 'rgba(160, 70, 20, 0.85)', widthM: 60, minPx: 7, tickStep: 4 },
   mg: { fill: 'rgba(112, 100, 140, 0.10)', hatch: 'rgba(90, 76, 130, 0.45)', hatchStep: 7, edge: 'rgba(90, 76, 130, 0.55)' },
   burst: { shell: '#4a3a26', flash: 'rgba(230, 150, 40, 0.9)', bullet: '#2a2622', shellPx: 2.6, bulletPx: 3.2 },
+  crater: { fill: 'rgba(110, 84, 44, 0.32)', rim: 'rgba(80, 60, 30, 0.9)', rimWidth: 1.6, minPx: 4 },
   reserve: { width: 3, head: 9, dash: [8, 5] as number[], font: `600 11px ${MARKER_FONT}` },
 } as const;
 
@@ -120,10 +121,24 @@ function placeOf(e: SimEvent, frame: Frame, front: Front | undefined, depths: { 
       spread: 40,
     };
   }
-  // Unnamed fire with no band: the German defensive barrage on the allied front; the attackers' standing barrage on the German.
-  const line = front?.[e.causes.includes('defensive-barrage') ? 'allied' : 'central'].flat();
+  // Unnamed fire with no band: along the front of the side the event says it hit (the one that lost most men; engine 0.4.5
+  // on). An older event, with no sides, has no place.
+  const side = hitSide(e);
+  if (!side) return null;
+  const line = front?.[side].flat();
   if (!line || line.length === 0) return null;
   return { place: (i, seed) => line[Math.floor(unit(seed, 3 * i + 7) * line.length)]!, spread: 60 };
+}
+
+/** The side a fire event hit hardest, by its `losses` (the first listed of those it reached, if it hit nobody); else undefined. */
+function hitSide(e: SimEvent): Side | undefined {
+  let best: Side | undefined;
+  let most = -1;
+  for (const s of ['allied', 'central'] as const) {
+    const l = e.losses?.[s];
+    if (l && l.killed + l.wounded > most) [best, most] = [s, l.killed + l.wounded];
+  }
+  return best;
 }
 
 /** How many marks an event is worth at speed 1: a few, more for fire that hit more men. */
@@ -193,8 +208,13 @@ function sideByUnit(r: RunRecord): Map<string, Side> {
   return m;
 }
 
-/** The furthest objective line's x at y (the fire plan's reach), or undefined where no objective line spans y. */
+/**
+ * How far the fire plan reaches at y: the sector's recorded reach (engine 0.4.5 on, barrage.ts `planReachX`), else, for an
+ * older record, the furthest objective line spanning y; undefined where neither says.
+ */
 function reachAt(r: RunRecord, y: number): number | undefined {
+  const sec = r.geometry.sectors.find((s) => s.reach && s.reach.length >= 2 && y >= s.yMin && y <= s.yMax);
+  if (sec) return xOnLine(sec.reach!, y);
   let best: number | undefined;
   for (const l of r.geometry.lines) {
     if (l.kind !== 'objective' || l.points.length < 2) continue;
@@ -255,6 +275,18 @@ export function mgZones(r: RunRecord, frame: Frame): Point[][] {
   return frame.barrages
     .filter((b) => !b.done && b.points.length >= 2 && sectors.has(b.sectorId))
     .map((b) => [...b.points.map(([x, y]): Point => [x + band, y]), ...[...b.points].reverse().map(([x, y]): Point => [x + band + mg, y])]);
+}
+
+export type Crater = { x: number; y: number; radiusM: number };
+const craterCache = new WeakMap<RunRecord, Array<Crater & { minute: number }>>();
+/** The craters of the mines blown by a minute (spec 9.2, "craters are blown"): where each was, at its radius (engine 0.4.5 on). */
+export function craters(r: RunRecord, minute: number): Crater[] {
+  let all = craterCache.get(r);
+  if (!all) {
+    all = r.events.flatMap((e) => (e.kind === 'mine-fired' && e.at ? [{ minute: e.minute, x: e.at[0], y: e.at[1], radiusM: e.factors?.craterRadiusM ?? 0 }] : []));
+    craterCache.set(r, all);
+  }
+  return all.filter((c) => c.minute <= minute && c.radiusM > 0).map(({ x, y, radiusM }) => ({ x, y, radiusM }));
 }
 
 export type ReserveColumn = { formationId: string; side: Side; label: string; from: Point; to: Point; progress: number };
@@ -496,6 +528,24 @@ export function drawStanding(ctx: CanvasRenderingContext2D, view: View, pieces: 
         ctx.lineTo(x + (nx * width) / 2, y + (ny * width) / 2);
       }
     }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** Mine craters: a churned pit with a raised rim, at least `minPx` across. */
+export function drawCraters(ctx: CanvasRenderingContext2D, view: View, list: readonly Crater[]): void {
+  const c = EFFECT_STYLE.crater;
+  ctx.save();
+  for (const k of list) {
+    const [x, y] = worldToScreen(view, [k.x, k.y]);
+    const rad = Math.max(c.minPx, k.radiusM * view.scale);
+    ctx.beginPath();
+    ctx.arc(x, y, rad, 0, Math.PI * 2);
+    ctx.fillStyle = c.fill;
+    ctx.fill();
+    ctx.strokeStyle = c.rim;
+    ctx.lineWidth = c.rimWidth;
     ctx.stroke();
   }
   ctx.restore();

@@ -10,7 +10,7 @@ import { markerStyleAt } from './zoom';
 import { MARKER_STYLE, drawUnitMarker } from './unitMarkers';
 import { frontAt } from './front';
 import {
-  bursts, drawBursts, drawCaptured, drawCreeping, drawFronts, drawMgZones, drawReserves, drawSegmentStates, drawStanding,
+  bursts, craters, drawBursts, drawCaptured, drawCraters, drawCreeping, drawFronts, drawMgZones, drawReserves, drawSegmentStates, drawStanding,
   fireEventsAt, mgZones, reserveColumns, segmentStates, standingBarrages,
 } from './effects';
 import { drawSky } from './sky';
@@ -435,6 +435,7 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   const trenches = r.geometry.lines.filter((l) => l.kind === 'trench');
   for (const l of trenches) drawTrench(ctx, view, l);
   drawSegmentStates(ctx, view, segmentStates(r, frame.minute));
+  drawCraters(ctx, view, craters(r, frame.minute));
   const objectives = r.geometry.lines.filter((l) => l.kind === 'objective');
   for (const l of objectives) drawObjective(ctx, view, l);
   if (settled) {

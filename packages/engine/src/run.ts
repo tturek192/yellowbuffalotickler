@@ -1,6 +1,7 @@
 import { decodeTerrain, minutesBetween, ScenarioError, v } from '@wwi/scenario';
-import type { Doctrine, Scenario, Tables } from '@wwi/scenario';
-import { initBarrage } from './barrage';
+import type { Doctrine, Point, Scenario, Tables } from '@wwi/scenario';
+import { initBarrage, planReachX } from './barrage';
+import { sampleYs } from './geometry';
 import { noteArtilleryDefaults } from './artillery';
 import { initBatteries, runBombardment } from './bombardment';
 import { emit } from './causes';
@@ -183,7 +184,12 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
     endMinute: state.minute,
     geometry: {
       lines: sc.lines,
-      sectors: sc.sectors.map((x) => ({ id: x.id, yMin: x.yMin, yMax: x.yMax })),
+      sectors: sc.sectors.map((x) => ({
+        id: x.id,
+        yMin: x.yMin,
+        yMax: x.yMax,
+        reach: sampleYs(x.yMin, x.yMax).map((y): Point => [round(planReachX(x, ctx.lines, y), 1), round(y, 1)]),
+      })),
       features: sc.features,
       ...(sc.terrainGrid ? { terrain: sc.terrainGrid } : {}),
       segments: state.segments.map((x) => ({

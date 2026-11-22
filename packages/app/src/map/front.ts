@@ -9,6 +9,12 @@ import type { Point } from './projection';
  * its living companies on the map reach towards the enemy (allied: east, +x; central: west, −x). Display resolution only.
  */
 export const FRONT_BIN_M = 100;
+/**
+ * Neighbouring bins whose forward edges differ by more than this are not joined: the line is broken there. Where a side
+ * has nobody forward, its edge falls back to men far behind (a reserve kilometres back); joining the two would draw a
+ * false east–west front across the ground between them. A gap is honest; a false line is not.
+ */
+export const FRONT_BREAK_M = 400;
 /** A gap of up to this many bins with nobody of a side in it is bridged; a wider one breaks the line. */
 const MAX_GAP_BINS = 6;
 /** Fronts kept per record (one per battle minute asked for), so scrubbing back and forth reuses them. */
@@ -195,16 +201,18 @@ function bridge(xs: Array<number | undefined>): void {
   }
 }
 
-/** The polylines through the defined bins' centres, broken where a bin is undefined. */
+/** The polylines through the defined bins' centres, broken where a bin is undefined or jumps more than FRONT_BREAK_M. */
 function lines(xs: ReadonlyArray<number | undefined>, y0: number): FrontLine {
   const out: FrontLine = [];
   let cur: Point[] = [];
   for (let i = 0; i <= xs.length; i++) {
     const x = xs[i];
-    if (x === undefined) {
+    const last = cur[cur.length - 1];
+    if (x === undefined || (last && Math.abs(x - last[0]) > FRONT_BREAK_M)) {
       if (cur.length) out.push(cur);
       cur = [];
-    } else cur.push([x, y0 + (i + 0.5) * FRONT_BIN_M]);
+    }
+    if (x !== undefined) cur.push([x, y0 + (i + 0.5) * FRONT_BIN_M]);
   }
   return out;
 }

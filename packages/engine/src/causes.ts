@@ -63,6 +63,8 @@ export function emit(state: SimState, ...events: NewEvent[]): SimState {
       causes: e.causes ?? [],
       refs,
       ...(e.factors !== undefined ? { factors: e.factors } : {}),
+      ...(e.losses !== undefined ? { losses: e.losses } : {}),
+      ...(e.at !== undefined ? { at: e.at } : {}),
     };
   });
   return { ...state, events: [...state.events, ...out], nextEventId: id };

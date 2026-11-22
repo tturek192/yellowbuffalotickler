@@ -411,6 +411,9 @@ describe('mines', () => {
     expect(lost).toBeGreaterThan(20);
     expect(lost).toBeLessThan(60);
     expect(fired[0]!.factors!.menLost).toBe(lost);
+    // Task 18 fix round: whose men it buried, and where it was blown (for the crater on the map).
+    expect(fired[0]!.losses).toEqual({ central: { killed: lost, wounded: 0 } });
+    expect(fired[0]!.at).toEqual([150, 100]);
     expect(k(after, 'k2').men).toBe(k(zero, 'k2').men);
     for (const c of after.companies) expect(c.men + c.killed + c.wounded + c.captured).toBe(k(zero, c.id).men + k(zero, c.id).killed + k(zero, c.id).wounded + k(zero, c.id).captured);
     // The crater is broken ground: cratered (off the trench itself, which stays a trench), and slow going.

@@ -2,7 +2,7 @@ import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenar
 import type { CompanyState, CompanyStatus } from './companies';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.4';
+export const ENGINE_VERSION = '0.4.5';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -94,7 +94,11 @@ export type RunRecord = {
   endMinute: number;
   geometry: {
     lines: Scenario['lines'];
-    sectors: Array<{ id: string; yMin: number; yMax: number }>;
+    /**
+     * `reach` (engine 0.4.5 on): how far the sector's fire plan reaches (barrage.ts `planReachX`, its last leg's line plus
+     * the stand-off) at sample ys across it, to 0.1 m: the standing barrages fall no further than this.
+     */
+    sectors: Array<{ id: string; yMin: number; yMax: number; reach?: Point[] }>;
     /** Map features (trenches, wire, woods, …) in local metres, as the scenario holds them. */
     features: Feature[];
     /** The scenario's elevation grid; absent (not undefined) when the scenario has none. */

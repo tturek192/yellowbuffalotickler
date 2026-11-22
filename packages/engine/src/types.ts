@@ -51,6 +51,13 @@ export type SimEvent = {
   refs: number[];
   /** Numbers behind the event (a gap in metres, a wire-cut fraction, …), for the "why" trace. */
   factors?: Record<string, number>;
+  /**
+   * Fire and mine events (engine 0.4.5 on): the men they killed and wounded on each side, by the sides of the companies
+   * they fell on; a side is listed when the fire reached one of its companies, even if it hit nobody there.
+   */
+  losses?: Partial<Record<Side, { killed: number; wounded: number }>>;
+  /** Where a mine was blown, in local metres (engine 0.4.5 on). */
+  at?: Point;
 };
 
 /** What a company is trying to do this step (chosen by the behaviour phase). */

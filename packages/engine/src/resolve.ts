@@ -5,7 +5,7 @@ import { CAUSES } from './causes';
 import type { CompanyState } from './companies';
 import { stochasticRound } from './stochastic';
 import type { SimState, StepContext } from './step';
-import type { Applied, FireGroup, Pending, PendingDamage } from './types';
+import type { Applied, FireGroup, Pending, PendingDamage, Side } from './types';
 
 /**
  * The resolve phase, the one place damage is applied (the model, "Fire", "Suppression" and "Officers"), all at once:
@@ -37,10 +37,20 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
   }
 
   // Arrays, in the order the fires were gathered, so nothing depends on Map or Set iteration order.
-  type Tally = { fire: FireGroup; causes: Cause[]; refs: number[]; targets: Array<{ id: string; name: string }>; hit: number; killed: number; wounded: number };
+  type Tally = {
+    fire: FireGroup;
+    causes: Cause[];
+    refs: number[];
+    targets: Array<{ id: string; name: string }>;
+    hit: number;
+    killed: number;
+    wounded: number;
+    /** The same, by the side of the company hit (Task 18 fix round: playback reads the sides from the event). */
+    bySide: Partial<Record<Side, { killed: number; wounded: number }>>;
+  };
   const tallies: Tally[] = [];
   for (const p of pending.damage)
-    if (p.fire && !tallies.some((t) => t.fire.key === p.fire!.key)) tallies.push({ fire: p.fire, causes: [], refs: [], targets: [], hit: 0, killed: 0, wounded: 0 });
+    if (p.fire && !tallies.some((t) => t.fire.key === p.fire!.key)) tallies.push({ fire: p.fire, causes: [], refs: [], targets: [], hit: 0, killed: 0, wounded: 0, bySide: {} });
 
   // 1. Damage, company by company.
   type Done = { men: number; killed: number; wounded: number; officers: number; gain: number; hit: number; keys: Array<{ key: string; causes: Cause[] }> };
@@ -75,6 +85,9 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
         t.hit += n;
         t.killed += k;
         t.wounded += n - k;
+        const side = (t.bySide[c.side] ??= { killed: 0, wounded: 0 });
+        side.killed += k;
+        side.wounded += n - k;
       }
     }
     return r;
@@ -98,6 +111,8 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
       causes: CAUSES.filter((x) => t.causes.includes(x)),
       refs: [...t.refs].sort((a, b) => a - b),
       factors: { ...t.fire.factors, targets: t.targets.length, hit: t.hit, killed: t.killed, wounded: t.wounded },
+      // Sides in a fixed order, never the order the targets came in.
+      losses: Object.fromEntries((['allied', 'central'] as const).flatMap((s) => (t.bySide[s] ? [[s, t.bySide[s]]] : []))),
     };
   });
   let out = emit(state, ...fireEvents);

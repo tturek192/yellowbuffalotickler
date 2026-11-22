@@ -121,6 +121,7 @@ export function MapKey({ record }: { record: RunRecord }) {
   for (const f of record.geometry.features) if (!first.has(f.kind)) first.set(f.kind, f);
   const segments = (record.geometry.segments?.length ?? 0) > 0;
   const barrages = record.geometry.barrageDepthM !== undefined && (record.snapshots ?? []).some((x) => x.barrages.length > 0);
+  const mines = (record.events ?? []).some((e) => e.kind === 'mine-fired' && e.at !== undefined);
   const reserves = (record.snapshots ?? []).some((x) => (x.reserves?.rows.length ?? 0) > 0);
   return (
     <div className="map-key" aria-label="Map key" role="group">
@@ -179,6 +180,11 @@ export function MapKey({ record }: { record: RunRecord }) {
         <circle cx="7" cy="5" r="2" fill={EFFECT_STYLE.burst.shell} />
         <path d="M15 7l3-3M20 6l3-2.5M24 8l3-3" stroke={EFFECT_STYLE.burst.bullet} strokeWidth="1" />
       </KeyRow>
+      {mines && (
+        <KeyRow label="Mine crater">
+          <circle cx="14" cy="5" r="4" fill={EFFECT_STYLE.crater.fill} stroke={EFFECT_STYLE.crater.rim} strokeWidth="1.2" />
+        </KeyRow>
+      )}
       {reserves && (
         <KeyRow label="Reserve column marching in">
           <path d="M27 5H8" stroke={MAP_COLORS.central} strokeWidth="2.5" strokeDasharray="5 3" />
