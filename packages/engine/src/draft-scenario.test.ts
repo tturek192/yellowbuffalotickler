@@ -96,6 +96,9 @@ describe('draft Vimy scenario run', () => {
     // taken prisoner to the last man is logged as surrendered, and a scenario with no frame lists its sun at lat 0,
     // lon 0 (and its clear-weather bound) in defaultsUsed. The draft has no frame and no enemy: with those two default
     // lines removed and the version set back to 0.4.7 its record hashes to 9b81acf8, so only they and the version move it.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.8', hash: '438acf06' });
+    // 0.4.9 (Plan 4 Task 0): a company reports an enemy line taken or lost only when it sees some point of it in the
+    // sector, by the sight-line and visibility tests enemySeen uses (eyesOf). The draft has no enemy: only the version
+    // moves its record.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.9', hash: '1d5752dd' });
   });
 });

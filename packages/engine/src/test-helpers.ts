@@ -356,6 +356,11 @@ export type FireOpts = {
    * wait behind it (they start 100 minutes late unless lagMin says otherwise).
    */
   ridgeBetween?: boolean;
+  /**
+   * A ridge 30 m high and 100 m wide centred on x, from the south edge of the frame up to y `yMax` (default: across
+   * the whole front), and nothing else in the way (Plan 4 Task 0: between the garrisons and the Black Line).
+   */
+  ridge?: { x: number; yMax?: number };
   /** The attackers' start x (default -400) and how late they start (default 6 minutes, after the garrisons are up). */
   startX?: number;
   lagMin?: number;
@@ -375,14 +380,15 @@ export function fixtureFire(o: FireOpts = {}): [Scenario, Models] {
   s.artillery = [];
   for (const c of s.forces[1]!.formations[0]!.companies!) c.machineGuns = est(o.mgs ?? 1);
   for (const [p, row] of Object.entries(COVER)) for (const [g, value] of Object.entries(row)) (m.tables.cover as Record<string, Record<string, unknown>>)[p]![g] = param(value);
-  if (o.ridgeBetween) {
+  const ridge = o.ridge ?? (o.ridgeBetween ? { x: 0 } : undefined);
+  if (ridge) {
     const cellM = 25;
     const originX = -1000;
     const originY = -200;
     const cols = 121; // -1000 to 2000 m
     const rows = 33; // -200 to 600 m
     const elev = new Float32Array(cols * rows);
-    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) elev[j * cols + i] = Math.abs(originX + i * cellM) <= 50 ? 30 : 0;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) elev[j * cols + i] = Math.abs(originX + i * cellM - ridge.x) <= 50 && originY + j * cellM <= (ridge.yMax ?? Infinity) ? 30 : 0;
     s.terrainGrid = encodeTerrain({ cellM, originX, originY, cols, rows, elevM: elev });
   }
   return [s, m];

@@ -986,8 +986,8 @@ export function commsPhase(state: SimState, ctx: StepContext): SimState {
 
 /**
  * The end of a step (the log phase): every company whose status changed, that took a segment, whose own segment
- * changed hands, or whose objective line was taken, or that sees an enemy line taken or lost (within `observerRangeM` of
- * it in its sector: the enemy's lines in its HQs' pictures come only from these, Task 13) reports to its battalion; so does one whose men have changed since
+ * changed hands, or whose objective line was taken, or that sees an enemy line taken or lost (some point of it in its
+ * sector, by `eyesOf`: the enemy's lines in its HQs' pictures come only from these, Task 13; Plan 4 Task 0) reports to its battalion; so does one whose men have changed since
  * its last report once `reportEveryMin` (its doctrine) has passed since then (a routine report: at most one a period,
  * and none while nothing changed). A company newly pinned calls for fire on the nearest segment the enemy holds that it
  * can see some of (`eyesOf`: within the visibility and `observerRangeM`, in its line of sight). Companies in ascending id order, the report before the call. Companies off the map report nothing.
@@ -1011,23 +1011,24 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
   let eyes: ReturnType<typeof eyesOf> | undefined;
   let w: Work | null = null;
   let last: Map<string, SimState['lastReport'] extends ReadonlyMap<string, infer R> ? R : never> | null = null;
-  const range = v(ctx.tables.effects.observerRangeM);
   // Segments change hands only with a segment-lost or segment-retaken event: without one, no holder is looked at.
   const anySeg = took.size > 0;
   const every = (c: CompanyState): number => v(ctx.doctrines[c.doctrineId]!.common.reportEveryMin);
   // The enemy's lines taken or lost this step, which its companies in sight of them report (Task 13: what a defender's
   // headquarters knows of the attacker's lines comes from these reports).
   const enemyLineEvents = [...[...linesTaken.keys()].map((k) => [k, 'taken'] as const), ...[...linesLost.keys()].map((k) => [k, 'lost'] as const)];
-  const seesLines = (c: CompanyState): Array<readonly [string, 'taken' | 'lost']> =>
-    enemyLineEvents.filter(([k]) => {
+  // Seen as the enemy is (`eyesOf`: the sight line and visibility fire uses), at some point of the line in its sector.
+  const seesLines = (c: CompanyState): Array<readonly [string, 'taken' | 'lost']> => {
+    let look: ((x: number, y: number) => boolean) | undefined;
+    return enemyLineEvents.filter(([k]) => {
       if (lineTakerOf(state, ctx, k) === c.side || !onField(c)) return false;
       const [lineId, sectorId] = k.split('|') as [string, string];
       const line = ctx.lines.get(lineId);
       const sector = ctx.scenario.sectors.find((x) => x.id === sectorId);
       if (!line || !sector) return false;
-      const y = Math.min(Math.max(c.y, sector.yMin), sector.yMax);
-      return Math.hypot(lineXAt(line, y) - c.x, y - c.y) <= range;
+      return seesAny((look ??= (eyes ??= eyesOf(state, ctx)).of(c)), lineSamplesOf(line, sector));
     });
+  };
   for (const c of state.companies) {
     if (c.status === 'off-map') continue;
     const had = state.lastReport.get(c.id);
@@ -1129,6 +1130,24 @@ function samplesOf(z: LineZone): Point[] {
       out.push([lineXAt(z.line, y), y], [lineXAt(z.prev, y), y]);
     }
     zoneSamples.set(z, out);
+  }
+  return out;
+}
+
+/** Points along a line's trace in a sector (every 25 m of y over the sector's `[yMin, yMax]`), worked out once. */
+const lineSamples = new WeakMap<object, WeakMap<object, Point[]>>();
+function lineSamplesOf(line: Parameters<typeof lineXAt>[0], sector: { yMin: number; yMax: number }): Point[] {
+  let bySector = lineSamples.get(line);
+  if (!bySector) lineSamples.set(line, (bySector = new WeakMap()));
+  let out = bySector.get(sector);
+  if (!out) {
+    out = [];
+    const n = Math.max(1, Math.ceil((sector.yMax - sector.yMin) / 25));
+    for (let i = 0; i <= n; i++) {
+      const y = sector.yMin + ((sector.yMax - sector.yMin) * i) / n;
+      out.push([lineXAt(line, y), y]);
+    }
+    bySector.set(sector, out);
   }
   return out;
 }

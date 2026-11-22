@@ -461,3 +461,44 @@ describe('what a company sees of the enemy (final review fix)', () => {
     expect(calls(fixtureFire({ ridgeBetween: true }))).toEqual([]);
   });
 });
+
+describe('what a company reports of enemy lines taken or lost (Plan 4 Task 0)', () => {
+  const OBSERVER = 'k1';
+  const LINE_KEY = 'black|s1';
+  type LineOpts = { ridgeBetween?: boolean; hiddenAtOwnY?: boolean; visibilityM?: number; zeroHour?: string };
+  /**
+   * fixtureFire with the Black Line (x 1150, y 0 to 400, the allies' objective) taken: the observer k1 (German, x 150,
+   * y 100) is 1,000 m from it, within observerRangeM. `ridgeBetween`: a ridge across the whole front at x 650, between
+   * them; `hiddenAtOwnY`: the ridge only up to y 200, so the trace at k1's y is hidden but the line's north end is not.
+   */
+  const lineTakenFixture = (o: LineOpts = {}): [Scenario, Models] => {
+    const f = fixtureFire(o.ridgeBetween ? { ridge: { x: 650 } } : o.hiddenAtOwnY ? { ridge: { x: 650, yMax: 200 } } : {});
+    if (o.visibilityM !== undefined) f[0].weather = [{ at: '1916-07-01T00:00', precipitation: est('none'), visibilityM: est(o.visibilityM) }];
+    if (o.zeroHour !== undefined) f[0].zeroHour = est(o.zeroHour);
+    return f;
+  };
+  /** The enemy lines an observer of the side that did not take it names in its report, the step a line is taken within 1.5 km of it. */
+  const linesReported = (f: [Scenario, Models], observerId: string): string[] => {
+    const { state, ctx } = initRun(...f, { seed: 1 });
+    const taken = { id: state.nextEventId, minute: 2, kind: 'line-taken', sectorId: 's1', lineId: 'black', text: 'Black Line taken', causes: ['followed-barrage'], refs: [] } as SimState['events'][number];
+    const s: SimState = { ...state, minute: 2, events: [taken], nextEventId: state.nextEventId + 1 };
+    const out = companyReports(s, ctx);
+    return out.messages
+      .filter((m) => m.kind === 'report' && m.fromFormationId === observerId)
+      .flatMap((m) => Object.keys((m.payload as Report).lines));
+  };
+
+  it('reports a line taken within observerRangeM that it can see, in daylight and clear weather', () => {
+    expect(linesReported(lineTakenFixture(), OBSERVER)).toEqual([LINE_KEY]);
+  });
+  it('does not report a line taken within 1.5 km with no line of sight to any point of it in the sector', () => {
+    expect(linesReported(lineTakenFixture({ ridgeBetween: true }), OBSERVER)).toEqual([]);
+  });
+  it('does not report it in mist (the weather) or at night (nightVisibilityM)', () => {
+    expect(linesReported(lineTakenFixture({ visibilityM: 300 }), OBSERVER)).toEqual([]);
+    expect(linesReported(lineTakenFixture({ zeroHour: '1916-07-01T01:00' }), OBSERVER)).toEqual([]);
+  });
+  it('sees the line at some point in the sector even where the trace at its own y is hidden', () => {
+    expect(linesReported(lineTakenFixture({ hiddenAtOwnY: true }), OBSERVER)).toEqual([LINE_KEY]);
+  });
+});

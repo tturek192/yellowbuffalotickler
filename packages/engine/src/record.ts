@@ -3,7 +3,7 @@ import type { CompanyState, CompanyStatus, Role } from './companies';
 import type { DivisionInsignia } from './insignia';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.8';
+export const ENGINE_VERSION = '0.4.9';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;

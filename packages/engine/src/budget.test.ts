@@ -44,12 +44,17 @@ function timedRuns(): Promise<{ cold: Timed; warm: Timed[] }> {
  * The batch budget is met. Whether to re-baseline the run budget or trim the model is the owner's choice, still pending.
  * Until then this test is a regression guard with margin over those measurements: cold ≤ 4500 ms, the best of three warm
  * runs ≤ 3500 ms, and the record (met and kept) ≤ 8 MB.
+ * Plan 4 Task 0 (engine 0.4.9, provisional ruling, for the owner to see): companies report enemy lines only when they
+ * see them, a correctness fix that makes the simulated battle do more work (Vimy seed 1: 687 → 1029 busy steps, most of
+ * them the corps committing reserves to the stalled 4th Division Red Line on 10–11 April), not a slower step. Measured
+ * then at about 4.7–4.8 s cold and 4.0 s warm best, the guards are re-baselined to about 10% over that: cold ≤ 5300 ms,
+ * warm best of three ≤ 4400 ms, the record still ≤ 8 MB. The 3 s target is still unmet, pending the owner's decision.
  */
-const COLD_CPU_MS = 4500;
-const WARM_CPU_MS = 3500;
+const COLD_CPU_MS = 5300;
+const WARM_CPU_MS = 4400;
 
 describe('performance budget (Global Constraints; Review Focus 4)', () => {
-  it('a full Vimy run stays within 4500 ms of CPU cold and 3500 ms warm (target 3000 ms unmet, owner to decide), its record within 8 MB', async () => {
+  it('a full Vimy run stays within 5300 ms of CPU cold and 4400 ms warm (target 3000 ms unmet, owner to decide), its record within 8 MB', async () => {
     const { cold, warm } = await timedRuns();
     const best = Math.min(...warm.map((r) => r.cpuMs));
     console.log(
