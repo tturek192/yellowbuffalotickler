@@ -32,7 +32,9 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
   const byTarget = new Map<string, PendingDamage[]>();
   const usedBy = new Map<string, number>();
   for (const p of pending.damage) {
-    byTarget.set(p.targetId, [...(byTarget.get(p.targetId) ?? []), p]);
+    const ps = byTarget.get(p.targetId);
+    if (ps) ps.push(p);
+    else byTarget.set(p.targetId, [p]);
     if (p.firerId !== undefined && p.ammoUsed !== undefined) usedBy.set(p.firerId, (usedBy.get(p.firerId) ?? 0) + p.ammoUsed);
   }
 
@@ -49,8 +51,13 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
     bySide: Partial<Record<Side, { killed: number; wounded: number }>>;
   };
   const tallies: Tally[] = [];
+  const tallyOf = new Map<string, Tally>(); // fire key -> its tally (looked up only)
   for (const p of pending.damage)
-    if (p.fire && !tallies.some((t) => t.fire.key === p.fire!.key)) tallies.push({ fire: p.fire, causes: [], refs: [], targets: [], hit: 0, killed: 0, wounded: 0, bySide: {} });
+    if (p.fire && !tallyOf.has(p.fire.key)) {
+      const t: Tally = { fire: p.fire, causes: [], refs: [], targets: [], hit: 0, killed: 0, wounded: 0, bySide: {} };
+      tallies.push(t);
+      tallyOf.set(p.fire.key, t);
+    }
 
   // 1. Damage, company by company.
   type Done = { men: number; killed: number; wounded: number; officers: number; gain: number; hit: number; keys: Array<{ key: string; causes: Cause[] }> };
@@ -77,11 +84,12 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
       if (seen) {
         for (const x of p.causes) if (!seen.causes.includes(x)) seen.causes.push(x);
       } else r.keys.push({ key, causes: [...p.causes] });
-      const t = p.fire && tallies.find((x) => x.fire.key === p.fire!.key);
+      const t = p.fire && tallyOf.get(p.fire.key);
       if (t) {
         for (const x of p.causes) if (!t.causes.includes(x)) t.causes.push(x);
         for (const x of p.refs) if (!t.refs.includes(x)) t.refs.push(x);
-        if (!t.targets.some((x) => x.id === c.id)) t.targets.push({ id: c.id, name: c.name });
+        // Companies come one at a time, so a target already noted is the last one.
+        if (t.targets.length === 0 || t.targets[t.targets.length - 1]!.id !== c.id) t.targets.push({ id: c.id, name: c.name });
         t.hit += n;
         t.killed += k;
         t.wounded += n - k;
@@ -127,14 +135,17 @@ export function resolve(state: SimState, ctx: StepContext, dt: number, pending: 
     const ammo = used > 0 ? Math.max(0, c.ammo - used) : c.ammo;
     // Fire is noted in minute order, so nothing has gone stale while the oldest is still recent.
     const recent = c.recentFire.length === 0 || c.recentFire[0]!.minute > since ? c.recentFire : c.recentFire.filter((x) => x.minute > since);
-    let next: CompanyState = ammo === c.ammo && recent.length === c.recentFire.length ? c : { ...c, ammo, recentFire: recent };
+    const same = ammo === c.ammo && recent.length === c.recentFire.length;
     if (c.ammo > 0 && ammo <= 0) {
       later.push({ minute: state.minute, kind: 'ammunition-exhausted', unitId: c.id, ...(c.sectorId ? { sectorId: c.sectorId } : {}), text: `${c.name} has fired its last rounds`, causes: ['ammunition-low'] });
     }
     if (!r) {
-      const s = next.suppression * decay;
-      return s === next.suppression ? next : { ...next, suppression: s };
+      // One copy for all that changed (the keys are all the company's own, so they keep their places).
+      const s = c.suppression * decay;
+      if (s === c.suppression) return same ? c : { ...c, ammo, recentFire: recent };
+      return same ? { ...c, suppression: s } : { ...c, ammo, recentFire: recent, suppression: s };
     }
+    let next: CompanyState = same ? c : { ...c, ammo, recentFire: recent };
     applied.set(c.id, { menBefore: c.men, hit: r.hit });
     const fireRefs = r.keys.flatMap((x) => (eventOf.has(x.key) ? [eventOf.get(x.key)!] : []));
     next = {
