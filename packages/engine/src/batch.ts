@@ -38,6 +38,8 @@ export type PrisonerRow = Spread & { bySide: Side; from: number; to: number; tar
 export type GunsRow = Spread & { from: number; to: number; target: number; range?: [number, number]; pass: null };
 /** When runs ended (minutes after Zero), beside `historical.endedAt`. */
 export type DurationRow = Spread & { target: number | null; range?: [number, number]; pass: boolean | null };
+/** The share of runs that end with each side holding a piece of key ground (`end.keyGround`), none when no side holds it; reported only. */
+export type KeyGroundRow = { id: string; name: string; allied: number; central: number; none: number };
 /** The share of runs each side won (none: no side held more of the key ground), beside `historical.winner`. */
 export type WinnerRow = { allied: number; central: number; none: number; historical: Side | null; pass: boolean | null };
 
@@ -49,6 +51,8 @@ export interface BatchSummary {
   gunsCaptured: GunsRow | null;
   duration: DurationRow;
   winner: WinnerRow;
+  /** Who holds each piece of key ground at the end, as shares of the runs (Task 19 fix round). */
+  keyGround: KeyGroundRow[];
 }
 
 /** What the batch needs of one run: its lines taken, its numbers for each target (in the targets' order), its end and winner. */
@@ -60,6 +64,8 @@ export type RunExtract = {
   gunsCaptured: number | null;
   endedAt: number;
   winner: Side | null;
+  /** Each piece of key ground and who held it at the end (the run's summary). */
+  keyGround: Array<{ id: string; name: string; holder: Side | null }>;
 };
 
 /** Linear-interpolation quantiles (qs in [0,1]) over the sorted values. */
@@ -148,6 +154,7 @@ export function extractRun(s: Scenario, r: RunRecord): RunExtract {
       : null,
     endedAt: r.summary.endedAt,
     winner: r.summary.winner,
+    keyGround: r.summary.keyGround.map(({ id, name, holder }) => ({ id, name, holder })),
   };
 }
 
@@ -217,8 +224,20 @@ export function summarizeBatch(s: Scenario, runs: RunExtract[]): BatchSummary {
   const share = (w: Side | null) => (ordered.length ? ordered.filter((r) => r.winner === w).length / ordered.length : 0);
   const historical = h.winner ? v(h.winner) : null;
   const winner: WinnerRow = { allied: share('allied'), central: share('central'), none: share(null), historical, pass: historical && ordered.length ? share(historical) > 0.5 : null };
-  return { runs: ordered.length, lines, casualties, prisoners, gunsCaptured, duration, winner };
+  // Key ground in the order the runs name it (every run of a scenario names the same pieces).
+  const grounds = new Map<string, KeyGroundRow>();
+  for (const run of ordered)
+    for (const k of run.keyGround ?? []) {
+      let g = grounds.get(k.id);
+      if (!g) grounds.set(k.id, (g = { id: k.id, name: k.name, allied: 0, central: 0, none: 0 }));
+      g[k.holder ?? 'none'] += 1 / ordered.length;
+    }
+  const keyGround = [...grounds.values()].map((g) => ({ ...g, allied: round6(g.allied), central: round6(g.central), none: round6(g.none) }));
+  return { runs: ordered.length, lines, casualties, prisoners, gunsCaptured, duration, winner, keyGround };
 }
+
+/** A share rounded to 6 decimals, so sums of 1/n come out as the plain fraction. */
+const round6 = (x: number): number => Math.round(x * 1e6) / 1e6;
 
 /** Run the seeds in this process and summarise them. */
 export function runBatch(s: Scenario, models: Models, seeds: number[]): BatchSummary {

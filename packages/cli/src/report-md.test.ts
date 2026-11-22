@@ -102,6 +102,7 @@ function fakeBatch(): BatchSummary {
     gunsCaptured: { from: 0, to: 2669, target: 54, range: [54, 63], p10: 150, median: 197, p90: 200, pass: null },
     duration: { target: 4290, range: [4290, 4440], p10: 4000, median: 5070, p90: 6000, pass: true },
     winner: { allied: 0.1, central: 0.9, none: 0, historical: 'allied', pass: false },
+    keyGround: [{ id: 'crest', name: 'The crest', allied: 0.25, central: 0.7, none: 0.05 }],
   };
 }
 
@@ -207,6 +208,33 @@ describe('the model report', () => {
     expect(explainPart).not.toMatch(/### Black Line/);
   });
 
+  it('shows who held each piece of key ground at the end, as shares of the batch', () => {
+    const md = reportToMarkdown(fakeBatch(), fakeRun(), minimalTables());
+    expect(md).toMatch(/### Key ground at the end/);
+    expect(md).toMatch(/\| The crest \(crest\) \| 25% \| 70% \| 5% \|/);
+  });
+
+  it('warns above the ranking that it credits ground changes to ancestors but men lost only to the event, and that fire has no firer refs', () => {
+    const md = reportToMarkdown(fakeBatch(), fakeRun(), minimalTables());
+    const part = md.slice(md.indexOf('## Most consequential events'), md.indexOf('### The 10 most frequent causes'));
+    expect(part).toMatch(/\*\*Caveat\.\*\*/);
+    expect(part).toMatch(/men lost count only on the event itself/);
+    expect(part).toMatch(/direct-fire events carry no refs to their firers/);
+    expect(part).toMatch(/under-ranked/);
+  });
+
+  it('for a line never taken, explains the last order that names it (a stalled line), else the last event that names it', () => {
+    const run = fakeRun();
+    run.events.push(
+      ev(8, 'order-issued', { lineId: 'blue', sectorId: 's1', text: 'Brigade commits a battalion to the stalled Blue Line', causes: ['timetable'] }),
+      ev(9, 'company-reached', { lineId: 'blue', sectorId: 's1', unitId: 'cdn-a' }),
+    );
+    const md = reportToMarkdown(fakeBatch(), run, minimalTables());
+    const blue = md.slice(md.indexOf('### Blue Line'));
+    expect(blue).toMatch(/#8 .*order-issued/);
+    expect(blue).not.toMatch(/#9 /);
+  });
+
   it('writes a marked placeholder for the commentary, or keeps the hand-written one it is given', () => {
     const md = reportToMarkdown(fakeBatch(), fakeRun(), minimalTables());
     expect(md).toContain('## Reading this report');
@@ -248,6 +276,22 @@ describe('sim report', () => {
     expect(run(['report', draft, '--runs', '2', '--workers', '2', '--out', out]).status).toBe(0);
     expect(extractCommentary(readFileSync(out, 'utf8'))).toBe('\nHand-written.\n');
   }, 120_000);
+
+  it('refuses, with nothing run or changed, a report whose commentary markers are broken or gone', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sim-report-'));
+    for (const [name, text] of [
+      ['broken.md', `# r\n${COMMENTARY_START}\nmine\n`],
+      ['bare.md', '# r\n\n## Reading this report\n\nmine\n'],
+    ] as const) {
+      const out = join(dir, name);
+      writeFileSync(out, text);
+      const r = run(['report', draft, '--runs', '2', '--out', out]);
+      expect(r.status).toBe(3);
+      expect(r.stderr.trim().split('\n')).toHaveLength(1);
+      expect(r.stderr).toMatch(/commentary/);
+      expect(readFileSync(out, 'utf8')).toBe(text);
+    }
+  });
 
   it('exits 1 with usage without --runs or --out', () => {
     expect(run(['report', draft, '--runs', '2']).status).toBe(1);

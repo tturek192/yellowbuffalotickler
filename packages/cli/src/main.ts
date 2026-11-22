@@ -111,6 +111,8 @@ async function main(argv: string[]): Promise<void> {
     // The hand-written commentary of an earlier report at --out is read first (a broken block stops here, before anything
     // is run or written) and carried into the new one.
     const commentary = existsSync(out) ? extractCommentary(readFileSync(out, 'utf8')) : null;
+    // An existing file with no commentary block may hold hand-written text all the same: never overwrite it.
+    if (existsSync(out) && commentary === null) throw new Error(`${out} exists and has no builder commentary block: move it away, or add the markers, before the report is written`);
     const seeds = Array.from({ length: runs }, (_, i) => seedStart + i);
     const started = performance.now();
     const b = await batchInWorkers({ scenarioFile: resolve(file), doctrineDir: resolve(values['doctrine-dir'] ?? 'doctrine'), tablesDir: resolve(values['tables-dir'] ?? 'tables'), seeds, workers: workers ?? 1 });

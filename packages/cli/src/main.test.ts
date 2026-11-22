@@ -82,7 +82,7 @@ describe('cli', () => {
     expect(json.code).toBe(0);
     const b = JSON.parse(json.stdout);
     expect(b.runs).toBe(3);
-    expect(Object.keys(b)).toEqual(['runs', 'lines', 'casualties', 'prisoners', 'gunsCaptured', 'duration', 'winner']);
+    expect(Object.keys(b)).toEqual(['runs', 'lines', 'casualties', 'prisoners', 'gunsCaptured', 'duration', 'winner', 'keyGround']);
     expect(runCli(['batch', draft, '--runs', '3', '--workers', '0']).code).toBe(1);
   });
 

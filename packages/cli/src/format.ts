@@ -76,5 +76,6 @@ export function formatBatchV2(b: BatchSummary, zeroHour: string): string {
   parts.push(table(['ended', 'target', 'p10', 'median', 'p90', 'pass'], [['runs', endTarget, clock(zeroHour, d.p10), clock(zeroHour, d.median), clock(zeroHour, d.p90), passText(d.pass)]]));
   const w = b.winner;
   parts.push(`winner: allied ${pct(w.allied)}, central ${pct(w.central)}, none ${pct(w.none)} of ${b.runs} runs · historical ${w.historical ?? '—'} · ${passText(w.pass)}`);
+  if (b.keyGround?.length) parts.push(`key ground at the end: ${b.keyGround.map((k) => `${k.id} allied ${pct(k.allied)} / central ${pct(k.central)} / none ${pct(k.none)}`).join('; ')}`);
   return parts.join('\n\n');
 }

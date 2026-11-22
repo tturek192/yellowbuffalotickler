@@ -43,7 +43,7 @@ export { ARTILLERY, commsPhase, companyReports, fireMissionEnds, hqPositionOf, i
 export { initRun, runScenario } from './run';
 export type { Models, RunOptions } from './run';
 export { casualtyPass, durationPass, extractRun, quantiles, runBatch, summarizeBatch } from './batch';
-export type { BatchLine, BatchSummary, CasualtyRow, DurationRow, GunsRow, PrisonerRow, RunExtract, Spread, Target, WinnerRow } from './batch';
+export type { BatchLine, BatchSummary, CasualtyRow, DurationRow, GunsRow, PrisonerRow, KeyGroundRow, RunExtract, Spread, Target, WinnerRow } from './batch';
 export { endCheck, endRun, finalLines, holderOf, lullDue, lullMin, winnerOf } from './end';
 export { summarize } from './summary';
 export { expandSnapshots, KEYFRAME_EVERY, snapshotWriter } from './snapshots';

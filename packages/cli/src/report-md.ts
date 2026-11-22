@@ -344,6 +344,16 @@ export function reportToMarkdown(batch: BatchSummary, run: RunRecord, params: Re
   }
   out.push('### Duration and winner', '');
   out.push(...tableMd(['Target', 'Historical', 'Model', 'Pass'], endRows.map((r) => [r.label, ...r.cells, passCell(r.pass)])), '');
+  if (batch.keyGround?.length) {
+    out.push(
+      '### Key ground at the end',
+      '',
+      `Who held each piece of key ground when each run ended, as shares of the ${batch.runs} runs (not a target: the winner is the side holding most of it).`,
+      '',
+      ...tableMd(['Key ground', 'Allied', 'German', 'None'], batch.keyGround.map((k) => [`${k.name} (${k.id})`, pct(k.allied), pct(k.central), pct(k.none)])),
+      '',
+    );
+  }
 
   // The events that mattered most, and their causes.
   const top = consequentialEvents(run.events, 50);
@@ -355,6 +365,13 @@ export function reportToMarkdown(batch: BatchSummary, run: RunRecord, params: Re
       `trapping or clearing; the garrison lost to a bombardment result) + ${MEN_PER_CHANGE} × the trench segments and objective lines ` +
       `changing hands (segment-lost, segment-retaken, line-taken, line-lost) whose refs lead back to it within ${CHAIN_DEPTH} levels, ` +
       'the change itself included. Batch extracts keep no events, so this reads the explained run only.',
+    '',
+    '**Caveat.** The ranking is lopsided. A ground change is credited to every event its refs lead back to, but men lost count only on the event itself. ' +
+      'Bookkeeping events on the way to a taking (barrage lifts, companies reaching a line, orders) therefore rank high while losing no men, and the causes ' +
+      'that sit on nearly every attacking chain (`timetable`, `followed-barrage`) top the cause counts without telling one event from another. ' +
+      'Fire is logged per target company and per step, and direct-fire events carry no refs to their firers, so a single fire event seldom reaches ' +
+      `${MEN_PER_CHANGE} men and no chain gathers a firer's losses together: fire losses are under-ranked here, however many men they cost in all. ` +
+      'Grouping losses by firer needs firer ids on fire events (a Plan 4 item). Read this section as "what moved the ground", not "what cost the men".',
     '',
     `### The 10 most frequent causes on the ${top.length} most consequential events`,
     '',
@@ -396,10 +413,12 @@ export function reportToMarkdown(batch: BatchSummary, run: RunRecord, params: Re
       const e = run.events.find((x) => x.kind === 'line-taken' && x.lineId === l.lineId && x.sectorId === l.sectorId);
       out.push(...(e ? chain(e.id) : ['The run records the taking but no line-taken event for it.']), '');
     } else {
-      // Never taken: the last event of the run that names the line.
+      // Never taken: the last order that names the line (a headquarters committing troops to it as stalled), else the last event that names it.
       const named = run.events.filter((x) => x.lineId === l.lineId && (x.sectorId === undefined || x.sectorId === l.sectorId));
-      const last = named[named.length - 1];
-      out.push(...(last ? [`The last event that names this line, and its chain:`, '', ...chain(last.id)] : ['No event in this run names this line.']), '');
+      const orders = named.filter((x) => x.kind === 'order-issued');
+      const last = orders[orders.length - 1] ?? named[named.length - 1];
+      const what = orders.length ? `The last of the ${orders.length} order(s) that commit troops to this line, and its chain:` : 'The last event that names this line, and its chain:';
+      out.push(...(last ? [what, '', ...chain(last.id)] : ['No event in this run names this line.']), '');
     }
   }
 

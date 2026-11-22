@@ -82,4 +82,21 @@ describe('batch v2: runs against the historical targets (Task 15)', () => {
     const per = [3, 1, 2].map((seed) => extractRun(s, runScenario(s, m, { seed })));
     expect(summarizeBatch(s, per)).toEqual(runBatch(s, m, [1, 2, 3]));
   });
+
+  it('the share of runs each side ends holding each piece of key ground, in the order the runs name it', () => {
+    const [s] = withTargets();
+    const run = (seed: number, holders: Array<'allied' | 'central' | null>) => ({
+      seed, lineTaken: [], casualties: [0, 0], prisoners: [0], gunsCaptured: 0, endedAt: 60, winner: null,
+      keyGround: holders.map((holder, i) => ({ id: `k${i}`, name: `Key ${i}`, holder })),
+    });
+    const b = summarizeBatch(s, [run(2, ['central', null]), run(1, ['allied', 'central']), run(3, ['central', 'central']), run(4, ['allied', 'central'])]);
+    expect(b.keyGround).toEqual([
+      { id: 'k0', name: 'Key 0', allied: 0.5, central: 0.5, none: 0 },
+      { id: 'k1', name: 'Key 1', allied: 0, central: 0.75, none: 0.25 },
+    ]);
+    // A real run's extract carries its key-ground holders from the summary.
+    const [s2, m] = withTargets();
+    const r = runScenario(s2, m, { seed: 1 });
+    expect(extractRun(s2, r).keyGround).toEqual(r.summary.keyGround.map(({ id, name, holder }) => ({ id, name, holder })));
+  });
 });
