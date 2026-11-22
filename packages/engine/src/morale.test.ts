@@ -5,7 +5,8 @@ import { CAUSES } from './causes';
 import { runPipeline } from './pipeline';
 import type { SimState, StepContext } from './step';
 import { initRun } from './run';
-import { eventsOf, fixtureFire, ofKind, runCrush, totalsOverTime } from './test-helpers';
+import { morale } from './morale';
+import { eventsOf, fixtureDugouts, fixtureFire, ofKind, runCrush, runDugouts, totalsOverTime } from './test-helpers';
 
 const runStep = (s: SimState, ctx: StepContext): SimState => runPipeline(s, ctx, 2);
 const ratings = (moraleEffect: number) => ({ planning: est(3), orderSpeed: est(3), adaptiveness: est(3), riskTolerance: est(3), moraleEffect: est(moraleEffect) });
@@ -95,5 +96,46 @@ describe('morale', () => {
     expect(c1.morale).toBeGreaterThan(0.6);
     expect(c1.morale).toBeLessThanOrEqual(c1.moraleStart);
     expect(c1.suppression).toBeLessThan(0.01);
+  });
+});
+
+describe('a garrison taken prisoner to the last man (final review fix)', () => {
+  it('is logged as surrendered, not destroyed: cause defenders-trapped, refs to its trapping and to the dugouts cleared', () => {
+    const r = runDugouts({ mopUp: true });
+    const k1 = r.events.filter((e) => e.unitId === 'k1' && (e.kind === 'company-destroyed' || e.kind === 'company-surrendered'));
+    expect(k1.map((e) => e.kind)).toEqual(['company-surrendered']);
+    const e = k1[0]!;
+    const trapped = r.events.find((x) => x.kind === 'defenders-trapped' && x.segmentId === 'ger-front-a:001')!;
+    const cleared = r.events.find((x) => x.kind === 'dugout-cleared' && x.segmentId === 'ger-front-a:001')!;
+    expect(e.text).toBe('1. Kompanie is taken prisoner to the last man: 120 men captured');
+    expect(e.causes).toEqual(['defenders-trapped']);
+    expect(e.refs).toEqual([trapped.id, cleared.id]);
+    // The men were counted as captured by the trapping and the clearing; this event adds none (playback totals, the report).
+    expect(e.factors).toMatchObject({ men: 0, captured: 120 });
+  });
+
+  it('a garrison shelled in the bombardment and then taken prisoner does not give artillery fire as the cause', () => {
+    const { state, ctx } = initRun(...fixtureDugouts({ mopUp: false }), { seed: 1 });
+    const s: SimState = {
+      ...state,
+      minute: 40,
+      events: [],
+      companies: state.companies.map((c) =>
+        c.id === 'k1' ? { ...c, men: 0, captured: c.men - 10, bombardment: { ...c.bombardment, killed: 4, wounded: 6 }, killed: c.killed + 4, wounded: c.wounded + 6, recentFire: [], takenPrisoner: { eventId: 0, minute: 30 } } : c,
+      ),
+    };
+    const out = morale(s, ctx, 2, { damage: [] });
+    const e = out.events.find((x) => x.unitId === 'k1')!;
+    expect(e.kind).toBe('company-surrendered');
+    expect(e.causes).not.toContain('artillery-fire');
+    expect(out.companies.find((c) => c.id === 'k1')!.status).toBe('surrendered');
+  });
+
+  it('a company shot down to the last man is still destroyed', () => {
+    const { state, ctx } = initRun(...fixtureFire(), { seed: 1 });
+    const s: SimState = { ...state, minute: 40, events: [], companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, men: 0, killed: c.men, recentFire: [{ minute: 40, eventId: null, causes: ['mg-fire'] }] } : c)) };
+    const e = morale(s, ctx, 2, { damage: [] }).events.find((x) => x.unitId === 'c1')!;
+    expect(e.kind).toBe('company-destroyed');
+    expect(e.causes).toContain('mg-fire');
   });
 });

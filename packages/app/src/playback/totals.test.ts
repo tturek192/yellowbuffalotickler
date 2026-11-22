@@ -44,6 +44,12 @@ describe('running totals', () => {
     expect(end.casualties.central).toMatchObject({ killed: 44 + 3 + 1, wounded: 11 + 4 + 2 });
   });
 
+  it('a garrison taken prisoner to the last man (engine 0.4.8: company-surrendered with men 0) adds no prisoners: its trapping and clearing counted them', () => {
+    const extra = { kind: 'company-surrendered', minute: 31, unitId: 'g1', text: 'taken prisoner to the last man', causes: ['defenders-trapped'], refs: [], factors: { men: 0, captured: 110 } } as unknown as SimEvent;
+    const withTaken = { ...r, events: [...r.events, extra].sort((a, b) => a.minute - b.minute) } as typeof r;
+    expect(totalsAt(withTaken, 60)).toEqual(totalsAt(r, 60));
+  });
+
   it('the bombardment before Zero is not counted (the summary keeps it apart)', () => {
     expect(totalsAt(r, 50).casualties.central.killed).toBe(44);
   });

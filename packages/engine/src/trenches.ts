@@ -555,7 +555,9 @@ export function mopUp(state: SimState, ctx: StepContext, dt: number): SimState {
       cap -= n;
       used += n;
       const p: DugoutPoint = { ...point, men: left - n, cleared: point.cleared + n };
-      companies = companies.map((c) => (c.id === g.id ? { ...c, men: c.men - n, captured: c.captured + n } : c));
+      // The event that took them: this point's clearing once it is cleared out (its id, as emitted below), else its trapping.
+      const taken = p.men === 0 ? { eventId: state.nextEventId + events.length, minute: state.minute } : { eventId: point.eventId, minute: state.minute };
+      companies = companies.map((c) => (c.id === g.id ? { ...c, men: c.men - n, captured: c.captured + n, ...(n > 0 ? { takenPrisoner: taken } : {}) } : c));
       // A company has at most one point in a segment: it is replaced, or gone once cleared out.
       segments = segments.map((x) => (x.id !== seg.id ? x : { ...x, dugoutPoints: x.dugoutPoints.flatMap((q) => (q.companyId !== point.companyId ? [q] : p.men > 0 ? [p] : [])) }));
       if (p.men === 0)

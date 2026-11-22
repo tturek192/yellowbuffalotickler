@@ -97,7 +97,8 @@ const STATE_EVENT = { pinned: 'company-pinned', 'falling-back': 'company-fell-ba
 
 /**
  * The morale phase, company by company in ascending id order, after `resolve`:
- * - a company with no men left standing is destroyed (`company-destroyed`);
+ * - a company with no men left standing is destroyed (`company-destroyed`), or, taken prisoner to the last man (trapped
+ *   or its dugouts cleared out, with no fire on it since), surrendered (`company-surrendered`, cause `defenders-trapped`);
  * - morale `m ← m − lossShock · casualties / men − suppressedDrain · s · dt/60 − isolationDrain · dt/60` (the last only
  *   when isolated: no other company of its side on the field within `isolationRadiusM` while an enemy is), recovering
  *   by `recoveryPerHour · dt/60`, up to its starting morale, when no fire came in this step;
@@ -140,10 +141,16 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
   const companies = state.companies.map((c, i): CompanyState => {
     if (c.status === 'surrendered' || c.status === 'destroyed' || c.status === 'off-map' || c.status === 'marching') return c;
     if (c.men <= 0) {
-      // No men left: shot down (the recent fire says by what), taken in its dugouts, or lost in the bombardment.
+      // No men left. Taken prisoner to the last man (trapped, its dugouts cleared out, no fire on it since): surrendered.
+      const taken = c.takenPrisoner;
+      if (taken && c.captured > 0 && c.recentFire.every((f) => f.minute <= taken.minute)) {
+        events.push(takenEvent(c, state, taken.eventId));
+        return { ...c, status: 'surrendered', intent: 'hold', officers: 0 };
+      }
+      // Else shot down (the recent fire says by what), the last of it taken below after fire, or lost in the bombardment.
       const extra: Cause[] = [];
       if (c.captured > 0 && c.segmentId !== undefined) extra.push('defenders-trapped');
-      if (c.recentFire.length === 0 && c.bombardment.killed + c.bombardment.wounded > 0) extra.push('artillery-fire');
+      if (c.recentFire.length === 0 && c.captured === 0 && c.bombardment.killed + c.bombardment.wounded > 0) extra.push('artillery-fire');
       events.push(stateEvent(c, 'destroyed', state.minute, { isolated: false, extra }));
       return { ...c, status: 'destroyed', intent: 'hold', officers: 0 };
     }
@@ -257,6 +264,27 @@ export function moraleThresholds(state: SimState, ctx: StepContext): Scheduled[]
  */
 type IsolationMemo = { field: Tracker; up: Tracker; byAt: Array<{ x: number; y: number; isolated: boolean } | undefined> };
 const isolationMemos = new WeakMap<StepContext, IsolationMemo>();
+
+/**
+ * A garrison taken prisoner to the last man (`company-surrendered`): cause `defenders-trapped`, refs to its segment's
+ * trapping and to the event that took its last men (its dugouts cleared out). Its men were counted captured by those
+ * events, so this one adds none (`men` 0).
+ */
+function takenEvent(c: CompanyState, state: SimState, lastEventId: number): NewEvent {
+  const seg = c.segmentId === undefined ? undefined : state.segments.find((x) => x.id === c.segmentId);
+  const refs = [...(seg?.trappedEventId != null ? [seg.trappedEventId] : []), lastEventId];
+  return {
+    minute: state.minute,
+    kind: 'company-surrendered',
+    unitId: c.id,
+    ...(c.sectorId ? { sectorId: c.sectorId } : {}),
+    ...(c.segmentId ? { segmentId: c.segmentId } : {}),
+    text: `${c.name} is taken prisoner to the last man: ${c.captured} men captured`,
+    causes: ['defenders-trapped'],
+    refs: refs.filter((x, i) => refs.indexOf(x) === i).sort((a, b) => a - b),
+    factors: { morale: round(c.morale, 3), suppression: round(c.suppression, 3), men: 0, captured: c.captured, lostInBattle: c.killed + c.wounded - c.bombardment.killed - c.bombardment.wounded, officers: c.officers },
+  };
+}
 
 /** A morale event: the causes of the recent fire on the company and of its state, with refs to that fire. */
 function stateEvent(

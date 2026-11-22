@@ -157,7 +157,7 @@ export function emergence(state: SimState, ctx: StepContext): SimState {
         captured += n;
         below += c.men - n;
         if (c.men - n > 0) points.push({ companyId: c.id, point: at(c), men: c.men - n, leftMin: out.minute, unguardedMin: out.minute, eventId, cleared: 0 });
-        trapped.push({ ...c, men: c.men - n, captured: c.captured + n });
+        trapped.push({ ...c, men: c.men - n, captured: c.captured + n, takenPrisoner: { eventId, minute: out.minute } });
       }
       out = emit(
         {

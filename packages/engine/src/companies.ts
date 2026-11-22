@@ -88,6 +88,11 @@ export type CompanyState = {
   /** The `officers-lost` event, once its officers are all down (Task 9); null while it has officers. */
   officersLostEventId: number | null;
   /**
+   * The last event that took men of it prisoner where they stood (its trapping, or its dugouts cleared out) and its
+   * minute; absent before. With no men left and no fire on it since, it was taken prisoner to the last man (morale.ts).
+   */
+  takenPrisoner?: { eventId: number; minute: number };
+  /**
    * The fire that came in on it over the last `fireRefsMin` minutes, a step at a time (Task 9): the event that
    * reported it (null when none did, e.g. fire that hit nobody) and its causes. The morale events take their causes
    * and refs from it.
