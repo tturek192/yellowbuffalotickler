@@ -131,26 +131,37 @@ test.describe('Vimy markers and zoom', () => {
     await page.goto('/?run=vimy');
     const map = page.getByRole('img', { name: /^Trench map of / });
     await expect(map).toHaveAttribute('data-detail', 'battalion');
-    await expect.poll(async () => (await drawn(page)).includes('102')).toBe(true);
+    // At fit-all the battalions are compact chips; their names are placed only where they fit.
+    await expect(map).toHaveAttribute('data-marker', 'chip');
+    await expect.poll(async () => (await drawn(page)).some((t) => /^\d+$/.test(t))).toBe(true);
     expect((await drawn(page)).filter(isCompanyLabel)).toEqual([]);
     await page.screenshot({ path: out('vimy-fitall.png') });
 
-    // Zoom in on the line with the wheel, about a point on the map.
+    // Mid-attack, zooming with the wheel about a point on the map: first to labelled battalion markers.
+    await page.getByLabel('Battle time').fill('150');
     const box = (await map.boundingBox())!;
-    await forget(page);
     await page.mouse.move(box.x + box.width * 0.45, box.y + box.height * 0.5);
+    for (let i = 0; i < 12 && (await map.getAttribute('data-marker')) === 'chip'; i++) {
+      await page.mouse.wheel(0, -300);
+      await page.waitForTimeout(60);
+    }
+    await expect(map).toHaveAttribute('data-marker', 'battalion');
+    await expect(map).toHaveAttribute('data-detail', 'battalion');
+    expect((await drawn(page)).filter(isCompanyLabel)).toEqual([]);
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: out('vimy-mid.png') });
+
+    // Then to companies.
+    await forget(page);
     for (let i = 0; i < 12 && (await map.getAttribute('data-detail')) !== 'company'; i++) {
       await page.mouse.wheel(0, -300);
       await page.waitForTimeout(60);
     }
     await expect(map).toHaveAttribute('data-detail', 'company');
+    await expect(map).toHaveAttribute('data-marker', 'company');
     await expect.poll(async () => (await drawn(page)).some(isCompanyLabel)).toBe(true);
+    await page.waitForTimeout(400);
     await page.screenshot({ path: out('vimy-zoomed.png') });
-
-    // Mid-attack: pinned, falling-back and surrendered markers and suppression rings show.
-    await page.getByLabel('Battle time').fill('150');
-    await page.waitForTimeout(300);
-    await page.screenshot({ path: out('vimy-zoomed-mid.png') });
 
     // Drag pans, and Fit all returns to the corps view.
     await page.mouse.down();

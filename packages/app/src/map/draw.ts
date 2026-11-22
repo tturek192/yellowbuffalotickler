@@ -6,7 +6,7 @@ import { divisionTags, nudgeClear, objectiveLabelGroups, overlaps, placeClear, t
 import { drawFeatures } from './features';
 import { terrainLayer } from './hillshade';
 import { LABEL_FONT, MAP_COLORS, MARKER_FONT, crenellatedPath, sideColor, tracePath } from './style';
-import { detailAt } from './zoom';
+import { markerStyleAt } from './zoom';
 import { MARKER_STYLE, drawUnitMarker } from './unitMarkers';
 
 export { crenellatedPath, MAP_COLORS } from './style';
@@ -98,7 +98,7 @@ function labelAtNorthEnd(
   ctx.restore();
 }
 
-function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord): void {
+function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, settled: boolean): void {
   const { w, h } = cssSize(ctx);
   ctx.fillStyle = MAP_COLORS.paper;
   ctx.fillRect(0, 0, w, h);
@@ -113,7 +113,8 @@ function drawPaper(ctx: CanvasRenderingContext2D, view: View, r: RunRecord): voi
   // Relief: hillshade and 5 m contours, printed on the paper under everything else.
   if (r.geometry.terrain) {
     const dpr = ctx.getTransform().a || 1;
-    ctx.drawImage(terrainLayer(r.geometry.terrain, view, w, h, dpr), 0, 0, w, h);
+    const t = terrainLayer(r.geometry.terrain, view, w, h, dpr, settled);
+    ctx.drawImage(t.image, t.x, t.y, t.w, t.h);
   }
 
   // Map squares every 500 m, as on the period sheets.
@@ -283,7 +284,12 @@ function drawBarrage(ctx: CanvasRenderingContext2D, view: View, points: Point[])
 }
 
 /** What changes between frames of the same battle minute: the wall-clock pulse of the suppression rings. */
-export type DrawOptions = { /** Suppression-ring phase in cycles (wall time, never battle time); 0 holds the rings still. */ pulse?: number };
+export type DrawOptions = {
+  /** False in the middle of a pan or zoom: the terrain is moved from its last layer, not rebuilt. */
+  settled?: boolean;
+  /** Suppression-ring phase in cycles (wall time, never battle time); 0 holds the rings still. */
+  pulse?: number;
+};
 
 /** Draw markers declutted against each other, top to bottom so the lower ones overlap the upper ones' bars. */
 function placeMarkers<T extends { x: number; y: number }>(view: View, items: readonly T[], w: (t: T) => number, h: number): Array<{ item: T; at: Screen }> {
@@ -293,7 +299,69 @@ function placeMarkers<T extends { x: number; y: number }>(view: View, items: rea
   return items.map((item, i) => ({ item, at: placed[i]! })).sort((a, b) => a.at[1] - b.at[1]);
 }
 
-/** Corps zoom: one marker per battalion, its strength, morale and suppression summed from its companies. */
+/** A battalion chip as drawn: its centre on the sheet, size and the battalion it stands for. */
+export type PlacedChip = { at: Screen; w: number; h: number; label: string; men: number };
+
+/** The room a chip takes on the sheet, strength bar included. */
+export const chipBox = (c: Pick<PlacedChip, 'at' | 'w' | 'h'>): Box => ({
+  x0: c.at[0] - c.w / 2,
+  x1: c.at[0] + c.w / 2,
+  y0: c.at[1] - c.h / 2,
+  y1: c.at[1] + c.h / 2 + MARKER_STYLE.barGap + MARKER_STYLE.chipBarH,
+});
+
+/** Place battalion chips (pure): each at its true position, spread vertically a little where they stack. */
+export function placeChips(view: View, bns: readonly { x: number; y: number; label: string; men: number }[], w: number, h: number): Array<PlacedChip & { index: number }> {
+  const pitch = h + MARKER_STYLE.barGap + MARKER_STYLE.chipBarH + 2;
+  const at = declutter(bns.map((b) => worldToScreen(view, [b.x, b.y])), w + 1, pitch, Math.min(13, pitch / 2));
+  return bns.map((b, index) => ({ index, at: at[index]!, w, h, label: b.label, men: b.men }));
+}
+
+/**
+ * Corps zoom (`markerStyleAt`): a text-free chip per battalion, small enough to tell apart at fit-all. Returns what was
+ * drawn so the labels can be placed once the line names are down.
+ */
+function drawChips(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, size: { w: number; h: number }): PlacedChip[] {
+  const bns = aggregateBattalions(frame.companies, r);
+  const placed = placeChips(view, bns, size.w, size.h);
+  for (const c of [...placed].sort((a, b) => a.at[1] - b.at[1])) {
+    const b = bns[c.index]!;
+    drawUnitMarker(ctx, { at: c.at, w: c.w, h: c.h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, chip: true, phase });
+  }
+  return placed;
+}
+
+/**
+ * Name the chips where the name fits clear of every chip, line name, map name and the clock card, biggest battalions
+ * first. A name that fits nowhere is left off (zoom in to read it).
+ */
+function labelChips(ctx: CanvasRenderingContext2D, chips: readonly PlacedChip[], placed: Box[]): void {
+  const { w: sheetW } = cssSize(ctx);
+  const size = 10;
+  const margin = 16;
+  const all = [...placed, ...chips.map(chipBox)];
+  ctx.save();
+  ctx.font = `600 ${size}px ${MARKER_FONT}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.lineJoin = 'round';
+  for (const c of [...chips].sort((a, b) => b.men - a.men || a.label.localeCompare(b.label))) {
+    const width = ctx.measureText(c.label).width;
+    const x0 = c.at[0] - width / 2;
+    const want: Box = { x0: x0 - 1, x1: x0 + width + 1, y0: c.at[1] - c.h / 2 - size - 3, y1: c.at[1] - c.h / 2 - 1 };
+    const box = placeClear(want, all, size + 2, 3, 6, 6, margin, sheetW - margin, margin);
+    if (all.some((p) => overlaps(box, p))) continue;
+    all.push(box);
+    ctx.strokeStyle = MAP_COLORS.paper;
+    ctx.lineWidth = 3;
+    ctx.strokeText(c.label, box.x0 + 1, box.y1 - 1);
+    ctx.fillStyle = MAP_COLORS.ink;
+    ctx.fillText(c.label, box.x0 + 1, box.y1 - 1);
+  }
+  ctx.restore();
+}
+
+/** Between the chip threshold and the company switch: one labelled marker per battalion. */
 function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number): void {
   const { minW, h, padX } = MARKER_STYLE.battalion;
   ctx.font = `600 11px ${MARKER_FONT}`;
@@ -362,7 +430,7 @@ function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
  * zoom, companies once 1 km is wider than 250 px (`detailAt`).
  */
 export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, opts: DrawOptions = {}): void {
-  drawPaper(ctx, view, r);
+  drawPaper(ctx, view, r, opts.settled ?? true);
   const labels: Box[] = [];
   drawFeatures(ctx, view, r.geometry.features, labels);
   const soft = labels.length; // map names: a line label may overlap one of these only when nothing else is free
@@ -371,13 +439,18 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   const objectives = r.geometry.lines.filter((l) => l.kind === 'objective');
   for (const l of objectives) drawObjective(ctx, view, l);
   for (const b of frame.barrages) if (!b.done) drawBarrage(ctx, view, b.points);
-  if (detailAt(view) === 'company') drawCompanies(ctx, view, r, frame, opts.pulse ?? 0);
-  else drawBattalions(ctx, view, r, frame, opts.pulse ?? 0);
+  const style = markerStyleAt(view);
+  const phase = opts.pulse ?? 0;
+  let chips: PlacedChip[] = [];
+  if (style.kind === 'company') drawCompanies(ctx, view, r, frame, phase);
+  else if (style.kind === 'chip') chips = drawChips(ctx, view, r, frame, phase, style);
+  else drawBattalions(ctx, view, r, frame, phase);
   // The clock card (HTML, .clock-card in styles.css) hides the sheet's top-left corner: keep labels out from under it.
   labels.push({ x0: 0, x1: cssSize(ctx).w < 600 ? 230 : 300, y0: 0, y1: 86 });
   // Line labels go on top of the markers so a stack of companies never hides a name.
   for (const l of trenches) labelTrench(ctx, view, l, labels, soft);
   labelObjectives(ctx, view, objectives, labels, soft);
   drawDivisionTags(ctx, view, r, objectives, labels);
+  labelChips(ctx, chips, labels);
   drawFurniture(ctx, view);
 }

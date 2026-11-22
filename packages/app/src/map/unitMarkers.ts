@@ -10,6 +10,8 @@ export const MARKER_STYLE = {
   /** Battalion markers are taller, carry the NATO "II" and grow to fit their label. */
   battalion: { minW: 34, h: 20, padX: 6 },
   barH: 3,
+  /** A chip's strength bar is thinner. */
+  chipBarH: 2,
   barGap: 2,
   /** Room one marker needs vertically: box, gap, bar, air. */
   pitch: (h: number): number => h + 8,
@@ -83,6 +85,8 @@ export type UnitMarker = {
   full: number;
   /** A battalion: draws the "II" above the box. */
   battalion?: boolean;
+  /** A compact chip: no text and no II, a thinner bar; the state marks stay. */
+  chip?: boolean;
   /** Pulse phase in cycles (wall time, not battle time). */
   phase: number;
 };
@@ -148,15 +152,17 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
     ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
   }
 
-  ctx.fillStyle = look === 'destroyed' ? 'rgba(255, 255, 255, 0.7)' : '#ffffff';
-  ctx.font = `600 11px ${MARKER_FONT}`;
-  // Longer labels step down a size to stay inside the marker.
-  if (ctx.measureText(m.label).width > w - 4) ctx.font = `600 9.5px ${MARKER_FONT}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(m.label, x + w / 2, y + h / 2 + 0.5);
+  if (!m.chip) {
+    ctx.fillStyle = look === 'destroyed' ? 'rgba(255, 255, 255, 0.7)' : '#ffffff';
+    ctx.font = `600 11px ${MARKER_FONT}`;
+    // Longer labels step down a size to stay inside the marker.
+    if (ctx.measureText(m.label).width > w - 4) ctx.font = `600 9.5px ${MARKER_FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(m.label, x + w / 2, y + h / 2 + 0.5);
+  }
 
-  if (m.battalion) {
+  if (m.battalion && !m.chip) {
     // The battalion sign: two short strokes above the box.
     ctx.strokeStyle = MAP_COLORS.ink;
     ctx.lineWidth = 1.5;
@@ -211,8 +217,9 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
   // Holding companies (garrisons, reserves) have no attack to wear them down: no strength bar. Nor has the dead.
   if (m.status === 'holding' || look === 'destroyed') return;
   const by = y + h + MARKER_STYLE.barGap;
+  const barH = m.chip ? MARKER_STYLE.chipBarH : MARKER_STYLE.barH;
   ctx.fillStyle = 'rgba(59, 51, 38, 0.25)';
-  ctx.fillRect(x, by, w, MARKER_STYLE.barH);
+  ctx.fillRect(x, by, w, barH);
   ctx.fillStyle = MAP_COLORS.ink;
-  ctx.fillRect(x, by, Math.round(w * strengthRatio(m.men, m.full)), MARKER_STYLE.barH);
+  ctx.fillRect(x, by, Math.round(w * strengthRatio(m.men, m.full)), barH);
 }

@@ -17,7 +17,7 @@ export type BattalionMarker = {
   /** Men-weighted averages. */
   morale: number;
   suppression: number;
-  /** The status with the most men. */
+  /** The status with the most starting men. */
   status: CompanyStatus;
   /** Companies on the map. */
   companies: number;
@@ -36,8 +36,8 @@ const mean = (xs: readonly number[]): number => xs.reduce((a, b) => a + b, 0) / 
  * One marker per battalion that has a company on the map (off-map companies are not drawn).
  * Living means men > 0, so a destroyed company (0 men) and a surrendered one (its men are captured) drop out of the
  * centroid and the strength; a battalion left with none keeps its companies' last positions as its centroid.
- * A status votes with the men of the companies in it, so a battalion of dead and captured men is 'surrendered' if
- * any company gave up and 'destroyed' otherwise (the tie order above); otherwise the largest body of men decides.
+ * A status votes with the men its companies started with, so a battalion with three companies surrendered and one
+ * advancing shows the white flag; the largest body of starting men decides, ties by the order above.
  */
 export function aggregateBattalions(rows: readonly FrameCompany[], record: RunRecord): BattalionMarker[] {
   const initial = new Map((record.snapshots[0] ? companiesOf(record, record.snapshots[0]) : []).map((c) => [c.id, c.men]));
@@ -56,7 +56,8 @@ export function aggregateBattalions(rows: readonly FrameCompany[], record: RunRe
     const men = living.reduce((a, c) => a + c.men, 0);
     const weighted = (pick: (c: FrameCompany) => number): number => (men > 0 ? living.reduce((a, c) => a + pick(c) * c.men, 0) / men : mean(cs.map(pick)));
     const votes = new Map<CompanyStatus, number>();
-    for (const c of cs) votes.set(c.status, (votes.get(c.status) ?? 0) + c.men);
+    // Each company votes with the men it started with, so surrendered and destroyed companies still count.
+    for (const c of cs) votes.set(c.status, (votes.get(c.status) ?? 0) + (initial.get(c.id) ?? c.men));
     const [status] = [...votes].sort((a, b) => b[1] - a[1] || tieRank(a[0]) - tieRank(b[0]))[0]!;
     out.push({
       id,

@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunRecord } from '@wwi/engine';
 import { encodeTerrain, FEATURE_KINDS, type Feature, type FeatureKind, type TerrainGrid } from '@wwi/scenario';
 import { frameAt } from '../playback';
-import { drawFrame, shortId } from './draw';
+import { chipBox, drawFrame, placeChips, shortId } from './draw';
+import { markerStyleAt } from './zoom';
 import type { View } from './projection';
 import { companyTable, unitsFor, type TestCompany } from '../test-record';
 
@@ -329,3 +330,51 @@ describe('terrain', () => {
   });
 });
 
+
+describe('battalion chips at corps zoom', () => {
+  /** 76 battalions spread over about 7 km by 6 km (Vimy's density), from a fixed pseudo-random sequence. */
+  const battalions = (): Array<{ x: number; y: number; label: string; men: number }> => {
+    let seed = 12345;
+    const rnd = (): number => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+    return Array.from({ length: 76 }, (_, i) => ({ x: rnd() * 7000, y: rnd() * 6000, label: `B${i}`, men: 100 + i }));
+  };
+  const fitAll: View = { scale: 0.027, tx: 20, ty: 200 };
+
+  /**
+   * The measure: a chip is crowded when another chip covers more than 30% of its own box (strength bar included).
+   * The share of crowded chips is what must stay small.
+   */
+  const crowdedShare = (boxes: ReturnType<typeof chipBox>[]): number => {
+    const area = (b: (typeof boxes)[number]): number => (b.x1 - b.x0) * (b.y1 - b.y0);
+    const common = (a: (typeof boxes)[number], b: (typeof boxes)[number]): number =>
+      Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+    const crowded = boxes.filter((a, i) => boxes.some((b, j) => j !== i && common(a, b) > 0.3 * area(a)));
+    return crowded.length / boxes.length;
+  };
+
+  it('are small enough at fit-all that under a third are crowded by a neighbour, and far fewer than the labelled markers were', () => {
+    const style = markerStyleAt(fitAll);
+    expect(style.kind).toBe('chip');
+    const { w, h } = style as { w: number; h: number };
+    const placed = placeChips(fitAll, battalions(), w, h);
+    // Uniform scatter is the hard case; Vimy's real record measures about 21-24% by this same measure (0.3 here).
+    const share = crowdedShare(placed.map(chipBox));
+    expect(share).toBeLessThanOrEqual(0.3);
+    // The old 40 x 20 labelled markers on the same ground: nearly every one is crowded. That is what the chips fix.
+    const old = crowdedShare(placeChips(fitAll, battalions(), 40, 20).map(chipBox));
+    expect(old).toBeGreaterThan(0.8);
+    expect(old).toBeGreaterThan(2 * share);
+  });
+
+  it('draw no text on the chip, and name only battalions whose names fit clear of everything', () => {
+    const bs = battalions().map((b, i) => ({ id: `${i + 10}bn-a`, battalionId: `${i + 10}bn`, side: 'allied' as const, x: b.x, y: b.y, men: 100, status: 'advancing' as const }));
+    const r = record([], bs as unknown as Company[]);
+    const rec = recordingContext();
+    drawFrame(rec.ctx, fitAll, r, frameAt(r, 0));
+    const names = rec.calls.filter((c) => c.name === 'fillText' && /^\d+$/.test(String(c.args[0])));
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.length).toBeLessThan(76); // crowded: not every battalion can be named
+    const boxes = names.map((c) => ({ x0: c.args[1] as number, x1: (c.args[1] as number) + 6 * String(c.args[0]).length, y: c.args[2] as number }));
+    for (const [i, a] of boxes.entries()) for (const b of boxes.slice(i + 1)) expect(Math.abs(a.y - b.y) >= 10 || a.x1 <= b.x0 || b.x1 <= a.x0).toBe(true);
+  });
+});

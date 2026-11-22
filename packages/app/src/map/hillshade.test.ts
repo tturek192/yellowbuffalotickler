@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { encodeTerrain, type TerrainGrid } from '@wwi/scenario';
-import { contourSegments, hillshade } from './hillshade';
+import { contourSegments, gestureSettled, hillshade, TERRAIN_SETTLE_MS, terrainOf, terrainPlan, transformedRect } from './hillshade';
 import type { View } from './projection';
 
 beforeAll(() => {
@@ -83,5 +83,51 @@ describe('contourSegments', () => {
 
   it('draws nothing on flat ground', () => {
     expect(contourSegments(flat(), 5)).toEqual([]);
+  });
+});
+
+describe('terrain layer reuse during a gesture', () => {
+  const spec = (view: View, w = 800, h = 600, dpr = 2) => ({ w, h, dpr, view });
+  const a: View = { scale: 0.1, tx: 10, ty: 500 };
+  const b: View = { scale: 0.2, tx: 30, ty: 450 };
+
+  it('reuses a layer built for the same view, settled or not', () => {
+    expect(terrainPlan(spec(a), spec(a), true)).toBe('exact');
+    expect(terrainPlan(spec(a), spec(a), false)).toBe('exact');
+  });
+  it('moves the cached layer mid-gesture and rebuilds once settled', () => {
+    expect(terrainPlan(spec(a), spec(b), false)).toBe('transform');
+    expect(terrainPlan(spec(a), spec(b), true)).toBe('rebuild');
+  });
+  it('rebuilds when there is no layer or the sheet size or pixel ratio changed', () => {
+    expect(terrainPlan(null, spec(b), false)).toBe('rebuild');
+    expect(terrainPlan(spec(a), spec(b, 900), false)).toBe('rebuild');
+    expect(terrainPlan(spec(a), spec(b, 800, 600, 1), false)).toBe('rebuild');
+  });
+  it('places a moved layer so a world point stays where the new view puts it', () => {
+    const r = transformedRect(a, b, 800, 600);
+    // world point p sits at a.tx + p*a.scale in the old image; the rect must map it to b.tx + p*b.scale.
+    for (const p of [0, 250, 1000]) {
+      const old = a.tx + p * a.scale;
+      expect(r.x + (old / 800) * r.w).toBeCloseTo(b.tx + p * b.scale);
+    }
+    expect(r.w).toBeCloseTo(1600);
+  });
+  it('settles only after the quiet period since the last gesture event', () => {
+    expect(gestureSettled(1000, 1100)).toBe(false);
+    expect(gestureSettled(1000, 1000 + TERRAIN_SETTLE_MS)).toBe(true);
+    expect(TERRAIN_SETTLE_MS).toBe(150);
+  });
+  it('shades each grid once, whatever the view', () => {
+    let reads = 0;
+    const g = flat();
+    const t = terrainOf(g);
+    const elev = t.elevM;
+    Object.defineProperty(t, 'elevM', { get: () => (reads++, elev) });
+    hillshade(g, view, 4, 4);
+    const first = reads;
+    hillshade(g, { ...view, tx: 1 }, 4, 4);
+    expect(first).toBeGreaterThan(0);
+    expect(reads).toBe(first);
   });
 });

@@ -3,8 +3,9 @@ import type { RunRecord } from '@wwi/engine';
 import { frameAt } from '../playback';
 import { drawFrame } from '../map/draw';
 import { fitView, recordBounds, type View } from '../map/projection';
-import { clampView, detailAt, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from '../map/zoom';
+import { clampView, markerStyleAt, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from '../map/zoom';
 import { pulsePhase } from '../map/unitMarkers';
+import { TERRAIN_SETTLE_MS } from '../map/hillshade';
 
 /**
  * Room kept clear for the clock card (top) and the scale bar (bottom), in CSS pixels. The map key sits in a strip
@@ -40,7 +41,7 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
     return { ...f, ty: f.ty + INSET_TOP };
   }, [bounds, size]);
   const view = zoomed ? clampView(zoomed, fit, bounds, size) : fit;
-  const detail = detailAt(view);
+  const markers = markerStyleAt(view).kind;
   const frame = useMemo(() => frameAt(record, minute), [record, minute]);
   const pulsing = useMemo(() => frame.companies.some((c) => c.suppression >= 0.05 && c.status !== 'off-map'), [frame]);
 
@@ -68,6 +69,23 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
     };
   }, []);
 
+  // The terrain is only moved, not rebuilt, while the view is changing; TERRAIN_SETTLE_MS after the last change it is rebuilt.
+  const settledRef = useRef(true);
+  const [settledTick, setSettledTick] = useState(0);
+  const firstView = useRef(true);
+  useEffect(() => {
+    if (firstView.current) {
+      firstView.current = false;
+      return;
+    }
+    settledRef.current = false;
+    const id = setTimeout(() => {
+      settledRef.current = true;
+      setSettledTick((n) => n + 1);
+    }, TERRAIN_SETTLE_MS);
+    return () => clearTimeout(id);
+  }, [view.scale, view.tx, view.ty]);
+
   const paint = useCallback(
     (pulse: number): void => {
       const canvas = canvasRef.current;
@@ -80,11 +98,11 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawFrame(ctx, view, record, frame, { pulse });
+      drawFrame(ctx, view, record, frame, { pulse, settled: settledRef.current });
     },
     // `view` is rebuilt every render; its parts are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [size, view.scale, view.tx, view.ty, record, frame, fontsReady],
+    [size, view.scale, view.tx, view.ty, record, frame, fontsReady, settledTick],
   );
 
   // Redraw on every change; while a marker is suppressed also pulse its ring from wall time (never battle time).
@@ -163,7 +181,8 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
         ref={canvasRef}
         role="img"
         aria-label={label}
-        data-detail={detail}
+        data-detail={markers === 'company' ? 'company' : 'battalion'}
+        data-marker={markers}
         className={dragging ? 'is-dragging' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

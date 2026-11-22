@@ -83,6 +83,20 @@ describe('aggregateBattalions', () => {
     expect(status('falling-back', 'pinned', 'advancing')).toBe('falling-back');
   });
 
+  it('weights each company by its starting men, so surrendered and destroyed companies still count', () => {
+    const start = (st: CompanyStatus, id: string): Spec => ({ id, bn: 'bn1', men: 100, status: st });
+    const { rows, record } = setup(
+      [
+        { id: 'a', bn: 'bn1', men: 0, status: 'surrendered' },
+        { id: 'b', bn: 'bn1', men: 0, status: 'surrendered' },
+        { id: 'c', bn: 'bn1', men: 0, status: 'surrendered' },
+        { id: 'd', bn: 'bn1', men: 20, status: 'advancing' },
+      ],
+      ['a', 'b', 'c', 'd'].map((id) => start('advancing', id)),
+    );
+    expect(aggregateBattalions(rows, record)[0]).toMatchObject({ status: 'surrendered', men: 20 });
+  });
+
   it('measures strength against the battalion at Zero, losses and surrenders included', () => {
     const { rows, record } = setup(
       [

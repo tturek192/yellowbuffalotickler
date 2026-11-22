@@ -53,3 +53,25 @@ export function wheelFactor(deltaY: number, deltaMode: number): number {
 export function pinchFactor(before: number, now: number): number {
   return before > 0 && now > 0 ? now / before : 1;
 }
+
+/** Below this many px per km a battalion is too small to carry a label: it is drawn as a compact chip. */
+export const CHIP_PX_PER_KM = 120;
+/** Chip width, px, at the smallest scale a map can show (about 20 px/km) and at the chip threshold. */
+const CHIP_W_MIN = 8;
+const CHIP_W_MAX = 18;
+const CHIP_PX_PER_KM_MIN = 20;
+
+export type MarkerStyle = { kind: 'chip'; w: number; h: number } | { kind: 'battalion' } | { kind: 'company' };
+
+/**
+ * How units are drawn at a view: compact text-free chips sized to the scale at corps zoom, labelled battalion markers
+ * from CHIP_PX_PER_KM up to the company switch, then company markers.
+ */
+export function markerStyleAt(view: View): MarkerStyle {
+  if (detailAt(view) === 'company') return { kind: 'company' };
+  const perKm = view.scale * 1000;
+  if (perKm >= CHIP_PX_PER_KM) return { kind: 'battalion' };
+  const t = Math.min(1, Math.max(0, (perKm - CHIP_PX_PER_KM_MIN) / (CHIP_PX_PER_KM - CHIP_PX_PER_KM_MIN)));
+  const w = Math.round(CHIP_W_MIN + (CHIP_W_MAX - CHIP_W_MIN) * t);
+  return { kind: 'chip', w, h: Math.round(w * 0.62) };
+}

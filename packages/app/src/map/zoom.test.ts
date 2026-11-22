@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fitView, worldToScreen, type Bounds, type View } from './projection';
-import { clampView, detailAt, MAX_SCALE, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from './zoom';
+import { CHIP_PX_PER_KM, clampView, detailAt, markerStyleAt, MAX_SCALE, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from './zoom';
 
 const bounds: Bounds = { minX: -6000, maxX: 7700, minY: -5000, maxY: 3200 };
 const size = { w: 1000, h: 700 };
@@ -87,5 +87,24 @@ describe('gestures', () => {
   it('zooms a pinch by the ratio of finger spans', () => {
     expect(pinchFactor(100, 200)).toBe(2);
     expect(pinchFactor(0, 200)).toBe(1);
+  });
+});
+
+describe('marker style by scale', () => {
+  const at = (perKm: number): View => ({ ...fit, scale: perKm / 1000 });
+  it('uses text-free chips at corps zoom, labelled battalions in the middle, companies when zoomed in', () => {
+    expect(markerStyleAt(at(27)).kind).toBe('chip');
+    expect(markerStyleAt(at(CHIP_PX_PER_KM - 1)).kind).toBe('chip');
+    expect(markerStyleAt(at(CHIP_PX_PER_KM)).kind).toBe('battalion');
+    expect(markerStyleAt(at(150)).kind).toBe('battalion');
+    expect(markerStyleAt(at(260)).kind).toBe('company');
+  });
+  it('grows the chip with the scale, between about 8 and 18 px wide', () => {
+    const w = (k: number): number => (markerStyleAt(at(k)) as { w: number }).w;
+    expect(w(10)).toBe(8);
+    expect(w(27)).toBeGreaterThanOrEqual(8);
+    expect(w(27)).toBeLessThan(w(100));
+    expect(w(119)).toBeLessThanOrEqual(18);
+    expect(w(119)).toBeGreaterThan(16);
   });
 });

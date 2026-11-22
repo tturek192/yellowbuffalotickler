@@ -29,6 +29,18 @@ export function terrainOf(grid: TerrainGrid): Terrain {
  * Illumination at each grid value minus that of flat ground: > 0 lit, < 0 in shade. The sun's azimuth is
  * clockwise from map-up (+y), so 315° lights from the upper left, as cartographers do.
  */
+const shadeCache = new WeakMap<Terrain, Map<string, Float32Array>>();
+
+/** `nodeShade`, computed once per grid and sun (it does not depend on the view). */
+function cachedShade(t: Terrain, az: number, alt: number): Float32Array {
+  let m = shadeCache.get(t);
+  if (!m) shadeCache.set(t, (m = new Map()));
+  const key = `${az}/${alt}`;
+  let hit = m.get(key);
+  if (!hit) m.set(key, (hit = nodeShade(t, az, alt)));
+  return hit;
+}
+
 function nodeShade(t: Terrain, sunAzimuthDeg: number, sunAltDeg: number): Float32Array {
   const { cols, rows, cellM, elevM } = t;
   const az = (sunAzimuthDeg * Math.PI) / 180;
@@ -60,7 +72,7 @@ function nodeShade(t: Terrain, sunAzimuthDeg: number, sunAltDeg: number): Float3
  */
 export function hillshade(grid: TerrainGrid, view: View, w: number, h: number, sunAzimuthDeg = 315, sunAltDeg = 45): ImageData {
   const t = terrainOf(grid);
-  const shade = nodeShade(t, sunAzimuthDeg, sunAltDeg);
+  const shade = cachedShade(t, sunAzimuthDeg, sunAltDeg);
   const { cols, rows, cellM, originX, originY } = t;
   const data = new Uint8ClampedArray(w * h * 4);
   // Grid index of each pixel column and row (pixel centres).
@@ -156,8 +168,36 @@ const CONTOUR_RGB = '110, 80, 38';
 /** Scale (CSS px per metre) from which 5 m contours print at full strength. */
 const FINE_CONTOUR_SCALE = 0.15;
 const contourCache = new WeakMap<TerrainGrid, ContourLevel[]>();
-type Layer = { key: string; canvas: OffscreenCanvas | HTMLCanvasElement };
+type LayerSpec = { w: number; h: number; dpr: number; view: View };
+type Layer = { spec: LayerSpec; canvas: OffscreenCanvas | HTMLCanvasElement };
 const layerCache = new WeakMap<TerrainGrid, Layer>();
+
+/** Quiet time after the last pan or zoom event before the terrain is rebuilt at full quality, ms. */
+export const TERRAIN_SETTLE_MS = 150;
+
+/** True once `settleMs` has passed since the last gesture event (pure, so the debounce is testable). */
+export const gestureSettled = (lastGestureAt: number, now: number, settleMs = TERRAIN_SETTLE_MS): boolean => now - lastGestureAt >= settleMs;
+
+const sameView = (a: View, b: View): boolean => a.scale === b.scale && a.tx === b.tx && a.ty === b.ty;
+
+/**
+ * What to do for the wanted terrain layer given the one cached: use it as it is, draw it moved and scaled to the new
+ * view (cheap, a little blurred: for the middle of a gesture), or build a new one. A cached layer cannot be reused
+ * when the sheet size or pixel ratio changed.
+ */
+export function terrainPlan(cached: LayerSpec | null, want: LayerSpec, settled: boolean): 'exact' | 'transform' | 'rebuild' {
+  if (cached && cached.w === want.w && cached.h === want.h && cached.dpr === want.dpr) {
+    if (sameView(cached.view, want.view)) return 'exact';
+    if (!settled) return 'transform';
+  }
+  return 'rebuild';
+}
+
+/** The rectangle (CSS px) to draw a layer built for `built` at, so that it lines up with `now`. */
+export function transformedRect(built: View, now: View, w: number, h: number): { x: number; y: number; w: number; h: number } {
+  const k = now.scale / built.scale;
+  return { x: now.tx - built.tx * k, y: now.ty - built.ty * k, w: w * k, h: h * k };
+}
 
 function newCanvas(w: number, h: number): OffscreenCanvas | HTMLCanvasElement {
   if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
@@ -169,12 +209,16 @@ function newCanvas(w: number, h: number): OffscreenCanvas | HTMLCanvasElement {
 
 /**
  * The terrain as one image for a w×h CSS-pixel view at `dpr` device pixels per CSS pixel: the hillshade
- * with 5 m contours over it. Built once per grid, view and size, so playback only copies it.
+ * with 5 m contours over it, and the rectangle to draw it in. Built once per grid, view and size, so playback only
+ * copies it. While a gesture is under way (`settled` false) the last layer is moved and scaled to the new view instead of
+ * being rebuilt; the caller asks again once settled to get the full-quality layer.
  */
-export function terrainLayer(grid: TerrainGrid, view: View, w: number, h: number, dpr: number): CanvasImageSource {
-  const key = `${w}x${h}@${dpr}:${view.scale},${view.tx},${view.ty}`;
+export function terrainLayer(grid: TerrainGrid, view: View, w: number, h: number, dpr: number, settled = true): { image: CanvasImageSource; x: number; y: number; w: number; h: number } {
+  const want: LayerSpec = { w, h, dpr, view };
   const cached = layerCache.get(grid);
-  if (cached?.key === key) return cached.canvas;
+  const plan = terrainPlan(cached?.spec ?? null, want, settled);
+  if (plan === 'exact') return { image: cached!.canvas, x: 0, y: 0, w, h };
+  if (plan === 'transform') return { image: cached!.canvas, ...transformedRect(cached!.spec.view, view, w, h) };
   const pw = Math.max(1, Math.round(w * dpr));
   const ph = Math.max(1, Math.round(h * dpr));
   const dv: View = { scale: view.scale * dpr, tx: view.tx * dpr, ty: view.ty * dpr };
@@ -198,6 +242,6 @@ export function terrainLayer(grid: TerrainGrid, view: View, w: number, h: number
       ctx.stroke();
     }
   }
-  layerCache.set(grid, { key, canvas });
-  return canvas;
+  layerCache.set(grid, { spec: want, canvas });
+  return { image: canvas, x: 0, y: 0, w, h };
 }
