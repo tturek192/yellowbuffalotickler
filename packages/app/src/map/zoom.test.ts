@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fitView, worldToScreen, type Bounds, type View } from './projection';
-import { CHIP_PX_PER_KM, clampView, detailAt, markerStyleAt, MAX_SCALE, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from './zoom';
+import { CHIP_PX_PER_KM, clampView, detailAt, markerStyleAt, MAX_SCALE, maxScale, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from './zoom';
 
 const bounds: Bounds = { minX: -6000, maxX: 7700, minY: -5000, maxY: 3200 };
 const size = { w: 1000, h: 700 };
@@ -28,6 +28,11 @@ describe('zoom limits', () => {
     expect(MAX_SCALE).toBe(2);
     const v = zoomAt(zoomedTo(4000), fit, [500, 350], 1e6, size, bounds);
     expect(v.scale).toBe(2);
+  });
+  it('the closest zoom is MAX_SCALE, or fit-all when fit-all is already closer (the + button is disabled there)', () => {
+    expect(maxScale(fit)).toBe(MAX_SCALE);
+    expect(maxScale({ ...fit, scale: MAX_SCALE * 3 })).toBe(MAX_SCALE * 3);
+    expect(zoomAt(zoomedTo(4000), fit, [500, 350], 1e6, size, bounds).scale).toBe(maxScale(fit));
   });
 });
 

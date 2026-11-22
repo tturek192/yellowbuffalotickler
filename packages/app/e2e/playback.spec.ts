@@ -93,6 +93,22 @@ test('fits a phone-width screen', async ({ page }) => {
   await page.screenshot({ path: out('playback-narrow.png'), fullPage: true });
 });
 
+test('the zoom buttons show their whole focus ring when reached by keyboard', async ({ page }) => {
+  await page.goto('/?run=sample');
+  const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+  await zoomIn.focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  await expect(zoomIn).toBeFocused();
+  // The ring is drawn inside the button, so the group's overflow: hidden cannot cut it off.
+  const ring = await zoomIn.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { style: s.outlineStyle, offset: parseFloat(s.outlineOffset), width: parseFloat(s.outlineWidth) };
+  });
+  expect(ring.style).not.toBe('none');
+  expect(ring.offset + ring.width).toBeLessThanOrEqual(0);
+});
+
 test('names a missing run instead of failing to parse the fallback page', async ({ page }) => {
   await page.goto('/?run=no-such-run');
   await expect(page.getByRole('alert')).toHaveText('No run named “no-such-run”.');

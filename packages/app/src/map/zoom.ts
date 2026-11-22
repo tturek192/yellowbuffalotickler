@@ -2,6 +2,9 @@ import type { Bounds, View } from './projection';
 
 /** Closest zoom: 200 m across 400 px. */
 export const MAX_SCALE = 400 / 200;
+
+/** The closest a view may zoom: MAX_SCALE, or fit-all when that is already closer. */
+export const maxScale = (fit: View): number => Math.max(MAX_SCALE, fit.scale);
 /** Companies are drawn once 1 km is wider than this many pixels; battalions before that. */
 export const COMPANY_DETAIL_PX_PER_KM = 250;
 
@@ -18,7 +21,7 @@ export function detailAt(view: View): Detail {
  * MAX_SCALE, and the middle of the viewport somewhere over the map's bounds so it can never be carried away.
  */
 export function clampView(view: View, fit: View, bounds: Bounds, size: Viewport): View {
-  const scale = Math.min(Math.max(view.scale, fit.scale), Math.max(MAX_SCALE, fit.scale));
+  const scale = Math.min(Math.max(view.scale, fit.scale), maxScale(fit));
   if (scale <= fit.scale) return fit;
   const cx = Math.min(Math.max((size.w / 2 - view.tx) / view.scale, bounds.minX), bounds.maxX);
   const cy = Math.min(Math.max((view.ty - size.h / 2) / view.scale, bounds.minY), bounds.maxY);
@@ -27,7 +30,7 @@ export function clampView(view: View, fit: View, bounds: Bounds, size: Viewport)
 
 /** Zoom by `factor` keeping the world point under screen position `at` where it is. */
 export function zoomAt(view: View, fit: View, at: readonly [number, number], factor: number, size: Viewport, bounds: Bounds): View {
-  const scale = Math.min(Math.max(view.scale * factor, fit.scale), Math.max(MAX_SCALE, fit.scale));
+  const scale = Math.min(Math.max(view.scale * factor, fit.scale), maxScale(fit));
   const wx = (at[0] - view.tx) / view.scale;
   const wy = (view.ty - at[1]) / view.scale;
   return clampView({ scale, tx: at[0] - wx * scale, ty: at[1] + wy * scale }, fit, bounds, size);

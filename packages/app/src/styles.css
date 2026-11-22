@@ -544,6 +544,11 @@ code {
   cursor: pointer;
 }
 
+/* The group clips its corners (overflow: hidden), so the focus ring is drawn inside the button. */
+.zoom-controls button:focus-visible {
+  outline-offset: -3px;
+}
+
 .zoom-controls button:first-child {
   border-top: 0;
 }

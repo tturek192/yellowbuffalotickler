@@ -5,7 +5,7 @@ import { drawFrame, type Hit, type MapPick } from '../map/draw';
 import { skyMoves } from '../map/sky';
 import { pickAt } from './why';
 import { fitView, recordBounds, type View } from '../map/projection';
-import { clampView, markerStyleAt, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from '../map/zoom';
+import { clampView, markerStyleAt, maxScale, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from '../map/zoom';
 import { pulsePhase } from '../map/unitMarkers';
 import { TERRAIN_SETTLE_MS } from '../map/hillshade';
 
@@ -223,7 +223,7 @@ export function MapCanvas({
 
   const zoomButton = (factor: number) => (): void => setZoomed((z) => zoomBy(z ?? fit, fit, factor, size, bounds));
   const atFit = view.scale <= fit.scale;
-  const atMax = view.scale >= 2;
+  const atMax = view.scale >= maxScale(fit);
 
   return (
     <div ref={wrapRef} className="map-canvas">
