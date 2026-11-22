@@ -170,35 +170,78 @@ export function nearestAccepted<T extends At>(
   keep?: (it: T) => boolean,
 ): Array<{ item: T; d: number }> {
   if (!(r >= 0) || !(max > 0)) return [];
-  const all: Array<{ item: T; d: number }> = [];
+  // The items in reach, as places in the buckets and their distances (in typed arrays: nothing is made for an item never
+  // taken), in the order the cells give.
   const { xs, ys, order, items } = b;
-  scanCells(b, cellOf(x - r), cellOf(x + r), cellOf(y - r), cellOf(y + r), (p) => {
-    const d = dist(xs[p]! - x, ys[p]! - y);
-    if (d > r) return;
-    const it = items[order[p]!]!;
-    if (keep === undefined || keep(it)) all.push({ item: it, d });
-  });
-  const out: Array<{ item: T; d: number }> = [];
-  const before = (a: { item: T; d: number }, c: { item: T; d: number }): boolean => a.d < c.d || (a.d === c.d && tie(a.item, c.item) < 0);
-  // Pick the nearest of the rest into place k, a few times; then sort what is left once.
-  const PICKS = 8;
-  let k = 0;
-  for (; k < all.length && k < PICKS; k++) {
-    let m = k;
-    for (let i = k + 1; i < all.length; i++) if (before(all[i]!, all[m]!)) m = i;
-    if (m !== k) [all[k], all[m]] = [all[m]!, all[k]!];
-    const c = all[k]!;
-    if (accept(c.item, c.d)) out.push(c);
-    if (out.length >= max) return out;
+  let n = 0;
+  let P = pickP;
+  let D = pickD;
+  const reentered = pickBusy;
+  if (reentered) (P = new Int32Array(64)), (D = new Float64Array(64));
+  pickBusy = true;
+  try {
+    const a0 = Math.max(cellOf(x - r) - b.i0, 0);
+    const a1 = Math.min(cellOf(x + r) - b.i0, b.cols - 1);
+    const c0 = Math.max(cellOf(y - r) - b.j0, 0);
+    const c1 = Math.min(cellOf(y + r) - b.j0, b.rows - 1);
+    if (a0 <= a1)
+      for (let j = c0; j <= c1; j++) {
+        const to = b.start[j * b.cols + a1 + 1]!;
+        for (let p = b.start[j * b.cols + a0]!; p < to; p++) {
+          const d = dist(xs[p]! - x, ys[p]! - y);
+          if (d > r) continue;
+          if (keep !== undefined && !keep(items[order[p]!]!)) continue;
+          if (n === P.length) {
+            const P2 = new Int32Array(2 * n);
+            const D2 = new Float64Array(2 * n);
+            P2.set(P);
+            D2.set(D);
+            (P = P2), (D = D2);
+          }
+          P[n] = p;
+          D[n] = d;
+          n++;
+        }
+      }
+    if (!reentered) (pickP = P), (pickD = D);
+    const itemAt = (k: number): T => items[order[P[k]!]!]!;
+    const before = (k: number, m: number): boolean => D[k]! < D[m]! || (D[k] === D[m] && tie(itemAt(k), itemAt(m)) < 0);
+    const out: Array<{ item: T; d: number }> = [];
+    // Pick the nearest of the rest into place k, a few times; then sort what is left once.
+    const PICKS = 8;
+    let k = 0;
+    for (; k < n && k < PICKS; k++) {
+      let m = k;
+      for (let i = k + 1; i < n; i++) if (before(i, m)) m = i;
+      if (m !== k) {
+        const p = P[k]!;
+        P[k] = P[m]!;
+        P[m] = p;
+        const d = D[k]!;
+        D[k] = D[m]!;
+        D[m] = d;
+      }
+      const it = itemAt(k);
+      if (accept(it, D[k]!)) out.push({ item: it, d: D[k]! });
+      if (out.length >= max) return out;
+    }
+    if (k >= n) return out;
+    const rest: Array<{ item: T; d: number }> = [];
+    for (let i = k; i < n; i++) rest.push({ item: itemAt(i), d: D[i]! });
+    rest.sort((a, c) => a.d - c.d || tie(a.item, c.item));
+    for (const c of rest) {
+      if (accept(c.item, c.d)) out.push(c);
+      if (out.length >= max) break;
+    }
+    return out;
+  } finally {
+    if (!reentered) pickBusy = false;
   }
-  if (k >= all.length) return out;
-  const rest = all.slice(k).sort((a, c) => a.d - c.d || tie(a.item, c.item));
-  for (const c of rest) {
-    if (accept(c.item, c.d)) out.push(c);
-    if (out.length >= max) break;
-  }
-  return out;
 }
+/** Room for `nearestAccepted`'s items in reach, reused from call to call (a call made while one is going gets its own). */
+let pickP = new Int32Array(256);
+let pickD = new Float64Array(256);
+let pickBusy = false;
 
 /**
  * Where a set of placed items stood when last looked at, for memos that hold while nothing near them moves (a numerical
