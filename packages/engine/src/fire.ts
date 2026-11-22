@@ -1,6 +1,6 @@
 import { v } from '@wwi/scenario';
 import type { Doctrine, Tables, Weapon } from '@wwi/scenario';
-import { bucketsOf, changedNear, changesSince, nearestAccepted, tracker } from './buckets';
+import { changedNear, changesSince, nearestAccepted, sideBuckets, tracker } from './buckets';
 import type { Tracker } from './buckets';
 import type { Buckets } from './buckets';
 import { emit } from './causes';
@@ -41,7 +41,6 @@ import type { FireGroup, Pending, Side } from './types';
  * maxTargetsPerFirer, densityRefMen, crewPerLewis, crewPerMg, mgUnobservedBelow and uphillPenaltyPer10m.
  */
 
-const SIDES: readonly Side[] = ['allied', 'central'];
 const enemyOf = (s: Side): Side => (s === 'allied' ? 'central' : 'allied');
 
 /** The weapons a company serves: machine guns first, then light machine guns, and the rest of its men are riflemen. */
@@ -119,12 +118,9 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
   const maxTargets = v(fx.maxTargetsPerFirer);
   const densityRef = v(fx.densityRefMen);
   const unobservedBelow = v(fx.mgUnobservedBelow);
-  // Men down in their dugouts cannot be seen, so are no one's target.
-  const seen = state.companies.filter(isSeen);
-  // Each side's companies that can be seen, in buckets: built when a firer first needs to look again.
-  let grid: Record<Side, Buckets<CompanyState>> | undefined;
-  const gridOf = (side: Side): Buckets<CompanyState> =>
-    (grid ??= Object.fromEntries(SIDES.map((s) => [s, bucketsOf(seen.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>)[side];
+  // Each side's companies in buckets (those that can be seen are kept by `isSeen` as the search goes): men down in their
+  // dugouts cannot be seen, so are no one's target.
+  const gridOf = (side: Side): Buckets<CompanyState> => sideBuckets(state.companies, side);
   const segs = new Map(state.segments.map((x) => [x.id, x]));
   let memo = memos.get(ctx);
   if (!memo) memos.set(ctx, (memo = { seen: tracker(), byFirer: [] }));
@@ -161,7 +157,7 @@ export function directFire(state: SimState, ctx: StepContext, dt: number, pendin
       looked[fi] = last;
     } else {
       const sees = sightFrom(ctx.world, [f.x, f.y]);
-      targets = nearestAccepted(gridOf(foe), f.x, f.y, reach, byId, maxTargets, (t, r) => visibility(r, visM) > 0 && sees(t.x, t.y)).map(({ item: t, d: r }) => ({ t, r }));
+      targets = nearestAccepted(gridOf(foe), f.x, f.y, reach, byId, maxTargets, (t, r) => visibility(r, visM) > 0 && sees(t.x, t.y), isSeen).map(({ item: t, d: r }) => ({ t, r }));
       // Only enemies as near as its farthest target count once it has all it can take; else any within reach.
       const within = targets.length >= maxTargets ? targets[targets.length - 1]!.r : reach;
       looked[fi] = { x: f.x, y: f.y, reach, visM, within, at: targets.map((x) => indexOf(x.t)), r: targets.map((x) => x.r) };

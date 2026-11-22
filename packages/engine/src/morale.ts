@@ -1,6 +1,6 @@
 import { v } from '@wwi/scenario';
 import type { Formation, Scenario } from '@wwi/scenario';
-import { anyWithin, bucketsOf, changedNear, changesSince, nearestWithin, tracker } from './buckets';
+import { anyWithin, changedNear, changesSince, nearestWithin, sideBuckets, tracker } from './buckets';
 import type { Tracker } from './buckets';
 import type { Buckets } from './buckets';
 import { emit } from './causes';
@@ -21,7 +21,8 @@ import type { Intent, Pending, Side } from './types';
  * `trainingBonusRehearsed`, the leaders' `moraleEffect` ratings, and the effects keys isolationRadiusM and fireRefsMin.
  */
 
-const SIDES: readonly Side[] = ['allied', 'central'];
+/** On the field and up (not down in its dugouts). */
+const isUp = (c: CompanyState): boolean => onField(c) && c.posture !== 'in-dugout';
 const enemyOf = (s: Side): Side => (s === 'allied' ? 'central' : 'allied');
 const clamp01 = (x: number): number => Math.min(1, Math.max(0, x));
 
@@ -115,21 +116,14 @@ const STATE_EVENT = { pinned: 'company-pinned', 'falling-back': 'company-fell-ba
 export function morale(state: SimState, ctx: StepContext, dt: number, pending: Pending): SimState {
   const fx = ctx.tables.effects;
   const isoR = v(fx.isolationRadiusM);
-  const field = state.companies.filter(onField);
-  const up = field.filter((c) => c.posture !== 'in-dugout');
-  // Each side's companies on the field and those up, in buckets: built when first asked for.
-  let grids: { friends: Record<Side, Buckets<CompanyState>>; foes: Record<Side, Buckets<CompanyState>> } | undefined;
-  const gridsOf = () =>
-    (grids ??= {
-      friends: Object.fromEntries(SIDES.map((s) => [s, bucketsOf(field.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>,
-      foes: Object.fromEntries(SIDES.map((s) => [s, bucketsOf(up.filter((c) => c.side === s))])) as Record<Side, Buckets<CompanyState>>,
-    });
+  // Each side's companies in buckets; those on the field (`onField`) and those up (`isUp`) are kept as the search goes.
+  const gridOf = (s: Side): Buckets<CompanyState> => sideBuckets(state.companies, s);
   const events: NewEvent[] = [];
   // Isolation is worked out again only where something moved within isolationRadiusM (`isolationMemo`).
   let memo = isolationMemos.get(ctx);
   if (!memo) isolationMemos.set(ctx, (memo = { field: tracker(), up: tracker(), byAt: [] }));
   const fieldMoved = changesSince(memo.field, state.companies, onField, (c) => c.side);
-  const upMoved = changesSince(memo.up, state.companies, (c) => onField(c) && c.posture !== 'in-dugout', (c) => c.side);
+  const upMoved = changesSince(memo.up, state.companies, isUp, (c) => c.side);
   const was = memo.field.fresh || memo.up.fresh ? [] : memo.byAt;
   const isolation: IsolationMemo['byAt'] = [];
   const isolatedNow = (c: CompanyState, i: number): boolean => {
@@ -138,8 +132,7 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
       isolation[i] = last;
       return last.isolated;
     }
-    const g = gridsOf();
-    const r = anyWithin(g.foes[enemyOf(c.side)], c.x, c.y, isoR) && !anyWithin(g.friends[c.side], c.x, c.y, isoR, (f) => f.id !== c.id);
+    const r = anyWithin(gridOf(enemyOf(c.side)), c.x, c.y, isoR, isUp) && !anyWithin(gridOf(c.side), c.x, c.y, isoR, (f) => onField(f) && f.id !== c.id);
     isolation[i] = { x: c.x, y: c.y, isolated: r };
     return r;
   };
@@ -168,7 +161,7 @@ export function morale(state: SimState, ctx: StepContext, dt: number, pending: P
     const moved: CompanyState = m === c.morale ? c : { ...c, morale: m };
 
     // The nearest enemy within closeRangeM (ties by id), looked for only when morale is low enough to surrender.
-    const near = m < v(k.surrender) ? nearestWithin(gridsOf().foes[enemyOf(c.side)], c.x, c.y, v(k.closeRangeM), byId) : undefined;
+    const near = m < v(k.surrender) ? nearestWithin(gridOf(enemyOf(c.side)), c.x, c.y, v(k.closeRangeM), byId, isUp) : undefined;
     if (near) {
       events.push(stateEvent(moved, 'surrendered', state.minute, { isolated, extra: ['morale-broke'], to: near.item, toM: near.d }));
       return { ...moved, status: 'surrendered', intent: 'hold', men: 0, captured: c.captured + c.men, officers: 0 };

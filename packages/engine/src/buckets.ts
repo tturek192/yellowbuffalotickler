@@ -38,10 +38,16 @@ let scratch = new Int32Array(1024);
 
 /** Put the items in their buckets; each bucket keeps them in the order given. Items not at a finite place are in none. */
 export function bucketsOf<T extends At>(items: readonly T[]): Buckets<T> {
+  return bucketsOfWhere(items);
+}
+
+/** The items for which `put` holds (all, without it) in buckets, by their places in the whole list. */
+function bucketsOfWhere<T extends At>(items: readonly T[], put?: (it: T) => boolean): Buckets<T> {
   const n = items.length;
   let i0 = Infinity, i1 = -Infinity, j0 = Infinity, j1 = -Infinity;
   for (let k = 0; k < n; k++) {
     const it = items[k]!;
+    if (put !== undefined && !put(it)) continue;
     const i = cellOf(it.x);
     const j = cellOf(it.y);
     if (!Number.isFinite(i) || !Number.isFinite(j)) continue;
@@ -60,6 +66,7 @@ export function bucketsOf<T extends At>(items: readonly T[]): Buckets<T> {
   let placed = 0;
   for (let k = 0; k < n; k++) {
     const it = items[k]!;
+    if (put !== undefined && !put(it)) continue;
     const i = cellOf(it.x);
     const j = cellOf(it.y);
     if (!Number.isFinite(i) || !Number.isFinite(j)) continue;
@@ -76,6 +83,7 @@ export function bucketsOf<T extends At>(items: readonly T[]): Buckets<T> {
   const ys = places.subarray(placed);
   for (let k = 0; k < n; k++) {
     const it = items[k]!;
+    if (put !== undefined && !put(it)) continue;
     const i = cellOf(it.x);
     const j = cellOf(it.y);
     if (!Number.isFinite(i) || !Number.isFinite(j)) continue;
@@ -111,13 +119,15 @@ function scanCells<T extends At>(b: Buckets<T>, ci0: number, ci1: number, cj0: n
  * The items within distance r of (x, y), each with its distance, nearest first (ties by the order `tie` gives).
  * It visits the buckets the circle's bounding square touches.
  */
-export function within<T extends At>(b: Buckets<T>, x: number, y: number, r: number, tie: (a: T, b: T) => number): Array<{ item: T; d: number }> {
+export function within<T extends At>(b: Buckets<T>, x: number, y: number, r: number, tie: (a: T, b: T) => number, keep?: (it: T) => boolean): Array<{ item: T; d: number }> {
   if (!(r >= 0)) return [];
   const out: Array<{ item: T; d: number }> = [];
   const { xs, ys, order, items } = b;
   scanCells(b, cellOf(x - r), cellOf(x + r), cellOf(y - r), cellOf(y + r), (p) => {
     const d = dist(xs[p]! - x, ys[p]! - y);
-    if (d <= r) out.push({ item: items[order[p]!]!, d });
+    if (d > r) return;
+    const it = items[order[p]!]!;
+    if (keep === undefined || keep(it)) out.push({ item: it, d });
   });
   return out.length > 1 ? out.sort((a, b2) => a.d - b2.d || tie(a.item, b2.item)) : out;
 }
@@ -130,7 +140,7 @@ export function anyWithin<T extends At>(b: Buckets<T>, x: number, y: number, r: 
 }
 
 /** The nearest item within distance r of (x, y), with its distance (ties by `tie`): `within(...)[0]`, without the list. */
-export function nearestWithin<T extends At>(b: Buckets<T>, x: number, y: number, r: number, tie: (a: T, b: T) => number): { item: T; d: number } | undefined {
+export function nearestWithin<T extends At>(b: Buckets<T>, x: number, y: number, r: number, tie: (a: T, b: T) => number, keep?: (it: T) => boolean): { item: T; d: number } | undefined {
   if (!(r >= 0)) return undefined;
   let best: { item: T; d: number } | undefined;
   const { xs, ys, order, items } = b;
@@ -138,13 +148,14 @@ export function nearestWithin<T extends At>(b: Buckets<T>, x: number, y: number,
     const d = dist(xs[p]! - x, ys[p]! - y);
     if (d > r) return;
     const it = items[order[p]!]!;
+    if (keep !== undefined && !keep(it)) return;
     if (best === undefined || d < best.d || (d === best.d && tie(it, best.item) < 0)) best = { item: it, d };
   });
   return best;
 }
 
 /**
- * The first `max` items within distance r of (x, y), nearest first (ties by `tie`), that `accept` takes: what walking
+ * The first `max` items within distance r of (x, y) (of those `keep` holds for, when given), nearest first (ties by `tie`), that `accept` takes: what walking
  * `within(...)` in order and keeping the accepted ones gives, without sorting every item in reach (the nearest are picked
  * one at a time, and only a long run of refusals sorts the rest).
  */
@@ -156,13 +167,16 @@ export function nearestAccepted<T extends At>(
   tie: (a: T, b: T) => number,
   max: number,
   accept: (it: T, d: number) => boolean,
+  keep?: (it: T) => boolean,
 ): Array<{ item: T; d: number }> {
   if (!(r >= 0) || !(max > 0)) return [];
   const all: Array<{ item: T; d: number }> = [];
   const { xs, ys, order, items } = b;
   scanCells(b, cellOf(x - r), cellOf(x + r), cellOf(y - r), cellOf(y + r), (p) => {
     const d = dist(xs[p]! - x, ys[p]! - y);
-    if (d <= r) all.push({ item: items[order[p]!]!, d });
+    if (d > r) return;
+    const it = items[order[p]!]!;
+    if (keep === undefined || keep(it)) all.push({ item: it, d });
   });
   const out: Array<{ item: T; d: number }> = [];
   const before = (a: { item: T; d: number }, c: { item: T; d: number }): boolean => a.d < c.d || (a.d === c.d && tie(a.item, c.item) < 0);
@@ -249,9 +263,48 @@ export const changedNear = (changes: Map<string, Buckets<At>>, group: string, x:
 };
 
 /** Visit every item in the buckets the box [x0, x1] × [y0, y1] touches (items outside the box may be visited too). */
-export function inBox<T extends At>(b: Buckets<T>, x0: number, y0: number, x1: number, y1: number, visit: (it: T) => void): void {
+export function inBox<T extends At>(b: Buckets<T>, x0: number, y0: number, x1: number, y1: number, visit: (it: T) => void, keep?: (it: T) => boolean): void {
   const { order, items } = b;
   scanCells(b, cellOf(x0), cellOf(x1), cellOf(y0), cellOf(y1), (p) => {
-    visit(items[order[p]!]!);
+    const it = items[order[p]!]!;
+    if (keep === undefined || keep(it)) visit(it);
   });
 }
+
+/**
+ * One side's items of a list in buckets, by their places in the list (a numerical shortcut, Task 21: answers never depend
+ * on it). The buckets of the list as last seen are kept, and reused while every item stands where it stood, on the same
+ * side, with the same id (the items themselves may be new copies: the buckets give the list's own). A caller that wants
+ * only some of a side's items passes a `keep` test to the search: the same items, in the same order, as buckets of the
+ * side's list filtered by it.
+ */
+export function sideBuckets<T extends At & { id: string; side: string }>(items: readonly T[], side: string): Buckets<T> {
+  const n = items.length;
+  let same = sideMemo.n === n;
+  if (same && sideMemo.items !== items) {
+    const was = sideMemo.objs as T[];
+    for (let i = 0; i < n; i++) {
+      const it = items[i]!;
+      const w = was[i]!;
+      if (it === w) continue;
+      if (it.x !== w.x || it.y !== w.y || it.id !== w.id || it.side !== w.side) {
+        same = false;
+        break;
+      }
+      was[i] = it;
+    }
+  }
+  if (!same) {
+    sideMemo.n = n;
+    sideMemo.objs = items.slice();
+    sideMemo.bySide = new Map();
+  }
+  sideMemo.items = items;
+  let b = sideMemo.bySide.get(side) as Buckets<T> | undefined;
+  if (!b) {
+    b = bucketsOfWhere(items, (it) => it.side === side);
+    sideMemo.bySide.set(side, b);
+  }
+  return b.items === items ? b : { ...b, items };
+}
+const sideMemo: { n: number; items: readonly unknown[] | null; objs: unknown[]; bySide: Map<string, Buckets<At>> } = { n: -1, items: null, objs: [], bySide: new Map() };

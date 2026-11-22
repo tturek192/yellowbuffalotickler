@@ -4,7 +4,7 @@ import type { World } from './ground';
 import type { BarrageState } from './barrage';
 import { CAUSES, emit } from './causes';
 import type { Cause } from './causes';
-import { anyWithin, bucketsOf } from './buckets';
+import { anyWithin, sideBuckets } from './buckets';
 import { isHolding } from './companies';
 import type { CompanyState, CompanyStatus } from './companies';
 import type { PhaseName } from './pipeline';
@@ -102,12 +102,11 @@ export function inContact(state: SimState, ctx: StepContext): boolean {
   // Task 14: a company down to its ammunition reserve fires it only on a counter-attack, whose companies are on the move
   // (so the run is busy anyway); in contact it counts as unable to fire.
   const canFire = (c: CompanyState): boolean => armed(c) && c.ammo > ammoReserve(c, ctx);
-  // Each side's enemies, in buckets (buckets.ts), so contact never looks at every pair.
-  const enemies = { allied: bucketsOf(field.filter((c) => c.side === 'central')), central: bucketsOf(field.filter((c) => c.side === 'allied')) };
+  // Each side's enemies, in buckets (buckets.ts), so contact never looks at every pair; those on the field are kept as it looks.
   for (const a of field) {
     if (isHolding(a)) continue;
     const r = v(ctx.doctrines[a.doctrineId]!.common.closeRangeM);
-    if (anyWithin(enemies[a.side], a.x, a.y, r, canFire(a) ? undefined : canFire)) return true;
+    if (anyWithin(sideBuckets(state.companies, a.side === 'allied' ? 'central' : 'allied'), a.x, a.y, r, canFire(a) ? onField : canFire)) return true;
   }
   return false;
 }

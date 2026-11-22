@@ -1,7 +1,7 @@
 import { minutesBetween, ScenarioError, v } from '@wwi/scenario';
 import type { Point, Scenario, Weapon } from '@wwi/scenario';
 import { bandAt, barrageXAt, planReachX } from './barrage';
-import { bucketsOf, inBox } from './buckets';
+import { inBox, sideBuckets } from './buckets';
 import { emit } from './causes';
 import type { Cause, NewEvent } from './causes';
 import type { CompanyState } from './companies';
@@ -513,11 +513,19 @@ export function artilleryFire(state: SimState, ctx: StepContext, dt: number, pen
     // The enemy companies near a lost segment's trench, found from each segment through buckets (the same test as before).
     const onLost = new Set<CompanyState>();
     if (zones.length) {
-      const grid = bucketsOf(field.filter((c) => c.side !== side));
+      const grid = sideBuckets(state.companies, side === 'allied' ? 'central' : 'allied');
       for (const z of zones)
-        inBox(grid, z.x0, z.x.yMin - near, z.x1, z.x.yMax + near, (c) => {
-          if (!onLost.has(c) && c.y >= z.x.yMin - near && c.y <= z.x.yMax + near && c.x >= z.x0 && c.x <= z.x1 && distanceTo(z.pts, at(c)) <= near) onLost.add(c);
-        });
+        inBox(
+          grid,
+          z.x0,
+          z.x.yMin - near,
+          z.x1,
+          z.x.yMax + near,
+          (c) => {
+            if (!onLost.has(c) && c.y >= z.x.yMin - near && c.y <= z.x.yMax + near && c.x >= z.x0 && c.x <= z.x1 && distanceTo(z.pts, at(c)) <= near) onLost.add(c);
+          },
+          onField,
+        );
     }
     const targets = field.filter((c) => {
       if (c.side === side) return false;

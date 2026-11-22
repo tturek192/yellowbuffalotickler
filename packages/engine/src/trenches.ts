@@ -4,7 +4,7 @@ import { distanceTo, segmentSamples } from './artillery';
 import { counterAttackOrder } from './movement';
 import { CAUSES, emit } from './causes';
 import type { Cause, NewEvent } from './causes';
-import { bucketsOf, inBox } from './buckets';
+import { inBox, sideBuckets } from './buckets';
 import type { Buckets } from './buckets';
 import { byId } from './companies';
 import type { CompanyState } from './companies';
@@ -49,8 +49,11 @@ function workBox(pts: readonly Point[]): [number, number, number, number] {
   return [x0, y0, x1, y1];
 }
 
-/** Companies (in the order given, or in id order from buckets: the same for a list in id order) within r of a segment's trench. */
-function nearSegment(cs: readonly CompanyState[] | Buckets<CompanyState>, pts: readonly Point[], r: number): Array<{ c: CompanyState; d: number }> {
+/** Companies in buckets, of which those `keep` holds for count (as a list in id order filtered by it would). */
+export type Pool = { b: Buckets<CompanyState>; keep: (c: CompanyState) => boolean };
+
+/** Companies (in the order given, or in id order from a pool: the same for a list in id order) within r of a segment's trench. */
+function nearSegment(cs: readonly CompanyState[] | Pool, pts: readonly Point[], r: number): Array<{ c: CompanyState; d: number }> {
   const [x0, y0, x1, y1] = boxOf(pts);
   const out: Array<{ c: CompanyState; d: number }> = [];
   const look = (c: CompanyState): void => {
@@ -60,7 +63,8 @@ function nearSegment(cs: readonly CompanyState[] | Buckets<CompanyState>, pts: r
   };
   if (Array.isArray(cs)) for (const c of cs) look(c);
   else {
-    inBox(cs as Buckets<CompanyState>, x0 - r, y0 - r, x1 + r, y1 + r, look);
+    const pool = cs as Pool;
+    inBox(pool.b, x0 - r, y0 - r, x1 + r, y1 + r, look, pool.keep);
     out.sort((a, b) => byId(a.c, b.c));
   }
   return out;
@@ -221,29 +225,15 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
   const ratio = v(fx.captureRatio);
   const uncutBelow = v(fx.wireUncutBelow);
   let out = state;
-  const upOf = (cs: readonly CompanyState[]) => cs.filter((c) => onField(c) && c.posture !== 'in-dugout');
-  // Each side's companies up, and those of them that can take a trench (not waiting, not falling back), from `up`.
-  // Holders and settled holders in buckets too: `nearSegment` gives the same companies from buckets as from the id-ordered lists.
-  // Each built when first asked for.
-  type Pools = { holders: (s: Side) => Buckets<CompanyState>; settled: (s: Side) => Buckets<CompanyState>; takers: (s: Side) => Buckets<CompanyState> };
-  const lazy = (make: (s: Side) => Buckets<CompanyState>): ((s: Side) => Buckets<CompanyState>) => {
-    const made: Partial<Record<Side, Buckets<CompanyState>>> = {};
-    return (s) => (made[s] ??= make(s));
-  };
-  const poolsOf = (cs: CompanyState[]): Pools => {
-    const holders: Record<Side, CompanyState[]> = { allied: [], central: [] };
-    const takers: Record<Side, CompanyState[]> = { allied: [], central: [] };
-    for (const c of cs) {
-      holders[c.side].push(c);
-      if (c.status !== 'waiting' && c.status !== 'falling-back') takers[c.side].push(c);
-    }
-    return {
-      holders: lazy((s) => bucketsOf(holders[s])),
-      settled: lazy((s) => bucketsOf(holders[s].filter(isSettled))),
-      takers: lazy((s) => bucketsOf(takers[s])),
-    };
-  };
-  let pools = poolsOf(upOf(state.companies));
+  // Each side's companies up (the holders), those of them consolidating or holding (settled), and those that can take a
+  // trench (takers: not waiting, not falling back), as pools of each side's buckets (buckets.ts `sideBuckets`).
+  type Pools = { holders: (s: Side) => Pool; settled: (s: Side) => Pool; takers: (s: Side) => Pool };
+  const poolsOf = (cs: readonly CompanyState[]): Pools => ({
+    holders: (s) => ({ b: sideBuckets(cs, s), keep: isUp }),
+    settled: (s) => ({ b: sideBuckets(cs, s), keep: isUpSettled }),
+    takers: (s) => ({ b: sideBuckets(cs, s), keep: isTaker }),
+  });
+  let pools = poolsOf(state.companies);
   for (let i = 0; i < state.segments.length; i++) {
     // Segments keep their places in the array: a capture replaces the one it is about.
     const seg = out.segments[i]!;
@@ -347,7 +337,7 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
         };
       }),
     );
-    if (rejoin.length) pools = poolsOf(upOf(out.companies));
+    if (rejoin.length) pools = poolsOf(out.companies);
   }
   return captureGuns(out, ctx);
 }
@@ -360,20 +350,23 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
 export function segmentDefenders(
   seg: SegmentState,
   pts: readonly Point[],
-  holders: readonly CompanyState[] | Buckets<CompanyState>,
+  holders: readonly CompanyState[] | Pool,
   ctx: StepContext,
-  settled?: readonly CompanyState[] | Buckets<CompanyState>,
+  settled?: readonly CompanyState[] | Pool,
 ): { men: number; ids: string[] } {
   const fx = ctx.tables.effects;
   const firstLoss = seg.holder === seg.garrisonSide && seg.holderEventId === null;
   const close = nearSegment(holders, pts, v(fx.captureRadiusM));
-  // `settled`: those of the holders consolidating or holding, when the caller has them already (given buckets of holders, it must).
+  // `settled`: those of the holders consolidating or holding, when the caller has them already (given a pool of holders, it must).
   const onLine = firstLoss ? [] : nearSegment(settled ?? (holders as readonly CompanyState[]).filter(isSettled), pts, v(fx.lineFeatureMatchM));
   const all = [...close, ...onLine.filter((x) => !close.some((y) => y.c.id === x.c.id))];
   return { men: sum(all, (x) => x.c.men), ids: all.map((x) => x.c.id) };
 }
 
 const isSettled = (c: CompanyState): boolean => c.status === 'consolidating' || c.status === 'holding';
+const isUp = (c: CompanyState): boolean => onField(c) && c.posture !== 'in-dugout';
+const isUpSettled = (c: CompanyState): boolean => isUp(c) && isSettled(c);
+const isTaker = (c: CompanyState): boolean => isUp(c) && c.status !== 'waiting' && c.status !== 'falling-back';
 
 /**
  * Guns overrun: every capturable battery (`capturable`) not yet taken whose position lies within `gunCaptureRadiusM`
