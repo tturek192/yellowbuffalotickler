@@ -53,12 +53,15 @@ function timedRuns(n: number): Promise<{ cold: Timed; warm: Timed[] }> {
  * every other project has finished, so nothing runs beside it; the cold figure is the best of two fresh worker threads
  * (one noisy first run no longer fails it), the warm one the best of three runs in the first thread; and the limits are
  * cold ≤ 5600 ms, warm ≤ 4700 ms, the record still ≤ 8 MB. The 3 s target is still unmet, pending the owner's decision.
+ * How it is run (Task 0 last ruling): timing gates do not belong in the always-run suite on a shared machine, where the
+ * same code measured 5–15% slower at the end of the suite than alone (one cold thread at 5807 ms). So `npm test` skips
+ * it unless BUDGET=1 (as cli workers.test.ts does with BUDGET_BATCH=1), and `npm run test:budget` runs it on its own.
  */
 const COLD_CPU_MS = 5600;
 const WARM_CPU_MS = 4700;
 
 describe('performance budget (Global Constraints; Review Focus 4)', () => {
-  it('a full Vimy run stays within 5600 ms of CPU cold (best of 2 fresh threads) and 4700 ms warm (best of 3) (target 3000 ms unmet, owner to decide), its record within 8 MB', async () => {
+  it.runIf(process.env.BUDGET === '1')('a full Vimy run stays within 5600 ms of CPU cold (best of 2 fresh threads) and 4700 ms warm (best of 3) (target 3000 ms unmet, owner to decide), its record within 8 MB', async () => {
     // One after the other, never side by side: a cold run and three warm ones in one thread, then a second cold thread.
     const first = await timedRuns(4);
     const second = await timedRuns(1);

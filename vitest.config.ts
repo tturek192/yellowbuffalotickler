@@ -6,8 +6,8 @@ export default defineConfig({
       'packages/*',
       'tools/*',
       'scripts',
-      // The engine's CPU budget (packages/engine/src/budget.test.ts): its own project in a later group, so it runs only
-      // once every other project has finished and nothing else runs beside it to load the CPU.
+      // The engine's CPU budget (packages/engine/src/budget.test.ts): its own project in a later group, so nothing runs
+      // beside it. It is skipped unless BUDGET=1: `npm run test:budget` runs it on its own.
       { test: { name: 'engine-budget', root: 'packages/engine', include: ['src/budget.test.ts'], sequence: { groupOrder: 1 } } },
     ],
   },

@@ -11,6 +11,7 @@
   },
   "scripts": {
     "test": "npm run typecheck && vitest run",
+    "test:budget": "BUDGET=1 vitest run --project engine-budget",
     "typecheck": "tsc -b",
     "sim": "tsx packages/cli/src/main.ts",
     "app": "npm -w packages/app run dev"
