@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RunRecord } from '@wwi/engine';
 import { frameAt } from '../playback';
-import { drawFrame } from '../map/draw';
+import { drawFrame, type Hit, type MapPick } from '../map/draw';
+import { skyMoves } from '../map/sky';
+import { pickAt } from './why';
 import { fitView, recordBounds, type View } from '../map/projection';
 import { clampView, markerStyleAt, panBy, pinchFactor, wheelFactor, zoomAt, zoomBy } from '../map/zoom';
 import { pulsePhase } from '../map/unitMarkers';
@@ -19,6 +21,8 @@ const ZOOM_STEP = 1.6;
 const PULSE_FRAME_MS = 50;
 /** Where a pulse is held for readers who ask for no motion. */
 const STILL_PHASE = 0.25;
+/** A press that moves less than this (CSS px) before it lifts is a click, not a drag. */
+const CLICK_SLOP_PX = 5;
 
 const CANVAS_FONTS = ['italic 15px "EB Garamond"', '600 11px "Barlow Condensed"'];
 
@@ -28,7 +32,7 @@ const prefersStill = (): boolean => typeof window.matchMedia === 'function' && w
  * The trench map: a devicePixelRatio-aware canvas that tracks its container's size. Wheel and pinch zoom about the
  * pointer, drag pans, and the buttons zoom about the middle; battalions show at corps zoom and companies when zoomed in.
  */
-export function MapCanvas({ record, minute, label }: { record: RunRecord; minute: number; label: string }) {
+export function MapCanvas({ record, minute, label, speed = 1, onPick }: { record: RunRecord; minute: number; label: string; speed?: number; onPick?: (pick: MapPick) => void }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -44,6 +48,10 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
   const markers = markerStyleAt(view).kind;
   const frame = useMemo(() => frameAt(record, minute), [record, minute]);
   const pulsing = useMemo(() => frame.companies.some((c) => c.suppression >= 0.05 && c.status !== 'off-map'), [frame]);
+  // Falling weather moves in wall time too.
+  const snowing = skyMoves(record, minute);
+  /** The markers as last drawn, for picking one with a click. */
+  const hitsRef = useRef<Hit[]>([]);
 
   useEffect(() => setZoomed(null), [record, size]);
 
@@ -86,8 +94,9 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
     return () => clearTimeout(id);
   }, [view.scale, view.tx, view.ty]);
 
+  /** Draw the frame at wall time `now` (ms), or held still when null. */
   const paint = useCallback(
-    (pulse: number): void => {
+    (now: number | null): void => {
       const canvas = canvasRef.current;
       if (!canvas || size.w === 0 || size.h === 0) return;
       const dpr = window.devicePixelRatio || 1;
@@ -98,30 +107,35 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawFrame(ctx, view, record, frame, { pulse, settled: settledRef.current });
+      hitsRef.current = drawFrame(ctx, view, record, frame, {
+        pulse: now === null ? STILL_PHASE : pulsePhase(now),
+        wallSec: now === null ? null : now / 1000,
+        settled: settledRef.current,
+        speed,
+      });
     },
     // `view` is rebuilt every render; its parts are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [size, view.scale, view.tx, view.ty, record, frame, fontsReady, settledTick],
+    [size, view.scale, view.tx, view.ty, record, frame, fontsReady, settledTick, speed],
   );
 
-  // Redraw on every change; while a marker is suppressed also pulse its ring from wall time (never battle time).
+  // Redraw on every change; while a marker is suppressed, or snow or rain falls, keep redrawing from wall time (never battle time).
   useEffect(() => {
     const still = prefersStill();
-    paint(still ? STILL_PHASE : pulsePhase(performance.now()));
-    if (!pulsing || still) return;
+    paint(still ? null : performance.now());
+    if (!(pulsing || snowing) || still) return;
     let raf = 0;
     let last = performance.now();
     const tick = (now: number): void => {
       if (now - last >= PULSE_FRAME_MS) {
         last = now;
-        paint(pulsePhase(now));
+        paint(now);
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [paint, pulsing]);
+  }, [paint, pulsing, snowing]);
 
   // Wheel zoom about the pointer. Not a React handler: React's wheel listeners are passive and cannot stop the page scrolling.
   useEffect(() => {
@@ -139,10 +153,13 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
 
   // Drag to pan; two fingers pinch to zoom (and pan with their midpoint).
   const pointers = useRef(new Map<number, [number, number]>());
+  /** Where a one-finger press began and whether it has stayed put (a click picks the marker under it). */
+  const press = useRef<{ at: [number, number]; still: boolean } | null>(null);
   const [dragging, setDragging] = useState(false);
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>): void => {
     e.currentTarget.setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, [e.clientX, e.clientY]);
+    press.current = pointers.current.size === 1 ? { at: [e.clientX, e.clientY], still: true } : null;
     setDragging(true);
   };
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>): void => {
@@ -151,6 +168,7 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
     const all = [...pointers.current.values()];
     const next: [number, number] = [e.clientX, e.clientY];
     const rect = e.currentTarget.getBoundingClientRect();
+    if (press.current && Math.hypot(e.clientX - press.current.at[0], e.clientY - press.current.at[1]) > CLICK_SLOP_PX) press.current.still = false;
     if (all.length === 1) {
       pointers.current.set(e.pointerId, next);
       setZoomed((z) => panBy(z ?? fit, fit, next[0] - prev[0], next[1] - prev[1], size, bounds));
@@ -167,8 +185,15 @@ export function MapCanvas({ record, minute, label }: { record: RunRecord; minute
     }
   };
   const onPointerEnd = (e: React.PointerEvent<HTMLCanvasElement>): void => {
-    pointers.current.delete(e.pointerId);
+    const wasDown = pointers.current.delete(e.pointerId);
     if (pointers.current.size === 0) setDragging(false);
+    const p = press.current;
+    if (wasDown && p?.still && e.type === 'pointerup' && pointers.current.size === 0 && onPick) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pick = pickAt(hitsRef.current, [e.clientX - rect.left, e.clientY - rect.top]);
+      if (pick) onPick(pick);
+    }
+    press.current = null;
   };
 
   const zoomButton = (factor: number) => (): void => setZoomed((z) => zoomBy(z ?? fit, fit, factor, size, bounds));

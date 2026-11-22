@@ -7,10 +7,12 @@ type Props = {
   current: number;
   timeOf: (minute: number) => string;
   onSeek: (minute: number) => void;
+  /** Open the "why" panel on an event (by id). */
+  onExplain?: (eventId: number) => void;
 };
 
-/** The event log; clicking an entry seeks to that event's minute. */
-export const EventLog = memo(function EventLog({ events, current, timeOf, onSeek }: Props) {
+/** The event log; clicking an entry seeks to that event's minute and opens the "why" panel on it. */
+export const EventLog = memo(function EventLog({ events, current, timeOf, onSeek, onExplain }: Props) {
   const listRef = useRef<HTMLUListElement>(null);
 
   // Keep the current entry in view without scrolling the page.
@@ -24,22 +26,26 @@ export const EventLog = memo(function EventLog({ events, current, timeOf, onSeek
   }, [current]);
 
   return (
-    <section className="panel side" aria-labelledby="event-log-title">
-      <div className="side-inner">
-        <h2 id="event-log-title" className="panel-title">
-          Event log <span className="count">{events.length}</span>
-        </h2>
-        <ul ref={listRef} className="log">
-          {events.map((e, i) => (
-            <li key={i} className={`log-item kind-${e.kind} ${i === current ? 'is-current' : i > current ? 'is-future' : ''}`}>
-              <button type="button" onClick={() => onSeek(e.minute)}>
-                <span className="log-time">{timeOf(e.minute)}</span>{' '}
-                <span className="log-text">{e.text}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <section className="event-log" aria-labelledby="event-log-title">
+      <h2 id="event-log-title" className="panel-title">
+        Event log <span className="count">{events.length}</span>
+      </h2>
+      <ul ref={listRef} className="log">
+        {events.map((e, i) => (
+          <li key={i} className={`log-item kind-${e.kind} ${i === current ? 'is-current' : i > current ? 'is-future' : ''}`}>
+            <button
+              type="button"
+              onClick={() => {
+                onSeek(e.minute);
+                onExplain?.(e.id);
+              }}
+            >
+              <span className="log-time">{timeOf(e.minute)}</span>{' '}
+              <span className="log-text">{e.text}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 });

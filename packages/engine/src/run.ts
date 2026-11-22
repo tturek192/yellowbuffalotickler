@@ -1,4 +1,4 @@
-import { decodeTerrain, ScenarioError, v } from '@wwi/scenario';
+import { decodeTerrain, minutesBetween, ScenarioError, v } from '@wwi/scenario';
 import type { Doctrine, Scenario, Tables } from '@wwi/scenario';
 import { initBarrage } from './barrage';
 import { noteArtilleryDefaults } from './artillery';
@@ -8,7 +8,7 @@ import { initComms } from './comms';
 import { initCompanies } from './companies';
 import { buildWorld } from './ground';
 import { resolveDefaults } from './defaults';
-import { noteLightDefaults } from './light';
+import { noteLightDefaults, utcOffsetOf } from './light';
 import { withStartingMorale } from './morale';
 import { runPipeline } from './pipeline';
 import { deriveSegments } from './segments';
@@ -194,12 +194,28 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
         yMax: round(x.yMax, 1),
         lengthM: round(x.lengthM, 1),
       })),
+      barrageDepthM: { band: v(ctx.tables.effects.barrageBandDepthM), mg: v(ctx.tables.effects.mgBarrageDepthM) },
     },
+    conditions: conditionsOf(sc, ctx),
     // Task 15: each company's formations, battalion up, so the batch can set formations' casualties beside targets.
     units: state.companies.map((c) => ({ id: c.id, battalionId: c.battalionId, name: c.name, side: c.side, formationPath: c.formationPath })),
     snapshots,
     events,
     summary: summarize(state, ctx, events, reason),
     defaultsUsed: [...ctx.defaultsUsed].sort(),
+  };
+}
+
+/** The weather by minute after Zero, and the sun's place and clock as `daylight` reads them (Task 18, for playback). */
+function conditionsOf(sc: Scenario, ctx: StepContext): RunRecord['conditions'] {
+  const zero = v(sc.zeroHour);
+  return {
+    sun: { lat: sc.frame?.origin.lat ?? 0, lon: sc.frame?.origin.lon ?? 0, utcOffsetMin: utcOffsetOf(sc), twilightMin: v(ctx.tables.effects.twilightMin) },
+    weather: sc.weather.map((w) => ({
+      minute: minutesBetween(zero, w.at),
+      precipitation: v(w.precipitation),
+      ...(w.windFromDeg ? { windFromDeg: v(w.windFromDeg) } : {}),
+      ...(w.visibilityM ? { visibilityM: v(w.visibilityM) } : {}),
+    })),
   };
 }

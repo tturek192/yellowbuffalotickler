@@ -64,5 +64,9 @@ describe('explain', () => {
     const imports = (f: string) => [...readFileSync(new URL(f, import.meta.url), 'utf8').matchAll(/^import (?!type )(.*) from '(.*)';$/gm)].map((m) => m[2]);
     expect(imports('./explain.ts')).toEqual(['./cause-text']);
     expect(imports('./cause-text.ts')).toEqual([]);
+    // Task 18: the sun's times, for the map's night, come from a file that imports nothing.
+    expect(imports('./sun.ts')).toEqual([]);
+    const reexports = [...readFileSync(new URL('./reader.ts', import.meta.url), 'utf8').matchAll(/^export (?!type )(.*) from '(.*)';$/gm)].map((m) => m[2]);
+    expect([...new Set(reexports)].sort()).toEqual(['./cause-text', './explain', './sun']);
   });
 });

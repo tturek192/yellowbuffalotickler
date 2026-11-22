@@ -2,7 +2,7 @@ import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenar
 import type { CompanyState, CompanyStatus } from './companies';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.3';
+export const ENGINE_VERSION = '0.4.4';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -69,6 +69,15 @@ export type Snapshot = {
   barrages: Array<{ sectorId: string; done: boolean; points: Point[] }>;
 };
 
+/** A weather entry as the record holds it: from `minute` (after Zero; before Zero is negative) until the next. */
+export type WeatherEntry = { minute: number; precipitation: Scenario['weather'][number]['precipitation']['value']; windFromDeg?: number; visibilityM?: number };
+
+/**
+ * The sun's place and clock as the light model uses them (light.ts `daylight`: the frame origin, else 0, 0; the clock
+ * offset, else 0; the twilight minutes), so a reader can work out day and night with `sunTimes`; and the scenario's weather.
+ */
+export type RunConditions = { sun: { lat: number; lon: number; utcOffsetMin: number; twilightMin: number }; weather: WeatherEntry[] };
+
 /** Casualties of one side in one period, with the same counts for every formation it has, by formation id. */
 export type SideCasualties = CasualtyCount & { formations: Record<string, CasualtyCount> };
 export type PeriodCasualties = Record<Side, SideCasualties>;
@@ -92,7 +101,11 @@ export type RunRecord = {
     terrain?: TerrainGrid;
     /** The German trench segments (Task 7), in the order snapshot segment rows index them. */
     segments: SegmentGeometry[];
+    /** How deep the creeping barrage's band and the machine-gun barrage's zone beyond it are, in metres (absent before engine 0.4.4). */
+    barrageDepthM?: { band: number; mg: number };
   };
+  /** What playback needs for weather and light (absent before engine 0.4.4). */
+  conditions?: RunConditions;
   /** Every company, in ascending id order: the battalion it belongs to, its name and side; its formations, battalion up (engine 0.4.0 on). */
   units: Array<{ id: string; battalionId: string; name: string; side: Side; formationPath?: string[] }>;
   /**

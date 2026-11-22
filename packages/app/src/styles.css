@@ -251,6 +251,239 @@ code {
     flex: none;
     max-height: 360px;
   }
+  .event-log {
+    flex: none;
+  }
+  .why-panel {
+    flex: none;
+    max-height: 420px;
+  }
+}
+
+/* A phone: the why panel is a sheet over the bottom of the screen. */
+@media (max-width: 600px) {
+  .why-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    max-height: 62vh;
+    border: 1px solid var(--rule);
+    border-top: 2px solid var(--brass);
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* The side column: running totals, the why panel when open, and the event log under them. */
+.event-log {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.side .totals {
+  flex: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  background: transparent;
+}
+
+.totals-since {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
+.totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0 2px;
+  font-size: 13px;
+}
+
+.totals-table th,
+.totals-table td {
+  padding: 2px 16px;
+  text-align: right;
+  font-weight: 400;
+}
+
+.totals-table th[scope='row'] {
+  text-align: left;
+  color: var(--muted);
+}
+
+.totals-table thead th {
+  font-family: var(--font-head);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.totals-table td {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.totals-sum th,
+.totals-sum td {
+  border-top: 1px solid var(--rule);
+  color: var(--text);
+}
+
+.side-allied {
+  color: #8fb3e6;
+}
+
+.side-central {
+  color: #e48c80;
+}
+
+.totals-taken {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 4px 0 10px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+
+.totals-taken div {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.totals-taken dt {
+  color: var(--muted);
+}
+
+.totals-taken dd {
+  margin: 0;
+  display: flex;
+  gap: 10px;
+  font-family: var(--font-mono);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.why-panel {
+  flex: 2 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  border-bottom: 2px solid var(--brass);
+  background: var(--panel-raised);
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+.why-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel-raised);
+  border-bottom: 1px solid var(--rule);
+}
+
+.side .why-head .panel-title {
+  border-bottom: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.why-subject {
+  color: var(--text);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.why-close {
+  margin-right: 8px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.why-empty {
+  margin: 12px 16px;
+  color: var(--muted);
+}
+
+.why-chain {
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px 12px;
+}
+
+.why-step {
+  margin: 0 0 8px;
+  padding-left: 8px;
+  border-left: 2px solid var(--rule);
+}
+
+.why-step.is-root {
+  border-left-color: var(--brass);
+}
+
+.why-because {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.why-event {
+  display: block;
+  width: 100%;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.why-event:hover .why-text {
+  text-decoration: underline;
+  text-decoration-color: var(--brass);
+}
+
+.why-causes {
+  margin: 2px 0 0;
+  padding-left: 18px;
+  color: var(--brass);
+  font-size: 13px;
+}
+
+.why-factors,
+.why-see-above {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.why-see-above {
+  font-family: var(--font-body);
+  font-style: italic;
 }
 
 /* ---------- Map ---------- */

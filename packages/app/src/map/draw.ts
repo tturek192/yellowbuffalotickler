@@ -1,6 +1,6 @@
 import type { RunRecord } from '@wwi/engine';
 import { aggregateBattalions, companiesOf, type Frame } from '../playback';
-import { BARRAGE_DEPTH_M, worldToScreen, type Point, type View } from './projection';
+import { BARRAGE_DEPTH_M, recordBounds, worldToScreen, type View } from './projection';
 import { declutter, type Screen } from './declutter';
 import { divisionTags, nudgeClear, objectiveLabelGroups, overlaps, placeClear, trenchLabel, type Box } from './labels';
 import { drawFeatures } from './features';
@@ -8,6 +8,12 @@ import { terrainLayer } from './hillshade';
 import { LABEL_FONT, MAP_COLORS, MARKER_FONT, crenellatedPath, sideColor, tracePath } from './style';
 import { markerStyleAt } from './zoom';
 import { MARKER_STYLE, drawUnitMarker } from './unitMarkers';
+import { frontAt } from './front';
+import {
+  bursts, drawBursts, drawCaptured, drawCreeping, drawFronts, drawMgZones, drawReserves, drawSegmentStates, drawStanding,
+  fireEventsAt, mgZones, reserveColumns, segmentStates, standingBarrages,
+} from './effects';
+import { drawSky } from './sky';
 
 export { crenellatedPath, MAP_COLORS } from './style';
 
@@ -244,52 +250,25 @@ function drawDivisionTags(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   ctx.restore();
 }
 
-function drawBarrage(ctx: CanvasRenderingContext2D, view: View, points: Point[]): void {
-  if (points.length < 2) return;
-  const near = points.map((p) => worldToScreen(view, p));
-  const far = points.map(([x, y]) => worldToScreen(view, [x + BARRAGE_DEPTH_M, y]));
-  const poly = [...near, ...far.reverse()];
-  const xs = poly.map((p) => p[0]);
-  const ys = poly.map((p) => p[1]);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-
-  ctx.save();
-  tracePath(ctx, poly);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(201, 162, 74, 0.2)';
-  ctx.fill();
-  ctx.clip();
-  ctx.strokeStyle = MAP_COLORS.hatch;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  const step = 6;
-  const span = maxY - minY;
-  for (let x = minX - span; x <= maxX; x += step) {
-    ctx.moveTo(x, maxY);
-    ctx.lineTo(x + span, minY);
-  }
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.save();
-  ctx.strokeStyle = 'rgba(150, 116, 40, 0.85)';
-  ctx.lineWidth = 1;
-  tracePath(ctx, poly);
-  ctx.closePath();
-  ctx.stroke();
-  ctx.restore();
-}
-
-/** What changes between frames of the same battle minute: the wall-clock pulse of the suppression rings. */
+/** What changes between frames of the same battle minute: the wall-clock pulse of the suppression rings, and the weather's fall. */
 export type DrawOptions = {
-  /** False in the middle of a pan or zoom: the terrain is moved from its last layer, not rebuilt. */
+  /**
+   * False in the middle of a pan or zoom: the terrain is moved from its last layer, not rebuilt, and the costlier effects
+   * (captured ground, fire bursts, falling weather) wait until the view settles.
+   */
   settled?: boolean;
   /** Suppression-ring phase in cycles (wall time, never battle time); 0 holds the rings still. */
   pulse?: number;
+  /** Playback speed (battle minutes per second): fire bursts thin out as it rises. */
+  speed?: number;
+  /** Wall-clock seconds for the falling weather; null or absent holds it still. */
+  wallSec?: number | null;
 };
+
+/** What a click on the map can pick: a company marker (zoomed in) or a battalion marker (corps zoom). */
+export type MapPick = { kind: 'company' | 'battalion'; id: string };
+/** A marker as drawn: the room it takes on the sheet, and what it stands for. Later entries are drawn on top. */
+export type Hit = { box: Box; pick: MapPick };
 
 /** Draw markers declutted against each other, top to bottom so the lower ones overlap the upper ones' bars. */
 function placeMarkers<T extends { x: number; y: number }>(view: View, items: readonly T[], w: (t: T) => number, h: number): Array<{ item: T; at: Screen }> {
@@ -321,12 +300,13 @@ export function placeChips(view: View, bns: readonly { x: number; y: number; lab
  * Corps zoom (`markerStyleAt`): a text-free chip per battalion, small enough to tell apart at fit-all. Returns what was
  * drawn so the labels can be placed once the line names are down.
  */
-function drawChips(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, size: { w: number; h: number }): PlacedChip[] {
+function drawChips(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, size: { w: number; h: number }, hits: Hit[]): PlacedChip[] {
   const bns = aggregateBattalions(frame.companies, r);
   const placed = placeChips(view, bns, size.w, size.h);
   for (const c of [...placed].sort((a, b) => a.at[1] - b.at[1])) {
     const b = bns[c.index]!;
     drawUnitMarker(ctx, { at: c.at, w: c.w, h: c.h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, chip: true, phase });
+    hits.push({ box: chipBox(c), pick: { kind: 'battalion', id: b.id } });
   }
   return placed;
 }
@@ -362,21 +342,27 @@ function labelChips(ctx: CanvasRenderingContext2D, chips: readonly PlacedChip[],
 }
 
 /** Between the chip threshold and the company switch: one labelled marker per battalion. */
-function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number): void {
+function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, hits: Hit[]): void {
   const { minW, h, padX } = MARKER_STYLE.battalion;
   ctx.font = `600 11px ${MARKER_FONT}`;
   const wOf = (label: string): number => Math.max(minW, Math.ceil(ctx.measureText(label).width) + 2 * padX);
   for (const { item: b, at } of placeMarkers(view, aggregateBattalions(frame.companies, r), (b) => wOf(b.label), h)) {
-    drawUnitMarker(ctx, { at, w: wOf(b.label), h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, battalion: true, phase });
+    const w = wOf(b.label);
+    drawUnitMarker(ctx, { at, w, h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, battalion: true, phase });
+    hits.push({ box: markerBox(at, w, h), pick: { kind: 'battalion', id: b.id } });
   }
 }
 
+/** The room a marker takes, its strength bar included. */
+const markerBox = (at: Screen, w: number, h: number): Box => ({ x0: at[0] - w / 2, x1: at[0] + w / 2, y0: at[1] - h / 2, y1: at[1] + h / 2 + MARKER_STYLE.barGap + MARKER_STYLE.barH });
+
 /** Zoomed in: one marker per company on the map. */
-function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number): void {
+function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, phase: number, hits: Hit[]): void {
   const initial = new Map((r.snapshots[0] ? companiesOf(r, r.snapshots[0]) : []).map((c) => [c.id, c.men]));
   const { w, h } = MARKER_STYLE.company;
   for (const { item: c, at } of placeMarkers(view, frame.companies.filter((c) => c.status !== 'off-map'), () => w, h)) {
     drawUnitMarker(ctx, { at, w, h, label: shortId(c.id), side: c.side, status: c.status, morale: c.morale, suppression: c.suppression, men: c.men, full: initial.get(c.id) ?? c.men, phase });
+    hits.push({ box: markerBox(at, w, h), pick: { kind: 'company', id: c.id } });
   }
 }
 
@@ -424,27 +410,51 @@ function drawFurniture(ctx: CanvasRenderingContext2D, view: View): void {
   ctx.restore();
 }
 
+const boundsCache = new WeakMap<RunRecord, ReturnType<typeof recordBounds>>();
+const boundsOf = (r: RunRecord): ReturnType<typeof recordBounds> => {
+  let b = boundsCache.get(r);
+  if (!b) boundsCache.set(r, (b = recordBounds(r)));
+  return b;
+};
+
 /**
- * Draw one frame in CSS pixels (the caller sets the devicePixelRatio transform): paper and terrain, map
- * features, trenches, objective lines, barrage bands (until each barrage ends), then unit markers: battalions at corps
- * zoom, companies once 1 km is wider than 250 px (`detailAt`).
+ * Draw one frame in CSS pixels (the caller sets the devicePixelRatio transform), bottom to top: paper and terrain, map
+ * features, captured ground, trenches and their segments' state (holder, wire), objective lines, the barrages (machine-gun
+ * zone, standing, creeping), both fronts, reserve columns, fire bursts, then unit markers (battalions at corps zoom,
+ * companies once 1 km is wider than 250 px, `detailAt`), night and weather, and the labels on top. Returns the markers as
+ * drawn, for picking one with a click.
  */
-export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, opts: DrawOptions = {}): void {
-  drawPaper(ctx, view, r, opts.settled ?? true);
+export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, frame: Frame, opts: DrawOptions = {}): Hit[] {
+  const settled = opts.settled ?? true;
+  drawPaper(ctx, view, r, settled);
   const labels: Box[] = [];
   drawFeatures(ctx, view, r.geometry.features, labels);
   const soft = labels.length; // map names: a line label may overlap one of these only when nothing else is free
+  const front = frontAt(r, frame.minute);
+  if (settled) drawCaptured(ctx, view, front);
   const trenches = r.geometry.lines.filter((l) => l.kind === 'trench');
   for (const l of trenches) drawTrench(ctx, view, l);
+  drawSegmentStates(ctx, view, segmentStates(r, frame.minute));
   const objectives = r.geometry.lines.filter((l) => l.kind === 'objective');
   for (const l of objectives) drawObjective(ctx, view, l);
-  for (const b of frame.barrages) if (!b.done) drawBarrage(ctx, view, b.points);
+  if (settled) {
+    drawMgZones(ctx, view, mgZones(r, frame));
+    drawStanding(ctx, view, standingBarrages(r, frame));
+  }
+  const band = r.geometry.barrageDepthM?.band ?? BARRAGE_DEPTH_M;
+  for (const b of frame.barrages) if (!b.done) drawCreeping(ctx, view, b.points, band);
+  drawFronts(ctx, view, front);
+  drawReserves(ctx, view, reserveColumns(r, frame.minute, boundsOf(r)));
+  if (settled) drawBursts(ctx, view, bursts(fireEventsAt(r, frame.minute), opts.speed ?? 1, frame, front, r.geometry.barrageDepthM));
   const style = markerStyleAt(view);
   const phase = opts.pulse ?? 0;
+  const hits: Hit[] = [];
   let chips: PlacedChip[] = [];
-  if (style.kind === 'company') drawCompanies(ctx, view, r, frame, phase);
-  else if (style.kind === 'chip') chips = drawChips(ctx, view, r, frame, phase, style);
-  else drawBattalions(ctx, view, r, frame, phase);
+  if (style.kind === 'company') drawCompanies(ctx, view, r, frame, phase, hits);
+  else if (style.kind === 'chip') chips = drawChips(ctx, view, r, frame, phase, style, hits);
+  else drawBattalions(ctx, view, r, frame, phase, hits);
+  const sheet = cssSize(ctx);
+  drawSky(ctx, r, frame.minute, sheet.w, sheet.h, opts.wallSec ?? null, settled);
   // The clock card (HTML, .clock-card in styles.css) hides the sheet's top-left corner: keep labels out from under it.
   labels.push({ x0: 0, x1: cssSize(ctx).w < 600 ? 230 : 300, y0: 0, y1: 86 });
   // Line labels go on top of the markers so a stack of companies never hides a name.
@@ -453,4 +463,5 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   drawDivisionTags(ctx, view, r, objectives, labels);
   labelChips(ctx, chips, labels);
   drawFurniture(ctx, view);
+  return hits;
 }

@@ -77,6 +77,10 @@ describe('draft Vimy scenario run', () => {
     // 0.4.3 (Task 14 fix round 1): the ammunition reserve released only on an enemy seen coming at the company, horse-drawn
     // batteries limbering up and withdrawing from enemy infantry, and mines. The draft has none of them in play: with the
     // version set back to 0.4.2 its record hashes to 7ed66c11 (the full suite passed so before the bump).
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.3', hash: 'acd659c0' });
+    // 0.4.4 (Task 18): the record carries what playback draws weather, night and barrage zones from: `conditions` (the
+    // scenario's weather by minute, and the sun's place and clock as the light model reads them) and the barrage band's
+    // and machine-gun zone's depths in `geometry.barrageDepthM`. The battle is unchanged: events, snapshots and summary
+    // are those of 0.4.3.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.4', hash: 'd9c250f0' });
   });
 });

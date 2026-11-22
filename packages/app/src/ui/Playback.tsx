@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RunRecord } from '@wwi/engine';
-import { advancePlayhead, formatClock, isQuiet, QUIET_SPEEDUP, seek, SPEEDS, timelineMarkers } from '../playback';
+import { explain } from '@wwi/engine/reader';
+import { advancePlayhead, battalionLabel, formatClock, isQuiet, QUIET_SPEEDUP, seek, SPEEDS, timelineMarkers, totalsAt } from '../playback';
 import { MapCanvas } from './MapCanvas';
 import { Timeline } from './Timeline';
 import { EventLog } from './EventLog';
 import { capQuietAdvance, elapsedLabel, nextEventMinute, prevEventMinute, QUIET_WINDOW_MIN } from './steps';
 import { MapKey } from './MapKey';
+import { Totals } from './Totals';
+import { WhyPanel } from './WhyPanel';
+import { whyRefFor, type WhyPick } from './why';
 
 const SPEED_LABELS: Record<(typeof SPEEDS)[number], string> = {
   1: '1 s = 1 min',
@@ -109,6 +113,21 @@ export function Playback({ record }: { record: RunRecord }) {
     setPlaying(true);
   };
 
+  // The why panel: what was picked, at the minute it was picked (the chain stays put while its steps move the playhead).
+  const [asked, setAsked] = useState<{ pick: WhyPick; minute: number } | null>(null);
+  useEffect(() => setAsked(null), [record]);
+  const explainEvent = useCallback((id: number) => setAsked({ pick: { kind: 'event', id }, minute: minuteRef.current }), []);
+  const explainUnit = useCallback((pick: WhyPick) => setAsked({ pick, minute: minuteRef.current }), []);
+  const whyShown = useMemo(() => {
+    if (!asked) return null;
+    const { pick } = asked;
+    const unitName = pick.kind === 'company' ? record.units.find((u) => u.id === pick.id)?.name ?? pick.id : '';
+    const kind = pick.kind === 'event' ? (record.events[pick.id]?.kind ?? 'event').replace(/-/g, ' ') : '';
+    const title = pick.kind === 'event' ? kind : pick.kind === 'company' ? unitName : `battalion ${battalionLabel(pick.id)}`;
+    const ref = whyRefFor(record, pick, asked.minute);
+    return { title, why: ref ? explain(record, ref) : null };
+  }, [asked, record]);
+
   const markers = useMemo(() => timelineMarkers(record), [record]);
   const timeOf = useCallback((m: number) => formatClock(record.zeroHour, m).split(' · ')[1] ?? '', [record]);
 
@@ -117,6 +136,8 @@ export function Playback({ record }: { record: RunRecord }) {
   for (let i = 0; i < events.length && events[i]!.minute <= shown; i++) current = i;
   const prev = prevEventMinute(eventMinutes, minute);
   const next = nextEventMinute(eventMinutes, minute);
+
+  const totals = useMemo(() => totalsAt(record, shown), [record, shown]);
 
   const clock = formatClock(record.zeroHour, minute);
   const elapsed = elapsedLabel(minute);
@@ -133,7 +154,7 @@ export function Playback({ record }: { record: RunRecord }) {
       <div className="layout">
         <section className="panel map-panel" aria-label="Time-lapse map">
           <div className="map-frame">
-            <MapCanvas record={record} minute={minute} label={`Trench map of ${record.scenarioTitle} at ${clock}, ${elapsed}`} />
+            <MapCanvas record={record} minute={minute} speed={speed} onPick={explainUnit} label={`Trench map of ${record.scenarioTitle} at ${clock}, ${elapsed}`} />
             <div className="clock-card">
               <div className="clock" data-testid="battle-clock">
                 {clock}
@@ -189,7 +210,13 @@ export function Playback({ record }: { record: RunRecord }) {
           </div>
         </section>
 
-        <EventLog events={events} current={current} timeOf={timeOf} onSeek={seekTo} />
+        <div className="panel side">
+          <div className="side-inner">
+            <Totals totals={totals} />
+            {whyShown && <WhyPanel why={whyShown.why} title={whyShown.title} timeOf={timeOf} onSeek={seekTo} onClose={() => setAsked(null)} />}
+            <EventLog events={events} current={current} timeOf={timeOf} onSeek={seekTo} onExplain={explainEvent} />
+          </div>
+        </div>
       </div>
     </>
   );

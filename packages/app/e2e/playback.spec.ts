@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const out = (name: string): string => fileURLToPath(new URL(`./out/${name}`, import.meta.url));
@@ -183,4 +184,120 @@ test.describe('Vimy markers and zoom', () => {
     await page.getByRole('button', { name: 'Zoom out' }).click();
     await expect(zoomIn).toBeEnabled();
   });
+});
+
+test.describe('Vimy: the battle on the map, totals and the why panel', () => {
+  const vimy = (): {
+    endMinute: number;
+    summary: { casualties: { battle: Record<'allied' | 'central', { killed: number; wounded: number; captured: number }> }; prisoners: Record<'allied' | 'central', number>; gunsCaptured: number };
+  } => JSON.parse(readFileSync(fileURLToPath(new URL('../public/runs/vimy.json', import.meta.url)), 'utf8'));
+  const count = async (page: Page, id: string): Promise<number> => Number((await page.getByTestId(id).innerText()).replace(/[^\d]/g, ''));
+
+  test('totals rise during the Vimy run, to the summary at its end', async ({ page }) => {
+    await page.goto('/?run=vimy');
+    const time = page.getByLabel('Battle time');
+    await expect(page.getByTestId('totals')).toBeVisible();
+    const at = async (m: number) => {
+      await time.fill(String(m));
+      return { allied: await count(page, 'totals-casualties-allied'), central: await count(page, 'totals-casualties-central'), guns: await count(page, 'totals-guns') };
+    };
+    const zero = await at(0);
+    const morning = await at(120);
+    const noon = await at(390);
+    expect(morning.allied).toBeGreaterThan(zero.allied);
+    expect(morning.central).toBeGreaterThan(zero.central);
+    expect(noon.allied).toBeGreaterThan(morning.allied);
+    const r = vimy();
+    const end = await at(r.endMinute);
+    const sum = (s: 'allied' | 'central') => r.summary.casualties.battle[s].killed + r.summary.casualties.battle[s].wounded + r.summary.casualties.battle[s].captured;
+    expect(end.allied).toBe(sum('allied'));
+    expect(end.central).toBe(sum('central'));
+    expect(end.guns).toBe(r.summary.gunsCaptured);
+    expect(await count(page, 'totals-prisoners-allied')).toBe(r.summary.prisoners.allied);
+  });
+
+  test('clicking an event opens the why panel with at least one cause line; a step moves the playhead', async ({ page }) => {
+    await page.goto('/?run=vimy');
+    const clock = page.getByTestId('battle-clock');
+    const log = page.getByRole('region', { name: /Event log/ });
+    await log.getByRole('listitem').filter({ hasText: 'is pinned' }).first().click();
+    const panel = page.getByRole('dialog', { name: /Why\?/ });
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('.why-cause').first()).toBeVisible();
+    expect(await panel.locator('.why-cause').count()).toBeGreaterThanOrEqual(1);
+    // A step further down the chain jumps the playhead to its minute.
+    const steps = panel.locator('.why-event');
+    expect(await steps.count()).toBeGreaterThan(1);
+    const before = await clock.innerText();
+    const last = steps.last();
+    const minute = Number(await last.getAttribute('data-minute'));
+    await last.click();
+    await expect(page.getByLabel('Battle time')).toHaveValue(String(minute));
+    if (minute !== 0) expect(await clock.innerText()).not.toBe('');
+    expect(before).not.toBe('');
+    await page.getByRole('button', { name: 'Close why panel' }).click();
+    await expect(panel).toHaveCount(0);
+  });
+
+  test('clicking a battalion on the map opens its why chain', async ({ page }) => {
+    await page.goto('/?run=vimy');
+    await page.getByLabel('Battle time').fill('120');
+    const map = page.getByRole('img', { name: /^Trench map of / });
+    const box = (await map.boundingBox())!;
+    // Try points across the middle of the sheet until one lands on a marker.
+    const panel = page.getByRole('dialog', { name: /Why\?/ });
+    for (let i = 0; i < 60 && (await panel.count()) === 0; i++) {
+      await map.click({ position: { x: box.width * (0.3 + 0.4 * ((i * 7) % 60) / 60), y: box.height * (0.25 + 0.5 * (i % 10) / 10) } });
+    }
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(/battalion/i);
+  });
+
+  const SHOTS: Array<[name: string, minute: number]> = [
+    ['zero', 0],
+    ['0700', 90],
+    ['1200', 390],
+    ['0409-2000', 870],
+    ['0412-0500', 4290],
+  ];
+
+  for (const [width, height] of [
+    [1280, 800],
+    [390, 844],
+  ] as const) {
+    test(`screenshots at ${width} px`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/?run=vimy');
+      await expect(page.getByTestId('battle-clock')).toBeVisible();
+      for (const [name, minute] of SHOTS) {
+        await page.getByLabel('Battle time').fill(String(minute));
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: out(`task-18-${name}-${width}.png`), fullPage: width < 600 });
+      }
+      // Zoomed in on the middle of the front, to companies, at 07:00 and 12:00.
+      const map = page.getByRole('img', { name: /^Trench map of / });
+      await page.getByLabel('Battle time').fill('90');
+      await map.scrollIntoViewIfNeeded();
+      for (let i = 0; i < 12 && (await map.getAttribute('data-detail')) !== 'company'; i++) {
+        const b = (await map.boundingBox())!;
+        await page.mouse.move(b.x + b.width * 0.47, b.y + b.height * 0.55);
+        await page.mouse.wheel(0, -300);
+        await page.waitForTimeout(60);
+      }
+      await expect(map).toHaveAttribute('data-detail', 'company');
+      await page.waitForTimeout(400);
+      // Not full-page: a full-page shot resizes the viewport, and a resize returns the map to fit-all.
+      await page.screenshot({ path: out(`task-18-0700-zoom-${width}.png`) });
+      await page.getByLabel('Battle time').fill('390');
+      await page.waitForTimeout(300);
+      await expect(map).toHaveAttribute('data-detail', 'company');
+      await page.screenshot({ path: out(`task-18-1200-zoom-${width}.png`) });
+      await page.getByRole('button', { name: 'Fit all' }).click();
+      await page.getByLabel('Battle time').fill('120');
+      await page.getByRole('region', { name: /Event log/ }).getByRole('listitem').filter({ hasText: 'is pinned' }).first().click();
+      await expect(page.getByRole('dialog', { name: /Why\?/ })).toBeVisible();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: out(`task-18-why-${width}.png`) });
+    });
+  }
 });

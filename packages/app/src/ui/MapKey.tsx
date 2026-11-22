@@ -4,6 +4,7 @@ import type { FeatureKind } from '@wwi/scenario';
 import { featureInk } from '../map/features';
 import { MAP_COLORS } from '../map/style';
 import { MARKER_STYLE } from '../map/unitMarkers';
+import { EFFECT_STYLE } from '../map/effects';
 
 type Feature = RunRecord['geometry']['features'][number];
 
@@ -118,6 +119,9 @@ function KeyRow({ children, label }: { children: ReactNode; label: string }) {
 export function MapKey({ record }: { record: RunRecord }) {
   const first = new Map<FeatureKind, Feature>();
   for (const f of record.geometry.features) if (!first.has(f.kind)) first.set(f.kind, f);
+  const segments = (record.geometry.segments?.length ?? 0) > 0;
+  const barrages = record.geometry.barrageDepthM !== undefined && (record.snapshots ?? []).some((x) => x.barrages.length > 0);
+  const reserves = (record.snapshots ?? []).some((x) => (x.reserves?.rows.length ?? 0) > 0);
   return (
     <div className="map-key" aria-label="Map key" role="group">
       <KeyRow label="Allied trench">
@@ -129,14 +133,58 @@ export function MapKey({ record }: { record: RunRecord }) {
       <KeyRow label="Objective line">
         <path d="M0 5h28" stroke={MAP_COLORS.ink} strokeWidth="2" strokeDasharray="6 3" />
       </KeyRow>
-      <KeyRow label="Barrage">
+      <KeyRow label="Front line">
+        <path d="M0 3h28" stroke={MAP_COLORS.allied} strokeWidth="2" />
+        <path d="M0 7.5h28" stroke={MAP_COLORS.central} strokeWidth="2" strokeDasharray="5 2" />
+      </KeyRow>
+      <KeyRow label="Captured ground">
+        <rect x="1" y="1" width="26" height="8" fill={MAP_COLORS.allied} opacity={EFFECT_STYLE.capturedAlpha * 2} />
+      </KeyRow>
+      {segments && (
+        <>
+          <KeyRow label="Trench taken">
+            <path d="M0 5h28" stroke={MAP_COLORS.allied} strokeWidth="2" />
+          </KeyRow>
+          <KeyRow label="Wire: uncut / cut">
+            <path d="M1 3l3 3M4 3l-3 3M6 3l3 3M9 3l-3 3M11 3l3 3M14 3l-3 3M19 3l3 3M22 3l-3 3M26 3l2 2M28 3l-2 2" stroke={EFFECT_STYLE.wire.ink} strokeWidth="0.8" fill="none" />
+          </KeyRow>
+        </>
+      )}
+      <KeyRow label="Barrage (creeping)">
         <defs>
           <pattern id="key-hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
-            <path d="M0 0v4" stroke={MAP_COLORS.hatch} strokeWidth="2" />
+            <path d="M0 0v4" stroke={EFFECT_STYLE.creeping.hatch} strokeWidth="2" />
           </pattern>
         </defs>
         <rect x="1" y="1" width="26" height="8" fill="url(#key-hatch)" stroke="rgba(150,116,40,.85)" strokeWidth="1" />
       </KeyRow>
+      {barrages && (
+        <>
+          <KeyRow label="Standing barrage">
+            <path d="M0 5h28" stroke={EFFECT_STYLE.standing.band} strokeWidth="7" />
+            <path d="M2 2v6M6 2v6M10 2v6M14 2v6M18 2v6M22 2v6M26 2v6" stroke={EFFECT_STYLE.standing.tick} strokeWidth="0.8" />
+          </KeyRow>
+          <KeyRow label="Machine-gun barrage zone">
+            <defs>
+              <pattern id="key-mg" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <path d="M0 0v4" stroke={EFFECT_STYLE.mg.hatch} strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect x="1" y="1" width="26" height="8" fill="url(#key-mg)" stroke={EFFECT_STYLE.mg.edge} strokeWidth="1" strokeDasharray="2 3" />
+          </KeyRow>
+        </>
+      )}
+      <KeyRow label="Shell burst · rifle and MG fire">
+        <circle cx="7" cy="5" r="3.6" fill={EFFECT_STYLE.burst.flash} />
+        <circle cx="7" cy="5" r="2" fill={EFFECT_STYLE.burst.shell} />
+        <path d="M15 7l3-3M20 6l3-2.5M24 8l3-3" stroke={EFFECT_STYLE.burst.bullet} strokeWidth="1" />
+      </KeyRow>
+      {reserves && (
+        <KeyRow label="Reserve column marching in">
+          <path d="M27 5H8" stroke={MAP_COLORS.central} strokeWidth="2.5" strokeDasharray="5 3" />
+          <path d="M1 5l7-3.5v7z" fill={MAP_COLORS.central} />
+        </KeyRow>
+      )}
       <KeyRow label="Battalion (zoomed out)">
         <rect x="5" y="3.5" width="18" height="6" fill={MAP_COLORS.allied} />
         <path d="M12 0.5V2.5M16 0.5V2.5" stroke={MAP_COLORS.ink} strokeWidth="1" />
