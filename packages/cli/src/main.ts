@@ -109,7 +109,7 @@ async function main(argv: string[]): Promise<void> {
   // The tables first (the scenario's weapon ids are checked against them as it loads), then the overlay, if any.
   const { scenario, models, whatIf, dropped } = loadFiles(files);
   const { doctrines, tables } = models;
-  for (const u of dropped) console.error(`dropped ops[${u.index}] (${u.op.op}): unknown ${u.reason}`);
+  for (const u of dropped) console.error(`dropped ops[${u.index}] (${u.op.op}): ${u.reason}`);
   const runOpts = whatIf ? { whatIf } : {};
   if (command === 'review') {
     // Each --notes directory's research notes, in the order given; a question is labelled with its directory and file.

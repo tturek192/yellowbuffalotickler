@@ -47,7 +47,7 @@ describe('batches on worker threads (Task 15)', () => {
   it('a batch with an overlay on 2 workers gives the same summary as in-process, and a worker run carries the what-if (Plan 4 Task 1)', async () => {
     // The draft has no enemy: the overlay halves its attackers.
     const overlayFile = join(mkdtempSync(join(tmpdir(), 'sim-ov-')), 'half.yaml');
-    writeFileSync(overlayFile, 'id: half\ntitle: Half the attackers\nscenarioId: draft\nops:\n  - op: scale-men\n    side: allied\n    factor: 0.5\n');
+    writeFileSync(overlayFile, 'id: half\ntitle: Half the attackers\nscenarioId: vimy-1917-1cdn-3bde\nops:\n  - op: scale-men\n    side: allied\n    factor: 0.5\n');
     const f = { ...files(DRAFT), overlayFile };
     const { scenario, models: m, whatIf } = loadFiles(f);
     const s3 = [1, 2, 3];

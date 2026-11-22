@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { stringify } from 'yaml';
-import { applyOverlay, checkOverlaid, emptyLibrary, parseOverlay, type Library, type Overlay, type OverlayOp } from './overlay';
+import { applyOverlay, checkOverlaid, emptyLibrary, parseOverlay, resolveChangePath, type Library, type Overlay, type OverlayOp } from './overlay';
 import { checkReferences } from './references';
 import { minutesBetween } from './local-time';
 import { allFormations } from './queries';
@@ -48,7 +48,7 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     const empty = scenario.reserves.filter((r) => companiesUnder(formation(scenario, r.formationId)!).length === 0);
     expect(empty.length).toBeGreaterThan(0);
     expect(empty.every((r) => r.strengthFactor?.value === 2)).toBe(true);
-    expect(changes.filter((c) => /^reserves\[\d+\]\.strengthFactor$/.test(c.path))).toHaveLength(empty.length);
+    expect(changes.filter((c) => /^reserve\[[^\]]+\]\.strengthFactor$/.test(c.path))).toHaveLength(empty.length);
   });
 
   it('scale-men multiplies into a reserve strengthFactor already set', () => {
@@ -65,6 +65,12 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     expect(companiesOf(scenario, 'allied').every((c) => Number.isInteger(c.strength.value))).toBe(true);
   });
 
+  it('scale-men 0.001 leaves every company exactly one man, never none', () => {
+    const { scenario } = apply([{ op: 'scale-men', side: 'allied', factor: 0.001 }]);
+    expect(companiesOf(scenario, 'allied').length).toBeGreaterThan(0);
+    expect(companiesOf(scenario, 'allied').every((c) => c.strength.value === 1)).toBe(true);
+  });
+
   it('scale-men on a formation scales only the companies under it', () => {
     const base = vimyScenario();
     const { scenario } = apply([{ op: 'scale-men', formationId: '1bde', factor: 2 }]);
@@ -79,7 +85,7 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     expect(base.reserves[i]!.distanceKm).toHaveProperty('range');
     const { scenario, changes } = apply([{ op: 'reserve-distance', formationId: '4gd', km: 12 }]);
     expect(scenario.reserves[i]!.distanceKm).toEqual({ value: 12, estimate: 'what-if: test — reserve-distance' });
-    expect(changes).toEqual([{ index: 0, path: `reserves[${i}].distanceKm`, from: base.reserves[i]!.distanceKm, to: scenario.reserves[i]!.distanceKm }]);
+    expect(changes).toEqual([{ index: 0, path: 'reserve[4gd].distanceKm', from: base.reserves[i]!.distanceKm, to: scenario.reserves[i]!.distanceKm }]);
     expect(changes[0]!.from).toMatchObject({ range: [16.1, 50.7], sources: expect.any(Array) });
   });
 
@@ -87,7 +93,7 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     const { scenario, changes } = apply([{ op: 'doctrine', side: 'allied', doctrineId: 'de-1917' }]);
     const i = scenario.forces.findIndex((f) => f.side === 'allied');
     expect(scenario.forces[i]!.doctrine).toBe('de-1917');
-    expect(changes).toEqual([{ index: 0, path: `forces[${i}].doctrine`, from: 'bef-1917', to: 'de-1917' }]);
+    expect(changes).toEqual([{ index: 0, path: 'force[allied].doctrine', from: 'bef-1917', to: 'de-1917' }]);
     expect(JSON.stringify(scenario)).not.toMatch(/what-if: test/);
   });
 
@@ -125,8 +131,75 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
   });
 
   it('fails when a reference no longer checks (checkReferences after applying), naming the op', () => {
-    const timeline: Scenario['weather'] = [{ at: '1917-04-09T05:30', precipitation: { value: 'rain', source: 'no-such-source' } }];
-    expect(() => apply([{ op: 'weather', timeline }])).toThrow(/ops\[0\] \(weather\): weather\[0\]\.precipitation\.source: unknown source "no-such-source"/);
+    // A library leader citing a source the library does not hold: the scenario's references no longer check.
+    const lib: Library = { ...emptyLibrary(), leaders: [{ id: 'monash', name: { value: 'John Monash', source: 'no-such-source' }, rank: { value: 'Major-General', estimate: 'test' } }] };
+    expect(() => apply([{ op: 'ground', preset: 'wet' }, { op: 'swap-leader', formationId: '1cdn', leaderId: 'monash' }], lib)).toThrow(
+      /ops\[1\] \(swap-leader\): leaders\[\d+\]\.name\.source: unknown source "no-such-source"/,
+    );
+  });
+
+  it('an overlay timeline is a what-if: every sourced value it supplies becomes an estimate, the old weather kept in the change', () => {
+    const base = vimyScenario();
+    const timeline: Scenario['weather'] = [
+      { at: '1917-04-09T05:30', precipitation: { value: 'rain', source: 'nicholson-1962', page: '252' }, windFromDeg: { value: 270, source: 'nicholson-1962' } },
+      { at: '1917-04-09T09:00', precipitation: { value: 'none', estimate: 'the overlay author' }, visibilityM: { value: 500, range: [100, 900], sources: [{ source: 'a' }, { source: 'b' }], note: 'n' }, tempC: { value: 2, source: 'nicholson-1962' } },
+    ];
+    const { scenario, changes } = apply([{ op: 'weather', timeline }]);
+    const e = { estimate: 'what-if: test — weather' };
+    expect(scenario.weather).toEqual([
+      { at: '1917-04-09T05:30', precipitation: { value: 'rain', ...e }, windFromDeg: { value: 270, ...e } },
+      { at: '1917-04-09T09:00', precipitation: { value: 'none', ...e }, visibilityM: { value: 500, ...e }, tempC: { value: 2, ...e } },
+    ]);
+    expect(changes).toEqual([{ index: 0, path: 'weather', from: base.weather, to: scenario.weather }]);
+  });
+
+  it('an overlay written for another scenario fails up front, naming both ids', () => {
+    expect(() => applyOverlay(vimyScenario(), { ...ov([{ op: 'ground', preset: 'wet' }]), scenarioId: 'somme-1916' }, emptyLibrary(), DOCS)).toThrow(
+      /overlay "test" is for scenario "somme-1916", not "vimy-1917"/,
+    );
+  });
+
+  it('a sector left with only holding companies (reserve, garrison) has no attacking companies', () => {
+    const s = vimyScenario();
+    const walk = (f: Formation): void => {
+      for (const c of f.companies ?? []) if (c.sectorId === 'barrage-2cdn') c.role = 'reserve';
+      (f.children ?? []).forEach(walk);
+    };
+    s.forces.forEach((force) => force.formations.forEach(walk));
+    expect(companiesOf(s, 'allied').some((c) => c.sectorId === 'barrage-2cdn')).toBe(true);
+    expect(checkOverlaid(s, DOCS)).toEqual([expect.stringMatching(/^sectors\[1\] \(barrage-2cdn\): no attacking companies/)]);
+  });
+
+  it('reserve-distance with a side leaves the other side\'s reserves as they were', () => {
+    const s = vimyScenario();
+    s.reserves.push({ formationId: '5bdiv', side: 'allied', distanceKm: { value: 7, estimate: 'test' }, entryPoint: [-3000, 0] });
+    const { scenario, changes } = apply([{ op: 'reserve-distance', side: 'central', km: 5 }], emptyLibrary(), s);
+    expect(scenario.reserves.find((r) => r.formationId === '5bdiv')!.distanceKm).toEqual({ value: 7, estimate: 'test' });
+    expect(changes.some((c) => c.path === 'reserve[5bdiv].distanceKm')).toBe(false);
+    expect(scenario.reserves.filter((r) => r.side === 'central').every((r) => r.distanceKm.value === 5)).toBe(true);
+  });
+
+  it('change paths name items by id, so a later remove-formation leaves them resolving or marked removed by that op', () => {
+    const { scenario, changes, unresolved } = apply([
+      { op: 'scale-men', side: 'central', factor: 2 },
+      { op: 'remove-formation', formationId: '79rd' },
+      { op: 'swap-leader', formationId: '79rd', leaderId: 'byng' },
+    ]);
+    expect(changes.every((c) => !/\[\d+\]/.test(c.path))).toBe(true);
+    const removed = changes.filter((c) => c.removedBy !== undefined);
+    expect(removed.length).toBeGreaterThan(0);
+    for (const c of changes) {
+      if (c.removedBy !== undefined) {
+        expect([c.index, c.removedBy]).toEqual([0, 1]);
+        expect(resolveChangePath(scenario, c.path), c.path).toBeUndefined();
+      } else if (c.to === undefined) expect(resolveChangePath(scenario, c.path), c.path).toBeUndefined();
+      else expect(resolveChangePath(scenario, c.path), c.path).toEqual(c.to);
+    }
+    // The 79th's reserve battalions' strengthFactors are among those marked removed; another division's still resolve.
+    expect(removed.some((c) => /^reserve\[[^\]]+\]\.strengthFactor$/.test(c.path))).toBe(true);
+    expect(changes.some((c) => c.removedBy === undefined && /^reserve\[4gd\]\.strengthFactor$/.test(c.path))).toBe(true);
+    // An op naming what an earlier op removed says so.
+    expect(unresolved).toEqual([expect.objectContaining({ index: 2, reason: 'formation "79rd" was removed by ops[1]' })]);
   });
 
   // Review Focus 2: ops written for an older scenario.
@@ -147,20 +220,20 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
       { op: 'ground', preset: 'wet' },
     ]);
     expect(r.unresolved.map((u) => [u.index, u.reason])).toEqual([
-      [0, 'formation "gone-f"'],
-      [1, 'artillery "gone-a"'],
-      [2, 'leader "gone-l"'],
-      [3, 'unit "gone-u"'],
-      [4, 'reserve "gone-r"'],
-      [5, 'weather preset "gone-p"'],
-      [6, 'library formation "gone-lib"'],
+      [0, 'unknown formation "gone-f"'],
+      [1, 'unknown artillery "gone-a"'],
+      [2, 'unknown leader "gone-l"'],
+      [3, 'unknown unit "gone-u"'],
+      [4, 'unknown reserve "gone-r"'],
+      [5, 'unknown weather preset "gone-p"'],
+      [6, 'unknown library formation "gone-lib"'],
     ]);
     expect(r.changes.map((c) => c.index)).toEqual([7]);
     expect(r.scenario.groundCondition?.value).toBe('wet');
   });
 
   it('an unknown doctrine id is unresolved; a known one swaps the side', () => {
-    expect(apply([{ op: 'doctrine', side: 'allied', doctrineId: 'xx' }]).unresolved).toEqual([expect.objectContaining({ index: 0, reason: 'doctrine "xx"' })]);
+    expect(apply([{ op: 'doctrine', side: 'allied', doctrineId: 'xx' }]).unresolved).toEqual([expect.objectContaining({ index: 0, reason: 'unknown doctrine "xx"' })]);
     const { scenario } = apply([{ op: 'doctrine', side: 'allied', doctrineId: 'de-1917' }]);
     expect(scenario.forces.filter((f) => f.side === 'allied').every((f) => f.doctrine === 'de-1917')).toBe(true);
   });
@@ -187,7 +260,7 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     const allocations = base.bombardment!.allocations.map((al, i) => [al, scenario.bombardment!.allocations[i]!] as const);
     expect(allocations.some(([al]) => al.artilleryId === id)).toBe(true);
     for (const [was, now] of allocations) expect(now.rounds.value).toBe(was.artilleryId === id ? Math.round(was.rounds.value * 0.5) : was.rounds.value);
-    expect(changes.every((c) => /^(artillery\[\d+\]\.ammunition|bombardment\.allocations\[\d+\]\.rounds)$/.test(c.path))).toBe(true);
+    expect(changes.every((c) => /^(artillery\[cdn-18pdr-creeping\]\.ammunition|allocation\[cdn-18pdr-creeping\/\w+\]\.rounds)$/.test(c.path))).toBe(true);
   });
 
   it('remove-formation removes its reserve, operation, artillery link and liaison entries, each a Change; historical targets stay', () => {
@@ -211,10 +284,11 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     expect(scenario.artillery).toHaveLength(base.artillery.length);
     const goneReserves = base.reserves.filter((r) => !scenario.reserves.some((x) => x.formationId === r.formationId));
     expect(goneReserves.length).toBeGreaterThan(0);
-    for (const prefix of ['forces[', 'reserves[', 'operations[', 'communications.liaison[', 'artillery[']) {
-      expect(changes.some((c) => c.path.startsWith(prefix) && c.to === undefined)).toBe(true);
+    for (const path of ['formation[10bde]', 'formation[gruppe-vimy]', 'operation[10bde-pimple]', 'liaison[10bde]', `reserve[${goneReserves[0]!.formationId}]`]) {
+      expect(changes.filter((c) => c.path === path && c.to === undefined), path).toHaveLength(1);
     }
-    expect(changes.filter((c) => c.path.startsWith('reserves['))).toHaveLength(goneReserves.length);
+    expect(changes.some((c) => /^artillery\[[^\]]+\]\.formationId$/.test(c.path) && c.from === 'gruppe-vimy' && c.to === undefined)).toBe(true);
+    expect(changes.filter((c) => /^reserve\[[^\]]+\]$/.test(c.path))).toHaveLength(goneReserves.length);
     expect(scenario.historical.casualties).toEqual(base.historical.casualties);
     expect(checkOverlaid(scenario, DOCS)).toEqual([]);
   });
@@ -229,7 +303,7 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     expect(cs.length).toBe(companiesUnder(formation(vimyScenario(), '79rd')!).length);
     expect(cs.every((c) => c.role === 'reserve' && c.id.startsWith('79rd-bis-') && c.sectorId === undefined && (c.start as number[])[0] === 9000)).toBe(true);
     expect(scenario.reserves.at(-1)).toEqual({ formationId: '79rd-bis', side: 'central', distanceKm: { value: 20, estimate: 'what-if: test — add-formation' }, entryPoint: [9000, 0] });
-    expect(changes.map((c) => c.path)).toEqual([expect.stringMatching(/\.children\[\d+\]$/), `reserves[${scenario.reserves.length - 1}]`]);
+    expect(changes.map((c) => c.path)).toEqual(['formation[79rd-bis]', 'reserve[79rd-bis]']);
     expect(checkReferences(scenario, DOCS)).toEqual([]);
   });
 
@@ -247,8 +321,8 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     expect(scenario.sources['lib-src']).toEqual(lib.sources['lib-src']);
     expect(scenario.leaders.at(-1)).toEqual(lib.leaders[0]);
     expect(formation(scenario, 'lib-div')!.insignia).toEqual(lib.formations[0]!.insignia);
-    expect(changes.filter((c) => c.path === 'sources.lib-src')).toEqual([{ index: 0, path: 'sources.lib-src', from: undefined, to: lib.sources['lib-src'] }]);
-    expect(changes.some((c) => c.path === `leaders[${scenario.leaders.length - 1}]`)).toBe(true);
+    expect(changes.filter((c) => c.path === 'source[lib-src]')).toEqual([{ index: 0, path: 'source[lib-src]', from: undefined, to: lib.sources['lib-src'] }]);
+    expect(changes.some((c) => c.path === 'leader[lib-general]')).toBe(true);
     expect(checkReferences(scenario, DOCS)).toEqual([]);
   });
 
@@ -280,7 +354,7 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     const base = vimyScenario();
     const r = apply([{ op: 'swap-leader', formationId: '1cdn', leaderId: 'watson' }]);
     expect(formation(r.scenario, '1cdn')!.leaderId).toBe('watson');
-    expect(r.changes).toEqual([{ index: 0, path: expect.stringMatching(/\.leaderId$/), from: 'currie', to: 'watson' }]);
+    expect(r.changes).toEqual([{ index: 0, path: 'formation[1cdn].leaderId', from: 'currie', to: 'watson' }]);
     const lib: Library = { ...emptyLibrary(), sources: { 'lib-src': { title: 'A memoir', tier: 'secondary' } }, leaders: [{ id: 'monash', name: { value: 'John Monash', source: 'lib-src' }, rank: { value: 'Major-General', source: 'lib-src' } }] };
     const { scenario } = apply([{ op: 'swap-leader', formationId: '1cdn', leaderId: 'monash' }], lib);
     expect(scenario.leaders).toHaveLength(base.leaders.length + 1);
@@ -307,7 +381,7 @@ describe('what-if overlays (Plan 4 Task 1)', () => {
     for (const c of bn.companies!) expect(at(all.scenario, c.id)).toEqual([(c.start as number[])[0]! + 10, (c.start as number[])[1]! + 20]);
     expect(all.changes).toHaveLength(bn.companies!.length);
     const div = apply([{ op: 'move', unitId: '1cdn', by: [1, 1] }]);
-    expect(div.unresolved[0]!.reason).toMatch(/unit "1cdn" \(a division/);
+    expect(div.unresolved[0]!.reason).toMatch(/unit "1cdn" is a division \(move takes a company or a battalion\)/);
   });
 
   it('never mutates the scenario it was given', () => {

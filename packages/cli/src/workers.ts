@@ -38,7 +38,7 @@ export function loadFiles(f: Files): { scenario: Scenario; models: Models; whatI
   if (r.unresolved.length && !f.dropUnresolved) {
     throw new ScenarioError([
       `${f.overlayFile}: ${r.unresolved.length} op(s) no longer resolve against ${scenario.id} (run with --drop-unresolved to leave them out):`,
-      ...r.unresolved.map((u) => `ops[${u.index}] (${u.op.op}): unknown ${u.reason}`),
+      ...r.unresolved.map((u) => `ops[${u.index}] (${u.op.op}): ${u.reason}`),
     ]);
   }
   return {

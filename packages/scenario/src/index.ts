@@ -13,4 +13,4 @@ export { projectLonLat, unprojectXY, projectLonLatPlacements, FrameSchema, type 
 export { geoToScenarioParts, type GeoJsonFeature, type GeoJsonFeatureCollection } from './geo';
 export { decodeTerrain, encodeTerrain, terrainGridProblem, TerrainGridSchema, type Terrain, type TerrainGrid, type TerrainGridData } from './terrain';
 export { buildReview, type ReviewDoc, type ReviewSection, type ReviewRow, type ReviewTables } from './review';
-export { applyOverlay, checkOverlaid, emptyLibrary, LibrarySchema, OverlaySchema, parseOverlay, type Change, type Library, type Overlay, type OverlayOp, type Unresolved, type WeatherPreset } from './overlay';
+export { applyOverlay, checkOverlaid, emptyLibrary, LibrarySchema, OverlaySchema, parseOverlay, resolveChangePath, type Change, type Library, type Overlay, type OverlayOp, type Unresolved, type WeatherPreset } from './overlay';

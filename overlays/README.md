@@ -17,7 +17,7 @@ npm run sim -- batch scenarios/vimy-1917/scenario.yaml --runs 8 --workers 4 --ov
 ```yaml
 id: vimy-germans-x2        # a short id for the overlay
 title: Germans ×2          # how the screens and the record name it
-scenarioId: vimy-1917      # the scenario it was written for
+scenarioId: vimy-1917      # the scenario it was written for: applied to another, it fails (exit 2)
 notes: optional free text
 ops:                       # the changes, applied in order
   - op: scale-men
@@ -33,7 +33,8 @@ ops:                       # the changes, applied in order
   a disputed value's range and sources, is kept in the record's list of changes.
 - A plain field (a force's doctrine, a formation's leader, a company's start) changes in place and is listed only in the
   changes.
-- A leader or formation taken from the library keeps its own sources.
+- A weather timeline written in the overlay is a what-if too: each of its values becomes such an estimate, whatever
+  source the overlay gives. A leader, formation or weather preset taken from the library keeps its own sources.
 
 ## The ops
 
@@ -42,7 +43,7 @@ the formation (every company if neither is given), to a whole man and never belo
 makes companies up for (one listed with none) gets the factor as its `strengthFactor`, so those companies are scaled too.
 
 **scale-guns** `side?`, `artilleryId?`, `factor` (0 or more). Multiplies the gun count of each artillery entry of the
-side, or the one named, to whole guns. 0 leaves no guns.
+side, or the one named, rounded to the nearest whole gun (a single gun halved stays one). 0 leaves no guns.
 
 **scale-ammunition** `side?`, `artilleryId?`, `factor` (0 or more). Multiplies the artillery's rounds for the battle,
 and the rounds those guns fire in the preliminary bombardment.

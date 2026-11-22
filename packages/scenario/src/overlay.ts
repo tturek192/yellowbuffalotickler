@@ -107,33 +107,95 @@ export function parseOverlay(yamlText: string): Overlay {
   return r.data;
 }
 
-/** One value an overlay changed: the op's index in `ops`, the scenario path, and the value before and after (absent: undefined). */
-export type Change = { index: number; path: string; from: unknown; to: unknown };
+/**
+ * One value an overlay changed: the op's index in `ops`, the path of what it changed, and the value before and after
+ * (absent: undefined; `to` is a copy, so a later op does not change what an earlier change shows).
+ *
+ * Paths name items by id, never by array index, so a later op that removes items leaves them meaning the same
+ * (Tasks 5–7 label values by them; `resolveChangePath` reads one against a scenario):
+ * `company[<id>].strength` and `.start`; `formation[<id>]` (added or removed) and `.leaderId`; `reserve[<formationId>]`
+ * (added or removed), `.strengthFactor` and `.distanceKm`; `artillery[<id>].count`, `.ammunition` and `.formationId`;
+ * `allocation[<artilleryId>/<task>].rounds` (a bombardment allocation; `#2`, `#3`, … after the task for a repeated pair);
+ * `operation[<id>]` and `liaison[<formationId>]` (removed); `force[<side>].doctrine`; `leader[<id>]` and `source[<id>]`
+ * (added); `weather`; `groundCondition`.
+ *
+ * `removedBy` is set on a change whose item a later op removed (a `remove-formation`): its path then resolves to nothing.
+ */
+export type Change = { index: number; path: string; from: unknown; to: unknown; removedBy?: number };
 export type Unresolved = { index: number; op: OverlayOp; reason: string };
 
 type Force = Scenario['forces'][number];
 type Placed = { f: Formation; path: string; side: Side; siblings: Formation[] };
 const ATTACKING: ReadonlySet<string> = new Set(['assault', 'mopup', 'support']);
 
-/** Every formation with its path, side and the array that holds it, depth-first in file order. */
+/** Every formation with its change path (`formation[<id>]`), side and the array that holds it, depth-first in file order. */
 function placed(s: Scenario): Placed[] {
   const out: Placed[] = [];
-  const walk = (fs: Formation[], base: string, side: Side) =>
-    fs.forEach((f, i) => {
-      const path = `${base}[${i}]`;
-      out.push({ f, path, side, siblings: fs });
-      if (f.children) walk(f.children, `${path}.children`, side);
+  const walk = (fs: Formation[], side: Side) =>
+    fs.forEach((f) => {
+      out.push({ f, path: `formation[${f.id}]`, side, siblings: fs });
+      if (f.children) walk(f.children, side);
     });
-  s.forces.forEach((force, i) => walk(force.formations, `forces[${i}].formations`, force.side));
+  s.forces.forEach((force) => walk(force.formations, force.side));
   return out;
 }
 
-/** The companies under a formation (itself and its children), with their paths. */
-function companiesUnder(f: Formation, path: string): Array<{ c: Company; path: string }> {
-  return [
-    ...(f.companies ?? []).map((c, j) => ({ c, path: `${path}.companies[${j}]` })),
-    ...(f.children ?? []).flatMap((ch, k) => companiesUnder(ch, `${path}.children[${k}]`)),
-  ];
+/** The companies under a formation (itself and its children), with their change paths (`company[<id>]`). */
+function companiesUnder(f: Formation): Array<{ c: Company; path: string }> {
+  return [...(f.companies ?? []).map((c) => ({ c, path: `company[${c.id}]` })), ...(f.children ?? []).flatMap(companiesUnder)];
+}
+
+/** Each bombardment allocation's change-path key, `<artilleryId>/<task>`, with `#n` for the nth repeat of a pair. */
+function allocationKeys(s: Scenario): string[] {
+  const seen = new Map<string, number>();
+  return (s.bombardment?.allocations ?? []).map((a) => {
+    const k = `${a.artilleryId}/${a.task}`;
+    const n = (seen.get(k) ?? 0) + 1;
+    seen.set(k, n);
+    return n === 1 ? k : `${k}#${n}`;
+  });
+}
+
+const SOURCED_WEATHER = ['precipitation', 'windFromDeg', 'visibilityM', 'tempC'] as const;
+
+/**
+ * What a change path names in a scenario (see `Change`): the value at it, or undefined when the item is not there.
+ * A path this function does not know reads as undefined.
+ */
+export function resolveChangePath(s: Scenario, path: string): unknown {
+  if (path === 'weather') return s.weather;
+  if (path === 'groundCondition') return s.groundCondition;
+  const m = /^([a-z]+)\[([^\]]+)\](?:\.(\w+))?$/.exec(path);
+  if (!m) return undefined;
+  const [, kind, id, field] = m as unknown as [string, string, string, string | undefined];
+  const item = ((): unknown => {
+    switch (kind) {
+      case 'company':
+        return placed(s).flatMap((p) => p.f.companies ?? []).find((c) => c.id === id);
+      case 'formation':
+        return placed(s).find((p) => p.f.id === id)?.f;
+      case 'reserve':
+        return s.reserves.find((r) => r.formationId === id);
+      case 'artillery':
+        return s.artillery.find((a) => a.id === id);
+      case 'allocation':
+        return s.bombardment?.allocations[allocationKeys(s).indexOf(id)];
+      case 'operation':
+        return s.operations?.find((o) => o.id === id);
+      case 'liaison':
+        return s.communications?.liaison?.find((l) => l.formationId === id);
+      case 'force':
+        return s.forces.find((f) => f.side === id);
+      case 'leader':
+        return s.leaders.find((l) => l.id === id);
+      case 'source':
+        return Object.hasOwn(s.sources, id) ? s.sources[id] : undefined;
+      default:
+        return undefined;
+    }
+  })();
+  if (item === undefined || field === undefined) return item;
+  return (item as Record<string, unknown>)[field];
 }
 
 const leadersUnder = (f: Formation): string[] => [...(f.leaderId ? [f.leaderId] : []), ...(f.children ?? []).flatMap(leadersUnder)];
@@ -169,93 +231,104 @@ function applyOps(s0: Scenario, o: Overlay, lib: Library, doctrineIds: string[])
   const changes: Change[] = [];
   const unresolved: Unresolved[] = [];
   const problems: string[] = [];
+  /** The op that removed each item, by the head of its change path (`formation[<id>]`, `company[<id>]`, `reserve[<id>]`, …). */
+  const removedBy = new Map<string, number>();
 
   o.ops.forEach((op, index) => {
     const estimate = `what-if: ${o.title} — ${op.op}`;
     /** A Sourced or Disputed value replaced by a what-if estimate; the old one (range and sources too) kept in the change. */
     const mark = <T>(path: string, from: unknown, value: T) => {
       const to = { value, estimate };
-      changes.push({ index, path, from, to });
+      changes.push({ index, path, from, to: structuredClone(to) });
       return to;
     };
-    const plain = (path: string, from: unknown, to: unknown) => void changes.push({ index, path, from, to });
+    const plain = (path: string, from: unknown, to: unknown) => void changes.push({ index, path, from, to: structuredClone(to) });
     const miss = (reason: string) => void unresolved.push({ index, op, reason });
+    /** An id that does not resolve: unknown, or removed by an earlier op (`head` is its change-path head, e.g. `formation[x]`). */
+    const missing = (what: string, id: string, ...heads: string[]) => {
+      const by = heads.map((h) => removedBy.get(h)).find((k) => k !== undefined);
+      return miss(by === undefined ? `unknown ${what} "${id}"` : `${what} "${id}" was removed by ops[${by}]`);
+    };
+    const missFormation = (id: string) => missing('formation', id, `formation[${id}]`);
     const problem = (p: string) => void problems.push(`ops[${index}] (${op.op}): ${p}`);
     /** Bring the sources a library item cites into the scenario's registry, each merge a change. */
     const mergeSources = (item: unknown) => {
       for (const { id } of collectSourceRefs(item, '')) {
         if (Object.hasOwn(s.sources, id) || !Object.hasOwn(lib.sources, id)) continue; // unknown everywhere: checkReferences says so
         s.sources[id] = structuredClone(lib.sources[id]!);
-        plain(`sources.${id}`, undefined, s.sources[id]);
+        plain(`source[${id}]`, undefined, s.sources[id]);
       }
     };
     const find = (id: string) => placed(s).find((p) => p.f.id === id);
-    const forcesOf = (side?: Side): Array<{ force: Force; i: number }> =>
-      s.forces.flatMap((force, i) => (side === undefined || force.side === side ? [{ force, i }] : []));
+    const forcesOf = (side?: Side): Force[] => s.forces.filter((force) => side === undefined || force.side === side);
 
     switch (op.op) {
       case 'scale-men': {
         let target: Placed | undefined;
         if (op.formationId !== undefined) {
           target = find(op.formationId);
-          if (!target) return miss(`formation "${op.formationId}"`);
+          if (!target) return missFormation(op.formationId);
         }
         const scope = target
           ? [target]
-          : forcesOf(op.side).flatMap(({ force, i }) => force.formations.map((f, j) => ({ f, path: `forces[${i}].formations[${j}]`, side: force.side, siblings: force.formations })));
+          : forcesOf(op.side).flatMap((force) => force.formations.map((f) => ({ f, path: `formation[${f.id}]`, side: force.side, siblings: force.formations })));
         for (const p of scope) {
           if (op.side !== undefined && p.side !== op.side) continue;
-          for (const { c, path } of companiesUnder(p.f, p.path)) {
+          for (const { c, path } of companiesUnder(p.f)) {
             c.strength = mark(`${path}.strength`, c.strength, Math.max(1, Math.round(v(c.strength) * op.factor)));
           }
         }
         // Off-map reserves the engine makes companies up for: the factor goes on the reserve, multiplied into any it has.
         const within = new Set(scope.flatMap((p) => idsUnder(p.f)));
         const all = placed(s);
-        s.reserves.forEach((r, i) => {
+        s.reserves.forEach((r) => {
           const f = all.find((p) => p.f.id === r.formationId)?.f;
           if (!f || hasCompanies(f) || !within.has(r.formationId) || (op.side !== undefined && r.side !== op.side)) return;
-          r.strengthFactor = mark(`reserves[${i}].strengthFactor`, r.strengthFactor, (r.strengthFactor ? v(r.strengthFactor) : 1) * op.factor);
+          r.strengthFactor = mark(`reserve[${r.formationId}].strengthFactor`, r.strengthFactor, (r.strengthFactor ? v(r.strengthFactor) : 1) * op.factor);
         });
         return;
       }
       case 'scale-guns':
       case 'scale-ammunition': {
-        if (op.artilleryId !== undefined && !s.artillery.some((a) => a.id === op.artilleryId)) return miss(`artillery "${op.artilleryId}"`);
+        if (op.artilleryId !== undefined && !s.artillery.some((a) => a.id === op.artilleryId)) return missing('artillery', op.artilleryId, `artillery[${op.artilleryId}]`);
         const chosen = new Set<string>();
-        s.artillery.forEach((a, i) => {
+        s.artillery.forEach((a) => {
           if ((op.artilleryId !== undefined && a.id !== op.artilleryId) || (op.side !== undefined && a.side !== op.side)) return;
           chosen.add(a.id);
-          if (op.op === 'scale-guns') a.count = mark(`artillery[${i}].count`, a.count, Math.round(v(a.count) * op.factor));
-          else if (a.ammunition) a.ammunition = mark(`artillery[${i}].ammunition`, a.ammunition, Math.round(v(a.ammunition) * op.factor));
+          if (op.op === 'scale-guns') a.count = mark(`artillery[${a.id}].count`, a.count, Math.round(v(a.count) * op.factor));
+          else if (a.ammunition) a.ammunition = mark(`artillery[${a.id}].ammunition`, a.ammunition, Math.round(v(a.ammunition) * op.factor));
         });
         if (op.op === 'scale-ammunition') {
+          const keys = allocationKeys(s);
           s.bombardment?.allocations.forEach((al, i) => {
-            if (chosen.has(al.artilleryId)) al.rounds = mark(`bombardment.allocations[${i}].rounds`, al.rounds, Math.round(v(al.rounds) * op.factor));
+            if (chosen.has(al.artilleryId)) al.rounds = mark(`allocation[${keys[i]}].rounds`, al.rounds, Math.round(v(al.rounds) * op.factor));
           });
         }
         return;
       }
       case 'remove-formation': {
         const target = find(op.formationId);
-        if (!target) return miss(`formation "${op.formationId}"`);
+        if (!target) return missFormation(op.formationId);
         const ids = new Set(idsUnder(target.f));
         plain(target.path, target.f, undefined);
         target.siblings.splice(target.siblings.indexOf(target.f), 1);
+        for (const id of ids) removedBy.set(`formation[${id}]`, index);
+        for (const { path } of companiesUnder(target.f)) removedBy.set(path, index);
         // What names the formation or one under it goes with it; historical targets stay (the compare screen marks them).
-        const keep = <T>(xs: T[], base: string, names: (x: T) => string | undefined): T[] =>
-          xs.filter((x, i) => {
+        const keep = <T>(xs: T[], head: (x: T) => string, names: (x: T) => string | undefined): T[] =>
+          xs.filter((x) => {
             const id = names(x);
             if (id === undefined || !ids.has(id)) return true;
-            plain(`${base}[${i}]`, x, undefined);
+            plain(head(x), x, undefined);
+            removedBy.set(head(x), index);
             return false;
           });
-        s.reserves = keep(s.reserves, 'reserves', (r) => r.formationId);
-        if (s.operations) s.operations = keep(s.operations, 'operations', (x) => x.formationId);
-        if (s.communications?.liaison) s.communications.liaison = keep(s.communications.liaison, 'communications.liaison', (x) => x.formationId);
-        s.artillery.forEach((a, i) => {
+        s.reserves = keep(s.reserves, (r) => `reserve[${r.formationId}]`, (r) => r.formationId);
+        if (s.operations) s.operations = keep(s.operations, (x) => `operation[${x.id}]`, (x) => x.formationId);
+        if (s.communications?.liaison) s.communications.liaison = keep(s.communications.liaison, (x) => `liaison[${x.formationId}]`, (x) => x.formationId);
+        s.artillery.forEach((a) => {
           if (a.formationId === undefined || !ids.has(a.formationId)) return;
-          plain(`artillery[${i}].formationId`, a.formationId, undefined);
+          plain(`artillery[${a.id}].formationId`, a.formationId, undefined);
           delete a.formationId;
         });
         return;
@@ -266,45 +339,53 @@ function applyOps(s0: Scenario, o: Overlay, lib: Library, doctrineIds: string[])
         if ('libraryId' in op.from) {
           const libraryId = op.from.libraryId;
           const item = lib.formations.find((f) => f.id === libraryId);
-          if (!item) return miss(`library formation "${libraryId}"`);
-          if (!under) return miss(`formation "${op.underFormationId}"`);
+          if (!item) return miss(`unknown library formation "${libraryId}"`);
+          if (!under) return missFormation(op.underFormationId);
           made = asReserve(structuredClone(item), op.entryPoint, (id) => id);
           // The leaders it names that the scenario lacks come from the library, with their own sourcing.
           for (const id of [...new Set(leadersUnder(made))].sort()) {
             const leader = lib.leaders.find((l) => l.id === id);
             if (!leader || s.leaders.some((l) => l.id === id)) continue;
             s.leaders.push(structuredClone(leader));
-            plain(`leaders[${s.leaders.length - 1}]`, undefined, leader);
+            plain(`leader[${id}]`, undefined, leader);
             mergeSources(leader);
           }
           mergeSources(item);
         } else {
           const { formationId, copyOf } = op.from;
           const original = find(copyOf);
-          if (!original) return miss(`formation "${copyOf}"`);
-          if (!under) return miss(`formation "${op.underFormationId}"`);
+          if (!original) return missFormation(copyOf);
+          if (!under) return missFormation(op.underFormationId);
           made = asReserve(structuredClone(original.f), op.entryPoint, (id) => (id === copyOf ? formationId : `${formationId}-${id}`));
           made.name = `${made.name} (what-if copy)`;
         }
         if (under.side !== op.side) return problem(`formation "${op.underFormationId}" is on the ${under.side} side, not ${op.side}`);
         const children = (under.f.children ??= []);
         children.push(made);
-        plain(`${under.path}.children[${children.length - 1}]`, undefined, made);
+        plain(`formation[${made.id}]`, undefined, made);
         const reserve = { formationId: made.id, side: op.side, distanceKm: { value: op.distanceKm, estimate }, entryPoint: op.entryPoint };
         s.reserves.push(reserve);
-        plain(`reserves[${s.reserves.length - 1}]`, undefined, reserve);
+        plain(`reserve[${made.id}]`, undefined, reserve);
         return;
       }
       case 'weather': {
         let timeline: Scenario['weather'];
         if ('preset' in op && op.preset !== undefined) {
           const preset = Object.hasOwn(lib.weatherPresets, op.preset) ? lib.weatherPresets[op.preset] : undefined;
-          if (!preset) return miss(`weather preset "${op.preset}"`);
+          if (!preset) return miss(`unknown weather preset "${op.preset}"`);
           const zero = v(s.zeroHour);
           timeline = preset.map(({ afterMin, ...e }) => ({ at: localText(addMinutes(zero, afterMin)), ...structuredClone(e) }));
           mergeSources(preset);
         } else {
-          timeline = structuredClone((op as { timeline: Scenario['weather'] }).timeline);
+          // Written by the overlay, not a library item: every sourced value in it is a what-if, whatever sourcing it wrote.
+          timeline = (op as { timeline: Scenario['weather'] }).timeline.map((e) => {
+            const out = structuredClone(e) as Record<string, unknown>;
+            for (const k of SOURCED_WEATHER) {
+              const val = (e as unknown as Record<string, { value: unknown } | undefined>)[k];
+              if (val !== undefined) out[k] = { value: val.value, estimate };
+            }
+            return out as WeatherEntry;
+          });
         }
         plain('weather', s.weather, timeline);
         s.weather = timeline;
@@ -315,12 +396,12 @@ function applyOps(s0: Scenario, o: Overlay, lib: Library, doctrineIds: string[])
         return;
       case 'swap-leader': {
         const target = find(op.formationId);
-        if (!target) return miss(`formation "${op.formationId}"`);
+        if (!target) return missFormation(op.formationId);
         if (!s.leaders.some((l) => l.id === op.leaderId)) {
           const leader = lib.leaders.find((l) => l.id === op.leaderId);
-          if (!leader) return miss(`leader "${op.leaderId}"`);
+          if (!leader) return miss(`unknown leader "${op.leaderId}"`);
           s.leaders.push(structuredClone(leader));
-          plain(`leaders[${s.leaders.length - 1}]`, undefined, leader);
+          plain(`leader[${leader.id}]`, undefined, leader);
           mergeSources(leader);
         }
         plain(`${target.path}.leaderId`, target.f.leaderId, op.leaderId);
@@ -328,33 +409,31 @@ function applyOps(s0: Scenario, o: Overlay, lib: Library, doctrineIds: string[])
         return;
       }
       case 'doctrine': {
-        if (!doctrineIds.includes(op.doctrineId)) return miss(`doctrine "${op.doctrineId}"`);
+        if (!doctrineIds.includes(op.doctrineId)) return miss(`unknown doctrine "${op.doctrineId}"`);
         const forces = forcesOf(op.side);
-        if (forces.length === 0) return miss(`side "${op.side}" (the scenario has no force on it)`);
-        for (const { force, i } of forces) {
-          plain(`forces[${i}].doctrine`, force.doctrine, op.doctrineId);
+        if (forces.length === 0) return miss(`no force on side "${op.side}"`);
+        for (const force of forces) {
+          plain(`force[${force.side}].doctrine`, force.doctrine, op.doctrineId);
           force.doctrine = op.doctrineId;
         }
         return;
       }
       case 'reserve-distance': {
-        const matches = s.reserves.flatMap((r, i) =>
-          (op.formationId === undefined || r.formationId === op.formationId) && (op.side === undefined || r.side === op.side) ? [{ r, i }] : [],
-        );
-        if (op.formationId !== undefined && matches.length === 0) return miss(`reserve "${op.formationId}"`);
-        for (const { r, i } of matches) r.distanceKm = mark(`reserves[${i}].distanceKm`, r.distanceKm, op.km);
+        const matches = s.reserves.filter((r) => (op.formationId === undefined || r.formationId === op.formationId) && (op.side === undefined || r.side === op.side));
+        if (op.formationId !== undefined && matches.length === 0) return missing('reserve', op.formationId, `reserve[${op.formationId}]`);
+        for (const r of matches) r.distanceKm = mark(`reserve[${r.formationId}].distanceKm`, r.distanceKm, op.km);
         return;
       }
       case 'move': {
         const all = placed(s);
-        const company = all.flatMap((p) => (p.f.companies ?? []).map((c, j) => ({ c, path: `${p.path}.companies[${j}]` }))).find((x) => x.c.id === op.unitId);
+        const company = all.flatMap((p) => (p.f.companies ?? []).map((c) => ({ c, path: `company[${c.id}]` }))).find((x) => x.c.id === op.unitId);
         let moved: Array<{ c: Company; path: string }>;
         if (company) moved = [company];
         else {
           const bn = all.find((p) => p.f.id === op.unitId);
-          if (!bn) return miss(`unit "${op.unitId}"`);
-          if (bn.f.kind !== 'battalion') return miss(`unit "${op.unitId}" (a ${bn.f.kind}; move takes a company or a battalion)`);
-          moved = companiesUnder(bn.f, bn.path);
+          if (!bn) return missing('unit', op.unitId, `company[${op.unitId}]`, `formation[${op.unitId}]`);
+          if (bn.f.kind !== 'battalion') return miss(`unit "${op.unitId}" is a ${bn.f.kind} (move takes a company or a battalion)`);
+          moved = companiesUnder(bn.f);
         }
         for (const { c, path } of moved) {
           if (!Array.isArray(c.start)) return problem(`${path}.start is not a local point`);
@@ -366,6 +445,11 @@ function applyOps(s0: Scenario, o: Overlay, lib: Library, doctrineIds: string[])
       }
     }
   });
+  // A change to an item a later op removed: its path now names nothing.
+  for (const c of changes) {
+    const by = removedBy.get(c.path.replace(/\].*$/, ']'));
+    if (by !== undefined && by > c.index) c.removedBy = by;
+  }
   return { scenario: s, changes, unresolved, problems };
 }
 
@@ -400,7 +484,8 @@ const MIN_PER_DAY = 1440;
 /**
  * Apply an overlay to a scenario (pure: `s` is never changed). Returns the new scenario, every change grouped by op
  * index, and the ops that no longer resolve (an unknown formation, unit, leader, artillery, library item, preset or
- * doctrine id: the caller decides; the other ops still apply). Throws ScenarioError if the result fails `checkOverlaid`,
+ * doctrine id: the caller decides; the other ops still apply). Throws ScenarioError if the overlay is for another
+ * scenario (its `scenarioId` is not `s.id`), or if the result fails `checkOverlaid`,
  * each problem naming the op and index that caused it where one can be named.
  */
 export function applyOverlay(
@@ -409,6 +494,7 @@ export function applyOverlay(
   lib: Library,
   doctrineIds: string[],
 ): { scenario: Scenario; changes: Change[]; unresolved: Unresolved[] } {
+  if (o.scenarioId !== s.id) throw new ScenarioError([`overlay "${o.id}" is for scenario "${o.scenarioId}", not "${s.id}"`]);
   const r = applyOps(s, o, lib, doctrineIds);
   const found = checkOverlaid(r.scenario, doctrineIds);
   if (r.problems.length || found.length) throw new ScenarioError([...r.problems, ...blame(found, s, o, lib, doctrineIds)]);

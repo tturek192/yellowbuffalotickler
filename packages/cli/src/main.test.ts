@@ -200,7 +200,7 @@ describe('cli', () => {
       const file = join(mkdtempSync(join(tmpdir(), 'sim-ov-')), 'stale.yaml');
       writeFileSync(
         file,
-        'id: stale\ntitle: Stale\nscenarioId: vimy-1917\nops:\n  - op: scale-men\n    side: allied\n    factor: 0.5\n  - op: swap-leader\n    formationId: gone\n    leaderId: currie\n',
+        'id: stale\ntitle: Stale\nscenarioId: vimy-1917-1cdn-3bde\nops:\n  - op: scale-men\n    side: allied\n    factor: 0.5\n  - op: swap-leader\n    formationId: gone\n    leaderId: currie\n',
       );
       return file;
     };
@@ -232,6 +232,14 @@ describe('cli', () => {
       expect(batch.code).toBe(2);
       expect(batch.stderr).toMatch(/unknown formation "gone"/);
     }, 120000);
+
+    it('an overlay written for another scenario exits 2 naming both ids, before any run', () => {
+      const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'wrong.json');
+      const r = runCli(['run', draft, '--seed', '1', '--out', out, '--overlay', 'overlays/vimy-germans-x2.yaml']);
+      expect(r.code).toBe(2);
+      expect(r.stderr).toMatch(/overlay "vimy-germans-x2" is for scenario "vimy-1917", not "vimy-1917-1cdn-3bde"/);
+      expect(existsSync(out)).toBe(false);
+    });
 
     it('a broken overlay exits 2 naming the op and its field; --drop-unresolved without --overlay is a usage error', () => {
       const file = join(mkdtempSync(join(tmpdir(), 'sim-ov-')), 'bad.yaml');

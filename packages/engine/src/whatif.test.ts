@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { applyOverlay, emptyLibrary } from '@wwi/scenario';
 import type { Scenario } from '@wwi/scenario';
 import { loadOverlay } from '@wwi/scenario/node';
+import { resolveDefaults } from './defaults';
 import { buildWorld, wetness } from './ground';
 import type { RunRecord } from './record';
 import { runScenario } from './run';
@@ -70,6 +71,23 @@ describe('what-if overlays in the engine (Plan 4 Task 1)', () => {
     expect(men(x2)).toBe(2 * men(b));
     expect(x2.defaultsUsed.some((d) => /strengthFactor 2/.test(d))).toBe(true);
   }, 120000);
+
+  it('a reserve strengthFactor small enough to round to no one leaves every made-up company one man', () => {
+    const { scenario } = applyOverlay(vimy(), { id: 't', title: 't', scenarioId: 'vimy-1917', ops: [{ op: 'scale-men', side: 'central', factor: 0.001 }] }, emptyLibrary(), DOCS);
+    const m = vimyDoctrines();
+    const made = (s: Scenario) => {
+      const out: number[] = [];
+      const walk = (f: Scenario['forces'][number]['formations'][number]): void => {
+        for (const c of f.companies ?? []) if (/\(made up\)/.test(c.name)) out.push(c.strength.value);
+        (f.children ?? []).forEach(walk);
+      };
+      s.forces.forEach((force) => force.formations.forEach(walk));
+      return out;
+    };
+    const strengths = made(resolveDefaults(scenario, m.doctrines, m.tables).scenario);
+    expect(strengths.length).toBeGreaterThan(0);
+    expect(strengths.every((n) => n === 1)).toBe(true);
+  });
 
   it('runScenario writes RunOptions.whatIf into the record, and a run without it has no whatIf key', () => {
     const x2 = withOverlay('overlays/vimy-germans-x2.yaml');
