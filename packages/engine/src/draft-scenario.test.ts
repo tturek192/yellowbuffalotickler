@@ -104,6 +104,7 @@ describe('draft Vimy scenario run', () => {
     // 0.5.1 (Plan 4 Task 3 fix round 1): the deadlock's margins carry their minute and the margins at the break (atBreak); a sector seals only when a reserve company stands within sealDistanceM behind the gun line; collapse counts the reserves on their way and assigned to a sector; surrender's denominator is fixed at Zero. The draft is not scored: only the version moves the hash.
     // 0.5.2 (Plan 4 Task 3 fix round 2): collapse counts an assigned reserve that waits off the map, until it is sent elsewhere or arrives. The draft is not scored: only the version moves the hash.
     // 0.5.3 (Plan 4 Task 3 fix round 3, the owner's ruling): collapse is the defender's whole force, reserves included, below collapseFrac of its men at Zero, not a sector; reserveSectors removed. The draft is not scored: only the version moves the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.5.3', hash: '1ca46f96' });
+    // 0.5.4 (Plan 4 Task 3 fix round 4, the ruling: taken and held): the stronghold condition needs every stronghold held without a break for strongholdHoldMin (default 60, an estimate); Margins.stronghold gains the longest hold. The draft is not scored: only the version moves the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.5.4', hash: 'fc4b658b' });
   });
 });

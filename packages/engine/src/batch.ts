@@ -63,14 +63,14 @@ export interface BatchSummary {
  * The deadlock over the batch (Plan 4 Task 3): the share of runs that broke it, the share broken by each condition (they
  * sum to `brokenShare`), the spread of the minute it broke (null exactly when no run broke it), and the spread of each
  * margin over every run, broken or not, from the whole-run margins (`breakthroughBeyondM` over the runs that measured one;
- * null when none did), with the number of strongholds. Each share is rounded to 6 decimals, so the shares by condition may
+ * null when none did), with the number of strongholds and the longest continuous hold of them all, in minutes. Each share is rounded to 6 decimals, so the shares by condition may
  * sum to `brokenShare` give or take 0.000001.
  */
 export type DeadlockRow = {
   brokenShare: number;
   byShare: Record<By, number>;
   minute: Spread | null;
-  margins: { breakthroughBeyondM: Spread | null; capturedFrac: Spread; minFitFrac: Spread; strongholdsHeld: Spread; strongholdsOf: number };
+  margins: { breakthroughBeyondM: Spread | null; capturedFrac: Spread; minFitFrac: Spread; strongholdsHeld: Spread; strongholdsOf: number; strongholdHoldMin: Spread };
 };
 
 /** What the batch needs of one run: its lines taken, its numbers for each target (in the targets' order), its end and winner. */
@@ -197,6 +197,8 @@ function deadlockOf(runs: RunExtract[]): DeadlockRow | null {
       minFitFrac: spreadOf(scored.map((d) => d.margins.collapse.minFitFrac)),
       strongholdsHeld: spreadOf(scored.map((d) => d.margins.stronghold.held)),
       strongholdsOf: Math.max(...scored.map((d) => d.margins.stronghold.of)),
+      // The longest continuous hold of every stronghold (engine 0.5.4 on; 0 in a record from before).
+      strongholdHoldMin: spreadOf(scored.map((d) => d.margins.stronghold.longestHoldMin ?? 0)),
     },
   };
 }

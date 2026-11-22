@@ -283,7 +283,9 @@ recorded, with its minute:
 - **collapse:** the German force in the battle as a whole, reserves included, falls below `collapseFrac` of its men
   at Zero (the same number as surrender's). Its fit men are those of every company not pinned, surrendered, falling
   back or destroyed: on the map, or a reserve not yet arrived, wherever it is sent. Collapse is not measured by sector;
-- **stronghold:** the Canadians hold every stronghold.
+- **stronghold:** the Canadians have taken and held every stronghold: held them all without a break for
+  `strongholdHoldMin`. The deadlock breaks the minute the hold completes. A momentary majority on the ground is not a
+  capture, and a hold lost and regained starts again.
 
 **Which conditions apply** is left to the default, all four; the scenario does not list them, and `defaultsUsed`
 records the default. Which apply is the owner's to set.
@@ -299,6 +301,13 @@ gun line has come up among the batteries it is to cover. A judgement for the own
 
 **The stronghold** is **Hill 145**, named explicitly. Left to the default, the strongholds would be the three pieces
 of `end.keyGround`: Hill 135, Hill 145 and the Pimple. The Pimple was taken only on 12 April.
+
+**The hold.** `strongholdHoldMin` is left to the engine's default, **60 minutes**, an estimate listed in `defaultsUsed`.
+A stronghold counts as taken once the German local counter-attack (the Gegenstoss) has had its chance to retake it: in
+`de-1917` the loss reaches the battalion with its next report (`reportEveryMin`, 30), the counter-attack company forms
+up and goes (`localCounterAttackDelayMin`, 5) and comes up into line (`deployMin`, 30). A definition for the owner, not a
+historical value. In Vimy seed 1 the Canadians stand on Hill 145 in the majority from 06:50 and lose it 34 minutes later;
+the hill fell on 10 April.
 
 **The artillery line.** `ger-gun-line` in `geo/features.geojson` is a German gun line drawn south to north through the
 gun positions the sources place. It is graded an estimate as a whole: about 1.4 km of its 6.2 km of y is sourced, and
@@ -484,7 +493,8 @@ arrivals are in `historical.yaml`.
   artillery, or the Canadian Corps' counter-battery maps of located positions, would say.
 - **The deadlock thresholds (for the owner).** Is half the German force taken prisoner the right reading of "a sizeable
   part"? Should the stronghold be Hill 145 alone, or the crest's two heights and the Pimple (`end.keyGround`)? How near
-  the gun line must a reserve come to seal a sector (`sealDistanceM`, 1 km)?
+  the gun line must a reserve come to seal a sector (`sealDistanceM`, 1 km)? How long must a stronghold be held to count
+  as taken (`strongholdHoldMin`, an hour by default)?
 - **Where the tanks started.** Where did No. 12 Company, D Battalion, lie up and start from on 9 April: on the
   Canadian front line, as entered, or farther back? When were they to start, and by which routes? D Battalion's war
   diary or Watson's *A Company of Tanks* would say.

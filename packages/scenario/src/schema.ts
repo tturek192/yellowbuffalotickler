@@ -308,6 +308,11 @@ const DeadlockSchema = z.strictObject({
   sealDistanceM: sourced(z.number().positive()).optional(),
   /** Stronghold: the attacker holds every one of these (default: the features of `end.keyGround`). */
   strongholds: z.array(z.strictObject({ featureId: z.string() })).optional(),
+  /**
+   * Stronghold, taken and held: the attacker must hold every stronghold without a break for this many minutes; the
+   * deadlock breaks the minute the hold completes (default 60, an estimate). A momentary majority on the ground is not a capture.
+   */
+  strongholdHoldMin: sourced(z.number().positive().max(1440)).optional(),
   /** The conditions that apply, in the order they are checked (default all four). */
   conditions: z
     .array(z.enum(DEADLOCK_CONDITIONS))

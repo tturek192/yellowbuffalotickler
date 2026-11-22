@@ -27,7 +27,14 @@ import type { Side } from './types';
  *   reserves included, falls below `collapseFrac` of its men at Zero (the same fixed number as surrender's). Fit: every
  *   defending company's men that is not pinned, surrendered, falling back or destroyed, wherever it is: on the map, or an
  *   off-map reserve not yet arrived (waiting, ordered or marching, wherever sent). Not measured per sector; no sector;
- * - stronghold: the attacker holds every stronghold (end.ts `holderOf`); never with no strongholds.
+ * - stronghold, taken and held: the attacker has held every stronghold (end.ts `holderOf`) without a break for
+ *   `strongholdHoldMin`; never with no strongholds. The hold begins at the first step at whose end the attacker holds them
+ *   all, ends at the first at whose end it does not, and the deadlock breaks at the minute it completes (the hold's start
+ *   plus strongholdHoldMin), which may fall between two steps. A momentary majority on the ground is no capture.
+ *   Quiet steps: within one nobody moves, so the holder cannot change but at its end; a hold that would complete before
+ *   the last fine-step minute of a quiet step (`stepMin` before its end) has completed whatever its end shows, as a run
+ *   stepped finely would see it, and one completing on the quiet step's last minute needs the hold at its end. So the
+ *   observer needs no scheduled minute: it never shortens a step, and the run steps as if unscored;
  * A company is in the sector whose y-band holds its y (the first in the scenario's order on a shared edge).
  * The first condition in `conditions` to hold is recorded, with its minute, and `deadlock-broken` says so. The margins
  * are the closest the run came to each condition at any step (Zero included), each with the minute it was first reached,
@@ -39,7 +46,8 @@ export const BY: readonly By[] = DEADLOCK_CONDITIONS;
 
 /**
  * How near the run came to each condition (SP3), each with the minute its value was first reached (null with no value):
- * the furthest beyond the gun line, the most captured, the fewest fit, the most strongholds held at once.
+ * the furthest beyond the gun line, the most captured, the fewest fit, the most strongholds held at once and the longest
+ * hold of them all.
  */
 export type Margins = {
   /** Metres beyond the artillery line (negative: short of it) of the attacking company furthest on, in a sector not sealed; null with no line, or no such company. */
@@ -47,7 +55,11 @@ export type Margins = {
   surrender: { capturedFrac: number; minute: number };
   /** The lowest share of the defender's men at Zero still fit, over the whole force, reserves included. */
   collapse: { minFitFrac: number; minute: number };
-  stronghold: { held: number; of: number; minute: number };
+  /**
+   * The most strongholds held at once (with the minute first reached), and the longest continuous hold of them all, in
+   * minutes, with the minute it was reached (0 and null with no hold).
+   */
+  stronghold: { held: number; of: number; minute: number; longestHoldMin: number; longestHoldMinute: number | null };
 };
 
 export type DeadlockSummary = { broken: boolean; by?: By; minute?: number; sectorId?: string; margins: Margins; atBreak: Margins | null };
@@ -61,6 +73,11 @@ export type DeadlockState = {
    * `sealDistanceM` behind the gun line (or in front of it). No breakthrough there counts.
    */
   sealed: string[];
+  /**
+   * The attacker's hold of every stronghold, as of this step: since the first step's minute at whose end it held them all,
+   * and the refs of that step (its latest events and the lines taken then); null while it does not hold them all.
+   */
+  hold: { since: number; refs: number[] } | null;
   /** The margins, to the end of the run. */
   margins: Margins;
   /** The margins as they stood at the break; null before it. */
@@ -77,6 +94,9 @@ type Config = {
   collapseFrac: number;
   sealDistanceM: number;
   strongholds: string[];
+  holdMin: number;
+  /** The run's fine step: a quiet step lasts a whole number of them, so its last fine minute is one before its end. */
+  stepMin: number;
   conditions: By[];
   /** The defender's off-map reserve companies, each with its reserve's formation id. */
   reserveOf: ReadonlyMap<string, string>;
@@ -90,6 +110,12 @@ const DEFAULT_SURRENDER_FRAC = 0.5;
 const DEFAULT_COLLAPSE_FRAC = 0.1;
 /** An estimate: a reserve company within a kilometre behind the gun line stands among the batteries it is to cover. */
 const DEFAULT_SEAL_DISTANCE_M = 1000;
+/**
+ * An estimate: a stronghold is taken once the defender's local counter-attack (the Gegenstoss) has had its chance to take
+ * it back. In de-1917 the loss reaches the battalion with its next report (`reportEveryMin`, 30), the counter-attack
+ * company forms up and goes (`localCounterAttackDelayMin`, 5) and comes up into line (`deployMin`, 30): about an hour.
+ */
+const DEFAULT_STRONGHOLD_HOLD_MIN = 60;
 
 const ATTACKING: ReadonlySet<string> = new Set(['assault', 'mopup', 'support']);
 /** Statuses of a defending company that is not fit to fight (an off-map reserve not yet arrived is fit: still available). */
@@ -107,7 +133,7 @@ const menAtZero = (c: CompanyState): number => c.men + c.killed + c.wounded + c.
  * The scoring for this scenario, with every default it takes listed in `defaultsUsed`; null when the scenario has no
  * `deadlock` section and either no `end.keyGround` or no attacker to infer (the only side with attacking companies).
  */
-function resolveConfig(state: SimState, ctx: StepContext): Config | null {
+function resolveConfig(state: SimState, ctx: StepContext, stepMin: number): Config | null {
   const s = ctx.scenario;
   const d = s.deadlock;
   const used = ctx.defaultsUsed;
@@ -129,6 +155,8 @@ function resolveConfig(state: SimState, ctx: StepContext): Config | null {
   if (line && !d?.sealDistanceM) used.add(`deadlock.sealDistanceM ← ${DEFAULT_SEAL_DISTANCE_M} (an estimate)`);
   const strongholds = d?.strongholds?.map((x) => x.featureId) ?? keyGround.map((k) => k.featureId);
   if (!d?.strongholds) used.add(`deadlock.strongholds ← end.keyGround: ${strongholds.join(', ') || 'none'}`);
+  if (strongholds.length > 0 && conditions.includes('stronghold') && !d?.strongholdHoldMin)
+    used.add(`deadlock.strongholdHoldMin ← ${DEFAULT_STRONGHOLD_HOLD_MIN} (an estimate: a local counter-attack's chance: the loss reported, the reserve formed up, deployed and in)`);
   const defender = other(attacker);
 
   // The defender's off-map reserves' companies (a sector's seal).
@@ -148,6 +176,8 @@ function resolveConfig(state: SimState, ctx: StepContext): Config | null {
     collapseFrac: d?.collapseFrac ? v(d.collapseFrac) : DEFAULT_COLLAPSE_FRAC,
     sealDistanceM: d?.sealDistanceM ? v(d.sealDistanceM) : DEFAULT_SEAL_DISTANCE_M,
     strongholds,
+    holdMin: d?.strongholdHoldMin ? v(d.strongholdHoldMin) : DEFAULT_STRONGHOLD_HOLD_MIN,
+    stepMin,
     conditions,
     reserveOf,
     surrenderMen: state.companies.reduce((a, c) => (c.side === defender ? a + menAtZero(c) : a), 0),
@@ -208,7 +238,18 @@ const latest = (ids: Array<number | null | undefined>): number[] =>
   [...new Set(ids.filter((x): x is number => typeof x === 'number'))].sort((a, b) => a - b).slice(-10);
 
 /** One step's measures: the sectors sealed, which conditions hold, the margins they move, and what an event would say of each. */
-type Checked = { sealed: string[]; holding: Partial<Record<By, string | null>>; margins: Margins; hold: (by: By) => Hold };
+type Checked = {
+  sealed: string[];
+  holding: Partial<Record<By, string | null>>;
+  /** The stronghold hold as of this step's end. */
+  strongholdHold: DeadlockState['hold'];
+  /** A hold completed within this quiet step, before its end: it breaks first, at its minute, the margins as they stood then. */
+  heldBefore: { minute: number; margins: Margins } | null;
+  /** The minute each condition holding broke the deadlock: the stronghold's completion; the step's end for the others. */
+  minuteOf: (by: By) => number;
+  margins: Margins;
+  hold: (by: By) => Hold;
+};
 
 /** The first condition in `conditions` that holds, if any. */
 const firstHolding = (cfg: Config, holding: Checked['holding']): By | undefined => cfg.conditions.find((k) => holding[k] !== undefined);
@@ -243,12 +284,33 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
   // Stronghold: the attacker holds every one.
   const held = cfg.strongholds.filter((id) => holderOf(state, ctx, id) === cfg.attacker).length;
   const of = cfg.strongholds.length;
+  const all = of > 0 && held === of;
+  // The hold: a hold begun at an earlier step completes at since + holdMin. The first fine-step minute at or after it
+  // (`seen`; steps end on the stepMin grid) is when a finely stepped run would see it: before this step's end, the quiet
+  // step held throughout; at its end, only if the attacker holds them all now.
+  const was = prev?.hold ?? null;
+  const done = was ? was.since + cfg.holdMin : null;
+  const seen = done !== null && done <= M ? M - Math.floor((M - done) / cfg.stepMin) * cfg.stepMin : null;
+  // Only while it can still break the deadlock: listed, and nothing broken yet (else it would complete again each step).
+  const completed = cfg.conditions.includes('stronghold') && !prev?.broken && seen !== null && (seen < M || all);
+  const lastStepEnd = M - cfg.stepMin;
+  const strongholdHold: DeadlockState['hold'] = all
+    ? (was ?? { since: M, refs: latest([...Object.values(state.takenEventIds), state.events.at(-1)?.id]) })
+    : null;
+  const longest0 = prev?.margins.stronghold ?? { longestHoldMin: 0, longestHoldMinute: null };
+  // The longest hold: to now while held; to the last fine-step minute before now once lost (the hold showed then).
+  const since = strongholdHold?.since ?? was?.since;
+  const holdTo = all ? M : was ? lastStepEnd : null;
+  const longest =
+    holdTo !== null && since !== undefined && holdTo - since > longest0.longestHoldMin
+      ? { longestHoldMin: holdTo - since, longestHoldMinute: holdTo }
+      : { longestHoldMin: longest0.longestHoldMin, longestHoldMinute: longest0.longestHoldMinute };
 
   const holding: Checked['holding'] = {};
   if (beyond && beyond.d > 0) holding.breakthrough = beyond.sectorId;
   if (cfg.surrenderMen > 0 && capturedFrac >= cfg.surrenderFrac) holding.surrender = null;
   if (cfg.surrenderMen > 0 && fitFrac < cfg.collapseFrac) holding.collapse = null;
-  if (of > 0 && held === of) holding.stronghold = null;
+  if (completed) holding.stronghold = null;
 
   // Each margin moves only when the run comes nearer than before, and takes this step's minute then.
   const m0 = prev?.margins;
@@ -260,8 +322,21 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
         : (m0?.breakthrough ?? { furthestBeyondM: null, sectorId: null, minute: null }),
     surrender: m0 && capturedFrac <= m0.surrender.capturedFrac ? m0.surrender : { capturedFrac, minute: M },
     collapse: m0 && fitFrac >= m0.collapse.minFitFrac ? m0.collapse : { minFitFrac: fitFrac, minute: M },
-    stronghold: m0 && held <= m0.stronghold.held ? m0.stronghold : { held, of, minute: M },
+    stronghold: { ...(m0 && held <= m0.stronghold.held ? m0.stronghold : { held, of, minute: M }), ...longest },
   };
+  // Completed inside this quiet step: the margins as they stood at the minute it was seen (the state then was the last
+  // step's, nobody moving), with the hold's length to then.
+  const heldBefore =
+    completed && seen! < M && m0
+      ? {
+          minute: done!,
+          margins: {
+            ...m0,
+            stronghold: seen! - was!.since > m0.stronghold.longestHoldMin ? { ...m0.stronghold, longestHoldMin: seen! - was!.since, longestHoldMinute: seen! } : m0.stronghold,
+          },
+        }
+      : null;
+  const minuteOf = (by: By): number => (by === 'stronghold' ? done! : M);
 
   const name = (id: string): string => sectors.find((x) => x.id === id)?.name ?? id;
   const lastFire = (c: CompanyState): number | null => c.recentFire.at(-1)?.eventId ?? null;
@@ -299,25 +374,26 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
       };
     }
     return {
-      text: `The deadlock is broken: the ${sideName(cfg.attacker)} side holds every stronghold (${cfg.strongholds.join(', ')})`,
+      text: `The deadlock is broken: the ${sideName(cfg.attacker)} side has held every stronghold (${cfg.strongholds.join(', ')}) for ${round(cfg.holdMin, 1)} minutes, since minute ${round(was!.since, 1)}`,
       causes: ['stronghold-held'],
-      refs: latest(Object.values(state.takenEventIds)),
-      factors: { held, of },
+      // Where the hold began: that step's latest events and the lines taken by then.
+      refs: was!.refs,
+      factors: { held: of, of, since: was!.since, holdMin: cfg.holdMin },
     };
   };
-  return { sealed, holding, margins, hold };
+  return { sealed, holding, strongholdHold, heldBefore, minuteOf, margins, hold };
 }
 
 /**
  * The scoring at Zero (initRun, after the bombardment): its defaults listed in `defaultsUsed` and the margins as they
  * stand. `deadlock` is null for a scenario that is not scored.
  */
-export function initDeadlock(state: SimState, ctx: StepContext): SimState {
-  const cfg = resolveConfig(state, ctx);
+export function initDeadlock(state: SimState, ctx: StepContext, stepMin = 2): SimState {
+  const cfg = resolveConfig(state, ctx, stepMin);
   if (!cfg) return { ...state, deadlock: null };
   configs.set(ctx, cfg);
-  const { sealed, margins } = check(state, ctx, cfg, null);
-  return { ...state, deadlock: { broken: null, sealed, margins, atBreak: null } };
+  const { sealed, margins, strongholdHold } = check(state, ctx, cfg, null);
+  return { ...state, deadlock: { broken: null, sealed, hold: strongholdHold, margins, atBreak: null } };
 }
 
 /**
@@ -329,11 +405,11 @@ export function scoreDeadlock(state: SimState, ctx: StepContext): { broken: bool
   const cfg = configs.get(ctx);
   if (!dl || !cfg) return { broken: false };
   if (dl.broken) return { broken: true, ...dl.broken };
-  const { holding } = check(state, ctx, cfg, dl);
-  const by = firstHolding(cfg, holding);
+  const { holding, heldBefore, minuteOf } = check(state, ctx, cfg, dl);
+  const by = heldBefore ? 'stronghold' : firstHolding(cfg, holding);
   if (by === undefined) return { broken: false };
   const sectorId = holding[by];
-  return { broken: true, by, minute: state.minute, ...(sectorId ? { sectorId } : {}) };
+  return { broken: true, by, minute: minuteOf(by), ...(sectorId ? { sectorId } : {}) };
 }
 
 /**
@@ -345,15 +421,18 @@ export function deadlockPhase(state: SimState, ctx: StepContext): SimState {
   const dl = state.deadlock;
   const cfg = configs.get(ctx);
   if (!dl || !cfg) return state;
-  const { holding, sealed, margins, hold } = check(state, ctx, cfg, dl);
-  const by = dl.broken ? undefined : firstHolding(cfg, holding);
-  if (by === undefined) return { ...state, deadlock: { ...dl, sealed, margins } };
+  const { holding, sealed, margins, hold, strongholdHold, heldBefore, minuteOf } = check(state, ctx, cfg, dl);
+  // A hold completed inside this quiet step came before anything its end shows.
+  const by = dl.broken ? undefined : heldBefore ? 'stronghold' : firstHolding(cfg, holding);
+  if (by === undefined) return { ...state, deadlock: { ...dl, sealed, hold: strongholdHold, margins } };
   const h = hold(by);
-  const broken = { by, minute: state.minute, ...(h.sectorId !== undefined ? { sectorId: h.sectorId } : {}) };
+  const minute = minuteOf(by);
+  const broken = { by, minute, ...(h.sectorId !== undefined ? { sectorId: h.sectorId } : {}) };
+  const atBreak = heldBefore?.margins ?? margins;
   // Refs: what led to it; the zero-hour event when nothing more particular is at hand.
   return emit(
-    { ...state, deadlock: { ...dl, broken, sealed, margins, atBreak: margins } },
-    { minute: state.minute, kind: 'deadlock-broken', ...(h.sectorId !== undefined ? { sectorId: h.sectorId } : {}), text: h.text, causes: h.causes, refs: h.refs.length ? h.refs : [0], factors: { ...h.factors, [`by:${by}`]: 1 } },
+    { ...state, deadlock: { ...dl, broken, sealed, hold: strongholdHold, margins, atBreak } },
+    { minute, kind: 'deadlock-broken', ...(h.sectorId !== undefined ? { sectorId: h.sectorId } : {}), text: h.text, causes: h.causes, refs: h.refs.length ? h.refs : [0], factors: { ...h.factors, [`by:${by}`]: 1 } },
   );
 }
 

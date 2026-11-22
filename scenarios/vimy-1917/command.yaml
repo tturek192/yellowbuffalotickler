@@ -305,6 +305,8 @@ deadlock:
   sealDistanceM:
     value: 1000
     estimate: "a German reserve company within a kilometre behind the gun line (or in front of it) has come up among the batteries and seals the gap; the German field batteries and their casemates stood in a belt some hundreds of metres deep on the ridge's eastern slope (BOH pp. 335-337), so a kilometre takes in the belt and its approaches. A judgement for the owner (command.md, Deadlock)"
+  # strongholdHoldMin is left to the default (60 minutes, an estimate, listed in defaultsUsed): the strongholds must be
+  # held without a break for an hour to count as taken (command.md, Deadlock).
   # Named here rather than taken from end.keyGround (which also holds Hill 135 and the Pimple): the stronghold whose taking
   # the owner names for Vimy.
   strongholds:
