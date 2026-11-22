@@ -282,6 +282,31 @@ const MineSchema = z.strictObject({
   cite: sourced(z.string()),
 });
 
+/** The conditions under which a run counts the deadlock as broken (Plan 4 Task 3; engine deadlock.ts). */
+export const DEADLOCK_CONDITIONS = ['breakthrough', 'surrender', 'collapse', 'stronghold'] as const;
+export type DeadlockCondition = (typeof DEADLOCK_CONDITIONS)[number];
+
+/**
+ * How a run scores the deadlock (Plan 4 Task 3), an observer that decides nothing in the battle. The first condition in
+ * `conditions` to hold is recorded. Each absent value takes the engine's default and is listed in `defaultsUsed`.
+ */
+const DeadlockSchema = z.strictObject({
+  attacker: Side,
+  /** The defender's artillery line: a breakthrough is an attacking company beyond it, the line running south to north. */
+  artilleryLine: z.union([z.strictObject({ featureId: z.string() }), z.strictObject({ lineId: z.string() })]),
+  /** Surrender: the defenders' captured men reach this share of their men (default 0.5, an estimate). */
+  surrenderFrac: sourced(z.number().gt(0).max(1)).optional(),
+  /** Collapse: a sector's fit defenders fall below this share of those there at Zero (default 0.1, the owner's). */
+  collapseFrac: sourced(z.number().gt(0).max(1)).optional(),
+  /** Stronghold: the attacker holds every one of these (default: the features of `end.keyGround`). */
+  strongholds: z.array(z.strictObject({ featureId: z.string() })).optional(),
+  /** The conditions that apply, in the order they are checked (default all four). */
+  conditions: z
+    .array(z.enum(DEADLOCK_CONDITIONS))
+    .refine((xs) => new Set(xs).size === xs.length, { message: 'conditions must not repeat' })
+    .optional(),
+});
+
 /** Strict at the root (final review fix): a misspelt section fails with its path instead of being dropped. */
 export const ScenarioSchema = z.strictObject({
   id: z.string(),
@@ -350,6 +375,8 @@ export const ScenarioSchema = z.strictObject({
       lullMin: sourced(z.number().positive()),
     })
     .optional(),
+  /** Deadlock scoring (Plan 4 Task 3): absent, a run with `end.keyGround` and an attacker to infer is scored from defaults. */
+  deadlock: DeadlockSchema.optional(),
   historical: z.strictObject({
     objectives: z.array(
       z.strictObject({

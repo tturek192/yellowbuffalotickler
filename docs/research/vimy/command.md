@@ -8,6 +8,7 @@ changes Plan 3 made to two earlier files:
 - the off-map forces on the flanks: the XVII Corps' guns on the right, the 24th Division's attack across the Souchez;
 - air control, and the share of artillery observation done from the air;
 - the end conditions: the key ground and the lull;
+- the deadlock's conditions, and the German gun line drawn for them (`geo/features.geojson`);
 - the 85th and 46th Battalions' evening companies, no longer timetabled (`oob-canadian.yaml`, `historical.yaml`).
 
 **Summary.** The scenario's clock is British time, GMT plus one hour: the army went onto Summer Time on 24 March 1917
@@ -33,12 +34,13 @@ this changes a run until Plan 3's command tasks read it.
 | id | Tier | Used for |
 |---|---|---|
 | `boh-1917-appendices` | official | Appendix 12, the Canadian Corps Scheme of Operations (undated): its communications (Section V, pp. 39-40) and aircraft (para. 11, p. 36) sections. Appendix 15, the First Army Artillery Plan (8 February): liaison (para. 6, p. 52) and the I Corps' counter-battery task after Zero (para. 7(f), p. 54). Appendix 25, 2nd Canadian Division Instructions No. 3 (24 March): signals (para. 17, pp. 88-89). Appendix 29, First Army's considerations of action after the attack (28 March, pp. 96-98). Appendix 42, First Army Order No. 103 (5 April, p. 136). Appendix 44, First Army Order No. 104 (9 April, pp. 144-146), issued during the battle. |
-| `boh-1917-1` | official | The Army's Summer Time (p. 147 n.1); British time (p. 318 n.2); the communications (pp. 193, 310 and n.2); the counter-battery scheme and the flanks (pp. 312-314); the 9 April attack and the reports (pp. 318-342); the Northern Attack and the Bois en Hache (pp. 343-348); the German side (pp. 352-356); the XVII Corps' heavy artillery (p. 226) and the Canadian Corps' (p. 306 n.1). |
-| `nicholson-1962` | official | The cable and subways (p. 250); the R.F.C. and the battery count (p. 251); German runners (p. 252); Zero at first light (p. 253); contact aeroplanes (p. 254); the reports of 9 April (pp. 254-258); the cavalry excluded from the scheme (p. 258); the 10th Brigade and the Pimple (pp. 261-263); the crest's two heights (p. 245); the German reserves (pp. 260, 267). |
+| `boh-1917-1` | official | The Army's Summer Time (p. 147 n.1); British time (p. 318 n.2); the communications (pp. 193, 310 and n.2); the counter-battery scheme and the flanks (pp. 312-314); the 9 April attack and the reports (pp. 318-342); the Northern Attack and the Bois en Hache (pp. 343-348); the German side (pp. 352-356); the XVII Corps' heavy artillery (p. 226) and the Canadian Corps' (p. 306 n.1). The German gun line: the Bois du Goulot, the casemates of Farbus Wood and the Bois de la Ville, the gun-pits (pp. 335-337). |
+| `nicholson-1962` | official | The cable and subways (p. 250); the R.F.C. and the battery count (p. 251); German runners (p. 252); Zero at first light (p. 253); contact aeroplanes (p. 254); the reports of 9 April (pp. 254-258); the cavalry excluded from the scheme (p. 258); the 10th Brigade and the Pimple (pp. 261-263); the crest's two heights (p. 245); the German reserves (pp. 260, 267). The batteries overrun on the reverse slope and the field guns in the Bois de la Ville (p. 257). |
 | `war-in-the-air-3` | official | New here: H. A. Jones, *The War in the Air*, vol. III (1931), the official air history. The air balance at Arras (p. 332), the squadrons with the First Army (pp. 332-333), the contact patrols of 9 April (p. 344), the artillery work that day (p. 345). Fetched by `scripts/fetch-sources.sh` (archive.org stream page). |
 | `vimy-brief-2026` | secondary | The owner's brief, through the design spec (s. 13.10): "Air observers adjusted about 75% of counter-battery shoots". |
 | `rca-ww1-history` | secondary | The Canadian Corps' heavy batteries by class ("nine 60 Pdr batteries", "two batteries of 6-inch Mark VII guns"), for the XVII Corps estimate. |
-| `hayes-1920` | secondary | The 85th at Zero and its evening attack (pp. 49-53). |
+| `hayes-1920` | secondary | The 85th at Zero and its evening attack (pp. 49-53); German gun pits on the flat beyond Givenchy (p. 70). |
+| `hussey-inman-1921` | secondary | The guns the British 13th Brigade took in the Bois du Goulot (p. 154). |
 
 ## The clock
 
@@ -267,6 +269,51 @@ historical length". The battle ran from Zero, 05:30 on 9 April, to the ridge all
 end unreachable. Most runs should end sooner, on their objectives or on the lull. Plan 3's performance budget speaks of
 a run ending "at most 12 April 23:59"; a run that stalls to the cap is longer than that (Conflicts).
 
+## Deadlock
+
+The deadlock section of `command.yaml` says when a run counts the deadlock as broken (the Deadlock design, Goal 1). It
+is a definition, not a historical value, and nothing in the battle reads it. The first of four conditions to hold is
+recorded, with its minute:
+
+- **breakthrough:** a Canadian or British company stands beyond the German artillery line in a sector before any
+  German off-map reserve has come into that sector;
+- **surrender:** the German men taken prisoner reach `surrenderFrac` of the German men on the map, and of the reserves
+  once they come on to it;
+- **collapse:** in some sector, the German men fit to fight fall below `collapseFrac` of those there at Zero;
+- **stronghold:** the Canadians hold every stronghold.
+
+**Which conditions apply** is left to the default, all four; the scenario does not list them, and `defaultsUsed`
+records the default. Which apply is the owner's to set.
+
+**The thresholds.** `collapseFrac` is **0.1**, the owner's "fewer than 10% of the defending troops in the sector remain
+fit to fight" (Deadlock design, Goal 1.3). `surrenderFrac` is **0.5**, an estimate: the design asks for "a sizeable
+part of the defending force", and no source sets a number. Both are definitions for the owner.
+
+**The stronghold** is **Hill 145**, named explicitly. Left to the default, the strongholds would be the three pieces
+of `end.keyGround`: Hill 135, Hill 145 and the Pimple. The Pimple was taken only on 12 April.
+
+**The artillery line.** `ger-gun-line` in `geo/features.geojson` is a German gun line drawn south to north through the
+gun positions the sources place. It spans every sector's y-band, from y −4700 to 1500. **Map 7 does not mark German
+batteries.** Its artillery symbols (divisional, medium and heavy batteries, super-heavy guns) are Canadian only, so the
+line is drawn from the woods Map 7 does show (digitized, ±100 m) and from the text. The two German artillery entries in
+`fireplan.yaml` are not used: they are two points standing for 197 pieces, about 1.2 km of y apart (bombardment.md,
+Artillery). Stretch by stretch, south to north:
+
+| Stretch | Points (x, y) | Basis | Kind |
+|---|---|---|---|
+| South of Farbus Wood | (2700, −4700) to (2691, −4219) | continued due south from the wood's south-west corner, so that the line reaches the 1st Division's southern edge | estimate |
+| Farbus Wood and the Bois de la Ville | (2691, −4219) to (2815, −3467), along the woods' western (upper) edges | "the line of concrete casemates along the upper edges of Farbus Wood and the Bois de la Ville" (BOH p. 336); the gun-pits "followed the southeastern lie of the ridge" (p. 336); field guns "firing point-blank" in the Bois de la Ville (Nicholson p. 257) | sourced |
+| The Bois de la Ville to the Bois du Goulot | (2815, −3467) to (2181, −2893) | a straight line between the two sourced stretches, about 250 m west of Farbus village. Nicholson p. 257 has the 1st Brigade overrunning "the German batteries" on the reverse slope above Farbus Wood, but places none between the woods | estimate |
+| The Bois du Goulot | (2181, −2893) to (1769, −2230), along the wood's western (upper) edge | "the line of guns in the Bois du Goulot" (BOH p. 335); a gun-detachment "in one of the pits along the upper edge of the wood" (BOH p. 337); two 8-inch howitzers and three 5.9s, four 77s and a 90-mm gun taken there (`hussey-inman-1921` p. 154). Two 21-cm howitzers were also taken at the quarries "at the lower end" of the Bois de Bonval, just north (BOH p. 335) | sourced |
+| The eastern foot of the ridge | (1769, −2230) to (1900, −500), by Petit Vimy and La Chaudière | no source read places German guns in front of the 3rd Division | estimate |
+| East of Givenchy | (1900, −500) to (1800, 250), then north to (1800, 1500) | the 85th Battalion later occupied "the same old German gun pits" on "the flat beyond Givenchy near the Lens-Arras Road" (`hayes-1920` p. 70). Where on the flat they were is not given, so the line's place there is an estimate; north of Givenchy it is continued to cover the 4th Division's band | estimate (located by a source) |
+
+**What this means for a run.** The sourced stretches lie just west of the Brown Line (`brown-1cdn`, `brown-2cdn`). A
+run in which the 1st and 2nd Divisions take their final objectives on 9 April, as they did, puts companies beyond the
+gun line there before any German reserve arrives. That is a breakthrough by this definition, and in the history the
+guns were indeed overrun (Nicholson p. 257; BOH p. 337). In the 3rd and 4th Divisions' sectors the line stands 1.5 to
+2 km beyond the final objectives, so a breakthrough there needs an advance the plan never ordered.
+
 ## Targets for the command model
 
 These are what the engine's communications and command model are checked against. None is an input.
@@ -359,6 +406,14 @@ arrivals are in `historical.yaml`.
 | `end.lullMin` 2880 | `command.yaml` | estimate (`boh-1917-1` p. 343) | 343 | "the northern attack was postponed for 48 hours" | estimate |
 | 85th C, D and 46th A, B reserve | `oob-canadian.yaml` | `boh-1917-1` | 341 | "hoping to force the Germans back from the near side of the hill before dark, sent forward ... two companies of the 85th" | official |
 | black-4cdn earliest 18:45 kept | `historical.yaml` | `boh-1917-1` | 341 | "Despite the absence of artillery fire, they started off across No Man's Land at 6.45 p.m." | official |
+| `deadlock.collapseFrac` 0.1 | `command.yaml` | estimate (the owner) | Deadlock design, Goal 1.3 | "fewer than 10% of the defending troops in the sector remain fit to fight" | estimate |
+| `deadlock.surrenderFrac` 0.5 | `command.yaml` | estimate | Deadlock design, Goal 1.2 | "a sizeable part of the defending force surrenders" | estimate |
+| `ger-gun-line`, Farbus Wood and the Bois de la Ville | `geo/features.geojson` | `boh-1917-1` | 336 | "the line of concrete casemates along the upper edges of Farbus Wood and the Bois de la Ville" | official |
+| `ger-gun-line`, the Bois de la Ville | `geo/features.geojson` | `nicholson-1962` | 257 | "resisted by the enemy in the Bois de la Ville both with machine-guns and with field guns firing point-blank" | official |
+| `ger-gun-line`, the Bois du Goulot | `geo/features.geojson` | `boh-1917-1` | 335 | "capturing from the north flank the line of guns in the Bois du Goulot" | official |
+| `ger-gun-line`, the Bois du Goulot's upper edge | `geo/features.geojson` | `boh-1917-1` | 337 | "a gun-detachment in one of the pits along the upper edge of the wood fired point-blank" | official |
+| `ger-gun-line`, the Bois du Goulot's guns | `geo/features.geojson` | `hussey-inman-1921` | 154 | "down through Goulot Wood, the K.O.S.B. capturing two 8-inch howitzers" | secondary |
+| `ger-gun-line`, east of Givenchy | `geo/features.geojson` | `hayes-1920` | 70 | "the flat beyond Givenchy near the Lens-Arras Road; the same old German gun pits" | secondary |
 
 ## Conflicts
 
@@ -411,6 +466,13 @@ arrivals are in `historical.yaml`.
 
 ## Open questions for the historian
 
+- **The German gun line.** Where did the field and heavy batteries of the 79th Reserve and 1st Bavarian Reserve
+  Divisions stand on 9 April, battery by battery or by group? The deadlock's artillery line is sourced only through
+  Farbus Wood, the Bois de la Ville and the Bois du Goulot; in front of the 3rd and 4th Divisions it is an estimate
+  along the ridge's eastern foot and on the flat east of Givenchy. The German regimental histories of the field
+  artillery, or the Canadian Corps' counter-battery maps of located positions, would say.
+- **The deadlock thresholds (for the owner).** Is half the German force taken prisoner the right reading of "a sizeable
+  part"? Should the stronghold be Hill 145 alone, or the crest's two heights and the Pimple (`end.keyGround`)?
 - **Where the tanks started.** Where did No. 12 Company, D Battalion, lie up and start from on 9 April: on the
   Canadian front line, as entered, or farther back? When were they to start, and by which routes? D Battalion's war
   diary or Watson's *A Company of Tanks* would say.

@@ -1,5 +1,7 @@
 import { minutesBetween, v } from '@wwi/scenario';
 import type { Scenario } from '@wwi/scenario';
+import { BY } from './deadlock';
+import type { By } from './deadlock';
 import type { RunRecord } from './record';
 import { runScenario } from './run';
 import type { Models } from './run';
@@ -53,7 +55,21 @@ export interface BatchSummary {
   winner: WinnerRow;
   /** Who holds each piece of key ground at the end, as shares of the runs (Task 19 fix round). */
   keyGround: KeyGroundRow[];
+  /** Whether the deadlock broke, by which condition and when, and the margins' spread (Plan 4 Task 3); null when the runs are not scored. */
+  deadlock: DeadlockRow | null;
 }
+
+/**
+ * The deadlock over the batch (Plan 4 Task 3): the share of runs that broke it, the share broken by each condition (they
+ * sum to `brokenShare`), the spread of the minute it broke (null exactly when no run broke it), and the spread of each
+ * margin over every run, broken or not (`breakthroughBeyondM` over the runs that measured one; null when none did).
+ */
+export type DeadlockRow = {
+  brokenShare: number;
+  byShare: Record<By, number>;
+  minute: Spread | null;
+  margins: { breakthroughBeyondM: Spread | null; capturedFrac: Spread; minFitFrac: Spread; strongholdsHeld: Spread };
+};
 
 /** What the batch needs of one run: its lines taken, its numbers for each target (in the targets' order), its end and winner. */
 export type RunExtract = {
@@ -66,6 +82,8 @@ export type RunExtract = {
   winner: Side | null;
   /** Each piece of key ground and who held it at the end (the run's summary). */
   keyGround: Array<{ id: string; name: string; holder: Side | null }>;
+  /** The run's `summary.deadlock` (null when not scored; absent from records before engine 0.5.0). */
+  deadlock: RunRecord['summary']['deadlock'];
 };
 
 /** Linear-interpolation quantiles (qs in [0,1]) over the sorted values. */
@@ -155,6 +173,28 @@ export function extractRun(s: Scenario, r: RunRecord): RunExtract {
     endedAt: r.summary.endedAt,
     winner: r.summary.winner,
     keyGround: r.summary.keyGround.map(({ id, name, holder }) => ({ id, name, holder })),
+    deadlock: r.summary.deadlock ?? null,
+  };
+}
+
+/** The deadlock over the runs (seed order): null when none of them is scored. */
+function deadlockOf(runs: RunExtract[]): DeadlockRow | null {
+  const scored = runs.flatMap((r) => (r.deadlock ? [r.deadlock] : []));
+  if (scored.length === 0) return null;
+  const n = runs.length;
+  const broken = scored.filter((d) => d.broken);
+  const byShare = Object.fromEntries(BY.map((k) => [k, round6(broken.filter((d) => d.by === k).length / n)])) as Record<By, number>;
+  const beyond = scored.flatMap((d) => (d.margins.breakthrough.furthestBeyondM === null ? [] : [d.margins.breakthrough.furthestBeyondM]));
+  return {
+    brokenShare: round6(broken.length / n),
+    byShare,
+    minute: broken.length ? spreadOf(broken.map((d) => d.minute!)) : null,
+    margins: {
+      breakthroughBeyondM: beyond.length ? spreadOf(beyond) : null,
+      capturedFrac: spreadOf(scored.map((d) => d.margins.surrender.capturedFrac)),
+      minFitFrac: spreadOf(scored.map((d) => d.margins.collapse.minFitFrac)),
+      strongholdsHeld: spreadOf(scored.map((d) => d.margins.stronghold.held)),
+    },
   };
 }
 
@@ -233,7 +273,7 @@ export function summarizeBatch(s: Scenario, runs: RunExtract[]): BatchSummary {
       g[k.holder ?? 'none'] += 1 / ordered.length;
     }
   const keyGround = [...grounds.values()].map((g) => ({ ...g, allied: round6(g.allied), central: round6(g.central), none: round6(g.none) }));
-  return { runs: ordered.length, lines, casualties, prisoners, gunsCaptured, duration, winner, keyGround };
+  return { runs: ordered.length, lines, casualties, prisoners, gunsCaptured, duration, winner, keyGround, deadlock: deadlockOf(ordered) };
 }
 
 /** A share rounded to 6 decimals, so sums of 1/n come out as the plain fraction. */

@@ -288,3 +288,21 @@ end:
   lullMin:
     value: 2880
     estimate: "48 hours. The longest pause between attacks in the battle was from the 10th Brigade's attack on Hill 145 (3 p.m. on 10 April, BOH p. 342) to the Pimple (5 a.m. on 12 April, BOH p. 345), about 38 hours, the result of the Northern Attack's being 'postponed for 48 hours' (BOH p. 343). A shorter lull would end a run that follows the historical course before the Pimple; 48 hours is the postponement itself (command.md)"
+
+# Deadlock scoring (Deadlock design, Goal 1): when a run counts the deadlock as broken. An observer: nothing in the battle
+# reads it. The conditions are left to the default, all four (listed in defaultsUsed); which apply is the owner's to set.
+deadlock:
+  attacker: allied
+  # The German field-gun line behind the ridge (geo/features.geojson; command.md, Deadlock): sourced through Farbus
+  # Wood, the Bois de la Ville and the Bois du Goulot, an estimate elsewhere.
+  artilleryLine: { featureId: ger-gun-line }
+  surrenderFrac:
+    value: 0.5
+    estimate: "half of the German men on the map (and of reserves once they come on to it) taken prisoner: 'a sizeable part of the defending force' (Deadlock design, Goal 1.2) made a number; a definition for the owner to set, not a historical value (command.md, Deadlock)"
+  collapseFrac:
+    value: 0.1
+    estimate: "the owner's threshold: 'fewer than 10% of the defending troops in the sector remain fit to fight' (Deadlock design, Goal 1.3); a definition, not a historical value"
+  # Named here rather than taken from end.keyGround (which also holds Hill 135 and the Pimple): the stronghold whose taking
+  # the owner names for Vimy.
+  strongholds:
+    - featureId: hill-145

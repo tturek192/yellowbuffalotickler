@@ -18,6 +18,7 @@ import { snapshotWriter } from './snapshots';
 import { endCheck, endRun, lullMin } from './end';
 import { summarize } from './summary';
 import { createStreams } from './rng';
+import { initDeadlock } from './deadlock';
 import { ENGINE_VERSION, round, SNAPSHOT_BUSY_MIN, SNAPSHOT_QUIET_MIN } from './record';
 import { offMapAtZero } from './reserves';
 import { initTanks } from './smaller';
@@ -113,10 +114,12 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
     command: { ordered: {}, stallCommits: {}, launched: {}, counterAttacks: {}, divisions: {}, offMap: {} },
     churn: ctx.world.churn,
     nextEventId: 0,
+    deadlock: null,
   };
   const atZero = emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' });
-  // Headquarters start knowing their companies and the trenches as they stand once the bombardment is over (comms.ts).
-  return { state: initComms(runBombardment(atZero, ctx).state, ctx), ctx };
+  // Headquarters start knowing their companies and the trenches as they stand once the bombardment is over (comms.ts); the
+  // deadlock score starts from the same state (deadlock.ts).
+  return { state: initDeadlock(initComms(runBombardment(atZero, ctx).state, ctx), ctx), ctx };
 }
 
 /** The off-map reserves, waiting where the scenario puts them until a headquarters orders them forward (Tasks 12–13). */

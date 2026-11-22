@@ -1,9 +1,10 @@
 import type { Change, Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
 import type { CompanyState, CompanyStatus, Role } from './companies';
+import type { DeadlockSummary } from './deadlock';
 import type { DivisionInsignia } from './insignia';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.10';
+export const ENGINE_VERSION = '0.5.0';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -149,6 +150,11 @@ export type RunRecord = {
     endReason: EndReason | null;
     winner: Side | null;
     keyGround: Array<{ id: string; name: string; holder: Side | null }>;
+    /**
+     * Whether the deadlock broke (engine 0.5.0 on; absent before): the first condition to hold, its minute and sector, and
+     * the margins; null for a scenario that is not scored (deadlock.ts).
+     */
+    deadlock: DeadlockSummary | null;
   };
   /** Every default the run applied, sorted (Review Focus 2). */
   defaultsUsed: string[];

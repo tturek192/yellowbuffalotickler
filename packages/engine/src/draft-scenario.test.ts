@@ -100,6 +100,7 @@ describe('draft Vimy scenario run', () => {
     // sector, by the sight-line and visibility tests enemySeen uses (eyesOf). The draft has no enemy: only the version
     // moves its record.
     // 0.4.10 (Plan 4 Task 1): an optional what-if block (whatIf), an optional groundCondition read by wetness(), and a reserve's strengthFactor on made-up companies. A run with no overlay is unchanged but for the version.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.10', hash: 'be2e390f' });
+    // 0.5.0 (Plan 4 Task 3): deadlock scoring: summary.deadlock (with margins) and the deadlock-broken event. The draft has no end.keyGround and no deadlock section, so it is not scored: summary.deadlock is null, no deadlock-broken event, nothing added to defaultsUsed; with summary.deadlock removed and the version set back to 0.4.10 its record hashes to be2e390f, so only they move the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.5.0', hash: 'c8b00b1f' });
   });
 });

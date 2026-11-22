@@ -1,3 +1,4 @@
+import { deadlockSummary } from './deadlock';
 import { winnerOf } from './end';
 import { tallyCasualties } from './record';
 import type { EndReason, RunRecord } from './record';
@@ -7,7 +8,7 @@ import type { SimState, StepContext } from './step';
  * The run's summary (Task 15): the lines taken; casualties by period (the preliminary bombardment, before Zero, and the
  * battle), side and formation, rolled up along each company's formation path (so battalion, brigade and division totals
  * are there to set beside targets); prisoners by the side that took them; guns captured; when and why the run ended; and
- * who holds the key ground. It reads the run, never `historical.*` (the batch compares, batch.ts).
+ * who holds the key ground; and the deadlock score (deadlock.ts). It reads the run, never `historical.*` (the batch compares, batch.ts).
  */
 export function summarize(state: SimState, ctx: StepContext, events: RunRecord['events'], endReason: EndReason): RunRecord['summary'] {
   const { winner, keyGround } = winnerOf(state, ctx);
@@ -33,5 +34,7 @@ export function summarize(state: SimState, ctx: StepContext, events: RunRecord['
     endReason,
     winner,
     keyGround,
+    // Whether the deadlock broke, how and when, and how near each condition came (Plan 4 Task 3).
+    deadlock: deadlockSummary(state),
   };
 }

@@ -139,6 +139,19 @@ export function checkReferences(
       dupKey(`end.keyGround[${i}].id`, k.id);
       checkFeature(`end.keyGround[${i}].featureId`, k.featureId);
     });
+    const dl = s.deadlock;
+    if (dl) {
+      const line = dl.artilleryLine;
+      if ('lineId' in line) {
+        if (!lineIds.has(line.lineId)) problems.push(`deadlock.artilleryLine.lineId: unknown line "${line.lineId}"`);
+      } else {
+        const f = s.features.find((x) => x.id === line.featureId);
+        if (!f) checkFeature('deadlock.artilleryLine.featureId', line.featureId);
+        else if (f.geometry.type !== 'LineString' || !f.geometry.coordinates.every((p, j, ps) => j === 0 || p[1] > ps[j - 1]![1]))
+          problems.push(`deadlock.artilleryLine.featureId: feature "${line.featureId}" must be a LineString with strictly ascending y (south to north)`);
+      }
+      dl.strongholds?.forEach((x, i) => checkFeature(`deadlock.strongholds[${i}].featureId`, x.featureId));
+    }
   };
 
   const walkFormations = (fs: Formation[], base: string) =>

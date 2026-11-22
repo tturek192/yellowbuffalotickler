@@ -32,6 +32,8 @@ export const EVENT_KINDS = [
   'tank-bogged', 'horses-gassed', 'ammunition-low',
   // Task 14 fix round: a horse-drawn battery limbering up to withdraw; a mine blown under the enemy
   'guns-withdrawn', 'mine-fired',
+  // Plan 4 Task 3: the deadlock counts as broken (deadlock.ts; an observer: nothing in the battle reads it)
+  'deadlock-broken',
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 

@@ -34,6 +34,8 @@ export const CAUSES = [
   'tank-fire',
   // Enemy infantry seen close to a battery, which withdraws (Task 14 fix round); a mine blown under the trench (Task 14 fix round)
   'enemy-near', 'mine',
+  // Why the deadlock counts as broken (Plan 4 Task 3, deadlock.ts): one cause for each condition
+  'beyond-the-guns', 'mass-surrender', 'defence-collapsed', 'stronghold-held',
 ] as const;
 
 export type Cause = (typeof CAUSES)[number];

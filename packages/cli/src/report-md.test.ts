@@ -78,6 +78,7 @@ function fakeRun(): RunRecord {
       endReason: 'lull',
       winner: 'central',
       keyGround: [{ id: 'crest', name: 'The crest', holder: 'central' }],
+      deadlock: null,
     },
     defaultsUsed: [
       'companies[cdn-a].officers ← bef-1917.companyDefaults.officers',
@@ -103,6 +104,17 @@ function fakeBatch(): BatchSummary {
     duration: { target: 4290, range: [4290, 4440], p10: 4000, median: 5070, p90: 6000, pass: true },
     winner: { allied: 0.1, central: 0.9, none: 0, historical: 'allied', pass: false },
     keyGround: [{ id: 'crest', name: 'The crest', allied: 0.25, central: 0.7, none: 0.05 }],
+    deadlock: {
+      brokenShare: 0.6,
+      byShare: { breakthrough: 0.1, surrender: 0, collapse: 0.5, stronghold: 0 },
+      minute: { p10: 60, median: 90, p90: 400 },
+      margins: {
+        breakthroughBeyondM: { p10: -900, median: -400, p90: 120 },
+        capturedFrac: { p10: 0.2, median: 0.35, p90: 0.45 },
+        minFitFrac: { p10: 0, median: 0.05, p90: 0.3 },
+        strongholdsHeld: { p10: 0, median: 1, p90: 1 },
+      },
+    },
   };
 }
 
@@ -212,6 +224,15 @@ describe('the model report', () => {
     const md = reportToMarkdown(fakeBatch(), fakeRun(), minimalTables());
     expect(md).toMatch(/### Key ground at the end/);
     expect(md).toMatch(/\| The crest \(crest\) \| 25% \| 70% \| 5% \|/);
+  });
+
+  it('shows the deadlock: the share broken, by which condition, when, and the margins (Plan 4 Task 3)', () => {
+    const md = reportToMarkdown(fakeBatch(), fakeRun(), minimalTables());
+    expect(md).toMatch(/### Deadlock\n\nBroken in 60% of the 10 runs, at /);
+    expect(md).toMatch(/\| collapse \| 50% \| lowest share of a sector's defenders still fit: 0% \/ 5% \/ 30% \|/);
+    expect(md).toMatch(/\| breakthrough \| 10% \| furthest beyond the gun line \(m\): -900 \/ -400 \/ 120 \|/);
+    // Not scored: no section.
+    expect(reportToMarkdown({ ...fakeBatch(), deadlock: null }, fakeRun(), minimalTables())).not.toMatch(/### Deadlock/);
   });
 
   it('warns above the ranking that it credits ground changes to ancestors but men lost only to the event, and that fire has no firer refs', () => {

@@ -354,6 +354,28 @@ export function reportToMarkdown(batch: BatchSummary, run: RunRecord, params: Re
       '',
     );
   }
+  const dl = batch.deadlock;
+  if (dl) {
+    const sp = (s: { p10: number; median: number; p90: number } | null, f: (x: number) => string) => (s ? `${f(s.p10)} / ${f(s.median)} / ${f(s.p90)}` : '—');
+    const share = (x: number) => n0(x * 100) + '%';
+    out.push(
+      '### Deadlock',
+      '',
+      `Broken in ${pct(dl.brokenShare)} of the ${batch.runs} runs, ${dl.minute ? `at ${t(dl.minute.p10)} / ${t(dl.minute.median)} / ${t(dl.minute.p90)} (p10 / median / p90)` : 'never'} (not a target). ` +
+        'Each margin is the closest a run came to its condition, over every run (p10 / median / p90).',
+      '',
+      ...tableMd(
+        ['Condition', 'Broken by', 'Margin'],
+        [
+          ['breakthrough', pct(dl.byShare.breakthrough), `furthest beyond the gun line (m): ${sp(dl.margins.breakthroughBeyondM, n0)}`],
+          ['surrender', pct(dl.byShare.surrender), `share of the defenders captured: ${sp(dl.margins.capturedFrac, share)}`],
+          ['collapse', pct(dl.byShare.collapse), `lowest share of a sector's defenders still fit: ${sp(dl.margins.minFitFrac, share)}`],
+          ['stronghold', pct(dl.byShare.stronghold), `strongholds held at once: ${sp(dl.margins.strongholdsHeld, n0)}`],
+        ],
+      ),
+      '',
+    );
+  }
 
   // The events that mattered most, and their causes.
   const top = consequentialEvents(run.events, 50);

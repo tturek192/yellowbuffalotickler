@@ -2,6 +2,7 @@ import { v } from '@wwi/scenario';
 import type { Doctrine, Point, Scenario, Tables, Terrain } from '@wwi/scenario';
 import type { World } from './ground';
 import type { BarrageState } from './barrage';
+import type { DeadlockState } from './deadlock';
 import { CAUSES, emit } from './causes';
 import type { Cause } from './causes';
 import { anyWithin, sideBuckets } from './buckets';
@@ -62,6 +63,11 @@ export type SimState = {
   nextEventId: number;
   /** Each side's last `batteries-recovered` event, for the refs of the defensive fire after it (Task 8). */
   batteriesRecoveredEventId?: Partial<Record<Side, number>>;
+  /**
+   * The deadlock score (Plan 4 Task 3, deadlock.ts): the first breaking and the running margins; null when the scenario is
+   * not scored. An observer's: no phase but the log phase's deadlock check reads it, and no decision does.
+   */
+  deadlock: DeadlockState | null;
 };
 
 export type StepContext = {

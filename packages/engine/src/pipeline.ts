@@ -4,6 +4,7 @@ import { advanceBarrage } from './barrage';
 import { commandPhase } from './command';
 import { commsPhase, companyReports } from './comms';
 import { emit } from './causes';
+import { deadlockPhase } from './deadlock';
 import type { NewEvent } from './causes';
 import { directFire } from './fire';
 import { morale } from './morale';
@@ -61,8 +62,11 @@ const command: Phase = (state, ctx, dt) => commandPhase(state, ctx, dt);
 /** Deliver the messages due and update each HQ's picture (comms.ts). */
 const comms: Phase = (state, ctx) => commsPhase(state, ctx);
 
-/** Line-taken checks; then companies report what changed, and pinned companies call for fire (comms.ts). */
-const log: Phase = (state, ctx) => companyReports(takeLines(state, ctx), ctx);
+/**
+ * Line-taken checks; then companies report what changed, and pinned companies call for fire (comms.ts); then the deadlock
+ * is scored on the step's final state (deadlock.ts: an observer, read by no decision).
+ */
+const log: Phase = (state, ctx) => deadlockPhase(companyReports(takeLines(state, ctx), ctx), ctx);
 
 /** The nine phases of a step, in the spec's order (the model, "Step pipeline"). */
 export const PHASES = [
