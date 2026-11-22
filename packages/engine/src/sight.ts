@@ -31,17 +31,19 @@ const centre = (w: World, cell: number): Point => [
 ];
 
 function trace(w: World, a: Point, b: Point, eyeM: number): boolean {
-  const z = (p: Point) => (w.terrain ? w.terrain.at(p[0], p[1]) : 0);
+  const terrain = w.terrain;
   const { data, cols, rows } = blockerRaster(w);
-  const za = z(a) + eyeM;
-  const zb = z(b) + eyeM;
-  const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / STEP_M));
+  const [ax, ay] = a;
+  const [bx, by] = b;
+  const za = (terrain ? terrain.at(ax, ay) : 0) + eyeM;
+  const zb = (terrain ? terrain.at(bx, by) : 0) + eyeM;
+  const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / STEP_M));
   // The samples next to either end are skipped: men standing in a wood or village can see out of its edge.
   for (let k = 1; k < n; k++) {
     const t = k / n;
-    const x = a[0] + t * (b[0] - a[0]);
-    const y = a[1] + t * (b[1] - a[1]);
-    if (z([x, y]) > za + t * (zb - za)) return false;
+    const x = ax + t * (bx - ax);
+    const y = ay + t * (by - ay);
+    if ((terrain ? terrain.at(x, y) : 0) > za + t * (zb - za)) return false;
     const i = Math.min(cols - 1, Math.max(0, Math.floor((x - w.originX) / STEP_M)));
     const j = Math.min(rows - 1, Math.max(0, Math.floor((y - w.originY) / STEP_M)));
     if (data[j * cols + i] && k > 1 && k < n - 1) return false;
