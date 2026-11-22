@@ -103,6 +103,7 @@ describe('draft Vimy scenario run', () => {
     // 0.5.0 (Plan 4 Task 3): deadlock scoring: summary.deadlock (with margins) and the deadlock-broken event. The draft has no end.keyGround and no deadlock section, so it is not scored: summary.deadlock is null, no deadlock-broken event, nothing added to defaultsUsed; with summary.deadlock removed and the version set back to 0.4.10 its record hashes to be2e390f, so only they move the hash.
     // 0.5.1 (Plan 4 Task 3 fix round 1): the deadlock's margins carry their minute and the margins at the break (atBreak); a sector seals only when a reserve company stands within sealDistanceM behind the gun line; collapse counts the reserves on their way and assigned to a sector; surrender's denominator is fixed at Zero. The draft is not scored: only the version moves the hash.
     // 0.5.2 (Plan 4 Task 3 fix round 2): collapse counts an assigned reserve that waits off the map, until it is sent elsewhere or arrives. The draft is not scored: only the version moves the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.5.2', hash: '7d9f3afd' });
+    // 0.5.3 (Plan 4 Task 3 fix round 3, the owner's ruling): collapse is the defender's whole force, reserves included, below collapseFrac of its men at Zero, not a sector; reserveSectors removed. The draft is not scored: only the version moves the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.5.3', hash: '1ca46f96' });
   });
 });

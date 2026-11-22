@@ -46,7 +46,7 @@ export { casualtyPass, durationPass, extractRun, quantiles, runBatch, summarizeB
 export type { BatchLine, BatchSummary, CasualtyRow, DeadlockRow, DurationRow, GunsRow, PrisonerRow, KeyGroundRow, RunExtract, Spread, Target, WinnerRow } from './batch';
 export { endCheck, endRun, finalLines, holderOf, lullDue, lullMin, winnerOf } from './end';
 export { summarize } from './summary';
-export { BY, deadlockPhase, deadlockSummary, fitBySector, initDeadlock, scoreDeadlock } from './deadlock';
+export { BY, deadlockPhase, deadlockSummary, forceFit, initDeadlock, scoreDeadlock } from './deadlock';
 export type { By, DeadlockState, DeadlockSummary, Margins } from './deadlock';
 export { expandSnapshots, KEYFRAME_EVERY, snapshotWriter } from './snapshots';
 export { buildWorld, churn, groundAt, speedFactor, wetness } from './ground';

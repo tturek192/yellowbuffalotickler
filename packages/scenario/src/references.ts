@@ -154,10 +154,6 @@ export function checkReferences(
           problems.push(`deadlock.artilleryLine.featureId: feature "${line.featureId}" must be a LineString with strictly ascending y (south to north)`);
       }
       dl.strongholds?.forEach((x, i) => checkFeature(`deadlock.strongholds[${i}].featureId`, x.featureId));
-      dl.reserveSectors?.forEach((x, i) => {
-        if (!s.reserves.some((r) => r.formationId === x.formationId)) problems.push(`deadlock.reserveSectors[${i}].formationId: no off-map reserve "${x.formationId}"`);
-        if (!sectorIds.has(x.sectorId)) problems.push(`deadlock.reserveSectors[${i}].sectorId: unknown sector "${x.sectorId}"`);
-      });
     }
   };
 

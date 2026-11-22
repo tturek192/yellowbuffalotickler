@@ -3,9 +3,10 @@ import { checkReferences, ScenarioSchema } from '@wwi/scenario';
 import type { Scenario } from '@wwi/scenario';
 import { est } from '@wwi/scenario/test-fixtures';
 import { summarizeBatch, extractRun } from './batch';
-import { deadlockSummary, fitBySector, scoreDeadlock } from './deadlock';
+import { deadlockSummary, forceFit, scoreDeadlock } from './deadlock';
 import type { By } from './deadlock';
 import { runPipeline } from './pipeline';
+import { round } from './record';
 import type { RunRecord } from './record';
 import { initRun, runScenario } from './run';
 import type { Models } from './run';
@@ -22,7 +23,7 @@ import { fixtureFire, fixtureReserves, fixtureWithDoctrineV3, runStates, vimy, v
 
 const cite = est('test');
 
-type Opts = { conditions?: By[]; surrenderFrac?: number; reserve?: boolean; section?: boolean; sector2?: boolean; reserveSectors?: Array<{ formationId: string; sectorId: string }> };
+type Opts = { conditions?: By[]; surrenderFrac?: number; reserve?: boolean; section?: boolean; sector2?: boolean };
 
 /** The v3 fixture, scored: the gun line at x 600, the knoll at (1150, 100) the stronghold, and optionally the reserve gres. */
 function scored(o: Opts = {}): [Scenario, Models] {
@@ -36,7 +37,6 @@ function scored(o: Opts = {}): [Scenario, Models] {
       strongholds: [{ featureId: 'knoll' }],
       ...(o.conditions ? { conditions: o.conditions } : {}),
       ...(o.surrenderFrac !== undefined ? { surrenderFrac: est(o.surrenderFrac) } : {}),
-      ...(o.reserveSectors ? { reserveSectors: o.reserveSectors } : {}),
     };
   if (o.sector2) {
     // A second sector north of s1 (y 400 to 800) with a German trench of its own, ger-front-b, held by k3 (50 men).
@@ -95,10 +95,9 @@ function sealRun(o: { sealDistanceM: number; entryY?: number }): RunRecord {
 /**
  * fixtureReserves with real orders: the division orders gres (two companies, 100 men each, off the map at Zero, entering
  * at (2500, 200)) forward once its front is lost, at minute 50 (minute 6 with `fast`), to a segment of ger-front-a in s1;
- * gres arrives at minute 96 (8) and walks to the front. With `sector2`, a sector s2 (y 800 to 1200) with no defenders of
- * its own, and with `toS2` gres assigned to it (`reserveSectors`). Scored on collapse only; the states to `endMinute`.
+ * gres arrives at minute 96 (8) and walks to the front. Scored on collapse only; the states to `endMinute`.
  */
-function reserveStates(o: { fast?: boolean; sector2?: boolean; toS2?: boolean; endMinute?: number }) {
+function reserveStates(o: { fast?: boolean; endMinute?: number }) {
   const [s, m] = fixtureReserves({ objective: 'black', distanceKm: 0, noCompanies: false });
   if (o.fast) {
     const de = m.doctrines['de-1917']!;
@@ -107,23 +106,21 @@ function reserveStates(o: { fast?: boolean; sector2?: boolean; toS2?: boolean; e
     m.tables.channels.runner = { delayMin: fast(1), failPerHour: fast(0) };
   }
   s.features.push({ id: 'guns', kind: 'battery', side: 'central', geometry: { type: 'LineString', coordinates: [[5000, -100], [5000, 1300]] }, cite });
-  if (o.sector2) s.sectors.push({ ...structuredClone(s.sectors[0]!), id: 's2', name: 'Sector 2', yMin: 800, yMax: 1200 });
-  s.deadlock = { attacker: 'allied', artilleryLine: { featureId: 'guns' }, strongholds: [], conditions: ['collapse'], ...(o.toS2 ? { reserveSectors: [{ formationId: 'gres', sectorId: 's2' }] } : {}) };
+  s.deadlock = { attacker: 'allied', artilleryLine: { featureId: 'guns' }, strongholds: [], conditions: ['collapse'] };
   return { f: [s, m] as [Scenario, Models], ...runStates([s, m], { endMinute: o.endMinute ?? 200 }) };
 }
 
-/** The German men fit on the map in a y-band, counted by hand (the statuses deadlock.ts counts as unfit or off the map). */
-const UNFIT_TEST = ['pinned', 'surrendered', 'falling-back', 'destroyed', 'off-map', 'marching'];
-const onMapFit = (s: SimState, yMin: number, yMax: number): number =>
-  s.companies.filter((c) => c.side === 'central' && c.men > 0 && !UNFIT_TEST.includes(c.status) && c.y >= yMin && c.y <= yMax).reduce((a, c) => a + c.men, 0);
-/** gres's men still off the map (waiting, ordered or marching). */
-const gresOff = (s: SimState): number => s.companies.filter((c) => c.id.startsWith('gres-') && (c.status === 'off-map' || c.status === 'marching')).reduce((a, c) => a + c.men, 0);
+/** The German men fit, counted by hand over the whole force: every company with men not pinned, surrendered, falling back or destroyed (off-map reserves not yet arrived included). */
+const UNFIT_TEST = ['pinned', 'surrendered', 'falling-back', 'destroyed'];
+const handFit = (s: SimState): number => s.companies.filter((c) => c.side === 'central' && c.men > 0 && !UNFIT_TEST.includes(c.status)).reduce((a, c) => a + c.men, 0);
+/** Every German man at Zero (conservation: the same at every state). */
+const allMen = (s: SimState): number => s.companies.filter((c) => c.side === 'central').reduce((a, c) => a + c.men + c.killed + c.wounded + c.captured, 0);
 
 /** Breakthrough, then stronghold: gres comes within 1,600 m behind the gun line on arrival (minute 8), or 100 m only at about minute 30. */
 const runBreak = (o: { reserveArrivesFirst: boolean }) => sealRun({ sealDistanceM: o.reserveArrivesFirst ? 1600 : 100 });
 /** The garrisons all taken prisoner at minute 4. */
 const runSurrender = () => runScenario(...scored(), { seed: 1 });
-/** The same, collapse checked first: no German left fit in s1, and no reserve to refill it. */
+/** The same, collapse checked first: no German left fit in the whole force, and no reserve. */
 const runCollapse = (o: Opts = {}) => runScenario(...scored({ conditions: ['collapse', 'surrender', 'stronghold'], ...o }), { seed: 1 });
 /** Breakthrough excluded: the knoll is taken once the attackers stand on it. */
 const runStronghold = () => runScenario(...scored({ conditions: ['stronghold'] }), { seed: 1 });
@@ -199,57 +196,31 @@ describe('deadlock scoring (Plan 4 Task 3)', () => {
     expect(captured(after)).toBeGreaterThan(0);
   });
 
-  it('records collapse per sector when fewer than collapseFrac of the on-map defenders in a sector remain fit, naming the sector', () => {
-    expect(runCollapse().summary.deadlock).toMatchObject({ broken: true, by: 'collapse', sectorId: 's1' });
-    expect(runCollapse().summary.deadlock!.margins.collapse).toMatchObject({ minFitFrac: 0, sectorId: 's1' });
+  it('records collapse when the whole force, reserves included, falls below collapseFrac of its men at Zero, naming no sector', () => {
+    const d = runCollapse().summary.deadlock!;
+    expect(d).toMatchObject({ broken: true, by: 'collapse', minute: 4 });
+    expect(d.sectorId).toBeUndefined();
+    expect(d.margins.collapse).toEqual({ minFitFrac: 0, minute: 4 });
+    const e = runCollapse().events.find((x) => x.kind === 'deadlock-broken')!;
+    expect(e.sectorId).toBeUndefined();
   });
 
-  it('a sector whose garrison is lost while its assigned reserve still waits off the map is not collapsed', () => {
-    // v3 with gres (200 men), assigned to s1 by its entry point and never sent (no headquarters orders it): k1 and k2
-    // (240) are taken at minute 4, and s1 keeps 200 of its 440.
-    const r = runFrom(scored({ conditions: ['collapse'], reserve: true }));
-    expect(r.last.reserves[0]!.status).toBe('waiting');
-    expect(r.last.deadlock!.zeroFit).toEqual({ s1: 440 });
-    expect(r.summary.deadlock).toMatchObject({ broken: false, margins: { collapse: { minFitFrac: expect.closeTo(200 / 440, 4), sectorId: 's1' } } });
+  it("losing one sector's garrison does not collapse the force", () => {
+    // v3 with s2 (k3, 50 men) and the resting battalion gres (200, never sent): k1 and k2 (240) are taken in s1, and the
+    // force keeps at least gres's 200 of its 490 (k3 is under s2's barrage too).
+    const r = runFrom(scored({ conditions: ['collapse'], reserve: true, sector2: true }));
+    expect(r.last.companies.filter((c) => c.id === 'k1' || c.id === 'k2').every((c) => c.men === 0)).toBe(true);
+    expect(r.summary.deadlock).toMatchObject({ broken: false });
+    expect(r.summary.deadlock!.margins.collapse.minFitFrac).toBeGreaterThanOrEqual(round(200 / 490, 4));
   });
 
-  it('once its assigned reserve is sent to another sector, the sector collapses, and the reserve weighs in the other (real order)', () => {
-    // gres assigned to s2 (which has no men of its own), sent by its division to ger-front-a in s1 at minute 6.
-    const { states, ctx } = reserveStates({ fast: true, sector2: true, toS2: true, endMinute: 40 });
-    expect(states[0]!.deadlock!.zeroFit.s2).toBe(200);
-    const waiting = states.find((s) => s.reserves[0]!.status === 'waiting' && s.minute > 0)!;
-    const sent = states.find((s) => s.reserves[0]!.status === 'ordered')!;
-    expect(fitBySector(waiting, ctx)).toEqual({ s1: onMapFit(waiting, 0, 400), s2: 200 });
-    expect(fitBySector(sent, ctx)).toEqual({ s1: onMapFit(sent, 0, 400) + 200, s2: 0 });
-    const d = deadlockSummary(states.at(-1)!)!;
-    expect(d).toMatchObject({ broken: true, by: 'collapse', sectorId: 's2', minute: sent.minute });
-  });
-
-  it('a reserve counts once, wherever it is: waiting, ordered, marching and arrived (real order and arrival)', () => {
+  it('an arrived reserve is counted once, and every reserve counts wherever it is sent (real order and arrival)', () => {
     const { states, ctx } = reserveStates({});
     expect(new Set(states.map((s) => s.reserves[0]!.status))).toEqual(new Set(['waiting', 'ordered', 'marching', 'arrived']));
-    for (const s of states) expect(fitBySector(s, ctx).s1).toBe(onMapFit(s, 0, 400) + gresOff(s));
-  });
-
-  it('once its reserve has arrived and been worn down below the threshold, the sector is collapsed', () => {
-    // A real arrival; then (staged) every German company in s1 pinned: nothing left to refill it.
-    const { states, ctx } = reserveStates({ fast: true, endMinute: 40 });
-    const s = states.at(-1)!;
-    expect(s.reserves[0]!.status).toBe('arrived');
-    expect(scoreDeadlock(s, ctx)).toEqual({ broken: false });
-    const worn: SimState = { ...s, companies: s.companies.map((c) => (c.side === 'central' && c.men > 0 && c.status !== 'surrendered' ? { ...c, status: 'pinned' as const } : c)) };
-    expect(scoreDeadlock(worn, ctx)).toMatchObject({ broken: true, by: 'collapse', sectorId: 's1' });
-  });
-
-  it('the assignment defaults to the entry point, listed; reserveSectors sets it', () => {
-    const f = scored({ reserve: true, sector2: true });
-    const { state, ctx } = initRun(...f, { seed: 1 });
-    expect(state.deadlock!.zeroFit).toEqual({ s1: 440, s2: 50 });
-    expect(ctx.defaultsUsed).toContain("deadlock.reserveSectors ← each reserve by its entry point's y: gres → s1");
-    const g = initRun(...scored({ reserve: true, sector2: true, reserveSectors: [{ formationId: 'gres', sectorId: 's2' }] }), { seed: 1 });
-    expect(g.state.deadlock!.zeroFit).toEqual({ s1: 240, s2: 250 });
-    expect(fitBySector(g.state, g.ctx)).toEqual({ s1: 240, s2: 250 });
-    expect([...g.ctx.defaultsUsed].some((d) => d.startsWith('deadlock.reserveSectors'))).toBe(false);
+    for (const s of states) expect(forceFit(s, ctx)).toBe(handFit(s));
+    // The share against the men at Zero, gres's included and fixed.
+    const last = states.at(-1)!;
+    expect(deadlockSummary(last)!.margins.collapse.minFitFrac).toBeCloseTo(Math.min(...states.map((s) => handFit(s) / allMen(states[0]!))), 4);
   });
 
   it('records stronghold when the attacker holds every stronghold feature', () => {
@@ -268,7 +239,7 @@ describe('deadlock scoring (Plan 4 Task 3)', () => {
     s.end = { keyGround: [{ id: 'knoll', name: 'The knoll', featureId: 'knoll', cite }], lullMin: est(120) };
     const used = runScenario(s, m, { seed: 1 }).defaultsUsed.filter((d) => d.startsWith('deadlock'));
     expect(used).toEqual([
-      'deadlock.collapseFrac ← 0.1 (the owner\'s: fewer than 10% of the defending troops in the sector fit to fight)',
+      'deadlock.collapseFrac ← 0.1 (the owner\'s: "fewer than 10% of enemy troops remaining")',
       'deadlock.conditions ← all four: breakthrough, surrender, collapse, stronghold',
       'deadlock.sealDistanceM ← 1000 (an estimate)',
       'deadlock.strongholds ← end.keyGround: knoll',

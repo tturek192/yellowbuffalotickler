@@ -23,12 +23,10 @@ import type { Side } from './types';
  *   come up to seal the gap;
  * - surrender: the defenders' captured men reach `surrenderFrac` of their men at Zero: every defending company's, the
  *   off-map reserves' included, a number fixed at Zero;
- * - collapse: in some sector, the defenders the sector has or can still be refilled with fall below `collapseFrac` of those
- *   it had at Zero: the defender can no longer refill it. Has: those on the map there and fit to fight (not pinned,
- *   surrendered, falling back, destroyed, off the map or marching), by position. Can be refilled with: the men of each
- *   off-map reserve not yet arrived, in the sector of the segment it is sent to once ordered or marching, else (waiting,
- *   or ordered with nowhere to go) in the sector it is assigned to (`reserveSectors`, default the sector of its entry
- *   point). Once arrived its companies count by position, so no man counts twice. Had at Zero: the same count then;
+ * - collapse (the owner's: "fewer than 10% of enemy troops remaining"): the defender's whole force in the battle, its
+ *   reserves included, falls below `collapseFrac` of its men at Zero (the same fixed number as surrender's). Fit: every
+ *   defending company's men that is not pinned, surrendered, falling back or destroyed, wherever it is: on the map, or an
+ *   off-map reserve not yet arrived (waiting, ordered or marching, wherever sent). Not measured per sector; no sector;
  * - stronghold: the attacker holds every stronghold (end.ts `holderOf`); never with no strongholds.
  * A company is in the sector whose y-band holds its y (the first in the scenario's order on a shared edge).
  * The first condition in `conditions` to hold is recorded, with its minute, and `deadlock-broken` says so. The margins
@@ -47,8 +45,8 @@ export type Margins = {
   /** Metres beyond the artillery line (negative: short of it) of the attacking company furthest on, in a sector not sealed; null with no line, or no such company. */
   breakthrough: { furthestBeyondM: number | null; sectorId: string | null; minute: number | null };
   surrender: { capturedFrac: number; minute: number };
-  /** The lowest share of a sector's defenders at Zero that it has or can still be refilled with; 1 (minute null) with no sector holding any at Zero. */
-  collapse: { minFitFrac: number; sectorId: string | null; minute: number | null };
+  /** The lowest share of the defender's men at Zero still fit, over the whole force, reserves included. */
+  collapse: { minFitFrac: number; minute: number };
   stronghold: { held: number; of: number; minute: number };
 };
 
@@ -58,8 +56,6 @@ export type DeadlockSummary = { broken: boolean; by?: By; minute?: number; secto
 export type DeadlockState = {
   /** The first condition to hold, once one has. */
   broken: { by: By; minute: number; sectorId?: string } | null;
-  /** Each sector's defenders at Zero (men): fit on the map there, and the off-map reserves assigned to it; by sector id. */
-  zeroFit: Record<string, number>;
   /**
    * Sectors sealed, in the scenario's sector order: one of the defender's off-map reserve companies has stood there within
    * `sealDistanceM` behind the gun line (or in front of it). No breakthrough there counts.
@@ -84,11 +80,7 @@ type Config = {
   conditions: By[];
   /** The defender's off-map reserve companies, each with its reserve's formation id. */
   reserveOf: ReadonlyMap<string, string>;
-  /** The sector of each trench segment (its middle y), for a reserve's destination. */
-  segmentSector: ReadonlyMap<string, string | null>;
-  /** The sector each defender off-map reserve is counted in at Zero (null: none). */
-  reserveSector: ReadonlyMap<string, string | null>;
-  /** Surrender's denominator: every defending company's men at Zero, off-map reserves included. */
+  /** Surrender's and collapse's denominator: every defending company's men at Zero, off-map reserves included. */
   surrenderMen: number;
 };
 
@@ -100,12 +92,10 @@ const DEFAULT_COLLAPSE_FRAC = 0.1;
 const DEFAULT_SEAL_DISTANCE_M = 1000;
 
 const ATTACKING: ReadonlySet<string> = new Set(['assault', 'mopup', 'support']);
-/** Statuses of a defending company that is not fit to fight, or not on the map. */
-const UNFIT: ReadonlySet<string> = new Set(['pinned', 'surrendered', 'falling-back', 'destroyed', 'off-map', 'marching']);
+/** Statuses of a defending company that is not fit to fight (an off-map reserve not yet arrived is fit: still available). */
+const UNFIT: ReadonlySet<string> = new Set(['pinned', 'surrendered', 'falling-back', 'destroyed']);
 /** Statuses of a company not (yet) on the map. */
 const OFF: ReadonlySet<string> = new Set(['off-map', 'marching']);
-/** Statuses of an off-map reserve on its way: ordered or marching, not yet arrived. */
-const ON_ITS_WAY: ReadonlySet<string> = new Set(['ordered', 'marching']);
 
 const other = (s: Side): Side => (s === 'allied' ? 'central' : 'allied');
 const sideName = (s: Side): string => (s === 'allied' ? 'Allied' : 'German');
@@ -135,13 +125,13 @@ function resolveConfig(state: SimState, ctx: StepContext): Config | null {
   const conditions = d?.conditions ?? [...BY];
   if (!d?.conditions) used.add(`deadlock.conditions ← all four: ${BY.join(', ')}`);
   if (!d?.surrenderFrac) used.add(`deadlock.surrenderFrac ← ${DEFAULT_SURRENDER_FRAC} (an estimate)`);
-  if (!d?.collapseFrac) used.add(`deadlock.collapseFrac ← ${DEFAULT_COLLAPSE_FRAC} (the owner's: fewer than 10% of the defending troops in the sector fit to fight)`);
+  if (!d?.collapseFrac) used.add(`deadlock.collapseFrac ← ${DEFAULT_COLLAPSE_FRAC} (the owner's: "fewer than 10% of enemy troops remaining")`);
   if (line && !d?.sealDistanceM) used.add(`deadlock.sealDistanceM ← ${DEFAULT_SEAL_DISTANCE_M} (an estimate)`);
   const strongholds = d?.strongholds?.map((x) => x.featureId) ?? keyGround.map((k) => k.featureId);
   if (!d?.strongholds) used.add(`deadlock.strongholds ← end.keyGround: ${strongholds.join(', ') || 'none'}`);
   const defender = other(attacker);
 
-  // The defender's off-map reserves: their companies, and the sector each is counted in at Zero.
+  // The defender's off-map reserves' companies (a sector's seal).
   const reserves = state.reserves.filter((r) => r.side === defender);
   const reserveOf = new Map<string, string>();
   for (const c of state.companies) {
@@ -149,12 +139,6 @@ function resolveConfig(state: SimState, ctx: StepContext): Config | null {
     const r = reserves.find((x) => c.formationPath.includes(x.formationId));
     if (r) reserveOf.set(c.id, r.formationId);
   }
-  const given = d?.reserveSectors;
-  const reserveSector = new Map<string, string | null>(
-    reserves.map((r) => [r.formationId, given ? (given.find((x) => x.formationId === r.formationId)?.sectorId ?? null) : sectorAt(ctx, r.entryPoint[1])]),
-  );
-  if (!given && reserves.length > 0)
-    used.add(`deadlock.reserveSectors ← each reserve by its entry point's y: ${reserves.map((r) => `${r.formationId} → ${reserveSector.get(r.formationId) ?? 'none'}`).join(', ')}`);
 
   return {
     attacker,
@@ -166,8 +150,6 @@ function resolveConfig(state: SimState, ctx: StepContext): Config | null {
     strongholds,
     conditions,
     reserveOf,
-    segmentSector: new Map(state.segments.map((x) => [x.id, sectorAt(ctx, (x.yMin + x.yMax) / 2)])),
-    reserveSector,
     surrenderMen: state.companies.reduce((a, c) => (c.side === defender ? a + menAtZero(c) : a), 0),
   };
 }
@@ -193,43 +175,29 @@ function sectorAt(ctx: StepContext, y: number): string | null {
 }
 
 /**
- * One pass over the defenders: each sector's fit men (on the map and fit there, by position, and the men of the off-map
- * reserves not yet arrived: where sent, else where assigned), the men captured, and the sectors a reserve company seals
- * this step.
+ * One pass over the defenders: the whole force's fit men (every company with men not pinned, surrendered, falling back or
+ * destroyed, off-map reserves not yet arrived included, so each man counts once wherever he is), the men captured, and the
+ * sectors a reserve company seals this step.
  */
-function defenders(state: SimState, ctx: StepContext, cfg: Config): { fit: Record<string, number>; captured: number; sealing: Set<string> } {
-  const fit: Record<string, number> = Object.fromEntries(ctx.scenario.sectors.map((s) => [s.id, 0]));
+function defenders(state: SimState, ctx: StepContext, cfg: Config): { fit: number; captured: number; sealing: Set<string> } {
   const sealing = new Set<string>();
   let captured = 0;
+  let fit = 0;
   for (const c of state.companies) {
     if (c.side !== cfg.defender) continue;
     captured += c.captured;
-    const rid = cfg.reserveOf.get(c.id);
-    if (OFF.has(c.status)) {
-      // A reserve still off the map: in the sector it is sent to once ordered (a segment's), else in the one it is assigned to.
-      if (rid === undefined || !(c.men > 0)) continue;
-      const r = state.reserves.find((x) => x.formationId === rid);
-      if (!r || r.status === 'arrived') continue;
-      const to = ON_ITS_WAY.has(r.status) && r.toSegmentId !== null ? cfg.segmentSector.get(r.toSegmentId) : cfg.reserveSector.get(rid);
-      if (to) fit[to]! += c.men;
-      continue;
-    }
+    if (c.men > 0 && !UNFIT.has(c.status)) fit += c.men;
+    if (OFF.has(c.status) || !cfg.line || !cfg.reserveOf.has(c.id) || !onField(c)) continue;
     const id = sectorAt(ctx, c.y);
-    if (id === null) continue;
-    if (c.men > 0 && !UNFIT.has(c.status)) fit[id]! += c.men;
-    if (rid !== undefined && cfg.line && onField(c) && c.x - lineXAt(cfg.line, c.y) <= cfg.sealDistanceM) sealing.add(id);
+    if (id !== null && c.x - lineXAt(cfg.line, c.y) <= cfg.sealDistanceM) sealing.add(id);
   }
   return { fit, captured, sealing };
 }
 
-/**
- * Each sector's defenders it has or can still be refilled with, in men, by sector id (every sector listed): fit on the map
- * there, by position, and the off-map reserves not yet arrived that are sent to it or, unsent, assigned to it. Empty for
- * a run that is not scored.
- */
-export function fitBySector(state: SimState, ctx: StepContext): Record<string, number> {
+/** The defender's whole force still fit, in men (collapse's numerator); 0 for a run that is not scored. */
+export function forceFit(state: SimState, ctx: StepContext): number {
   const cfg = configs.get(ctx);
-  return cfg ? defenders(state, ctx, cfg).fit : {};
+  return cfg ? defenders(state, ctx, cfg).fit : 0;
 }
 
 /** What holds now, for one condition: the sector, and what the event says of it. */
@@ -250,7 +218,7 @@ const firstHolding = (cfg: Config, holding: Checked['holding']): By | undefined 
  * brought up to date from `prev` (each with the minute it was first reached), and the event's details for a condition
  * (worked out only when asked: a run breaks the deadlock once).
  */
-function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockState | null, zeroFit: Record<string, number>): Checked {
+function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockState | null): Checked {
   const sectors = ctx.scenario.sectors;
   const sectorIds = sectors.map((s) => s.id);
   const M = state.minute;
@@ -270,14 +238,8 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
     }
   // Surrender: the defenders' captured men against all their men at Zero.
   const capturedFrac = cfg.surrenderMen > 0 ? captured / cfg.surrenderMen : 0;
-  // Collapse: the sector with the lowest share of its defenders at Zero that it has or can still be refilled with.
-  let low: { frac: number; sectorId: string } | null = null;
-  for (const id of sectorIds) {
-    const z = zeroFit[id] ?? 0;
-    if (!(z > 0)) continue;
-    const frac = fit[id]! / z;
-    if (low === null || frac < low.frac) low = { frac, sectorId: id };
-  }
+  // Collapse: the whole force still fit against its men at Zero.
+  const fitFrac = cfg.surrenderMen > 0 ? fit / cfg.surrenderMen : 1;
   // Stronghold: the attacker holds every one.
   const held = cfg.strongholds.filter((id) => holderOf(state, ctx, id) === cfg.attacker).length;
   const of = cfg.strongholds.length;
@@ -285,7 +247,7 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
   const holding: Checked['holding'] = {};
   if (beyond && beyond.d > 0) holding.breakthrough = beyond.sectorId;
   if (cfg.surrenderMen > 0 && capturedFrac >= cfg.surrenderFrac) holding.surrender = null;
-  if (low && low.frac < cfg.collapseFrac) holding.collapse = low.sectorId;
+  if (cfg.surrenderMen > 0 && fitFrac < cfg.collapseFrac) holding.collapse = null;
   if (of > 0 && held === of) holding.stronghold = null;
 
   // Each margin moves only when the run comes nearer than before, and takes this step's minute then.
@@ -297,10 +259,7 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
         ? { furthestBeyondM: beyond.d, sectorId: beyond.sectorId, minute: M }
         : (m0?.breakthrough ?? { furthestBeyondM: null, sectorId: null, minute: null }),
     surrender: m0 && capturedFrac <= m0.surrender.capturedFrac ? m0.surrender : { capturedFrac, minute: M },
-    collapse:
-      low !== null && (m0 === undefined || m0.collapse.minute === null || low.frac < m0.collapse.minFitFrac)
-        ? { minFitFrac: low.frac, sectorId: low.sectorId, minute: M }
-        : (m0?.collapse ?? { minFitFrac: 1, sectorId: null, minute: null }),
+    collapse: m0 && fitFrac >= m0.collapse.minFitFrac ? m0.collapse : { minFitFrac: fitFrac, minute: M },
     stronghold: m0 && held <= m0.stronghold.held ? m0.stronghold : { held, of, minute: M },
   };
 
@@ -312,7 +271,7 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
       const { c, sectorId, d } = beyond!;
       const there = state.companies.filter((x) => x.side === cfg.attacker && onField(x) && sectorAt(ctx, x.y) === sectorId && x.x > lineXAt(cfg.line!, x.y)).length;
       const taken = Object.keys(state.takenEventIds).filter((k) => k.endsWith(`|${sectorId}`)).map((k) => state.takenEventIds[k]);
-      const segs = state.segments.filter((x) => x.holder === cfg.attacker && cfg.segmentSector.get(x.id) === sectorId).map((x) => x.holderEventId);
+      const segs = state.segments.filter((x) => x.holder === cfg.attacker && sectorAt(ctx, (x.yMin + x.yMax) / 2) === sectorId).map((x) => x.holderEventId);
       return {
         sectorId,
         text: `The deadlock is broken: ${c.name} is ${Math.round(d)} m beyond the ${def} gun line in ${name(sectorId)}, before any ${def} reserve has come up to it there`,
@@ -331,14 +290,12 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
       };
     }
     if (by === 'collapse') {
-      const { sectorId, frac } = low!;
-      const down = state.companies.filter((c) => c.side === cfg.defender && !OFF.has(c.status) && sectorAt(ctx, c.y) === sectorId && (UNFIT.has(c.status) || !(c.men > 0)));
+      const down = state.companies.filter((c) => c.side === cfg.defender && (UNFIT.has(c.status) || !(c.men > 0)));
       return {
-        sectorId,
-        text: `The deadlock is broken: of the ${zeroFit[sectorId]} ${def} men ${name(sectorId)} had at Zero (with its reserves), ${fit[sectorId]} are fit to fight there or still to come (${Math.round(frac * 100)}%)`,
+        text: `The deadlock is broken: of the ${cfg.surrenderMen} ${def} men in the battle at Zero, reserves included, ${fit} are fit to fight (${Math.round(fitFrac * 100)}%)`,
         causes: ['defence-collapsed'],
         refs: latest(down.flatMap((c) => [c.takenPrisoner?.eventId, c.fellBackEventId, c.officersLostEventId, lastFire(c)])),
-        factors: { fit: fit[sectorId]!, atZero: zeroFit[sectorId]!, frac: round(frac, 4) },
+        factors: { fit, atZero: cfg.surrenderMen, frac: round(fitFrac, 4) },
       };
     }
     return {
@@ -352,18 +309,15 @@ function check(state: SimState, ctx: StepContext, cfg: Config, prev: DeadlockSta
 }
 
 /**
- * The scoring at Zero (initRun, after the bombardment): its defaults listed in `defaultsUsed`, each sector's defenders
- * counted (fit on the map there, and the off-map reserves assigned to it), and the margins as they stand. `deadlock` is
- * null for a scenario that is not scored.
+ * The scoring at Zero (initRun, after the bombardment): its defaults listed in `defaultsUsed` and the margins as they
+ * stand. `deadlock` is null for a scenario that is not scored.
  */
 export function initDeadlock(state: SimState, ctx: StepContext): SimState {
   const cfg = resolveConfig(state, ctx);
   if (!cfg) return { ...state, deadlock: null };
   configs.set(ctx, cfg);
-  // At Zero every reserve waits, so the tally counts each in the sector it is assigned to.
-  const zeroFit = defenders(state, ctx, cfg).fit;
-  const { sealed, margins } = check(state, ctx, cfg, null, zeroFit);
-  return { ...state, deadlock: { broken: null, zeroFit, sealed, margins, atBreak: null } };
+  const { sealed, margins } = check(state, ctx, cfg, null);
+  return { ...state, deadlock: { broken: null, sealed, margins, atBreak: null } };
 }
 
 /**
@@ -375,7 +329,7 @@ export function scoreDeadlock(state: SimState, ctx: StepContext): { broken: bool
   const cfg = configs.get(ctx);
   if (!dl || !cfg) return { broken: false };
   if (dl.broken) return { broken: true, ...dl.broken };
-  const { holding } = check(state, ctx, cfg, dl, dl.zeroFit);
+  const { holding } = check(state, ctx, cfg, dl);
   const by = firstHolding(cfg, holding);
   if (by === undefined) return { broken: false };
   const sectorId = holding[by];
@@ -391,7 +345,7 @@ export function deadlockPhase(state: SimState, ctx: StepContext): SimState {
   const dl = state.deadlock;
   const cfg = configs.get(ctx);
   if (!dl || !cfg) return state;
-  const { holding, sealed, margins, hold } = check(state, ctx, cfg, dl, dl.zeroFit);
+  const { holding, sealed, margins, hold } = check(state, ctx, cfg, dl);
   const by = dl.broken ? undefined : firstHolding(cfg, holding);
   if (by === undefined) return { ...state, deadlock: { ...dl, sealed, margins } };
   const h = hold(by);

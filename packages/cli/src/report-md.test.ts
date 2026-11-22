@@ -230,7 +230,7 @@ describe('the model report', () => {
   it('shows the deadlock: the share broken, by which condition, when, and the margins (Plan 4 Task 3)', () => {
     const md = reportToMarkdown(fakeBatch(), fakeRun(), minimalTables());
     expect(md).toMatch(/### Deadlock\n\nBroken in 60% of the 10 runs, at /);
-    expect(md).toMatch(/\| collapse \| 50% \| lowest share of a sector's defenders still fit: 0% \/ 5% \/ 30% \|/);
+    expect(md).toMatch(/\| collapse \| 50% \| lowest share of the defenders' whole force still fit: 0% \/ 5% \/ 30% \|/);
     expect(md).toMatch(/\| breakthrough \| 10% \| furthest beyond the gun line \(m\): -900 \/ -400 \/ 120 \|/);
     expect(md).toMatch(/\| stronghold \| 0% \| strongholds held at once, of 1: 0 \/ 1 \/ 1 \|/);
     // Not scored: no section.

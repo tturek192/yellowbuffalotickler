@@ -280,19 +280,17 @@ recorded, with its minute:
   `sealDistanceM` behind the gun line, or in front of it: the reserve has come up to seal the gap;
 - **surrender:** the German men taken prisoner reach `surrenderFrac` of all the German men in the battle at Zero, the
   off-map reserves included. The number is fixed at Zero, so a reserve's arrival does not move it;
-- **collapse:** in some sector, the German men the sector has, or can still be refilled with, fall below
-  `collapseFrac` of those it had at Zero: the defender can no longer refill it. It has the men fit to fight there. It
-  can be refilled with the men of each German off-map reserve not yet arrived: in the sector it is sent to once ordered,
-  and until then in the sector it is assigned to, each reserve by its entry point's y (`reserveSectors`, left to that
-  default and listed in `defaultsUsed`). Once a reserve arrives its companies count where they stand, so no man counts
-  twice;
+- **collapse:** the German force in the battle as a whole, reserves included, falls below `collapseFrac` of its men
+  at Zero (the same number as surrender's). Its fit men are those of every company not pinned, surrendered, falling
+  back or destroyed: on the map, or a reserve not yet arrived, wherever it is sent. Collapse is not measured by sector;
 - **stronghold:** the Canadians hold every stronghold.
 
 **Which conditions apply** is left to the default, all four; the scenario does not list them, and `defaultsUsed`
 records the default. Which apply is the owner's to set.
 
-**The thresholds.** `collapseFrac` is **0.1**, the owner's "fewer than 10% of the defending troops in the sector remain
-fit to fight" (Deadlock design, Goal 1.3). `surrenderFrac` is **0.5**, an estimate: the design asks for "a sizeable
+**The thresholds.** `collapseFrac` is **0.1**, the owner's "fewer than 10% of enemy troops remaining", which the owner
+has ruled applies to the whole German force in the battle, reserves included, not to a sector (Deadlock design, Goal
+1.3). `surrenderFrac` is **0.5**, an estimate: the design asks for "a sizeable
 part of the defending force", and no source sets a number. Both are definitions for the owner.
 
 **The seal.** `sealDistanceM` is **1,000 m**, an estimate. The German field batteries and their casemates stood in a belt
@@ -323,10 +321,8 @@ Artillery). Stretch by stretch, south to north:
 the 3rd and 4th Divisions' sectors the line stands 1.5 to 2 km beyond the final objectives, so a breakthrough there
 needs an advance the plan never ordered. In the runs so far (Vimy seed 1), the German resting battalions come within a
 kilometre of the gun line in every sector by about 08:40 on 9 April, hours before the Brown Line falls, so no run has
-broken through. The army reserves (the 17th and 111th Divisions) are assigned to the 1st and 3rd Divisions' sectors by their entry
-points; while they wait they still count as able to refill those sectors, so a sector collapses only once its reserves
-have been sent elsewhere, or have come up and been worn down. Which reserves a sector's baseline should hold is the
-owner's to set (`reserveSectors`).
+broken through. Collapse counts the whole German force, the army reserves (the 17th, 111th and 4th Guard Divisions) included while
+they wait, so it needs the German force as a whole to be nearly gone.
 
 ## Targets for the command model
 
@@ -420,7 +416,7 @@ arrivals are in `historical.yaml`.
 | `end.lullMin` 2880 | `command.yaml` | estimate (`boh-1917-1` p. 343) | 343 | "the northern attack was postponed for 48 hours" | estimate |
 | 85th C, D and 46th A, B reserve | `oob-canadian.yaml` | `boh-1917-1` | 341 | "hoping to force the Germans back from the near side of the hill before dark, sent forward ... two companies of the 85th" | official |
 | black-4cdn earliest 18:45 kept | `historical.yaml` | `boh-1917-1` | 341 | "Despite the absence of artillery fire, they started off across No Man's Land at 6.45 p.m." | official |
-| `deadlock.collapseFrac` 0.1 | `command.yaml` | estimate (the owner) | Deadlock design, Goal 1.3 | "fewer than 10% of the defending troops in the sector remain fit to fight" | estimate |
+| `deadlock.collapseFrac` 0.1 | `command.yaml` | estimate (the owner) | the owner's ruling on Goal 1.3 | "fewer than 10% of enemy troops remaining" | estimate |
 | `deadlock.surrenderFrac` 0.5 | `command.yaml` | estimate | Deadlock design, Goal 1.2 | "a sizeable part of the defending force surrenders" | estimate |
 | `deadlock.sealDistanceM` 1000 | `command.yaml` | estimate | BOH 335-337 | "the line of concrete casemates along the upper edges of Farbus Wood and the Bois de la Ville" | estimate |
 | `ger-gun-line`, Farbus Wood and the Bois de la Ville | `geo/features.geojson` | `boh-1917-1` | 336 | "the line of concrete casemates along the upper edges of Farbus Wood and the Bois de la Ville" | official |
@@ -488,9 +484,7 @@ arrivals are in `historical.yaml`.
   artillery, or the Canadian Corps' counter-battery maps of located positions, would say.
 - **The deadlock thresholds (for the owner).** Is half the German force taken prisoner the right reading of "a sizeable
   part"? Should the stronghold be Hill 145 alone, or the crest's two heights and the Pimple (`end.keyGround`)? How near
-  the gun line must a reserve come to seal a sector (`sealDistanceM`, 1 km)? Which reserves should a sector's collapse
-  baseline hold: every reserve whose entry point lies in its band, as now, or only the divisions' own resting
-  battalions, leaving out the army reserves (`reserveSectors`)?
+  the gun line must a reserve come to seal a sector (`sealDistanceM`, 1 km)?
 - **Where the tanks started.** Where did No. 12 Company, D Battalion, lie up and start from on 9 April: on the
   Canadian front line, as entered, or farther back? When were they to start, and by which routes? D Battalion's war
   diary or Watson's *A Company of Tanks* would say.
