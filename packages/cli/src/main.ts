@@ -93,8 +93,9 @@ async function main(argv: string[]): Promise<void> {
   }
   const workers = values.workers === undefined ? null : intOpt('workers', values.workers);
   if (workers !== null && workers < 1) throw new UsageError('--workers must be at least 1');
-  const { scenario, doctrines } = loadScenario(file, values['doctrine-dir'] ?? 'doctrine');
+  // The tables first: the scenario's weapon ids are checked against them as it loads.
   const tables = loadTables(values['tables-dir'] ?? 'tables');
+  const { scenario, doctrines } = loadScenario(file, values['doctrine-dir'] ?? 'doctrine', tables);
   if (command === 'review') {
     // Each --notes directory's research notes, in the order given; a question is labelled with its directory and file.
     const questions = (values.notes ?? []).flatMap((dir) =>

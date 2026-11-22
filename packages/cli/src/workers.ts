@@ -16,8 +16,9 @@ type Job = Files & ({ kind: 'extracts'; seeds: number[] } | { kind: 'record'; se
 type Reply = { ok: true; extracts?: RunExtract[]; record?: string } | { ok: false; error: string };
 
 function load(f: Files) {
-  const { scenario, doctrines } = loadScenario(f.scenarioFile, f.doctrineDir);
-  return { scenario, models: { doctrines, tables: loadTables(f.tablesDir) } };
+  const tables = loadTables(f.tablesDir);
+  const { scenario, doctrines } = loadScenario(f.scenarioFile, f.doctrineDir, tables);
+  return { scenario, models: { doctrines, tables } };
 }
 
 /** Run one job on a new worker thread (this same module, under the TypeScript loader the tests and the CLI use). */

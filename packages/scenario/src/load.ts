@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import { ScenarioSchema, type Scenario } from './schema';
 import { DoctrineSchema, type Doctrine } from './doctrine';
 import { checkReferences, collectSourceRefs } from './references';
+import type { Tables } from './tables';
 
 export class ScenarioError extends Error {
   constructor(public problems: string[]) {
@@ -31,12 +32,13 @@ export function parseScenario(yamlText: string, doctrineIds: string[]): Scenario
 
 /**
  * Validate an already-parsed (and, for multi-file scenarios, merged) scenario document. `locate` rewrites each
- * problem's path to name its file and the index within it (see Provenance in include.ts).
+ * problem's path to name its file and the index within it (see Provenance in include.ts); with `tables`, weapon ids
+ * are checked against them.
  */
-export function parseScenarioData(data: unknown, doctrineIds: string[], locate?: (path: string) => string): Scenario {
+export function parseScenarioData(data: unknown, doctrineIds: string[], locate?: (path: string) => string, tables?: Pick<Tables, 'weapons'>): Scenario {
   const r = ScenarioSchema.safeParse(data);
   if (!r.success) throw new ScenarioError(issues(r.error, locate));
-  const problems = checkReferences(r.data, doctrineIds, locate);
+  const problems = checkReferences(r.data, doctrineIds, locate, tables);
   if (problems.length) throw new ScenarioError(problems);
   return r.data;
 }

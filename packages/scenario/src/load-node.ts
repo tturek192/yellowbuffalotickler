@@ -44,9 +44,15 @@ function readTerrain(scenarioPath: string, file: unknown, frame: Frame | undefin
   return g;
 }
 
+/**
+ * Load a scenario and its doctrines. With `tables` (the CLI's path: `sim run`, `review`, `batch`, `report` and the batch
+ * workers) every weapon id the scenario names must be a weapon of the tables, so a mistyped one fails here, with its
+ * file and path, rather than at its first shot.
+ */
 export function loadScenario(
   path: string,
   doctrineDir: string,
+  tables?: Pick<Tables, 'weapons'>,
 ): { scenario: Scenario; doctrines: Record<string, Doctrine> } {
   let text: string;
   try {
@@ -151,7 +157,7 @@ export function loadScenario(
   try {
     if (structural) throw new ScenarioError([]);
     // attempted ids count as known: their own failures are already reported above
-    scenario = parseScenarioData(merged, ids, locate);
+    scenario = parseScenarioData(merged, ids, locate, tables);
   } catch (e) {
     if (!(e instanceof ScenarioError)) throw e;
     problems.push(...e.problems);

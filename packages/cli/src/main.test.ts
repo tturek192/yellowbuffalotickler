@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,11 +15,41 @@ function runCli(args: string[]) {
 
 const draft = 'scenarios/vimy-1917/1cdn-3bde-draft.yaml';
 
+/** A copy of the Vimy scenario directory, with `edit(dir)` applied; its scenario.yaml path. */
+function vimyCopy(edit: (dir: string) => void): string {
+  const dir = join(mkdtempSync(join(tmpdir(), 'sim-vimy-')), 'vimy-1917');
+  cpSync(join(repoRoot, 'scenarios/vimy-1917'), dir, { recursive: true });
+  edit(dir);
+  return join(dir, 'scenario.yaml');
+}
+const replaceIn = (file: string, from: string, to: string): void => {
+  const text = readFileSync(file, 'utf8');
+  if (!text.includes(from)) throw new Error(`${from} not in ${file}`);
+  writeFileSync(file, text.replace(from, to));
+};
+
 describe('cli', () => {
   it('exits 2 and lists problems for a broken scenario', () => {
     const r = runCli(['run', 'packages/cli/test/broken.yaml', '--seed', '1', '--out', '/tmp/x.json']);
     expect(r.code).toBe(2);
     expect(r.stderr).toMatch(/unknown line/);
+  });
+
+  it('a weapon the tables lack is rejected up front by run, review and batch: exit 2, naming the file and the weapon', () => {
+    // A defensive battery with no bombardment allocation: before, only its first shot found the weapon missing (exit 3).
+    const scenario = vimyCopy((d) => replaceIn(join(d, 'fireplan.yaml'), 'weapon: 77mm-fk\n    role: defensive\n    count: { value: 108', 'weapon: 77mm-fkx\n    role: defensive\n    count: { value: 108'));
+    const dir = mkdtempSync(join(tmpdir(), 'sim-'));
+    for (const args of [
+      ['run', scenario, '--seed', '1', '--out', join(dir, 'run.json')],
+      ['review', scenario, '--out', join(dir, 'review.md')],
+      ['batch', scenario, '--runs', '2'],
+      ['batch', scenario, '--runs', '2', '--workers', '2'],
+    ]) {
+      const r = runCli(args);
+      expect(r.code, args.join(' ')).toBe(2);
+      expect(r.stderr).toMatch(/fireplan\.yaml.*artillery\[\d+\]\.weapon: unknown weapon "77mm-fkx"/);
+    }
+    expect(existsSync(join(dir, 'run.json'))).toBe(false);
   });
 
   it('exits 1 with usage on bad arguments', () => {
