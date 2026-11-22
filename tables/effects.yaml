@@ -309,7 +309,9 @@ effects:
       kilometres off; 1,500 m is the middle. When men can see less far than that (night, mist, snow) observation falls in proportion.
       Order of magnitude, not fitted to Vimy
     description: Distance in metres an artillery observer must be able to see to watch the fall of shot; observed fire loses effect in
-      proportion when visibility is shorter.
+      proportion when visibility is shorter. Also the farthest a company reports the enemy it sees, and calls for fire on a trench it
+      sees; there it is a limit, not a proportion, and the company must also have the trench within the visibility (night, mist, snow)
+      and in its line of sight, as for direct fire.
     calibrated: true
   batteriesRecoveredFrac:
     value: 0.5

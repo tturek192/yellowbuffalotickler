@@ -6,7 +6,9 @@ import type { NewEvent } from './causes';
 import type { CompanyState } from './companies';
 import { CELL_M } from './ground';
 import { lineXAt } from './geometry';
+import { visibility, visibilityM } from './light';
 import { featurePoints as featurePointsOf, pointRadiusM } from './segments';
+import { sightFrom } from './sight';
 import { lineTakerOf, segmentDefenders, segmentsOnLine, segmentById } from './trenches';
 import { round } from './record';
 import type { Scheduled } from './schedule';
@@ -39,14 +41,14 @@ import type { BatteryState, CallForFire, CutLine, EnemyKnown, FireMission, Forma
  *
  * Reports. A company reports to its battalion when its status changes, it takes a segment, its own segment changes
  * hands or its line is taken or lost again (`companyReports`, at the end of the step). Each report also tells of the
- * enemy it sees: for each segment the enemy holds within `observerRangeM`, the enemy's men up in it (Task 12, for the
- * command model's force ratios). A headquarters merges a report into its picture (with when each segment changed hands,
+ * enemy it sees: for each segment the enemy holds that it can see some of (within the visibility and `observerRangeM`, in
+ * its line of sight: `eyesOf`), the enemy's men up in it (Task 12, for the command model's force ratios). A headquarters merges a report into its picture (with when each segment changed hands,
  * the lines lost again, the enemy seen, and the event each piece was about) and passes a summary of what is new up to
  * the next headquarters: at once when a unit's status, a segment's holder or a line changed, otherwise
  * `reportEveryMin` (doctrine) after its last summary; news of the enemy alone goes up with the next summary.
  *
- * Calls for fire. A company that is pinned calls for fire on the nearest segment held by the enemy within
- * `observerRangeM`. The call goes up the chain until it reaches a formation the scenario's `liaison` covers, which
+ * Calls for fire. A company that is pinned calls for fire on the nearest segment held by the enemy that it can see some
+ * of (the same test). The call goes up the chain until it reaches a formation the scenario's `liaison` covers, which
  * passes it to the artillery by buried cable (its delayMin: the liaison officer's call); with no liaison on the way it
  * reaches the top of the chain, where the artillery is commanded. On arrival `callForFireGuns` guns of the nearest
  * batteries of the side in action (not the creeping or machine-gun barrage, which keep the timetable) fire on the
@@ -987,8 +989,8 @@ export function commsPhase(state: SimState, ctx: StepContext): SimState {
  * changed hands, or whose objective line was taken, or that sees an enemy line taken or lost (within `observerRangeM` of
  * it in its sector: the enemy's lines in its HQs' pictures come only from these, Task 13) reports to its battalion; so does one whose men have changed since
  * its last report once `reportEveryMin` (its doctrine) has passed since then (a routine report: at most one a period,
- * and none while nothing changed). A company newly pinned calls for fire on the nearest segment the enemy holds within
- * `observerRangeM`. Companies in ascending id order, the report before the call. Companies off the map report nothing.
+ * and none while nothing changed). A company newly pinned calls for fire on the nearest segment the enemy holds that it
+ * can see some of (`eyesOf`: within the visibility and `observerRangeM`, in its line of sight). Companies in ascending id order, the report before the call. Companies off the map report nothing.
  * A report is about the company's last event this step (not a message lost), else the line taken, else its segment's
  * change of hands, else the last fire on it.
  */
@@ -1006,6 +1008,7 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     if (e.kind === 'line-lost') linesLost.set(`${e.lineId}|${e.sectorId}`, e.id);
   }
   let seen: ReturnType<typeof enemySeen> | undefined;
+  let eyes: ReturnType<typeof eyesOf> | undefined;
   let w: Work | null = null;
   let last: Map<string, SimState['lastReport'] extends ReadonlyMap<string, infer R> ? R : never> | null = null;
   const range = v(ctx.tables.effects.observerRangeM);
@@ -1071,11 +1074,15 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
     sendOn(w, { side: c.side, kind: 'report', payload: report, ...(about !== undefined ? { aboutEventId: about } : {}) }, c.id, M);
     if (statusChanged && c.status === 'pinned') {
       const p: Point = [c.x, c.y];
+      const e = (eyes ??= eyesOf(state, ctx));
+      const look = e.of(c);
       let best: { id: string; d: number } | null = null;
       for (const x of state.segments) {
-        if (x.holder === c.side || x.yMin - range > c.y || x.yMax + range < c.y) continue;
-        const d = distanceTo(segmentSamples(ctx, x, state.companies), p);
-        if (d <= range && (!best || d < best.d)) best = { id: x.id, d };
+        if (x.holder === c.side || x.yMin - e.range > c.y || x.yMax + e.range < c.y) continue;
+        const pts = segmentSamples(ctx, x, state.companies);
+        const d = distanceTo(pts, p);
+        // The nearest it can see some of (as for the enemy it reports).
+        if (d <= e.range && (!best || d < best.d) && seesAny(look, pts)) best = { id: x.id, d };
       }
       if (best) {
         const call: CallForFire = { segmentId: best.id, byUnitId: c.id, atMin: M };
@@ -1088,14 +1095,56 @@ export function companyReports(state: SimState, ctx: StepContext): SimState {
 }
 
 /**
- * What a company sees of the enemy when it reports (Task 12): each segment the enemy holds whose trench lies within
- * `observerRangeM` of it, with the men of the enemy up there (on the field, not down in dugouts, within `captureRadiusM`
- * of its trench), segments in order. Each segment's men are counted once a step.
+ * What a company can see from where it stands at this minute, by the tests direct fire uses (fire.ts): within the
+ * visibility (the weather, held down by the light: light.ts `visibilityM` and `visibility`), in its line of sight
+ * (sight.ts `sightFrom`, from the same cache), and no farther than `observerRangeM`. `range` is the farthest it can see.
+ */
+function eyesOf(state: SimState, ctx: StepContext): { range: number; of: (c: CompanyState) => (x: number, y: number) => boolean } {
+  const visM = visibilityM(ctx.scenario, ctx.tables, state.minute);
+  const range = Math.min(v(ctx.tables.effects.observerRangeM), Math.max(0, visM));
+  return {
+    range,
+    of: (c) => {
+      let sees: ((x: number, y: number) => boolean) | undefined;
+      return (x, y) => {
+        const r = Math.hypot(x - c.x, y - c.y);
+        return r <= range && visibility(r, visM) > 0 && (sees ??= sightFrom(ctx.world, [c.x, c.y]))(x, y);
+      };
+    },
+  };
+}
+
+/** Whether a company sees some sample of a trench (nearest first is not needed: any one will do). */
+const seesAny = (look: (x: number, y: number) => boolean, pts: readonly Point[]): boolean => pts.some((p) => look(p[0], p[1]));
+
+/** Points along a segment-less line's ground (its line and the line before it, every 25 m of y), worked out once. */
+const zoneSamples = new WeakMap<LineZone, Point[]>();
+function samplesOf(z: LineZone): Point[] {
+  let out = zoneSamples.get(z);
+  if (!out) {
+    out = [];
+    const n = Math.max(1, Math.ceil((z.yMax - z.yMin) / 25));
+    for (let i = 0; i <= n; i++) {
+      const y = z.yMin + ((z.yMax - z.yMin) * i) / n;
+      out.push([lineXAt(z.line, y), y], [lineXAt(z.prev, y), y]);
+    }
+    zoneSamples.set(z, out);
+  }
+  return out;
+}
+
+/**
+ * What a company sees of the enemy when it reports (Task 12; the final review fix): each segment the enemy holds with
+ * some sample of its trench in the company's sight (`eyesOf`: within the visibility and `observerRangeM`, in its line of
+ * sight), with the men of the enemy up there (on the field, not down in dugouts, within `captureRadiusM` of its trench),
+ * segments in order; an operation's target place whose middle it sees (or that it stands in); the ground of a
+ * segment-less objective line it sees some of (or stands on). Each segment's men are counted once a step.
  */
 const zoneMemo = new WeakMap<StepContext, Map<string, string[]>>();
 
-function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Record<string, { men: number; atMin: number }> {
-  const range = v(ctx.tables.effects.observerRangeM);
+export function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Record<string, { men: number; atMin: number }> {
+  const eyes = eyesOf(state, ctx);
+  const range = eyes.range;
   const near = v(ctx.tables.effects.captureRadiusM);
   const M = state.minute;
   const menIn = new Map<string, number>();
@@ -1144,7 +1193,9 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
   const placeMen = new Map<string, number>();
   return (c) => {
     const out: Record<string, { men: number; atMin: number }> = {};
+    if (!(range > 0)) return out;
     const p: Point = [c.x, c.y];
+    const look = eyes.of(c);
     for (const x of state.segments) {
       if (x.holder === c.side || x.yMin - range > c.y || x.yMax + range < c.y) continue;
       const pts = segmentSamples(ctx, x, state.companies);
@@ -1152,12 +1203,13 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
       // Cheap first: the box around its trench.
       const b = boxOf(x.id, pts);
       if (c.x < b[0] - range || c.x > b[2] + range) continue;
-      if (distanceTo(pts, p) > range) continue;
+      if (distanceTo(pts, p) > range || !seesAny(look, pts)) continue;
       out[x.id] = { men: menAt(x, pts), atMin: M, ...(x.garrisonSide !== c.side ? lostOf(x.garrisonIds) : {}) };
     }
     // An operation's target place in sight: the enemy up within its radius.
     for (const pl of places) {
-      if (Math.hypot(pl.point[0] - c.x, pl.point[1] - c.y) > range + pl.radiusM) continue;
+      const d = Math.hypot(pl.point[0] - c.x, pl.point[1] - c.y);
+      if (d > range + pl.radiusM || (d > pl.radiusM && !look(pl.point[0], pl.point[1]))) continue;
       const k = `${c.side}|${pl.key}`;
       let n = placeMen.get(k);
       if (n === undefined) {
@@ -1169,7 +1221,7 @@ function enemySeen(state: SimState, ctx: StepContext): (c: CompanyState) => Reco
     }
     // The ground of its side's segment-less objective lines in sight: the enemy up there.
     for (const z of zones) {
-      if (z.side !== c.side || !inZone(z, c.x, c.y, match, range)) continue;
+      if (z.side !== c.side || !inZone(z, c.x, c.y, match, range) || (!inZone(z, c.x, c.y, match) && !seesAny(look, samplesOf(z)))) continue;
       const k = z.key;
       let n = placeMen.get(k);
       if (n === undefined) {

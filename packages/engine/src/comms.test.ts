@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
-import { ARTILLERY, companyReports, fireMissionEnds, hqPositionOf, messageDueTimes, send } from './comms';
+import { ARTILLERY, companyReports, enemySeen, fireMissionEnds, hqPositionOf, messageDueTimes, send } from './comms';
 import { churn } from './ground';
 import { runPipeline } from './pipeline';
 import { initRun, runScenario } from './run';
@@ -9,7 +9,7 @@ import type { Models } from './run';
 import { quietStep } from './schedule';
 import { isBusy } from './step';
 import type { SimState, StepContext } from './step';
-import { fixtureComms, runStates, vimy, vimyDoctrines, withAlliedFront, withQuietStep } from './test-helpers';
+import { fixtureComms, fixtureFire, runStates, vimy, vimyDoctrines, withAlliedFront, withQuietStep } from './test-helpers';
 import type { CommsOpts } from './test-helpers';
 import type { Order, Report } from './types';
 
@@ -425,3 +425,39 @@ function allFormationsOf(force: Force): F[] {
   force.formations.forEach(walk);
   return out;
 }
+
+describe('what a company sees of the enemy (final review fix)', () => {
+  /** What c1 (x -400) reports seeing of the garrisons' trench ger-front-a (x 150, 550 m off), at Zero. */
+  const seenBy = (f: [Scenario, Models]): string[] => {
+    const { state, ctx } = initRun(...f, { seed: 1 });
+    const c1 = state.companies.find((c) => c.id === 'c1')!;
+    return Object.keys(enemySeen(state, ctx)(c1)).filter((k) => k.startsWith('ger-front-a'));
+  };
+
+  it('sees the trench in daylight, in clear weather and with nothing between', () => {
+    expect(seenBy(fixtureFire()).length).toBe(2);
+  });
+
+  it('sees nothing over a ridge between it and the trench (the line of sight fire uses)', () => {
+    expect(seenBy(fixtureFire({ ridgeBetween: true }))).toEqual([]);
+  });
+
+  it('sees nothing beyond the visibility: in mist (the weather) and at night (nightVisibilityM)', () => {
+    const mist = fixtureFire();
+    mist[0].weather = [{ at: '1916-07-01T00:00', precipitation: est('none'), visibilityM: est(300) }];
+    expect(seenBy(mist)).toEqual([]);
+    const night = fixtureFire();
+    night[0].zeroHour = est('1916-07-01T01:00');
+    expect(seenBy(night)).toEqual([]);
+  });
+
+  it('a pinned company calls for fire only on a segment it can see', () => {
+    const calls = (f: [Scenario, Models]) => {
+      const { state, ctx } = initRun(...f, { seed: 1 });
+      const s: SimState = { ...state, minute: 2, events: [], companies: state.companies.map((c) => (c.id === 'c1' ? { ...c, status: 'pinned' as const } : c)) };
+      return companyReports(s, ctx).messages.filter((m) => m.kind === 'call-for-fire');
+    };
+    expect(calls(fixtureFire()).length).toBe(1);
+    expect(calls(fixtureFire({ ridgeBetween: true }))).toEqual([]);
+  });
+});
