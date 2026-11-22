@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { explain, runBatch, runScenario } from '@wwi/engine';
@@ -9,12 +9,14 @@ import { formatBatchV2 } from './format';
 import { atMinute, formatWhy } from './why';
 import { batchInWorkers } from './workers';
 import { extractOpenQuestions, REVIEW_MARKER, reviewToMarkdown } from './review-md';
+import { extractCommentary, reportToMarkdown } from './report-md';
 
 const USAGE = `usage:
   sim run <scenario.yaml> --seed <n> --out <file.json> [--doctrine-dir <dir>] [--tables-dir <dir>]
   sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--doctrine-dir <dir>] [--tables-dir <dir>]
   sim why <record.json> (--event <n> | --unit <id> --at <HH:MM>)
-  sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
+  sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim report <scenario.yaml> --runs <n> --out <file.md> [--seed-start <n>] [--workers <n>] [--doctrine-dir <dir>] [--tables-dir <dir>]`;
 
 class UsageError extends Error {}
 
@@ -66,7 +68,7 @@ async function main(argv: string[]): Promise<void> {
     }
     return;
   }
-  if ((command !== 'run' && command !== 'batch' && command !== 'review') || !file || positionals.length > 2) {
+  if ((command !== 'run' && command !== 'batch' && command !== 'review' && command !== 'report') || !file || positionals.length > 2) {
     throw new UsageError('expected a command and a scenario file');
   }
   let seed = 0;
@@ -81,6 +83,10 @@ async function main(argv: string[]): Promise<void> {
     if (!values.out) throw new UsageError('missing --out');
     out = values.out;
   } else {
+    if (command === 'report') {
+      if (!values.out) throw new UsageError('missing --out');
+      out = values.out;
+    }
     runs = intOpt('runs', values.runs);
     if (runs < 1) throw new UsageError('--runs must be at least 1');
     seedStart = intOpt('seed-start', values['seed-start'], 1);
@@ -101,6 +107,18 @@ async function main(argv: string[]): Promise<void> {
     );
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, reviewToMarkdown(buildReview(scenario, doctrines, tables), questions));
+  } else if (command === 'report') {
+    // The hand-written commentary of an earlier report at --out is read first (a broken block stops here, before anything
+    // is run or written) and carried into the new one.
+    const commentary = existsSync(out) ? extractCommentary(readFileSync(out, 'utf8')) : null;
+    const seeds = Array.from({ length: runs }, (_, i) => seedStart + i);
+    const started = performance.now();
+    const b = await batchInWorkers({ scenarioFile: resolve(file), doctrineDir: resolve(values['doctrine-dir'] ?? 'doctrine'), tablesDir: resolve(values['tables-dir'] ?? 'tables'), seeds, workers: workers ?? 1 });
+    const record = runScenario(scenario, { doctrines, tables }, { seed: seedStart });
+    const wallMs = performance.now() - started;
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, reportToMarkdown(b, record, { tables, doctrines }, { wallMs, workers: workers ?? 1, seedStart, scenarioFile: file, commentary }));
+    console.log(`report written to ${out}: ${runs} runs in ${(wallMs / 1000).toFixed(1)} s`);
   } else if (command === 'run') {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, JSON.stringify(runScenario(scenario, { doctrines, tables }, { seed })));
