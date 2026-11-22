@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RunRecord, SimEvent } from '@wwi/engine';
-import { advancePlayhead, seek, formatClock, frameAt, isQuiet, timelineMarkers } from './index';
+import { advancePlayhead, seek, formatClock, frameAt, isQuiet, timeLabel, timelineMarkers } from './index';
 import { companyTable, unitsFor, type TestCompany } from '../test-record';
 
 function recordWith(
@@ -88,5 +88,17 @@ describe('playback', () => {
   it('formats the battle clock', () => {
     expect(formatClock('1917-04-09T05:30', 55)).toBe('Mon 9 Apr · 06:25');
     expect(formatClock('1917-04-09T23:30', 90)).toBe('Tue 10 Apr · 01:00');
+  });
+
+  it('labels a time with its day, in the clock\'s form, once the run spans more than one day', () => {
+    // A run that ends on the day of Zero: the time alone.
+    expect(timeLabel('1917-04-09T05:30', 55, 768)).toBe('06:25');
+    expect(timeLabel('1917-04-09T05:30', 768, 768)).toBe('18:18');
+    // A four-day run: every time carries its day, Zero's too, so the morning of the 10th is not read as the assault's.
+    expect(timeLabel('1917-04-09T05:30', 0, 5070)).toBe('Mon 9 Apr · 05:30');
+    expect(timeLabel('1917-04-09T05:30', 1440, 5070)).toBe('Tue 10 Apr · 05:30');
+    expect(timeLabel('1917-04-09T05:30', 5070, 5070)).toBe('Thu 12 Apr · 18:00');
+    // Over midnight by a minute is two days.
+    expect(timeLabel('1917-04-09T23:30', 0, 31)).toBe('Mon 9 Apr · 23:30');
   });
 });

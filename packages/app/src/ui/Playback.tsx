@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RunRecord } from '@wwi/engine';
 import { explain } from '@wwi/engine/reader';
-import { advancePlayhead, battalionLabel, formatClock, isQuiet, QUIET_SPEEDUP, seek, SPEEDS, timelineMarkers, totalsAt } from '../playback';
+import { advancePlayhead, battalionLabel, formatClock, isQuiet, QUIET_SPEEDUP, seek, SPEEDS, timeLabel, timelineMarkers, totalsAt } from '../playback';
 import { MapCanvas } from './MapCanvas';
 import { Timeline } from './Timeline';
 import { EventLog } from './EventLog';
@@ -136,7 +136,8 @@ export function Playback({ record, mapStyle = 'plain' }: { record: RunRecord; ma
   }, [asked, record]);
 
   const markers = useMemo(() => timelineMarkers(record), [record]);
-  const timeOf = useCallback((m: number) => formatClock(record.zeroHour, m).split(' · ')[1] ?? '', [record]);
+  // With its day once the run spans more than one day (Plan 3 runs go on to 12 April).
+  const timeOf = useCallback((m: number) => timeLabel(record.zeroHour, m, record.endMinute), [record]);
 
   const shown = Math.floor(minute);
   let current = -1;

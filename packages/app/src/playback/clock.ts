@@ -30,3 +30,18 @@ export function formatClock(zeroHourIso: string, minute: number): string {
   const t = addMinutes(zeroHourIso, Math.floor(minute));
   return `${DAYS[t.getUTCDay()]} ${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} · ${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`;
 }
+
+/** Whether a run from Zero to `endMinute` ends on a later day than it started. */
+export function spansDays(zeroHourIso: string, endMinute: number): boolean {
+  const day = (m: number): string => addMinutes(zeroHourIso, Math.floor(m)).toISOString().slice(0, 10);
+  return day(0) !== day(endMinute);
+}
+
+/**
+ * A time for the event log, the why panel and the timeline's ends: 'HH:MM' for a run that ends on the day of Zero,
+ * and the clock's own form with its day ('Tue 10 Apr · 05:30') for one that spans more than one day.
+ */
+export function timeLabel(zeroHourIso: string, minute: number, endMinute: number): string {
+  const full = formatClock(zeroHourIso, minute);
+  return spansDays(zeroHourIso, endMinute) ? full : full.split(' · ')[1]!;
+}
