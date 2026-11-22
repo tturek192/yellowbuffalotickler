@@ -49,7 +49,7 @@ function workBox(pts: readonly Point[]): [number, number, number, number] {
   return [x0, y0, x1, y1];
 }
 
-/** Companies (in the order given, or in id order from buckets) within r of a segment's trench. */
+/** Companies (in the order given, or in id order from buckets: the same for a list in id order) within r of a segment's trench. */
 function nearSegment(cs: readonly CompanyState[] | Buckets<CompanyState>, pts: readonly Point[], r: number): Array<{ c: CompanyState; d: number }> {
   const [x0, y0, x1, y1] = boxOf(pts);
   const out: Array<{ c: CompanyState; d: number }> = [];
@@ -223,7 +223,13 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
   let out = state;
   const upOf = (cs: readonly CompanyState[]) => cs.filter((c) => onField(c) && c.posture !== 'in-dugout');
   // Each side's companies up, and those of them that can take a trench (not waiting, not falling back), from `up`.
-  type Pools = { up: CompanyState[]; holders: Record<Side, CompanyState[]>; settled: Record<Side, CompanyState[]>; takers: Record<Side, Buckets<CompanyState>> };
+  // Holders and settled holders in buckets too: `nearSegment` gives the same companies from buckets as from the id-ordered lists.
+  // Each built when first asked for.
+  type Pools = { holders: (s: Side) => Buckets<CompanyState>; settled: (s: Side) => Buckets<CompanyState>; takers: (s: Side) => Buckets<CompanyState> };
+  const lazy = (make: (s: Side) => Buckets<CompanyState>): ((s: Side) => Buckets<CompanyState>) => {
+    const made: Partial<Record<Side, Buckets<CompanyState>>> = {};
+    return (s) => (made[s] ??= make(s));
+  };
   const poolsOf = (cs: CompanyState[]): Pools => {
     const holders: Record<Side, CompanyState[]> = { allied: [], central: [] };
     const takers: Record<Side, CompanyState[]> = { allied: [], central: [] };
@@ -232,10 +238,9 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
       if (c.status !== 'waiting' && c.status !== 'falling-back') takers[c.side].push(c);
     }
     return {
-      up: cs,
-      holders,
-      settled: { allied: holders.allied.filter(isSettled), central: holders.central.filter(isSettled) },
-      takers: { allied: bucketsOf(takers.allied), central: bucketsOf(takers.central) },
+      holders: lazy((s) => bucketsOf(holders[s])),
+      settled: lazy((s) => bucketsOf(holders[s].filter(isSettled))),
+      takers: lazy((s) => bucketsOf(takers[s])),
     };
   };
   let pools = poolsOf(upOf(state.companies));
@@ -245,12 +250,12 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
     const pts = segmentSamples(ctx, seg, out.companies);
     if (pts.length === 0) continue;
     const other = enemyOf(seg.holder);
-    const attackers = nearSegment(pools.takers[other], pts, r);
+    const attackers = nearSegment(pools.takers(other), pts, r);
     const a = sum(attackers, (x) => x.c.men);
     if (!(a > 0)) continue;
     // Nobody enters a trench a barrage is falling on (as with trapping, gap.ts): only the trench near them matters.
     if (barrageNear(seg, ctx, out.companies, out.minute, attackers.map((x) => at(x.c)), r)) continue;
-    const d = segmentDefenders(seg, pts, pools.holders[seg.holder], ctx, pools.settled[seg.holder]).men;
+    const d = segmentDefenders(seg, pts, pools.holders(seg.holder), ctx, pools.settled(seg.holder)).men;
     // An ORDERED counter-attack (the command model's, Task 12) is not held off by the rear rule: reaching a segment in its
     // holder's rear with nobody there to hold it, it takes it back (with defenders, it needs the 3:1 as anyone does).
     const onOrder = attackers.flatMap((x) => {
@@ -352,12 +357,18 @@ export function captureSegments(state: SimState, ctx: StepContext): SimState {
  * quantity the fight is resolved on): `holders` (its holder's companies up on the field) within `captureRadiusM` of its
  * trench, and, except on a garrison's first loss, those of them consolidating or holding within `lineFeatureMatchM`.
  */
-export function segmentDefenders(seg: SegmentState, pts: readonly Point[], holders: readonly CompanyState[], ctx: StepContext, settled?: readonly CompanyState[]): { men: number; ids: string[] } {
+export function segmentDefenders(
+  seg: SegmentState,
+  pts: readonly Point[],
+  holders: readonly CompanyState[] | Buckets<CompanyState>,
+  ctx: StepContext,
+  settled?: readonly CompanyState[] | Buckets<CompanyState>,
+): { men: number; ids: string[] } {
   const fx = ctx.tables.effects;
   const firstLoss = seg.holder === seg.garrisonSide && seg.holderEventId === null;
   const close = nearSegment(holders, pts, v(fx.captureRadiusM));
-  // `settled`: those of the holders consolidating or holding, when the caller has them already.
-  const onLine = firstLoss ? [] : nearSegment(settled ?? holders.filter(isSettled), pts, v(fx.lineFeatureMatchM));
+  // `settled`: those of the holders consolidating or holding, when the caller has them already (given buckets of holders, it must).
+  const onLine = firstLoss ? [] : nearSegment(settled ?? (holders as readonly CompanyState[]).filter(isSettled), pts, v(fx.lineFeatureMatchM));
   const all = [...close, ...onLine.filter((x) => !close.some((y) => y.c.id === x.c.id))];
   return { men: sum(all, (x) => x.c.men), ids: all.map((x) => x.c.id) };
 }
@@ -450,7 +461,8 @@ function overrunGuns(state: SimState, ctx: StepContext): SimState {
   for (const key of keys) {
     const b = at.get(key)![0]!;
     const [px, py] = b.position!;
-    const within = up.filter((c) => Math.hypot(c.x - px, c.y - py) <= rad);
+    // Those in the box around the position first (a cheap test that only skips companies further off than rad).
+    const within = up.filter((c) => c.x >= px - rad && c.x <= px + rad && c.y >= py - rad && c.y <= py + rad && Math.hypot(c.x - px, c.y - py) <= rad);
     const attackers = within.filter((c) => c.side !== b.side && c.status !== 'waiting' && c.status !== 'falling-back');
     const a = sum(attackers, (c) => c.men);
     const d = sum(within.filter((c) => c.side === b.side), (c) => c.men);

@@ -8,91 +8,136 @@ import { dist } from './geometry';
 export const BUCKET_M = 250;
 
 type At = { x: number; y: number };
-type Cell<T> = { i: number; j: number; items: T[] };
 
+/**
+ * The buckets as typed arrays (a numerical-method layout, Task 21): a dense grid of cells over the items' own extent,
+ * each cell's items kept together in the order given, with their places copied out so that a search reads numbers only.
+ */
 export type Buckets<T extends At> = {
-  /** Cells by integer key (`keyOf`), looked up only (never iterated). */
-  byKey: Map<number, Cell<T>>;
-  /** Every occupied cell, in the order first filled (no answer depends on it). */
-  occupied: Cell<T>[];
+  /** The items, in the order given. */
+  items: readonly T[];
+  /** The grid's first cell column and row, and its size in cells (0 × 0 with no items). */
+  i0: number;
+  j0: number;
+  cols: number;
+  rows: number;
+  /** Cell k = (j − j0) · cols + (i − i0) holds the items at places start[k] .. start[k + 1] − 1 of `order`. */
+  start: Int32Array;
+  /** Each place's item, by its index in `items` (by cell, and in the order given within a cell). */
+  order: Int32Array;
+  /** Each place's item's x and y. */
+  xs: Float64Array;
+  ys: Float64Array;
 };
 
 const cellOf = (v: number): number => Math.floor(v / BUCKET_M);
-/** An integer key for cell (i, j): exact for |i|, |j| < 2^20 buckets (262,000 km), far beyond any field. */
-const OFFSET = 1 << 20;
-const keyOf = (i: number, j: number): number => (i + OFFSET) * 2 * OFFSET + (j + OFFSET);
+const NONE = new Int32Array(1);
+const NO_PLACES = new Float64Array(0);
+/** Room to fill the cells in, reused by every build (it holds nothing between builds). */
+let scratch = new Int32Array(1024);
 
-/** Put the items in their buckets; each bucket keeps them in the order given. */
+/** Put the items in their buckets; each bucket keeps them in the order given. Items not at a finite place are in none. */
 export function bucketsOf<T extends At>(items: readonly T[]): Buckets<T> {
-  const byKey = new Map<number, Cell<T>>();
-  const occupied: Cell<T>[] = [];
-  for (const it of items) {
+  const n = items.length;
+  let i0 = Infinity, i1 = -Infinity, j0 = Infinity, j1 = -Infinity;
+  for (let k = 0; k < n; k++) {
+    const it = items[k]!;
     const i = cellOf(it.x);
     const j = cellOf(it.y);
-    const k = keyOf(i, j);
-    let cell = byKey.get(k);
-    if (!cell) {
-      cell = { i, j, items: [] };
-      byKey.set(k, cell);
-      occupied.push(cell);
-    }
-    cell.items.push(it);
+    if (!Number.isFinite(i) || !Number.isFinite(j)) continue;
+    if (i < i0) i0 = i;
+    if (i > i1) i1 = i;
+    if (j < j0) j0 = j;
+    if (j > j1) j1 = j;
   }
-  return { byKey, occupied };
+  if (!(i1 >= i0)) return { items, i0: 0, j0: 0, cols: 0, rows: 0, start: NONE, order: new Int32Array(0), xs: NO_PLACES, ys: NO_PLACES };
+  const cols = i1 - i0 + 1;
+  const rows = j1 - j0 + 1;
+  const cells = cols * rows;
+  // A counting sort by cell, stable (the order given within a cell); `start` and `order` share one buffer, as do xs and ys.
+  const ints = new Int32Array(cells + 1 + n);
+  const start = ints.subarray(0, cells + 1);
+  let placed = 0;
+  for (let k = 0; k < n; k++) {
+    const it = items[k]!;
+    const i = cellOf(it.x);
+    const j = cellOf(it.y);
+    if (!Number.isFinite(i) || !Number.isFinite(j)) continue;
+    start[(j - j0) * cols + (i - i0) + 1]!++;
+    placed++;
+  }
+  for (let c = 0; c < cells; c++) start[c + 1]! += start[c]!;
+  if (scratch.length < cells) scratch = new Int32Array(Math.max(cells, 2 * scratch.length));
+  const fill = scratch;
+  fill.set(start.subarray(0, cells));
+  const order = ints.subarray(cells + 1, cells + 1 + placed);
+  const places = new Float64Array(2 * placed);
+  const xs = places.subarray(0, placed);
+  const ys = places.subarray(placed);
+  for (let k = 0; k < n; k++) {
+    const it = items[k]!;
+    const i = cellOf(it.x);
+    const j = cellOf(it.y);
+    if (!Number.isFinite(i) || !Number.isFinite(j)) continue;
+    const p = fill[(j - j0) * cols + (i - i0)]!++;
+    order[p] = k;
+    xs[p] = it.x;
+    ys[p] = it.y;
+  }
+  return { items, i0, j0, cols, rows, start, order, xs, ys };
 }
 
-/** Visit every item in the buckets the circle's bounding square touches (or the occupied buckets inside it when fewer); stop when `visit` returns true. */
-function scan<T extends At>(b: Buckets<T>, x: number, y: number, r: number, visit: (it: T) => boolean | void): void {
-  const i0 = cellOf(x - r);
-  const i1 = cellOf(x + r);
-  const j0 = cellOf(y - r);
-  const j1 = cellOf(y + r);
-  if ((i1 - i0 + 1) * (j1 - j0 + 1) > b.occupied.length) {
-    for (const cell of b.occupied) {
-      if (cell.i < i0 || cell.i > i1 || cell.j < j0 || cell.j > j1) continue;
-      for (const it of cell.items) if (visit(it)) return;
-    }
-    return;
+/**
+ * Visit every place in the cells the box of cells [ci0, ci1] × [cj0, cj1] covers (clamped to the grid), cell row by cell
+ * row; stop when `visit` returns true. Gives whether it stopped.
+ */
+function scanCells<T extends At>(b: Buckets<T>, ci0: number, ci1: number, cj0: number, cj1: number, visit: (p: number) => boolean | void): boolean {
+  const a0 = Math.max(ci0 - b.i0, 0);
+  const a1 = Math.min(ci1 - b.i0, b.cols - 1);
+  const c0 = Math.max(cj0 - b.j0, 0);
+  const c1 = Math.min(cj1 - b.j0, b.rows - 1);
+  if (a0 > a1 || c0 > c1) return false;
+  const { start } = b;
+  for (let j = c0; j <= c1; j++) {
+    // The cells of a row are side by side, so a row's places are one run.
+    const from = start[j * b.cols + a0]!;
+    const to = start[j * b.cols + a1 + 1]!;
+    for (let p = from; p < to; p++) if (visit(p)) return true;
   }
-  for (let j = j0; j <= j1; j++)
-    for (let i = i0; i <= i1; i++) {
-      const cell = b.byKey.get(keyOf(i, j));
-      if (cell) for (const it of cell.items) if (visit(it)) return;
-    }
+  return false;
 }
 
 /**
  * The items within distance r of (x, y), each with its distance, nearest first (ties by the order `tie` gives).
- * It visits the buckets the circle's bounding square touches, or the occupied buckets inside it when those are fewer.
+ * It visits the buckets the circle's bounding square touches.
  */
 export function within<T extends At>(b: Buckets<T>, x: number, y: number, r: number, tie: (a: T, b: T) => number): Array<{ item: T; d: number }> {
   if (!(r >= 0)) return [];
   const out: Array<{ item: T; d: number }> = [];
-  scan(b, x, y, r, (it) => {
-    const d = dist(it.x - x, it.y - y);
-    if (d <= r) out.push({ item: it, d });
+  const { xs, ys, order, items } = b;
+  scanCells(b, cellOf(x - r), cellOf(x + r), cellOf(y - r), cellOf(y + r), (p) => {
+    const d = dist(xs[p]! - x, ys[p]! - y);
+    if (d <= r) out.push({ item: items[order[p]!]!, d });
   });
   return out.length > 1 ? out.sort((a, b2) => a.d - b2.d || tie(a.item, b2.item)) : out;
 }
 
 /** Whether any item for which `ok` holds lies within distance r of (x, y) (the same test as `within`, without the list). */
-export function anyWithin<T extends At>(b: Buckets<T>, x: number, y: number, r: number, ok: (it: T) => boolean = () => true): boolean {
-  if (!(r >= 0)) return false;
-  let found = false;
-  scan(b, x, y, r, (it) => {
-    if (dist(it.x - x, it.y - y) <= r && ok(it)) found = true;
-    return found;
-  });
-  return found;
+export function anyWithin<T extends At>(b: Buckets<T>, x: number, y: number, r: number, ok?: (it: T) => boolean): boolean {
+  if (!(r >= 0) || b.cols === 0) return false;
+  const { xs, ys, order, items } = b;
+  return scanCells(b, cellOf(x - r), cellOf(x + r), cellOf(y - r), cellOf(y + r), (p) => dist(xs[p]! - x, ys[p]! - y) <= r && (ok === undefined || ok(items[order[p]!]!)));
 }
 
 /** The nearest item within distance r of (x, y), with its distance (ties by `tie`): `within(...)[0]`, without the list. */
 export function nearestWithin<T extends At>(b: Buckets<T>, x: number, y: number, r: number, tie: (a: T, b: T) => number): { item: T; d: number } | undefined {
   if (!(r >= 0)) return undefined;
   let best: { item: T; d: number } | undefined;
-  scan(b, x, y, r, (it) => {
-    const d = dist(it.x - x, it.y - y);
+  const { xs, ys, order, items } = b;
+  scanCells(b, cellOf(x - r), cellOf(x + r), cellOf(y - r), cellOf(y + r), (p) => {
+    const d = dist(xs[p]! - x, ys[p]! - y);
     if (d > r) return;
+    const it = items[order[p]!]!;
     if (best === undefined || d < best.d || (d === best.d && tie(it, best.item) < 0)) best = { item: it, d };
   });
   return best;
@@ -114,9 +159,10 @@ export function nearestAccepted<T extends At>(
 ): Array<{ item: T; d: number }> {
   if (!(r >= 0) || !(max > 0)) return [];
   const all: Array<{ item: T; d: number }> = [];
-  scan(b, x, y, r, (it) => {
-    const d = dist(it.x - x, it.y - y);
-    if (d <= r) all.push({ item: it, d });
+  const { xs, ys, order, items } = b;
+  scanCells(b, cellOf(x - r), cellOf(x + r), cellOf(y - r), cellOf(y + r), (p) => {
+    const d = dist(xs[p]! - x, ys[p]! - y);
+    if (d <= r) all.push({ item: items[order[p]!]!, d });
   });
   const out: Array<{ item: T; d: number }> = [];
   const before = (a: { item: T; d: number }, c: { item: T; d: number }): boolean => a.d < c.d || (a.d === c.d && tie(a.item, c.item) < 0);
@@ -204,17 +250,8 @@ export const changedNear = (changes: Map<string, Buckets<At>>, group: string, x:
 
 /** Visit every item in the buckets the box [x0, x1] × [y0, y1] touches (items outside the box may be visited too). */
 export function inBox<T extends At>(b: Buckets<T>, x0: number, y0: number, x1: number, y1: number, visit: (it: T) => void): void {
-  const i0 = cellOf(x0);
-  const i1 = cellOf(x1);
-  const j0 = cellOf(y0);
-  const j1 = cellOf(y1);
-  if ((i1 - i0 + 1) * (j1 - j0 + 1) > b.occupied.length) {
-    for (const cell of b.occupied) if (cell.i >= i0 && cell.i <= i1 && cell.j >= j0 && cell.j <= j1) for (const it of cell.items) visit(it);
-    return;
-  }
-  for (let j = j0; j <= j1; j++)
-    for (let i = i0; i <= i1; i++) {
-      const cell = b.byKey.get(keyOf(i, j));
-      if (cell) for (const it of cell.items) visit(it);
-    }
+  const { order, items } = b;
+  scanCells(b, cellOf(x0), cellOf(x1), cellOf(y0), cellOf(y1), (p) => {
+    visit(items[order[p]!]!);
+  });
 }
