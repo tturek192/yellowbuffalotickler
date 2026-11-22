@@ -113,6 +113,7 @@ function fakeBatch(): BatchSummary {
         capturedFrac: { p10: 0.2, median: 0.35, p90: 0.45 },
         minFitFrac: { p10: 0, median: 0.05, p90: 0.3 },
         strongholdsHeld: { p10: 0, median: 1, p90: 1 },
+        strongholdsOf: 1,
       },
     },
   };
@@ -231,6 +232,7 @@ describe('the model report', () => {
     expect(md).toMatch(/### Deadlock\n\nBroken in 60% of the 10 runs, at /);
     expect(md).toMatch(/\| collapse \| 50% \| lowest share of a sector's defenders still fit: 0% \/ 5% \/ 30% \|/);
     expect(md).toMatch(/\| breakthrough \| 10% \| furthest beyond the gun line \(m\): -900 \/ -400 \/ 120 \|/);
+    expect(md).toMatch(/\| stronghold \| 0% \| strongholds held at once, of 1: 0 \/ 1 \/ 1 \|/);
     // Not scored: no section.
     expect(reportToMarkdown({ ...fakeBatch(), deadlock: null }, fakeRun(), minimalTables())).not.toMatch(/### Deadlock/);
   });

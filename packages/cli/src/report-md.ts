@@ -370,7 +370,7 @@ export function reportToMarkdown(batch: BatchSummary, run: RunRecord, params: Re
           ['breakthrough', pct(dl.byShare.breakthrough), `furthest beyond the gun line (m): ${sp(dl.margins.breakthroughBeyondM, n0)}`],
           ['surrender', pct(dl.byShare.surrender), `share of the defenders captured: ${sp(dl.margins.capturedFrac, share)}`],
           ['collapse', pct(dl.byShare.collapse), `lowest share of a sector's defenders still fit: ${sp(dl.margins.minFitFrac, share)}`],
-          ['stronghold', pct(dl.byShare.stronghold), `strongholds held at once: ${sp(dl.margins.strongholdsHeld, n0)}`],
+          ['stronghold', pct(dl.byShare.stronghold), `strongholds held at once, of ${dl.margins.strongholdsOf}: ${sp(dl.margins.strongholdsHeld, n0)}`],
         ],
       ),
       '',

@@ -52,7 +52,7 @@ export const CAUSE_TEXT: Record<Cause, string> = {
   'tank-fire': 'tank machine guns fired',
   'enemy-near': 'enemy infantry were close by',
   mine: 'a mine was blown under the trench',
-  'beyond-the-guns': "attacking troops were beyond the defender's gun line before any of his reserves arrived there",
+  'beyond-the-guns': "attacking troops were beyond the defender's gun line before any of his reserves had come up to it there",
   'mass-surrender': 'a large part of the defending force had surrendered',
   'defence-collapsed': 'too few defenders in the sector were still fit to fight',
   'stronghold-held': 'the attacker held every stronghold',

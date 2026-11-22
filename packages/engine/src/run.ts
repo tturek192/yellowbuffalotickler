@@ -43,6 +43,11 @@ export type RunOptions = {
   keyframeEvery?: number;
   /** The what-if overlay the scenario was made with (scenario overlay.ts `applyOverlay`), written into the record as `whatIf`. */
   whatIf?: WhatIf;
+  /**
+   * Run without the deadlock score (tests: deadlock.test.ts, that the score is an observer): `state.deadlock` null from Zero,
+   * as for a scenario that is not scored, so `summary.deadlock` is null and no `deadlock-broken` is emitted.
+   */
+  unscored?: boolean;
 };
 
 const WEAPON_SLOTS = ['rifle', 'lightMg', 'mg'] as const;
@@ -66,7 +71,7 @@ function checkCompanyWeapons(s: Scenario, models: Models): void {
  * batteries set out, the zero-hour event emitted, and then the preliminary bombardment run (its losses taken
  * before Zero, its results emitted at minute 0).
  */
-export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'seed'>): { state: SimState; ctx: StepContext } {
+export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'seed' | 'unscored'>): { state: SimState; ctx: StepContext } {
   checkCompanyWeapons(s, models);
   const { scenario, used } = resolveDefaults(s, models.doctrines, models.tables);
   const rngs = createStreams(opts.seed);
@@ -119,7 +124,8 @@ export function initRun(s: Scenario, models: Models, opts: Pick<RunOptions, 'see
   const atZero = emit(state, { minute: 0, kind: 'zero-hour', text: 'Zero hour' });
   // Headquarters start knowing their companies and the trenches as they stand once the bombardment is over (comms.ts); the
   // deadlock score starts from the same state (deadlock.ts).
-  return { state: initDeadlock(initComms(runBombardment(atZero, ctx).state, ctx), ctx), ctx };
+  const ready = initComms(runBombardment(atZero, ctx).state, ctx);
+  return { state: opts.unscored ? ready : initDeadlock(ready, ctx), ctx };
 }
 
 /** The off-map reserves, waiting where the scenario puts them until a headquarters orders them forward (Tasks 12–13). */

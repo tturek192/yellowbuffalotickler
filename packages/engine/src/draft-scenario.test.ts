@@ -101,6 +101,7 @@ describe('draft Vimy scenario run', () => {
     // moves its record.
     // 0.4.10 (Plan 4 Task 1): an optional what-if block (whatIf), an optional groundCondition read by wetness(), and a reserve's strengthFactor on made-up companies. A run with no overlay is unchanged but for the version.
     // 0.5.0 (Plan 4 Task 3): deadlock scoring: summary.deadlock (with margins) and the deadlock-broken event. The draft has no end.keyGround and no deadlock section, so it is not scored: summary.deadlock is null, no deadlock-broken event, nothing added to defaultsUsed; with summary.deadlock removed and the version set back to 0.4.10 its record hashes to be2e390f, so only they move the hash.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.5.0', hash: 'c8b00b1f' });
+    // 0.5.1 (Plan 4 Task 3 fix round 1): the deadlock's margins carry their minute and the margins at the break (atBreak); a sector seals only when a reserve company stands within sealDistanceM behind the gun line; collapse counts the reserves on their way and assigned to a sector; surrender's denominator is fixed at Zero. The draft is not scored: only the version moves the hash.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.5.1', hash: '87587af8' });
   });
 });

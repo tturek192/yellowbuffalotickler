@@ -275,11 +275,15 @@ The deadlock section of `command.yaml` says when a run counts the deadlock as br
 is a definition, not a historical value, and nothing in the battle reads it. The first of four conditions to hold is
 recorded, with its minute:
 
-- **breakthrough:** a Canadian or British company stands beyond the German artillery line in a sector before any
-  German off-map reserve has come into that sector;
-- **surrender:** the German men taken prisoner reach `surrenderFrac` of the German men on the map, and of the reserves
-  once they come on to it;
-- **collapse:** in some sector, the German men fit to fight fall below `collapseFrac` of those there at Zero;
+- **breakthrough:** a Canadian or British company stands beyond the German artillery line in a sector before the
+  sector is sealed. A sector is sealed, for good, once a company of a German off-map reserve stands in it within
+  `sealDistanceM` behind the gun line, or in front of it: the reserve has come up to seal the gap;
+- **surrender:** the German men taken prisoner reach `surrenderFrac` of all the German men in the battle at Zero, the
+  off-map reserves included. The number is fixed at Zero, so a reserve's arrival does not move it;
+- **collapse:** in some sector, the German men the sector has or has coming fall below `collapseFrac` of those it had at
+  Zero. It has the men fit to fight there. It has coming the men of the reserves ordered or marching to one of its
+  trench segments and not yet arrived. It had at Zero the men fit there, and the reserves assigned to it: each reserve
+  by its entry point's y (`reserveSectors`, left to that default and listed in `defaultsUsed`);
 - **stronghold:** the Canadians hold every stronghold.
 
 **Which conditions apply** is left to the default, all four; the scenario does not list them, and `defaultsUsed`
@@ -289,11 +293,16 @@ records the default. Which apply is the owner's to set.
 fit to fight" (Deadlock design, Goal 1.3). `surrenderFrac` is **0.5**, an estimate: the design asks for "a sizeable
 part of the defending force", and no source sets a number. Both are definitions for the owner.
 
+**The seal.** `sealDistanceM` is **1,000 m**, an estimate. The German field batteries and their casemates stood in a belt
+some hundreds of metres deep on the eastern slope (BOH pp. 335-337). A reserve company within a kilometre behind the
+gun line has come up among the batteries it is to cover. A judgement for the owner.
+
 **The stronghold** is **Hill 145**, named explicitly. Left to the default, the strongholds would be the three pieces
 of `end.keyGround`: Hill 135, Hill 145 and the Pimple. The Pimple was taken only on 12 April.
 
 **The artillery line.** `ger-gun-line` in `geo/features.geojson` is a German gun line drawn south to north through the
-gun positions the sources place. It spans every sector's y-band, from y −4700 to 1500. **Map 7 does not mark German
+gun positions the sources place. It is graded an estimate as a whole: about 1.4 km of its 6.2 km of y is sourced, and
+its estimate note names those stretches and their pages. It spans every sector's y-band, from y −4700 to 1500. **Map 7 does not mark German
 batteries.** Its artillery symbols (divisional, medium and heavy batteries, super-heavy guns) are Canadian only, so the
 line is drawn from the woods Map 7 does show (digitized, ±100 m) and from the text. The two German artillery entries in
 `fireplan.yaml` are not used: they are two points standing for 197 pieces, about 1.2 km of y apart (bombardment.md,
@@ -306,13 +315,16 @@ Artillery). Stretch by stretch, south to north:
 | The Bois de la Ville to the Bois du Goulot | (2815, −3467) to (2181, −2893) | a straight line between the two sourced stretches, about 250 m west of Farbus village. Nicholson p. 257 has the 1st Brigade overrunning "the German batteries" on the reverse slope above Farbus Wood, but places none between the woods | estimate |
 | The Bois du Goulot | (2181, −2893) to (1769, −2230), along the wood's western (upper) edge | "the line of guns in the Bois du Goulot" (BOH p. 335); a gun-detachment "in one of the pits along the upper edge of the wood" (BOH p. 337); two 8-inch howitzers and three 5.9s, four 77s and a 90-mm gun taken there (`hussey-inman-1921` p. 154). Two 21-cm howitzers were also taken at the quarries "at the lower end" of the Bois de Bonval, just north (BOH p. 335) | sourced |
 | The eastern foot of the ridge | (1769, −2230) to (1900, −500), by Petit Vimy and La Chaudière | no source read places German guns in front of the 3rd Division | estimate |
-| East of Givenchy | (1900, −500) to (1800, 250), then north to (1800, 1500) | the 85th Battalion later occupied "the same old German gun pits" on "the flat beyond Givenchy near the Lens-Arras Road" (`hayes-1920` p. 70). Where on the flat they were is not given, so the line's place there is an estimate; north of Givenchy it is continued to cover the 4th Division's band | estimate (located by a source) |
+| Towards Givenchy | (1900, −500) to (1800, 250), then north to (1800, 1500) | the 85th Battalion later occupied "the same old German gun pits" on "the flat beyond Givenchy near the Lens-Arras Road" (`hayes-1920` p. 70). Where on the flat they were is not given, so the line's place there is an estimate; north of Givenchy it is continued to cover the 4th Division's band | estimate (located by a source) |
 
-**What this means for a run.** The sourced stretches lie just west of the Brown Line (`brown-1cdn`, `brown-2cdn`). A
-run in which the 1st and 2nd Divisions take their final objectives on 9 April, as they did, puts companies beyond the
-gun line there before any German reserve arrives. That is a breakthrough by this definition, and in the history the
-guns were indeed overrun (Nicholson p. 257; BOH p. 337). In the 3rd and 4th Divisions' sectors the line stands 1.5 to
-2 km beyond the final objectives, so a breakthrough there needs an advance the plan never ordered.
+**What this means for a run.** The sourced stretches lie just west of the Brown Line (`brown-1cdn`, `brown-2cdn`). In
+the 3rd and 4th Divisions' sectors the line stands 1.5 to 2 km beyond the final objectives, so a breakthrough there
+needs an advance the plan never ordered. In the runs so far (Vimy seed 1), the German resting battalions come within a
+kilometre of the gun line in every sector by about 08:40 on 9 April, hours before the Brown Line falls, so no run has
+broken through. And because the army reserves (the 17th and 111th Divisions) are assigned to the 1st and 3rd Divisions'
+sectors by their entry points, those sectors' baselines are large, and the 3rd Division's sector collapses within
+minutes of Zero, while the 111th Division is still waiting to be sent. Which reserves a sector's baseline should hold is
+the owner's to set (`reserveSectors`).
 
 ## Targets for the command model
 
@@ -408,6 +420,7 @@ arrivals are in `historical.yaml`.
 | black-4cdn earliest 18:45 kept | `historical.yaml` | `boh-1917-1` | 341 | "Despite the absence of artillery fire, they started off across No Man's Land at 6.45 p.m." | official |
 | `deadlock.collapseFrac` 0.1 | `command.yaml` | estimate (the owner) | Deadlock design, Goal 1.3 | "fewer than 10% of the defending troops in the sector remain fit to fight" | estimate |
 | `deadlock.surrenderFrac` 0.5 | `command.yaml` | estimate | Deadlock design, Goal 1.2 | "a sizeable part of the defending force surrenders" | estimate |
+| `deadlock.sealDistanceM` 1000 | `command.yaml` | estimate | BOH 335-337 | "the line of concrete casemates along the upper edges of Farbus Wood and the Bois de la Ville" | estimate |
 | `ger-gun-line`, Farbus Wood and the Bois de la Ville | `geo/features.geojson` | `boh-1917-1` | 336 | "the line of concrete casemates along the upper edges of Farbus Wood and the Bois de la Ville" | official |
 | `ger-gun-line`, the Bois de la Ville | `geo/features.geojson` | `nicholson-1962` | 257 | "resisted by the enemy in the Bois de la Ville both with machine-guns and with field guns firing point-blank" | official |
 | `ger-gun-line`, the Bois du Goulot | `geo/features.geojson` | `boh-1917-1` | 335 | "capturing from the north flank the line of guns in the Bois du Goulot" | official |
@@ -472,7 +485,10 @@ arrivals are in `historical.yaml`.
   along the ridge's eastern foot and on the flat east of Givenchy. The German regimental histories of the field
   artillery, or the Canadian Corps' counter-battery maps of located positions, would say.
 - **The deadlock thresholds (for the owner).** Is half the German force taken prisoner the right reading of "a sizeable
-  part"? Should the stronghold be Hill 145 alone, or the crest's two heights and the Pimple (`end.keyGround`)?
+  part"? Should the stronghold be Hill 145 alone, or the crest's two heights and the Pimple (`end.keyGround`)? How near
+  the gun line must a reserve come to seal a sector (`sealDistanceM`, 1 km)? Which reserves should a sector's collapse
+  baseline hold: every reserve whose entry point lies in its band, as now, or only the divisions' own resting
+  battalions, leaving out the army reserves (`reserveSectors`)?
 - **Where the tanks started.** Where did No. 12 Company, D Battalion, lie up and start from on 9 April: on the
   Canadian front line, as entered, or farther back? When were they to start, and by which routes? D Battalion's war
   diary or Watson's *A Company of Tanks* would say.

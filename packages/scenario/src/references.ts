@@ -143,7 +143,10 @@ export function checkReferences(
     if (dl) {
       const line = dl.artilleryLine;
       if ('lineId' in line) {
-        if (!lineIds.has(line.lineId)) problems.push(`deadlock.artilleryLine.lineId: unknown line "${line.lineId}"`);
+        const l = s.lines.find((x) => x.id === line.lineId);
+        if (!l) problems.push(`deadlock.artilleryLine.lineId: unknown line "${line.lineId}"`);
+        else if (!l.points.every((p, j, ps) => j === 0 || p[1] > ps[j - 1]![1]))
+          problems.push(`deadlock.artilleryLine.lineId: line "${line.lineId}" must have strictly ascending y (south to north)`);
       } else {
         const f = s.features.find((x) => x.id === line.featureId);
         if (!f) checkFeature('deadlock.artilleryLine.featureId', line.featureId);
@@ -151,6 +154,10 @@ export function checkReferences(
           problems.push(`deadlock.artilleryLine.featureId: feature "${line.featureId}" must be a LineString with strictly ascending y (south to north)`);
       }
       dl.strongholds?.forEach((x, i) => checkFeature(`deadlock.strongholds[${i}].featureId`, x.featureId));
+      dl.reserveSectors?.forEach((x, i) => {
+        if (!s.reserves.some((r) => r.formationId === x.formationId)) problems.push(`deadlock.reserveSectors[${i}].formationId: no off-map reserve "${x.formationId}"`);
+        if (!sectorIds.has(x.sectorId)) problems.push(`deadlock.reserveSectors[${i}].sectorId: unknown sector "${x.sectorId}"`);
+      });
     }
   };
 

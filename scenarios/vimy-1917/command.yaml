@@ -298,10 +298,13 @@ deadlock:
   artilleryLine: { featureId: ger-gun-line }
   surrenderFrac:
     value: 0.5
-    estimate: "half of the German men on the map (and of reserves once they come on to it) taken prisoner: 'a sizeable part of the defending force' (Deadlock design, Goal 1.2) made a number; a definition for the owner to set, not a historical value (command.md, Deadlock)"
+    estimate: "half of all the German men in the battle at Zero, the off-map reserves included, taken prisoner: 'a sizeable part of the defending force' (Deadlock design, Goal 1.2) made a number; a definition for the owner to set, not a historical value (command.md, Deadlock)"
   collapseFrac:
     value: 0.1
     estimate: "the owner's threshold: 'fewer than 10% of the defending troops in the sector remain fit to fight' (Deadlock design, Goal 1.3); a definition, not a historical value"
+  sealDistanceM:
+    value: 1000
+    estimate: "a German reserve company within a kilometre behind the gun line (or in front of it) has come up among the batteries and seals the gap; the German field batteries and their casemates stood in a belt some hundreds of metres deep on the ridge's eastern slope (BOH pp. 335-337), so a kilometre takes in the belt and its approaches. A judgement for the owner (command.md, Deadlock)"
   # Named here rather than taken from end.keyGround (which also holds Hill 135 and the Pimple): the stronghold whose taking
   # the owner names for Vimy.
   strongholds:

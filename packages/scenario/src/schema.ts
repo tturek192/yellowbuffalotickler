@@ -298,6 +298,16 @@ const DeadlockSchema = z.strictObject({
   surrenderFrac: sourced(z.number().gt(0).max(1)).optional(),
   /** Collapse: a sector's fit defenders fall below this share of those there at Zero (default 0.1, the owner's). */
   collapseFrac: sourced(z.number().gt(0).max(1)).optional(),
+  /**
+   * Breakthrough's seal: a sector is sealed (no breakthrough there counts) once one of the defender's off-map reserve
+   * companies stands within this many metres behind the artillery line in it, or in front of it (default 1000, an estimate).
+   */
+  sealDistanceM: sourced(z.number().positive()).optional(),
+  /**
+   * Collapse's baseline: the sector each of the defender's off-map reserves is counted in at Zero (default: the sector of
+   * its entry point's y; a reserve in no sector's band is counted in none).
+   */
+  reserveSectors: z.array(z.strictObject({ formationId: z.string(), sectorId: z.string() })).optional(),
   /** Stronghold: the attacker holds every one of these (default: the features of `end.keyGround`). */
   strongholds: z.array(z.strictObject({ featureId: z.string() })).optional(),
   /** The conditions that apply, in the order they are checked (default all four). */
