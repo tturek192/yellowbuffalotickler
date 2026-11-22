@@ -29,7 +29,15 @@ export function notesFor(r: RunRecord): {
     edge: d.side === 'central' ? PERIOD_STYLE.germanEdge : PERIOD_STYLE.ink,
     edgeWidth: d.side === 'central' ? 2 : 1,
   });
-  const of = (side: Side) => divisions.filter((d) => d.side === side && used.has(d.id)).map(swatch);
+  const of = (side: Side): Swatch[] => {
+    const shown = divisions.filter((d) => d.side === side && used.has(d.id));
+    const patched = shown.filter((d) => !d.noPatch).map(swatch);
+    // Formations that wore no patch share the side's colour: one row naming them all, apart from any division.
+    const bare = shown.filter((d) => d.noPatch);
+    if (bare.length === 0) return patched;
+    const names = bare.map((d) => swatch(d).name);
+    return [...patched, { ...swatch(bare[0]!), name: `${names.slice(0, -1).join(', ')}${names.length > 1 ? ' and ' : ''}${names.at(-1)} (no patch)` }];
+  };
   const patches = divisions
     .filter((d) => d.side === 'allied' && used.has(d.id) && d.insignia)
     .map((d) => ({ label: /^(\d+(st|nd|rd|th))\b/.exec(d.name)?.[1] ?? d.name, fill: d.insignia! }));
@@ -40,7 +48,7 @@ export function notesFor(r: RunRecord): {
 /** The battle's place and the force, from a title like 'Vimy Ridge, 9-12 April 1917: Canadian Corps'. */
 export function titleParts(title: string): { place: string; force: string | null } {
   const [head, force] = title.split(':').map((s) => s.trim());
-  return { place: (head ?? title).split(',')[0]!.trim(), force: force || null };
+  return { place: (head ?? title).split(',')[0]!.trim(), force: force ? force.replace(/\s*\(.*\)\s*$/, '') : null };
 }
 
 /** A small ornament for the corners of the sheet: a lozenge in a ring, between four dots. */
@@ -198,7 +206,7 @@ export function PeriodFrame({ record, minute, pxPerM, map, controls }: Props) {
             <circle cx="84" cy="10" r="2" fill={PERIOD_STYLE.ink} />
             <circle cx="116" cy="10" r="2" fill={PERIOD_STYLE.ink} />
           </svg>
-          {force && <div className="period-cart-force">The {force.replace(/^the\s+/i, '').replace(/\s*\(.*\)\s*$/, '')} at</div>}
+          {force && <div className="period-cart-force">The {force.replace(/^the\s+/i, '')} at</div>}
           <div className="period-cart-place">{place}</div>
           <div className="period-cart-when">
             Positions at {periodTime(record.zeroHour, minute)}, {periodDay(record.zeroHour, minute, true)}

@@ -60,10 +60,11 @@ describe('battalion insignia in the record', () => {
     ]);
   });
 
-  it('lists the divisions for the map notes, with their patch where they have one', () => {
+  it('lists the divisions for the map notes, with their patch where they have one, and any formation that wore none', () => {
     const out = insigniaOf({ forces: forces() } as Scenario, units, new Set());
     expect(out.divisions).toEqual([
       { id: 'd1', name: '1st Division', side: 'allied', insignia: '#b3261e' },
+      { id: 'att', name: 'Attached Brigade', side: 'allied', noPatch: true },
       { id: 'd2', name: '2nd Division', side: 'allied' },
       { id: 'gd', name: 'German Division', side: 'central' },
     ]);
@@ -79,5 +80,15 @@ describe('battalion insignia in the record', () => {
     for (const u of allied) expect(u.insignia).toBe('#3f7a3a');
     for (const u of r.units.filter((x) => x.side === 'central')) expect(u.insignia).toBeUndefined();
     expect(r.defaultsUsed.some((d) => d.startsWith('insignia: '))).toBe(true);
+  });
+
+  it("a run's units carry their company's role in the plan (the period map draws uncommitted reserves open)", () => {
+    const [s, m] = fixtureWithDoctrineV3();
+    const r = runScenario(s, m, { seed: 1, endMinute: 4 });
+    const roles = new Map(s.forces.flatMap((f) => f.formations).flatMap(function all(f: Formation): Array<[string, string]> {
+      return [...(f.companies ?? []).map((c): [string, string] => [c.id, c.role]), ...(f.children ?? []).flatMap(all)];
+    }));
+    expect(r.units.length).toBeGreaterThan(0);
+    for (const u of r.units) expect(u.role).toBe(roles.get(u.id));
   });
 });

@@ -12,8 +12,13 @@ export const MAP_COLORS = {
   hatch: '#c9a24a',
   wood: '#56642e',
   sepia: '#7a6034',
-  /** German battalion blocks in the period style: dark field grey, edged in red. */
-  german: '#454a44',
+  /**
+   * German battalion blocks in the period style: a field grey, edged in red; clearly apart from the 3rd Canadian
+   * Division's black and every other patch (period.ts MIN_BLOCK_DELTA_E).
+   */
+  german: '#7a8279',
+  /** Allied formations that wore no patch (the British 5th Division and 13th Brigade): a neutral khaki, never a patch colour. */
+  alliedUnpatched: '#9a7b45',
 } as const;
 
 /** Radius a point feature is drawn with when it gives none, metres. */

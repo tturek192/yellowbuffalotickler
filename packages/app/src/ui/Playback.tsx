@@ -262,7 +262,7 @@ export function Playback({ record, mapStyle = 'plain' }: { record: RunRecord; ma
                     <span className="period-sc">Casualties</span> · Allied <b>{n(casualties('allied'))}</b> · German <b>{n(casualties('central'))}</b>
                   </div>
                   <div>
-                    <span className="period-sc">Prisoners</span> <b>{n(totals.prisoners.allied + totals.prisoners.central)}</b>
+                    <span className="period-sc">Prisoners taken</span> · Allied <b>{n(totals.prisoners.allied)}</b> · German <b>{n(totals.prisoners.central)}</b>
                   </div>
                   <div>
                     <span className="period-sc">Guns taken</span> <b>{n(totals.guns)}</b>

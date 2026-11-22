@@ -14,7 +14,7 @@ import {
   fireEventsAt, mgZones, reserveColumns, segmentStates, standingBarrages,
 } from './effects';
 import { drawSky } from './sky';
-import { blockPaint, drawCompassRose, drawPaperGrain, drawTerritory, drawVignettes, labelVignettes, PERIOD_STYLE, placeVignettes, territoryFills, vignetteBox, vignettes } from './period';
+import { blockPaint, clearOfMarkers, companyOpen, drawCompassRose, drawPaperGrain, drawTerritory, drawVignettes, labelVignettes, PERIOD_STYLE, placeVignettes, territoryFills, vignetteBox, vignettes } from './period';
 
 export { crenellatedPath, MAP_COLORS } from './style';
 
@@ -287,6 +287,19 @@ function placeMarkers<T extends { x: number; y: number }>(view: View, items: rea
   return items.map((item, i) => ({ item, at: placed[i]! })).sort((a, b) => a.at[1] - b.at[1]);
 }
 
+const byBattalionCache = new WeakMap<Frame, Map<string, Frame['companies']>>();
+/** A battalion's block is open (waiting or in reserve) only when every company of it on the map is. */
+function battalionOpen(r: RunRecord, frame: Frame, id: string): boolean {
+  let m = byBattalionCache.get(frame);
+  if (!m) {
+    m = new Map();
+    for (const c of frame.companies) if (c.status !== 'off-map') m.set(c.battalionId, [...(m.get(c.battalionId) ?? []), c]);
+    byBattalionCache.set(frame, m);
+  }
+  const cs = m.get(id) ?? [];
+  return cs.length > 0 && cs.every((c) => companyOpen(r, c, frame.minute));
+}
+
 /** A battalion chip as drawn: its centre on the sheet, size and the battalion it stands for. */
 export type PlacedChip = { at: Screen; w: number; h: number; label: string; men: number };
 
@@ -314,7 +327,7 @@ function drawChips(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, fram
   const placed = placeChips(view, bns, size.w, size.h);
   for (const c of [...placed].sort((a, b) => a.at[1] - b.at[1])) {
     const b = bns[c.index]!;
-    drawUnitMarker(ctx, { at: c.at, w: c.w, h: c.h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, chip: true, phase, ...(period ? { paint: blockPaint(b.side, b.status, b.insignia) } : {}) });
+    drawUnitMarker(ctx, { at: c.at, w: c.w, h: c.h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, chip: true, phase, ...(period ? { paint: blockPaint(b.side, battalionOpen(r, frame, b.id), b.insignia, true) } : {}) });
     hits.push({ box: chipBox(c), pick: { kind: 'battalion', id: b.id } });
   }
   return placed;
@@ -358,7 +371,7 @@ function drawBattalions(ctx: CanvasRenderingContext2D, view: View, r: RunRecord,
   const wOf = (label: string): number => Math.max(minW, Math.ceil(ctx.measureText(label).width) + 2 * padX);
   for (const { item: b, at } of placeMarkers(view, aggregateBattalions(frame.companies, r), (b) => wOf(b.label), h)) {
     const w = wOf(b.label);
-    drawUnitMarker(ctx, { at, w, h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, battalion: true, phase, ...(period ? { paint: blockPaint(b.side, b.status, b.insignia) } : {}) });
+    drawUnitMarker(ctx, { at, w, h, label: b.label, side: b.side, status: b.status, morale: b.morale, suppression: b.suppression, men: b.men, full: b.fullMen, battalion: true, phase, ...(period ? { paint: blockPaint(b.side, battalionOpen(r, frame, b.id), b.insignia, false) } : {}) });
     hits.push({ box: markerBox(at, w, h), pick: { kind: 'battalion', id: b.id } });
   }
 }
@@ -372,7 +385,7 @@ function drawCompanies(ctx: CanvasRenderingContext2D, view: View, r: RunRecord, 
   const insignia = period ? new Map(r.units.map((u) => [u.id, u.insignia])) : null;
   const { w, h } = MARKER_STYLE.company;
   for (const { item: c, at } of placeMarkers(view, frame.companies.filter((c) => c.status !== 'off-map'), () => w, h)) {
-    drawUnitMarker(ctx, { at, w, h, label: shortId(c.id), side: c.side, status: c.status, morale: c.morale, suppression: c.suppression, men: c.men, full: initial.get(c.id) ?? c.men, phase, ...(insignia ? { paint: blockPaint(c.side, c.status, insignia.get(c.id)) } : {}) });
+    drawUnitMarker(ctx, { at, w, h, label: shortId(c.id), side: c.side, status: c.status, morale: c.morale, suppression: c.suppression, men: c.men, full: initial.get(c.id) ?? c.men, phase, ...(insignia ? { paint: blockPaint(c.side, companyOpen(r, c, frame.minute), insignia.get(c.id), false) } : {}) });
     hits.push({ box: markerBox(at, w, h), pick: { kind: 'company', id: c.id } });
   }
 }
@@ -474,9 +487,6 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   const reserves = reserveColumns(r, frame.minute, boundsOf(r));
   drawReserves(ctx, view, reserves);
   if (settled) drawBursts(ctx, view, bursts(fireEventsAt(r, frame.minute), opts.speed ?? 1, frame, front, r.geometry.barrageDepthM));
-  // Vignettes (period): under the markers, so a drawing never hides a unit.
-  const placedVignettes = period ? placeVignettes(view, vignettes(r, frame.minute)) : [];
-  drawVignettes(ctx, placedVignettes);
   const style = markerStyleAt(view);
   const phase = opts.pulse ?? 0;
   const hits: Hit[] = [];
@@ -485,6 +495,11 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   else if (style.kind === 'chip') chips = drawChips(ctx, view, r, frame, phase, style, hits, period);
   else drawBattalions(ctx, view, r, frame, phase, hits, period);
   const sheet = cssSize(ctx);
+  // Vignettes (period): over the terrain and the wash, moved clear of the markers and the map names so none hides another.
+  const placedVignettes = period ? clearOfMarkers(placeVignettes(view, vignettes(r, frame.minute)), [...hits.map((x) => x.box), ...labels], sheet.w) : [];
+  drawVignettes(ctx, placedVignettes);
+  // Line and chip names placed later keep clear of the drawings.
+  labels.push(...placedVignettes.map(vignetteBox));
   drawSky(ctx, r, frame.minute, sheet.w, sheet.h, opts.wallSec ?? null, settled);
   // The zoom buttons (HTML, .zoom-controls) sit over the bottom-right corner: no label goes under them.
   labels.push({ x0: sheet.w - 64, x1: sheet.w, y0: sheet.h - 132, y1: sheet.h });
@@ -502,7 +517,7 @@ export function drawFrame(ctx: CanvasRenderingContext2D, view: View, r: RunRecor
   drawDivisionTags(ctx, view, r, objectives, labels);
   labelChips(ctx, chips, labels);
   // Reserve and vignette names last, each only where it fits clear of every name and marker already down.
-  const taken = [...labels, ...hits.map((x) => x.box), ...placedVignettes.map(vignetteBox)];
+  const taken = [...labels, ...hits.map((x) => x.box)];
   labelReserves(ctx, view, reserves, taken, sheet.w);
   if (period) labelVignettes(ctx, placedVignettes, taken, sheet.w);
   drawFurniture(ctx, view, period);

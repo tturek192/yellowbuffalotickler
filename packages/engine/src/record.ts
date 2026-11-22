@@ -1,9 +1,9 @@
 import type { Feature, Point, Posture, Scenario, TerrainGrid } from '@wwi/scenario';
-import type { CompanyState, CompanyStatus } from './companies';
+import type { CompanyState, CompanyStatus, Role } from './companies';
 import type { DivisionInsignia } from './insignia';
 import type { CasualtyCount, ReserveState, SegmentState, Side, SimEvent, TankState } from './types';
 
-export const ENGINE_VERSION = '0.4.6';
+export const ENGINE_VERSION = '0.4.7';
 
 /** Snapshot spacing in battle-minutes: while anything is happening, and otherwise (output resolution, not a model number). */
 export const SNAPSHOT_BUSY_MIN = 10;
@@ -113,8 +113,11 @@ export type RunRecord = {
   };
   /** What playback needs for weather and light (absent before engine 0.4.4). */
   conditions?: RunConditions;
-  /** Every company, in ascending id order: the battalion it belongs to, its name and side; its formations, battalion up (engine 0.4.0 on). */
-  units: Array<{ id: string; battalionId: string; name: string; side: Side; formationPath?: string[]; insignia?: string }>;
+  /**
+   * Every company, in ascending id order: the battalion it belongs to, its name and side; its formations, battalion up
+   * (engine 0.4.0 on); its division's patch colour (0.4.6 on) and its role in the plan (0.4.7 on).
+   */
+  units: Array<{ id: string; battalionId: string; name: string; side: Side; formationPath?: string[]; insignia?: string; role?: Role }>;
   /**
    * The divisions (and division-sized groups), with their sleeve-patch colour where the scenario gives one (engine
    * 0.4.6 on): the period map's notes. A unit's `insignia` is its nearest formation's patch (insignia.ts).

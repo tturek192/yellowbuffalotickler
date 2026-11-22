@@ -2,14 +2,15 @@ import { v, type Formation, type Scenario } from '@wwi/scenario';
 import type { Side } from './types';
 
 /** A division (or a group the scenario enters in a division's place) as the map's notes name it, with its patch colour. */
-export type DivisionInsignia = { id: string; name: string; side: Side; insignia?: string };
+export type DivisionInsignia = { id: string; name: string; side: Side; insignia?: string; noPatch?: true };
 
 /**
  * Each company's insignia colour, from the nearest formation up its path that has one (`formationPath`, battalion up).
  * A formation whose insignia is `none` (a source says it wore no patch: an attached brigade) stops the search, so its
  * battalions do not inherit their parent's patch. A company with no colour is drawn in its side's colour: each formation
  * where that happens is listed once in defaultsUsed (the `none` formation, else the company's division). Also the
- * divisions (kind `division` or `group`) in scenario order, for the map's notes.
+ * divisions (kind `division` or `group`) in scenario order, for the map's notes, with any formation that wore no patch
+ * (`noPatch`: an attached brigade is then named apart from the division it fought under).
  */
 export function insigniaOf(
   s: Pick<Scenario, 'forces'>,
@@ -20,9 +21,9 @@ export function insigniaOf(
   const divisions: DivisionInsignia[] = [];
   const visit = (f: Formation, side: Side): void => {
     formations.set(f.id, f);
-    if (f.kind === 'division' || f.kind === 'group') {
-      const c = f.insignia ? v(f.insignia.colour) : undefined;
-      divisions.push({ id: f.id, name: f.name, side, ...(c && c !== 'none' ? { insignia: c } : {}) });
+    const c = f.insignia ? v(f.insignia.colour) : undefined;
+    if (f.kind === 'division' || f.kind === 'group' || c === 'none') {
+      divisions.push({ id: f.id, name: f.name, side, ...(c === 'none' ? { noPatch: true as const } : c ? { insignia: c } : {}) });
     }
     for (const child of f.children ?? []) visit(child, side);
   };

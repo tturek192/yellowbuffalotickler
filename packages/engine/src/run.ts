@@ -224,7 +224,7 @@ export function runScenario(s: Scenario, models: Models, opts: RunOptions): RunR
     // Task 15: each company's formations, battalion up, so the batch can set formations' casualties beside targets.
     units: state.companies.map((c) => {
       const colour = insignia.byUnit.get(c.id);
-      return { id: c.id, battalionId: c.battalionId, name: c.name, side: c.side, formationPath: c.formationPath, ...(colour ? { insignia: colour } : {}) };
+      return { id: c.id, battalionId: c.battalionId, name: c.name, side: c.side, formationPath: c.formationPath, ...(colour ? { insignia: colour } : {}), role: c.role };
     }),
     divisions: insignia.divisions,
     ...(patrols.length > 0 ? { contactPatrols: patrols } : {}),

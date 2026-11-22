@@ -108,8 +108,9 @@ describe('runScenario', () => {
     // Engine 0.4.0: each company's formations, battalion up.
     expect(r.units[0]!.formationPath![0]).toBe('bn1');
     expect(r.units).toEqual([
-      { id: 'c1', battalionId: 'bn1', name: 'A Company', side: 'allied', formationPath: r.units[0]!.formationPath },
-      { id: 'c2', battalionId: 'bn1', name: 'B Company', side: 'allied', formationPath: r.units[1]!.formationPath },
+      // Engine 0.4.7: each company's role in the plan.
+      { id: 'c1', battalionId: 'bn1', name: 'A Company', side: 'allied', formationPath: r.units[0]!.formationPath, role: r.units[0]!.role },
+      { id: 'c2', battalionId: 'bn1', name: 'B Company', side: 'allied', formationPath: r.units[1]!.formationPath, role: r.units[1]!.role },
     ]);
     const snap = snapshotsOf(r)[1]!.companies;
     expect(snap.columns).toEqual(['id', 'x', 'y', 'men', 'status', 'morale', 'suppression', 'posture', 'killed', 'wounded', 'captured', 'gapM']);

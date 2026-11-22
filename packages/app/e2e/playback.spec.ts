@@ -330,6 +330,10 @@ test('period style is the default: the Explanatory Notes and the cartouche frame
   await expect(notes).toContainText('1st Canadian Division');
   await expect(page.getByTestId('battle-clock')).toHaveText('Monday, 9th April · 5.30 a.m.');
   await expect(page.getByRole('checkbox', { name: 'Period style' })).toBeChecked();
+  // The frame's totals give each side's prisoners apart, as the side panel does.
+  await page.getByLabel('Battle time').fill('870');
+  await expect(page.locator('.period-totals')).toContainText(/Prisoners taken · Allied [\d,]+ · German [\d,]+/);
+  await page.getByLabel('Battle time').fill('0');
   // The frame is laid out round the map: neither panel covers it.
   const map = (await page.getByRole('img', { name: /^Trench map of / }).boundingBox())!;
   for (const panel of [notes, cartouche]) {

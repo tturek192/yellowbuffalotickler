@@ -4,7 +4,8 @@ import { battleRecord, trenchAt } from '../battle-record';
 import type { TestCompany } from '../test-record';
 import { recordingContext } from '../test-canvas';
 import { MAP_COLORS } from './style';
-import { blockColour, blockOpen, drawCompassRose, fillArea, paperTexture, territoryFills, vignettes } from './period';
+import { readFileSync } from 'node:fs';
+import { blockColour, blockOpen, clearOfMarkers, committedAt, deltaE, drawCompassRose, fillArea, MIN_BLOCK_DELTA_E, paperTexture, placeVignettes, territoryFills, vignettes } from './period';
 
 const co = (id: string, side: TestCompany['side'], x: number, y: number, extra: Partial<TestCompany> = {}): TestCompany => ({ id, side, x, y, men: 100, status: 'holding', ...extra });
 
@@ -81,16 +82,100 @@ describe('the period map style (period.ts)', () => {
   it('battalion blocks use their division insignia colour, falling back to the side colour', () => {
     expect(blockColour(unit({ insignia: '#3f7a3a' }))).toBe('#3f7a3a');
     expect(blockColour(unit({ side: 'central' }))).toBe(MAP_COLORS.german);
-    expect(blockColour(unit({ side: 'allied' }))).toBe(MAP_COLORS.allied);
+    // An allied formation that wore no patch is drawn in a neutral khaki, never a patch colour (the 2nd Division's blue).
+    expect(blockColour(unit({ side: 'allied' }))).toBe(MAP_COLORS.alliedUnpatched);
   });
 
-  it('a block is open while waiting or in reserve, filled in action', () => {
-    expect(blockOpen('waiting', 'allied')).toBe(true);
-    expect(blockOpen('holding', 'allied')).toBe(true);
-    expect(blockOpen('marching', 'central')).toBe(true);
-    expect(blockOpen('advancing', 'allied')).toBe(false);
+  it('every pair of block colours in use is told apart: at least MIN_BLOCK_DELTA_E (CIE76) between them', () => {
+    const yaml = readFileSync(new URL('../../../../scenarios/vimy-1917/oob-canadian.yaml', import.meta.url), 'utf8');
+    const patches = [...yaml.matchAll(/colour: \{ value: "(#[0-9a-f]{6})"/g)].map((m) => m[1]!);
+    expect(patches.length).toBe(4);
+    const colours = [...patches, MAP_COLORS.alliedUnpatched, MAP_COLORS.german];
+    const close: string[] = [];
+    for (let i = 0; i < colours.length; i++)
+      for (let j = i + 1; j < colours.length; j++) if (deltaE(colours[i]!, colours[j]!) < MIN_BLOCK_DELTA_E) close.push(`${colours[i]} ~ ${colours[j]}`);
+    expect(close).toEqual([]);
+    expect(MIN_BLOCK_DELTA_E).toBeGreaterThanOrEqual(20);
+  });
+
+  it('a block is open while waiting, marching, or an uncommitted reserve; filled in action and once committed', () => {
+    expect(blockOpen('waiting', 'assault', false)).toBe(true);
+    expect(blockOpen('marching', 'reserve', false)).toBe(true);
+    expect(blockOpen('holding', 'reserve', false)).toBe(true);
+    // A company that took its objective and holds it is in action, not in reserve.
+    expect(blockOpen('holding', 'assault', true)).toBe(false);
+    expect(blockOpen('holding', 'assault', false)).toBe(false);
+    // A reserve that went forward and now holds a trench is committed.
+    expect(blockOpen('holding', 'reserve', true)).toBe(false);
+    expect(blockOpen('advancing', 'assault', true)).toBe(false);
     // A German garrison holding its trench is in action.
-    expect(blockOpen('holding', 'central')).toBe(false);
+    expect(blockOpen('holding', 'garrison', false)).toBe(false);
+  });
+
+  it('a company is committed from the first snapshot it is in action (advancing, fighting, falling back, …)', () => {
+    const r = battleRecord({
+      features: [],
+      snapshots: [
+        { minute: 0, companies: [co('r', 'allied', 0, 0), co('a', 'allied', 0, 100, { status: 'waiting' })] },
+        { minute: 30, companies: [co('r', 'allied', 0, 0), co('a', 'allied', 50, 100, { status: 'advancing' })] },
+        { minute: 60, companies: [co('r', 'allied', 100, 0, { status: 'advancing' }), co('a', 'allied', 300, 100)] },
+        { minute: 90, companies: [co('r', 'allied', 300, 0), co('a', 'allied', 300, 100)] },
+      ],
+    });
+    expect(committedAt(r, 'r', 30)).toBe(false);
+    expect(committedAt(r, 'r', 60)).toBe(true);
+    expect(committedAt(r, 'r', 90)).toBe(true);
+    expect(committedAt(r, 'a', 0)).toBe(false);
+    expect(committedAt(r, 'a', 90)).toBe(true);
+  });
+
+  it('the wash runs on across a break in the front and out to the ends of the map, carrying the last edge', () => {
+    const r = battleRecord({
+      features: [trenchAt('rear', 1500, -500, 1300)],
+      snapshots: [
+        {
+          minute: 0,
+          // German companies at the two ends of the sector, nobody between (a break far wider than the bins bridged).
+          companies: [co('g1', 'central', 500, 50), co('g2', 'central', 500, 750), co('a', 'allied', 200, 400)],
+          segments: [['allied']],
+        },
+      ],
+    });
+    const central = territoryFills(r, 0).filter((f) => f.side === 'central');
+    expect(central.length).toBe(1);
+    const ys = central[0]!.polygon.map((p) => p[1]);
+    expect(Math.min(...ys)).toBeLessThanOrEqual(-500);
+    expect(Math.max(...ys)).toBeGreaterThanOrEqual(1300);
+  });
+
+  it('like vignettes close on the sheet are drawn as one, named with their number', () => {
+    const view = { scale: 0.01, tx: 0, ty: 0 };
+    const tanks = [0, 1, 2].map((i) => ({ kind: 'tank' as const, side: 'allied' as const, x: i * 100, y: 0, label: i === 0 ? 'tank, bogged' : 'tank', bogged: i === 0 }));
+    const placed = placeVignettes(view, tanks);
+    expect(placed).toHaveLength(1);
+    expect(placed[0]).toMatchObject({ kind: 'tank', label: '3 tanks, 1 bogged', bogged: false });
+    expect(placeVignettes({ scale: 1, tx: 0, ty: 0 }, tanks)).toHaveLength(3);
+    const guns = placeVignettes(view, [
+      { kind: 'gun', side: 'allied', x: 0, y: 0, label: '18-pounders' },
+      { kind: 'gun', side: 'allied', x: 50, y: 0, label: '6-inch howitzers' },
+    ]);
+    expect(guns.map((g) => g.label)).toEqual(['18-pounders, 6-inch howitzers']);
+  });
+
+  it('a vignette under a marker is moved clear of it, keeping its true place as an anchor; one in the clear stays put', () => {
+    const marker = { x0: 90, x1: 110, y0: 95, y1: 105 };
+    const [moved, kept] = clearOfMarkers(
+      [
+        { kind: 'tank', at: [100, 100], label: 'tank', bogged: false },
+        { kind: 'tank', at: [400, 100], label: 'tank', bogged: false },
+      ],
+      [marker],
+      800,
+    );
+    expect(moved!.anchor).toEqual([100, 100]);
+    expect(moved!.at).not.toEqual([100, 100]);
+    expect(kept!.anchor).toBeUndefined();
+    expect(kept!.at).toEqual([400, 100]);
   });
 
   it('the paper texture is made once and reused; the compass rose draws its N', () => {

@@ -95,7 +95,7 @@ export type UnitMarker = {
    * The period style's paint (Task 20): the block's colour (its division's patch), open (outline only: waiting or in
    * reserve) or filled, and its edge. Absent: the plain style, the side's ink.
    */
-  paint?: { fill: string; open: boolean; edge: string; edgeWidth: number };
+  paint?: { fill: string; open: boolean; edge: string; edgeWidth: number; halo?: string };
 };
 
 /** Draw one marker (a company or a battalion): fill, edge, label, strength bar, and the state marks. */
@@ -116,6 +116,12 @@ export function drawUnitMarker(ctx: CanvasRenderingContext2D, m: UnitMarker): vo
     ctx.lineWidth = 2;
     ctx.strokeRect(x - ring.radius, y - ring.radius, w + 2 * ring.radius, h + 2 * ring.radius);
     ctx.restore();
+  }
+
+  if (m.paint?.halo) {
+    // A paper halo round the period block, so it stands clear of the wash, the lines and its neighbours.
+    ctx.fillStyle = m.paint.halo;
+    ctx.fillRect(x - 1.5, y - 1.5, w + 3, h + 3);
   }
 
   ctx.save();

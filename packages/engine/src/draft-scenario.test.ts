@@ -89,6 +89,8 @@ describe('draft Vimy scenario run', () => {
     // lists the divisions (`divisions`), the geometry the batteries' places (`geometry.batteries`), and a run that sent
     // contact-patrol messages lists them (`contactPatrols`); defaultsUsed names formations drawn in the side's colour.
     // The battle is unchanged: the same events, snapshots and summary.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.6', hash: 'f0c74277' });
+    // 0.4.7 (Task 20 fix round 1): units carry their role in the plan (`role`), so the period map draws only uncommitted
+    // reserves as open blocks; `divisions` also lists formations that wore no patch (`noPatch`). Battle unchanged.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.7', hash: '9b81acf8' });
   });
 });

@@ -1,7 +1,7 @@
 import type { CompanyStatus, RunRecord, Side } from '@wwi/engine';
 import { frameAt, surrounding } from '../playback';
 import type { Screen } from './declutter';
-import { frontAt } from './front';
+import { FRONT_BREAK_M, frontAt } from './front';
 import { overlaps, placeClear, type Box } from './labels';
 import { recordBounds, worldToScreen, type Bounds, type Point, type View } from './projection';
 import { MAP_COLORS } from './style';
@@ -32,8 +32,8 @@ export const PERIOD_STYLE = {
   blue: '#2c5fa8',
   /** Held ground: a pastel wash multiplied into the paper. */
   fill: { allied: '#e8b98a', central: '#9fc08a', alpha: 0.42 },
-  /** German blocks are edged in this red. */
-  germanEdge: '#c0392b',
+  /** German blocks are edged in this dark red. */
+  germanEdge: '#8e2418',
   /** Paper grain: a tile of this many px, multiplied in at this opacity. */
   texture: { size: 192, alpha: 0.16 },
   /** Vignette width (px) and the distance (px) within which like vignettes are drawn as one. */
@@ -51,6 +51,8 @@ const boundsOf = (r: RunRecord): Bounds => {
 
 /** Ground a side holds: a polygon from its front back to the sheet's edge behind it (west for allied, east for central). */
 export type TerritoryFill = { side: Side; polygon: Point[] };
+/** A piece of front this short (points, one per 100 m bin) can be a spur back to a reserve rather than the front. */
+const SPUR_MAX_POINTS = 4;
 
 /**
  * Each side's held ground at a minute: behind each piece of its front (front.ts `frontAt`, which moves as segments change
@@ -59,16 +61,30 @@ export type TerritoryFill = { side: Side; polygon: Point[] };
 export function territoryFills(r: RunRecord, minute: number): TerritoryFill[] {
   const front = frontAt(r, minute);
   const b = boundsOf(r);
-  const half = 50; // half a front bin (FRONT_BIN_M), so a one-bin piece still has area
   const out: TerritoryFill[] = [];
   for (const side of ['allied', 'central'] as const) {
-    const edge = side === 'allied' ? Math.min(b.minX, ...front.allied.flat().map((p) => p[0])) : Math.max(b.maxX, ...front.central.flat().map((p) => p[0]));
-    for (const line of front[side]) {
-      if (line.length === 0) continue;
-      const first = line[0]!;
-      const last = line[line.length - 1]!;
-      out.push({ side, polygon: [[edge, first[1] - half], [first[0], first[1] - half], ...line, [last[0], last[1] + half], [edge, last[1] + half]] });
-    }
+    // One wash per side: the front's pieces joined across their breaks (a gap in the line is not a gap in the ground
+    // held), and the end edges carried out to the north and south of the map.
+    const pieces = [...front[side]].filter((l) => l.length > 0).sort((a, b) => a[0]![1] - b[0]![1]);
+    // A short piece standing far behind the pieces either side of it is a reserve held back, not the edge of the
+    // ground: the wash runs across it rather than notching back to it.
+    const behind = (a: number, b: number): boolean => (side === 'allied' ? a < b - FRONT_BREAK_M : a > b + FRONT_BREAK_M);
+    const kept = pieces.filter((l, i) => {
+      if (l.length > SPUR_MAX_POINTS) return true;
+      const prev = pieces[i - 1]?.at(-1)?.[0];
+      const next = pieces[i + 1]?.[0]?.[0];
+      const mean = l.reduce((a, p) => a + p[0], 0) / l.length;
+      return !((prev === undefined || behind(mean, prev)) && (next === undefined || behind(mean, next)) && (prev !== undefined || next !== undefined));
+    });
+    const line = kept.flat();
+    if (line.length === 0) continue;
+    const xs = line.map((p) => p[0]);
+    const edge = side === 'allied' ? Math.min(b.minX, ...xs) : Math.max(b.maxX, ...xs);
+    const first = line[0]!;
+    const last = line[line.length - 1]!;
+    const y0 = Math.min(b.minY, first[1]);
+    const y1 = Math.max(b.maxY, last[1]);
+    out.push({ side, polygon: [[edge, y0], [first[0], y0], ...line, [last[0], y1], [edge, y1]] });
   }
   return out;
 }
@@ -196,23 +212,75 @@ export function vignettes(r: RunRecord, minute: number): Vignette[] {
   return [...gunsOf(r), ...balloons, ...tanksAt(r, minute), ...aircraftAt(r, minute)];
 }
 
-/** A battalion block's colour: its division's patch, else its side's colour (German blocks are dark). */
+/** A battalion block's colour: its division's patch, else its side's (German field grey; khaki for allies without a patch). */
 export function blockColour(u: { side: Side; insignia?: string }): string {
-  return u.insignia ?? (u.side === 'central' ? MAP_COLORS.german : MAP_COLORS.allied);
+  return u.insignia ?? (u.side === 'central' ? MAP_COLORS.german : MAP_COLORS.alliedUnpatched);
 }
 
-/** An open block (outline only) is waiting or in reserve; a filled one is in action. A German garrison holding its trench is in action. */
-export function blockOpen(status: CompanyStatus, side: Side): boolean {
-  return status === 'waiting' || status === 'marching' || (status === 'holding' && side === 'allied');
+/** Every pair of block colours in use must differ by at least this much (CIE76 ΔE; about 2.3 is "just noticeable"). */
+export const MIN_BLOCK_DELTA_E = 25;
+
+/** CIE76 colour difference between two #rrggbb colours (sRGB, D65). */
+export function deltaE(a: string, b: string): number {
+  const lab = (hex: string): [number, number, number] => {
+    const lin = (i: number): number => {
+      const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    const [r, g, bl] = [lin(1), lin(3), lin(5)];
+    const f = (t: number): number => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+    const fx = f((0.4124 * r + 0.3576 * g + 0.1805 * bl) / 0.95047);
+    const fy = f(0.2126 * r + 0.7152 * g + 0.0722 * bl);
+    const fz = f((0.0193 * r + 0.1192 * g + 0.9505 * bl) / 1.08883);
+    return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+  };
+  const [p, q] = [lab(a), lab(b)];
+  return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+}
+
+/** Statuses of a company in action: from the first snapshot it shows one, it is committed. */
+const IN_ACTION: ReadonlySet<CompanyStatus> = new Set(['advancing', 'consolidating', 'pinned', 'falling-back', 'counter-attacking', 'surrendered', 'destroyed']);
+const committedCache = new WeakMap<RunRecord, Map<string, number>>();
+
+/** Whether a company has been in action by a minute (a reserve sent forward, an assault company once it went over). */
+export function committedAt(r: RunRecord, id: string, minute: number): boolean {
+  let first = committedCache.get(r);
+  if (!first) {
+    first = new Map();
+    for (const s of r.snapshots) {
+      const ci = s.companies.columns.indexOf('id');
+      const si = s.companies.columns.indexOf('status');
+      for (const row of s.companies.rows) if (!first.has(row[ci] as string) && IN_ACTION.has(row[si] as CompanyStatus)) first.set(row[ci] as string, s.minute);
+    }
+    committedCache.set(r, first);
+  }
+  const at = first.get(id);
+  return at !== undefined && at <= minute;
+}
+
+/**
+ * An open block (outline only) is waiting, marching, off the map, or a reserve not yet committed; a filled one is in
+ * action, including a company holding the objective it took and a German garrison holding its trench.
+ */
+export function blockOpen(status: CompanyStatus, role: string | undefined, committed: boolean): boolean {
+  if (status === 'waiting' || status === 'marching' || status === 'off-map') return true;
+  return status === 'holding' && role === 'reserve' && !committed;
+}
+
+/** Whether a company's block is open at a minute (its role from the record's units, engine 0.4.7 on). */
+export function companyOpen(r: RunRecord, c: { id: string; status: CompanyStatus }, minute: number): boolean {
+  return blockOpen(c.status, unitsById(r).get(c.id)?.role, committedAt(r, c.id, minute));
 }
 
 /** A period block's paint: its colour, open or filled, and its edge (German blocks edged in red, a little heavier). */
-export function blockPaint(side: Side, status: CompanyStatus, insignia?: string): { fill: string; open: boolean; edge: string; edgeWidth: number } {
+export function blockPaint(side: Side, open: boolean, insignia: string | undefined, small: boolean): { fill: string; open: boolean; edge: string; edgeWidth: number; halo: string } {
   return {
     fill: blockColour({ side, ...(insignia ? { insignia } : {}) }),
-    open: blockOpen(status, side),
+    open,
     edge: side === 'central' ? PERIOD_STYLE.germanEdge : PERIOD_STYLE.ink,
-    edgeWidth: side === 'central' ? 2 : 1,
+    // At chip size a heavy red edge would be most of the block: one pixel there.
+    edgeWidth: side === 'central' && !small ? 1.5 : 1,
+    halo: PERIOD_STYLE.paper,
   };
 }
 
@@ -509,7 +577,7 @@ function aircraftPath(ctx: CanvasRenderingContext2D, w: number): void {
 }
 
 /** Like vignettes close together on the sheet (a troop of tanks at corps zoom) are drawn as one, named with their number. */
-export type PlacedVignette = { kind: Vignette['kind']; at: Screen; label: string; bogged: boolean; side?: Side };
+export type PlacedVignette = { kind: Vignette['kind']; at: Screen; label: string; bogged: boolean; side?: Side; anchor?: Screen };
 
 export function placeVignettes(view: View, vs: readonly Vignette[]): PlacedVignette[] {
   const groups: Array<{ v: Vignette[]; at: Screen }> = [];
@@ -539,10 +607,46 @@ export const vignetteBox = (p: PlacedVignette): Box => {
   return { x0: p.at[0] - w / 2, x1: p.at[0] + w / 2, y0: p.at[1] - w * 0.35 - lift, y1: p.at[1] + w * 0.35 - lift };
 };
 
-/** Draw the vignettes (under the unit markers). An aircraft flies a little above the ground it reports on. */
+/**
+ * Move each vignette off the unit markers (and off the vignettes already placed) to the nearest clear spot, so neither
+ * hides the other; one that moved keeps its true place as `anchor`, and a hairline leads back to it. One with no clear
+ * spot near stays where it is.
+ */
+export function clearOfMarkers(placed: readonly PlacedVignette[], markers: readonly Box[], sheetW: number): PlacedVignette[] {
+  const taken: Box[] = [...markers];
+  return placed.map((p) => {
+    const box = vignetteBox(p);
+    let out = p;
+    if (taken.some((t) => overlaps(box, t))) {
+      const b = placeClear(box, taken, 8, 5, 8, 5, 4, sheetW - 4);
+      if (!taken.some((t) => overlaps(b, t))) out = { ...p, at: [p.at[0] + (b.x0 - box.x0), p.at[1] + (b.y0 - box.y0)], anchor: p.at };
+    }
+    taken.push(vignetteBox(out));
+    return out;
+  });
+}
+
+/** Draw the vignettes (over the terrain and the wash, beside the unit markers). An aircraft flies a little above the ground it reports on. */
 export function drawVignettes(ctx: CanvasRenderingContext2D, placed: readonly PlacedVignette[]): void {
   const w = PERIOD_STYLE.vignette.w;
   for (const p of placed) {
+    if (p.anchor) {
+      // Moved clear of the markers: a hairline and a dot mark where it really is.
+      const b = vignetteBox(p);
+      ctx.save();
+      ctx.strokeStyle = PERIOD_STYLE.vignetteInk;
+      ctx.fillStyle = PERIOD_STYLE.vignetteInk;
+      ctx.globalAlpha = 0.7;
+      ctx.lineWidth = 0.75;
+      ctx.beginPath();
+      ctx.moveTo(p.anchor[0], p.anchor[1]);
+      ctx.lineTo(Math.min(Math.max(p.anchor[0], b.x0), b.x1), Math.min(Math.max(p.anchor[1], b.y0), b.y1));
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(p.anchor[0], p.anchor[1], 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
     const b = vignetteBox(p);
     ctx.save();
     ctx.translate((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2);
