@@ -59,6 +59,26 @@ describe('cli', () => {
     expect(r.stderr).toMatch(/command\.yaml.*unknown section "tank"/);
   });
 
+  it('a problem found when the run starts gives the same exit code and every problem on worker threads as in this process: batch --workers and report (final review fix)', () => {
+    // A doctrine whose company weapons are not in the tables: found by runScenario's setup, not by the loader.
+    const docs = mkdtempSync(join(tmpdir(), 'sim-doctrine-'));
+    cpSync(join(repoRoot, 'doctrine'), docs, { recursive: true });
+    replaceIn(join(docs, 'bef-1917.yaml'), '  rifle: rifle\n  lightMg: lewis', '  rifle: smle-x\n  lightMg: lewis-mk9');
+    const out = join(mkdtempSync(join(tmpdir(), 'sim-')), 'report.md');
+    const runs = [
+      runCli(['batch', draft, '--runs', '2', '--doctrine-dir', docs]),
+      runCli(['batch', draft, '--runs', '2', '--workers', '2', '--doctrine-dir', docs]),
+      runCli(['report', draft, '--runs', '2', '--out', out, '--doctrine-dir', docs]),
+    ];
+    for (const r of runs) {
+      expect(r.code).toBe(2);
+      expect(r.stderr).toMatch(/smle-x/);
+      expect(r.stderr).toMatch(/lewis-mk9/);
+    }
+    expect(runs[1]!.stderr).toBe(runs[0]!.stderr);
+    expect(existsSync(out)).toBe(false);
+  });
+
   it('exits 1 with usage on bad arguments', () => {
     const r = runCli(['run', draft]);
     expect(r.code).toBe(1);

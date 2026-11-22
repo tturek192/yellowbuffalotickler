@@ -1,6 +1,7 @@
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
 import { extractRun, runScenario, summarizeBatch } from '@wwi/engine';
 import type { BatchSummary, RunExtract } from '@wwi/engine';
+import { ScenarioError } from '@wwi/scenario';
 import { loadScenario, loadTables } from '@wwi/scenario/node';
 
 /*
@@ -13,7 +14,8 @@ import { loadScenario, loadTables } from '@wwi/scenario/node';
 export type Files = { scenarioFile: string; doctrineDir: string; tablesDir: string };
 
 type Job = Files & ({ kind: 'extracts'; seeds: number[] } | { kind: 'record'; seed: number });
-type Reply = { ok: true; extracts?: RunExtract[]; record?: string } | { ok: false; error: string };
+/** A failure carries a ScenarioError's problems, so the parent throws the same error (exit 2, every problem listed). */
+type Reply = { ok: true; extracts?: RunExtract[]; record?: string } | { ok: false; error: string; problems?: string[] };
 
 function load(f: Files) {
   const tables = loadTables(f.tablesDir);
@@ -25,7 +27,7 @@ function load(f: Files) {
 function onWorker(job: Job): Promise<Reply & { ok: true }> {
   return new Promise((done, fail) => {
     const w = new Worker(new URL(import.meta.url), { workerData: job, execArgv: ['--import', 'tsx'] });
-    w.once('message', (r: Reply) => (r.ok ? done(r) : fail(new Error(r.error))));
+    w.once('message', (r: Reply) => (r.ok ? done(r) : fail(r.problems ? new ScenarioError(r.problems) : new Error(r.error))));
     w.once('error', fail);
     w.once('exit', (code) => {
       if (code !== 0) fail(new Error(`a batch worker stopped with exit code ${code}`));
@@ -61,6 +63,6 @@ if (!isMainThread && parentPort && (workerData as Job | undefined)?.kind) {
         : { ok: true, extracts: job.seeds.map((seed) => extractRun(scenario, runScenario(scenario, models, { seed }))) };
     parentPort.postMessage(reply);
   } catch (e) {
-    parentPort.postMessage({ ok: false, error: e instanceof Error ? e.message : String(e) } satisfies Reply);
+    parentPort.postMessage({ ok: false, error: e instanceof Error ? e.message : String(e), ...(e instanceof ScenarioError ? { problems: e.problems } : {}) } satisfies Reply);
   }
 }
