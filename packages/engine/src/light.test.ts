@@ -86,4 +86,15 @@ describe('utcOffset default', () => {
     noteLightDefaults(sc(), used);
     expect(used.size).toBe(1);
   });
+
+  it('a scenario with no frame records that its sun times are taken at lat 0, lon 0, and its clear-weather bound', () => {
+    const s = sc();
+    delete s.frame;
+    const used = new Set<string>();
+    noteLightDefaults(s, used);
+    expect([...used]).toEqual([
+      'frame.origin ← lat 0, lon 0 (no frame: sun times taken at the equator and the prime meridian)',
+      'visibility (clear weather) ← 10000 m (no frame or terrain grid to bound it)',
+    ]);
+  });
 });

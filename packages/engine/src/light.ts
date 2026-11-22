@@ -12,11 +12,15 @@ export const utcOffsetOf = (s: Scenario): number => (s.utcOffsetMin ? v(s.utcOff
 
 /**
  * Record the light module's defaults: the wiring phase calls this once at setup, so a run that uses
- * daylight lists a missing `utcOffsetMin` in `defaultsUsed`. (Adding it in resolveDefaults would list
+ * daylight lists a missing `utcOffsetMin`, a missing frame (sun times at lat 0, lon 0) and the clear-weather
+ * fallback bound in `defaultsUsed`. (Adding it in resolveDefaults would list
  * it for every run, including the draft scenario, and change its record.)
  */
 export function noteLightDefaults(s: Scenario, defaultsUsed: Set<string>): void {
   if (!s.utcOffsetMin) defaultsUsed.add('utcOffsetMin ← 0 (no clock offset given; sun times taken as UTC)');
+  // `daylight` and the record's `conditions.sun` read the frame's origin; with no frame the sun is at (0, 0).
+  if (!s.frame) defaultsUsed.add('frame.origin ← lat 0, lon 0 (no frame: sun times taken at the equator and the prime meridian)');
+  if (!s.frame && !s.terrainGrid) defaultsUsed.add(`visibility (clear weather) ← ${FALLBACK_CLEAR_M} m (no frame or terrain grid to bound it)`);
 }
 
 /** Sun times, worked out once for each place, date and clock offset (they depend on nothing else). */

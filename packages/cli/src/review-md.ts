@@ -41,6 +41,11 @@ export function reviewToMarkdown(doc: ReviewDoc, openQuestions: string[] = doc.o
       'coefficient that is fitted, not looked up.',
     '',
   ];
+  if (doc.defaults?.length) {
+    out.push('## Engine defaults', '', 'The engine fills these in because the scenario leaves them out; each run lists them in its defaultsUsed.', '');
+    for (const d of doc.defaults) out.push(`- ${d}`);
+    out.push('');
+  }
   for (const s of doc.sections) {
     out.push(`## ${s.title}`, '');
     if (!s.rows.length) {

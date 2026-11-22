@@ -8,6 +8,17 @@ describe('defaults', () => {
   it('the Plan 1 draft runs and lists every default it used', () => {
     const r = runScenario(draft(), doctrines(), { seed: 1 });
     expect(r.defaultsUsed).toEqual(expect.arrayContaining([expect.stringMatching(/officers ← bef-1917\.companyDefaults\.officers/)]));
+    // It has no frame: its sun is at lat 0, lon 0, and the record says so.
+    expect(r.conditions!.sun).toMatchObject({ lat: 0, lon: 0 });
+    expect(r.defaultsUsed).toContain('frame.origin ← lat 0, lon 0 (no frame: sun times taken at the equator and the prime meridian)');
+  });
+
+  it("Vimy has a frame, and its sun is the frame's origin", () => {
+    const s = vimy();
+    expect(s.frame).toBeDefined();
+    const r = runScenario(s, vimyDoctrines(), { seed: 1, endMinute: 4 });
+    expect(r.conditions!.sun).toMatchObject({ lat: s.frame!.origin.lat, lon: s.frame!.origin.lon });
+    expect(r.defaultsUsed.some((x) => x.startsWith('frame.origin'))).toBe(false);
   });
 
   it('fills every absent company value from its doctrine, names it by company id, and leaves given values alone', () => {

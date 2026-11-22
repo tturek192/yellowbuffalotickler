@@ -28,6 +28,19 @@ describe('buildReview', () => {
     ]);
   });
 
+  it('flags the engine defaults a scenario leaves open: no frame puts the sun at lat 0, lon 0', () => {
+    const s = fixtureWithMixedValues();
+    delete s.frame;
+    delete s.utcOffsetMin;
+    expect(buildReview(s).defaults).toEqual([
+      'No frame: the engine takes sunrise and sunset at lat 0, lon 0 (the equator and the prime meridian), so night and day do not follow the battlefield.',
+      'No utcOffsetMin: the engine takes the scenario clock as UTC for sun times.',
+    ]);
+    s.frame = { origin: { lon: 2.77, lat: 50.38 }, bearingDeg: { value: 75, estimate: 'test' }, extent: { minX: 0, maxX: 1, minY: 0, maxY: 1 } };
+    s.utcOffsetMin = { value: 60, estimate: 'test' };
+    expect(buildReview(s).defaults).toEqual([]);
+  });
+
   it('marks leader ratings as owner-owned', () => {
     const rows = buildReview(fixtureWithLeaders()).sections.find((s) => s.title === 'Leaders and ratings')!.rows;
     expect(rows.length).toBeGreaterThan(0);

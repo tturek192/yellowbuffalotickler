@@ -25,6 +25,15 @@ describe('reviewToMarkdown', () => {
     expect(md).toMatch(/## Model tables\n\nNo values\./);
   });
 
+  it('lists the engine defaults the scenario leaves open, and has no such section when there are none', () => {
+    const s = fixtureWithMixedValues();
+    delete s.frame;
+    expect(reviewToMarkdown(buildReview(s), [])).toMatch(/## Engine defaults\n\nThe engine fills these in[^\n]*\n\n- No frame: the engine takes sunrise and sunset at lat 0, lon 0/);
+    s.frame = { origin: { lon: 2.77, lat: 50.38 }, bearingDeg: { value: 75, estimate: 'test' }, extent: { minX: 0, maxX: 1, minY: 0, maxY: 1 } };
+    s.utcOffsetMin = { value: 60, estimate: 'test' };
+    expect(reviewToMarkdown(buildReview(s), [])).not.toMatch(/## Engine defaults/);
+  });
+
   it('escapes pipes in cells', () => {
     const s = fixtureWithMixedValues();
     s.geometrySource = { value: 'a | b', source: 'test-src' };

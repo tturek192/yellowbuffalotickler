@@ -28,7 +28,17 @@ export type ReviewDoc = {
   sections: ReviewSection[];
   /** Left empty here: the CLI reads the research notes and passes the questions to the renderer. */
   openQuestions: string[];
+  /** What the engine will fill in because the scenario leaves it out (each also lands in a run's `defaultsUsed`). */
+  defaults: string[];
 };
+
+/** The engine defaults a scenario leaves open that change what a run means (light.ts `noteLightDefaults`). */
+function engineDefaults(s: Scenario): string[] {
+  const out: string[] = [];
+  if (!s.frame) out.push('No frame: the engine takes sunrise and sunset at lat 0, lon 0 (the equator and the prime meridian), so night and day do not follow the battlefield.');
+  if (!s.utcOffsetMin) out.push('No utcOffsetMin: the engine takes the scenario clock as UTC for sun times.');
+  return out;
+}
 
 type Registry = Record<string, { tier: Tier }>;
 type Raw = Record<string, unknown>;
@@ -274,5 +284,6 @@ export function buildReview(s: Scenario, doctrines: Record<string, Doctrine> = {
     counts: { values: all.length, sourced: count('sourced'), estimates: count('estimate'), disputed: count('disputed'), byTier },
     sections,
     openQuestions: [],
+    defaults: engineDefaults(s),
   };
 }

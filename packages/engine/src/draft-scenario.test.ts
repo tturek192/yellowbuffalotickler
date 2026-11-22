@@ -91,6 +91,11 @@ describe('draft Vimy scenario run', () => {
     // The battle is unchanged: the same events, snapshots and summary.
     // 0.4.7 (Task 20 fix round 1): units carry their role in the plan (`role`), so the period map draws only uncommitted
     // reserves as open blocks; `divisions` also lists formations that wore no patch (`noPatch`). Battle unchanged.
-    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.7', hash: '9b81acf8' });
+    // 0.4.8 (final review fixes): a division's or army's next counter-attack plan is a scheduled minute (quiet steps and
+    // the lull wait for it), company reports of the enemy pass the sight-line and visibility tests fire uses, a garrison
+    // taken prisoner to the last man is logged as surrendered, and a scenario with no frame lists its sun at lat 0,
+    // lon 0 (and its clear-weather bound) in defaultsUsed. The draft has no frame and no enemy: with those two default
+    // lines removed and the version set back to 0.4.7 its record hashes to 9b81acf8, so only they and the version move it.
+    expect({ engineVersion: ENGINE_VERSION, hash: hash(record) }).toEqual({ engineVersion: '0.4.8', hash: '438acf06' });
   });
 });
