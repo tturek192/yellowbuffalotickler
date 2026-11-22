@@ -3,3 +3,4 @@ export { explain } from './explain';
 export type { Why, WhyRef } from './explain';
 export { CAUSE_TEXT } from './cause-text';
 export { sunTimes } from './sun';
+export { hashRecord } from './hash';

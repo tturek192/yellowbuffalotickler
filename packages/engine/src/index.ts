@@ -56,3 +56,4 @@ export { daylight, noteLightDefaults, sunTimes, utcOffsetOf, visibility, visibil
 export { explain } from './explain';
 export type { Why, WhyRef } from './explain';
 export { CAUSE_TEXT } from './cause-text';
+export { hashRecord } from './hash';

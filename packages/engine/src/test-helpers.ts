@@ -9,6 +9,7 @@ import type { Doctrine, Feature, Scenario, Tables, WeaponKind } from '@wwi/scena
 import { est, germanForce, minimalDoctrineV2, minimalScenario, minimalScenarioV3, minimalTables } from '@wwi/scenario/test-fixtures';
 import { loadScenario, loadTables } from '@wwi/scenario/node';
 import { buildWorld } from './ground';
+import { hashRecord } from './hash';
 import { createRng } from './rng';
 import type { RunRecord } from './record';
 import { initRun, runScenario } from './run';
@@ -91,15 +92,9 @@ export const eventsOf = (r: RunRecord): RunRecord['events'] => r.events;
 /** Every snapshot of a run in full (keyframes and deltas expanded, snapshots.ts). */
 export const snapshotsOf = (r: Pick<RunRecord, 'snapshots'>): RunRecord['snapshots'] => expandSnapshots(r);
 
-/** 32-bit FNV-1a over the UTF-16 code units of the record's JSON, as 8 hex digits. */
+/** 32-bit FNV-1a over the UTF-16 code units of the record's JSON, as 8 hex digits (hash.ts `hashRecord`). */
 export function hash(r: RunRecord | string): string {
-  const text = typeof r === 'string' ? r : JSON.stringify(r);
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return h.toString(16).padStart(8, '0');
+  return hashRecord(typeof r === 'string' ? r : JSON.stringify(r));
 }
 
 /**

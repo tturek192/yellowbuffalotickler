@@ -85,10 +85,13 @@ describe('the why panel', () => {
     expect(html).toContain('see above');
   });
 
-  it('the app imports the engine at runtime only through @wwi/engine/reader', () => {
+  it('the app imports the engine at runtime only through @wwi/engine/reader, but in src/sim (the Web Workers and their pool)', () => {
     const root = fileURLToPath(new URL('..', import.meta.url));
+    const sim = join(root, 'sim');
     const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? files(join(dir, f)) : /\.tsx?$/.test(f) && !/\.test\.ts$/.test(f) ? [join(dir, f)] : []));
-    const bad = files(root).flatMap((f) =>
+    // src/sim/** may import the engine itself (Plan 4 Global Constraints): the engine runs there, in a Web Worker.
+    expect(files(sim).length).toBeGreaterThan(0);
+    const bad = files(root).filter((f) => !f.startsWith(`${sim}/`)).flatMap((f) =>
       [...readFileSync(f, 'utf8').matchAll(/^import (?!type )[^;]* from '(@wwi\/engine[^']*)';$/gm)].filter((m) => m[1] !== '@wwi/engine/reader').map((m) => `${f}: ${m[1]}`),
     );
     expect(bad).toEqual([]);

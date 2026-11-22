@@ -66,7 +66,9 @@ describe('explain', () => {
     expect(imports('./cause-text.ts')).toEqual([]);
     // Task 18: the sun's times, for the map's night, come from a file that imports nothing.
     expect(imports('./sun.ts')).toEqual([]);
+    // Plan 4 Task 5: a record's hash, for the app to compare a browser run with the CLI's, from a file that imports nothing.
+    expect(imports('./hash.ts')).toEqual([]);
     const reexports = [...readFileSync(new URL('./reader.ts', import.meta.url), 'utf8').matchAll(/^export (?!type )(.*) from '(.*)';$/gm)].map((m) => m[2]);
-    expect([...new Set(reexports)].sort()).toEqual(['./cause-text', './explain', './sun']);
+    expect([...new Set(reexports)].sort()).toEqual(['./cause-text', './explain', './hash', './sun']);
   });
 });

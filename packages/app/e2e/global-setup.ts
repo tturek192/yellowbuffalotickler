@@ -1,5 +1,7 @@
 import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { hashRecord } from '../../engine/src/hash';
 
 /** Scenario files (from the repo root) and the run names the e2e tests play (served from public/runs). */
 const RUNS: Array<[scenario: string, run: string]> = [
@@ -16,7 +18,12 @@ const BUNDLES: Array<[scenario: string, bundle: string]> = [
   ['scenarios/vimy-1917/1cdn-3bde-draft.yaml', 'draft'],
 ];
 
-/** Write the run records the e2e tests play. */
+/** The what-if run the browser must match byte for byte (batch.spec.ts): Vimy, seed 1, with this overlay. */
+export const CLI_HASH_OVERLAY = 'overlays/vimy-germans-x2.yaml';
+/** Where its hash is written (e2e/out, not served). */
+export const CLI_HASH_FILE = 'packages/app/e2e/out/cli-hash.json';
+
+/** Write the run records the e2e tests play, the scenario bundles, and the CLI's hash of the what-if run. */
 export default function globalSetup(): void {
   const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
   for (const [scenario, run] of RUNS) {
@@ -34,4 +41,10 @@ export default function globalSetup(): void {
   }
   const index = spawnSync('node', ['packages/app/scripts/scenario-index.mjs'], { cwd: repoRoot, stdio: 'inherit' });
   if (index.status !== 0) throw new Error(`writing the scenario index failed with status ${index.status}`);
+  // The CLI's record of the what-if run, hashed as written (`sim run` writes JSON.stringify(record)).
+  const whatIf = 'packages/app/e2e/out/vimy-germans-x2.json';
+  mkdirSync(`${repoRoot}packages/app/e2e/out`, { recursive: true });
+  const run = spawnSync('npm', ['run', 'sim', '--', 'run', 'scenarios/vimy-1917/scenario.yaml', '--seed', '1', '--overlay', CLI_HASH_OVERLAY, '--out', whatIf], { cwd: repoRoot, stdio: 'inherit' });
+  if (run.status !== 0) throw new Error(`sim run with ${CLI_HASH_OVERLAY} failed with status ${run.status}`);
+  writeFileSync(`${repoRoot}${CLI_HASH_FILE}`, JSON.stringify({ overlay: CLI_HASH_OVERLAY, seed: 1, cliHash: hashRecord(readFileSync(`${repoRoot}${whatIf}`, 'utf8')) }));
 }
