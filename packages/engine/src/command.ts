@@ -361,12 +361,7 @@ const offMapActive = (ctx: StepContext, M: number, dt: number): boolean => offMa
  * (`counterAttackRetryMin` after its last), an off-map attack opening.
  */
 function decisionDueMin(state: SimState, ctx: StepContext): number {
-  const w = workOf(state, ctx);
-  const due = [...stallChecks(state, ctx), ...operationStarts(state, ctx), ...counterAttackRetries(state, ctx), ...planPatience(state, ctx)].map((x) => x.minute);
-  for (const fid of Object.keys(state.command.divisions)) {
-    const d = doctrineOf(w, fid).defence;
-    if (d) due.push(state.command.divisions[fid]! + v(d.counterAttackRetryMin));
-  }
+  const due = [...stallChecks(state, ctx), ...operationStarts(state, ctx), ...counterAttackRetries(state, ctx), ...planPatience(state, ctx), ...divisionPlans(state, ctx)].map((x) => x.minute);
   for (const a of offMapAttacksOf(ctx.scenario)) due.push(a.fromMin);
   return Math.min(Infinity, ...due.filter((m) => m > state.minute));
 }
@@ -995,6 +990,25 @@ export function counterAttackRetries(state: SimState, ctx: StepContext): Schedul
     if (!h || !d || h.picture.segments[seg] === h.side) return [];
     const due = c.atMin + v(d.counterAttackRetryMin);
     return due > state.minute ? [{ minute: due, startsMovement: false }] : [];
+  });
+}
+
+/**
+ * A division's or army's next counter-attack plan: `counterAttackRetryMin` after its last (`divisionalCounterAttacks`,
+ * `armyReserves`), while it has no plan in hand and its picture shows ground lost on the front it answers for (a
+ * division's own; an army's, the fronts of the divisions under it). A decision, which moves nobody (its reserves march
+ * and its companies go on their orders).
+ */
+export function divisionPlans(state: SimState, ctx: StepContext): Scheduled[] {
+  const w = workOf(state, ctx);
+  return sorted(Object.keys(state.command.divisions)).flatMap((fid) => {
+    const d = doctrineOf(w, fid).defence;
+    const h = hqOf(w, fid);
+    if (!d || !h || pendingOf(h)) return [];
+    const due = state.command.divisions[fid]! + v(d.counterAttackRetryMin);
+    if (due <= state.minute) return [];
+    const fronts = w.topo.divisions.filter((x) => x === fid || within(w, x, fid)).flatMap((x) => w.topo.divisionFront.get(x)!);
+    return fronts.some((x) => h.picture.segments[x] !== undefined && h.picture.segments[x] !== h.side) ? [{ minute: due, startsMovement: false }] : [];
   });
 }
 

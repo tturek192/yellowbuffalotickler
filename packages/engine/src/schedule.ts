@@ -1,5 +1,5 @@
 import { ammunitionRunsOut, batteryRecoveries, offMapWindows } from './artillery';
-import { counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, planPatience, stallChecks } from './command';
+import { counterAttackRetries, divisionPlans, offMapAttackWindows, operationStarts, orderStarts, planPatience, stallChecks } from './command';
 import { fireMissionEnds, messageDueTimes } from './comms';
 import { garrisonEmergences } from './gap';
 import { phaseEndMin } from './barrage';
@@ -58,6 +58,8 @@ export const SCHEDULES: ReadonlyArray<readonly [name: string, source: ScheduleSo
   ['off-map-attacks', offMapAttackWindows],
   // Task 12 fix round: a failed local counter-attack may be ordered again (a decision, which moves nobody).
   ['counter-attack-retries', counterAttackRetries],
+  // Final review fix: a division's or army's next counter-attack plan, counterAttackRetryMin after its last (a decision).
+  ['division-plans', divisionPlans],
   // Task 13: an ordered reserve setting off (moves nobody on the map) and arriving (its companies come on to the map).
   ['reserves', reserveTimes],
   // Task 13 fix round: a planned counter-attack with no ground it can reach is given up (a decision; moves nobody).

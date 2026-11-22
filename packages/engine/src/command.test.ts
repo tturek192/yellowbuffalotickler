@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { est } from '@wwi/scenario/test-fixtures';
 import type { Scenario } from '@wwi/scenario';
-import { commandPending, commandPhase, counterAttackRetries, offMapAttackWindows, operationStarts, orderStarts, planPatience, stallChecks } from './command';
+import { commandPending, commandPhase, counterAttackRetries, divisionPlans, offMapAttackWindows, operationStarts, orderStarts, planPatience, stallChecks } from './command';
 import { send } from './comms';
 import { captureSegments } from './trenches';
 import { morale } from './morale';
@@ -9,6 +9,7 @@ import { runPipeline } from './pipeline';
 import { initRun, runScenario } from './run';
 import type { Models } from './run';
 import { quietStep, SCHEDULES } from './schedule';
+import { lullDue } from './end';
 import { isBusy, takeLines } from './step';
 import type { SimState, StepContext } from './step';
 import { fixtureComms, fixtureCounter, fixtureReserves, fixtureStall, runStates, withQuietStep, withRearTrench } from './test-helpers';
@@ -608,6 +609,32 @@ describe('the command model and quiet steps', () => {
     expect(e.minute).toBe(102);
     expect(e.factors!.again).toBe(1);
     expectSameBattle(coarse, fine);
+  });
+
+  it("a division's next counter-attack plan (counterAttackRetryMin after its last) is a scheduled decision: the division-plans source, its flag, the same minute however the battle is stepped, and the lull waits for it", () => {
+    expect(SCHEDULES.some(([name, source]) => name === 'division-plans' && source === divisionPlans)).toBe(true);
+    // gd planned last at 47 (retry 60): when it knows its front lost (by ~34) it may plan again at 107, in a quiet stretch.
+    const run = (quietMin: number) => {
+      const f = fixtureCounter({ divOrderSpeed: 3, offMapReserve: true });
+      const { state, ctx } = initRun(f[0], withQuietStep(f[1], quietMin), { seed: 1 });
+      let s: SimState = { ...state, command: { ...state.command, divisions: { gd: 47 } } };
+      const out = [s];
+      while (s.minute < 250) out.push((s = runPipeline(s, ctx, isBusy(s, ctx) ? 2 : quietStep(s, ctx, 2, quietMin))));
+      return { out, ctx };
+    };
+    const coarse = run(10);
+    const fine = run(2);
+    const ordered = (xs: SimState[]) => xs.flatMap((s) => s.events).find((e) => e.kind === 'reserve-ordered')!;
+    expect(ordered(coarse.out).minute).toBe(108);
+    expectSameBattle(coarse.out, fine.out);
+    // Before it: due at 107 and not a movement; with no plan pending and its front lost, and nothing else due, it holds a lull open.
+    const before = fine.out.find((s) => s.minute === 100)!;
+    expect(divisionPlans(before, fine.ctx)).toEqual([{ minute: 107, startsMovement: false }]);
+    expect(lullDue(before, fine.ctx, 10)).toBe(true);
+    expect(lullDue({ ...before, command: { ...before.command, divisions: {} } }, fine.ctx, 10)).toBe(false);
+    // Once it has planned (a plan in hand) nothing more is due until that plan has gone in or been given up.
+    const after = fine.out.find((s) => s.minute === 110)!;
+    expect(divisionPlans(after, fine.ctx)).toEqual([]);
   });
 
   it('commandPending holds the run while an order is on its way', () => {
