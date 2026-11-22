@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "cd ../.. && npm run sim -- run scenarios/vimy-1917/1cdn-3bde-draft.yaml --seed 1 --out packages/app/public/runs/sample.json",
+    "predev": "cd ../.. && npm run sim -- run scenarios/vimy-1917/1cdn-3bde-draft.yaml --seed 1 --out packages/app/public/runs/sample.json && npm run sim -- bundle scenarios/vimy-1917/scenario.yaml --out packages/app/public/scenarios/vimy-1917.json && npm run sim -- bundle scenarios/vimy-1917/1cdn-3bde-draft.yaml --out packages/app/public/scenarios/draft.json && node packages/app/scripts/scenario-index.mjs",
     "dev": "vite",
+    "prebuild": "cd ../.. && npm run sim -- bundle scenarios/vimy-1917/scenario.yaml --out packages/app/public/scenarios/vimy-1917.json && npm run sim -- bundle scenarios/vimy-1917/1cdn-3bde-draft.yaml --out packages/app/public/scenarios/draft.json && node packages/app/scripts/scenario-index.mjs",
     "build": "vite build",
     "e2e": "playwright test --trace off"
   },

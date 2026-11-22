@@ -7,3 +7,4 @@ packages/app/e2e/out/
 test-results/
 playwright-report/
 .cache/
+packages/app/public/scenarios/

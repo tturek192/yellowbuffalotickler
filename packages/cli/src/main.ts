@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util';
 import { explain, runBatch, runScenario } from '@wwi/engine';
 import type { RunRecord } from '@wwi/engine';
 import { buildReview, ScenarioError, v } from '@wwi/scenario';
+import { buildBundle } from './bundle';
 import { formatBatchV2 } from './format';
 import { atMinute, formatWhy } from './why';
 import { batchInWorkers, loadFiles, type Files } from './workers';
@@ -15,11 +16,13 @@ const USAGE = `usage:
   sim batch <scenario.yaml> --runs <n> [--seed-start <n>] [--workers <n>] [--json] [--overlay <file> [--drop-unresolved] [--library-dir <dir>]] [--doctrine-dir <dir>] [--tables-dir <dir>]
   sim why <record.json> (--event <n> | --unit <id> --at <HH:MM>)
   sim review <scenario.yaml> --out <file.md> [--notes <dir> ...] [--overlay <file> [--drop-unresolved] [--library-dir <dir>]] [--doctrine-dir <dir>] [--tables-dir <dir>]
+  sim bundle <scenario.yaml> --out <file.json> [--doctrine-dir <dir>] [--tables-dir <dir>] [--library-dir <dir>]
   sim report <scenario.yaml> --runs <n> --out <file.md> [--seed-start <n>] [--workers <n>] [--overlay <file> [--drop-unresolved] [--library-dir <dir>]] [--doctrine-dir <dir>] [--tables-dir <dir>]
 
   --overlay <file>     run a what-if: apply the overlay (overlays/README.md) to the scenario; the record lists its changes (whatIf)
   --drop-unresolved    leave out the overlay's ops that no longer resolve against the scenario (otherwise they stop the run, exit 2)
-  --library-dir <dir>  the leader, formation and weather-preset library an overlay may draw on (default: library)`;
+  --library-dir <dir>  the leader, formation and weather-preset library an overlay may draw on (default: library)
+  bundle               writes the scenario, its models, table sources and library as one JSON file, for the browser`;
 
 class UsageError extends Error {}
 
@@ -72,6 +75,15 @@ async function main(argv: string[]): Promise<void> {
     } else {
       throw new UsageError('expected --event <n> or --unit <id> --at <HH:MM>');
     }
+    return;
+  }
+  if (command === 'bundle') {
+    if (!file || positionals.length > 2) throw new UsageError('expected a command and a scenario file');
+    if (!values.out) throw new UsageError('missing --out');
+    for (const o of ['overlay', 'drop-unresolved'] as const) if (values[o] !== undefined) throw new UsageError(`--${o} does not apply to bundle`);
+    const bundle = buildBundle({ scenarioFile: file, doctrineDir: values['doctrine-dir'] ?? 'doctrine', tablesDir: values['tables-dir'] ?? 'tables', libraryDir: values['library-dir'] ?? 'library' });
+    mkdirSync(dirname(values.out), { recursive: true });
+    writeFileSync(values.out, JSON.stringify(bundle));
     return;
   }
   if ((command !== 'run' && command !== 'batch' && command !== 'review' && command !== 'report') || !file || positionals.length > 2) {
