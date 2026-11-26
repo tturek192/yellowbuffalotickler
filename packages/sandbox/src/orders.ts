@@ -1,14 +1,18 @@
 import type { Order, Side, Unit } from './types';
 import type { Battle } from './state';
 import { losClear } from './sight';
+import { rngNext } from './rng';
 
 type NewOrder = Omit<Order, 'issuedAt' | 'dueAt'>;
 const alive = (u: Unit) => u.status !== 'surrendered' && u.status !== 'destroyed';
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
 
-/** Queues an order; it reaches its unit orderDelayMin minutes later. */
+/** Queues an order; it reaches its unit after 0.5–2 × orderDelayMin minutes (drawn from the battle's seed). */
 export function issue(b: Battle, o: NewOrder): Battle {
-  return { ...b, pending: [...b.pending, { ...o, issuedAt: b.minute, dueAt: b.minute + b.settings.orderDelayMin }] };
+  // Runners get lost and lines get cut: an order takes between half and twice the usual delay.
+  const [r, rngState] = rngNext(b.rngState);
+  const delay = Math.round(b.settings.orderDelayMin * (0.5 + 1.5 * r));
+  return { ...b, rngState, pending: [...b.pending, { ...o, issuedAt: b.minute, dueAt: b.minute + delay }] };
 }
 
 /** Carries out every order whose time has come. */
@@ -46,6 +50,10 @@ export function aiDecide(b: Battle, side: Side): NewOrder[] {
     if (through[0]) { const r = nearestReserve(through[0]); if (r) out.push({ side, kind: 'send-reserve', unitId: r.id, at: { x: through[0].x, y: through[0].y } }); }
   } else {
     // Help a stalled (pinned) battalion: a reserve to its spot and, once per half hour, a barrage on the enemy it can see.
+    // Battalions that rallied and now sit holding short of the far edge are sent forward again.
+    const W = b.map.w * b.map.cellM, far = b.dir > 0 ? W - 200 : 200;
+    for (const u of own) if (u.kind === 'battalion' && !u.reserve && u.status === 'holding' && u.morale > b.settings.pinAt && Math.abs(u.x - far) > 300 && !pendingIds.has(u.id))
+      out.push({ side, kind: 'send-reserve', unitId: u.id, at: { x: far, y: u.y } });
     const stalled = own.filter(u => u.status === 'pinned').sort((a, c) => (a.id < c.id ? -1 : 1));
     for (const p of stalled) {
       const r = nearestReserve(p); if (r) out.push({ side, kind: 'send-reserve', unitId: r.id, at: { x: p.x, y: p.y } });

@@ -9,7 +9,7 @@ export const SETTINGS = {
   /** Share of a shelled unit's men hit per minute under a barrage or battery fire. */
   shellLethality: 0.002,
   /** How fast the creeping barrage moves forward (m per minute). */
-  barrageSpeedMPerMin: 50,
+  barrageSpeedMPerMin: 30,
   /** Depth of the barrage band (m). */
   barrageDepthM: 150,
   /** Minutes a garrison needs to man the parapet after the barrage lifts off it. */
@@ -25,13 +25,13 @@ export const SETTINGS = {
   /** Morale below which a unit falls back. */
   breakAt: 0.25,
   /** Share of a trapped garrison that surrenders (the rest flee). */
-  surrenderTrappedFrac: 0.5,
-  /** Minutes before an order reaches its unit. */
+  surrenderTrappedFrac: 0.8,
+  /** Usual minutes before an order reaches its unit (each order takes 0.5–2 × this). */
   orderDelayMin: 20,
   /** Reserve march speed on the way to the fight (m per minute). */
   reserveMarchMPerMin: 70,
   /** A defender reserve this close behind the gun line seals its sector against breakthrough (m). */
-  sealDistanceM: 1000,
+  sealDistanceM: 750,
   /** Minutes the attacker must hold every stronghold to break the deadlock. */
   strongholdHoldMin: 60,
   /** Most units one side may field. */

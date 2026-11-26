@@ -12,9 +12,9 @@ describe('orders', () => {
   it('an order takes effect at dueAt, not before', () => {
     let b = newBattle(open, { controller: both, units: [unit({ id: 'r', side: 'attacker', x: 1000, y: 3000, status: 'waiting', reserve: true })] });
     b = issue(b, { side: 'attacker', kind: 'send-reserve', unitId: 'r', at: { x: 3000, y: 3000 } });
-    expect(b.pending[0].dueAt).toBe(b.settings.orderDelayMin);
-    expect(run(b, b.settings.orderDelayMin).units[0].x).toBe(1000);
-    expect(run(b, b.settings.orderDelayMin + 2).units[0].x).toBeGreaterThan(1000);
+    const due = b.pending[0].dueAt; expect(due).toBeGreaterThanOrEqual(10); expect(due).toBeLessThanOrEqual(40);
+    expect(run(b, due).units[0].x).toBe(1000);
+    expect(run(b, due + 2).units[0].x).toBeGreaterThan(1000);
   });
   it('a barrage order shells its point for 10 minutes', () => {
     let b = newBattle(open, { controller: both, settings: { orderDelayMin: 0 }, units: [unit({ id: 'd', side: 'defender', x: 5000, y: 3000 })] });

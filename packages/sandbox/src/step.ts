@@ -44,7 +44,7 @@ export function step(bIn: Battle): Battle {
   if (creepX !== null) {
     const lo = Math.min(creepX, creepX + b0.dir * s.barrageDepthM), hi = Math.max(creepX, creepX + b0.dir * s.barrageDepthM);
     for (const u of units) if (u.side === 'defender' && alive(u) && u.kind === 'battalion' && u.x >= lo && u.x <= hi) shell(u);
-    for (const l of lines) if (l.kind === 'wire' && l.points.some(([x]) => x >= lo && x <= hi)) l.cut = Math.min(1, (l.cut ?? 0) + 0.03);
+    for (const l of lines) if (l.kind === 'wire' && l.points.some(([x]) => x >= lo && x <= hi)) l.cut = Math.min(1, (l.cut ?? 0) + 0.1);
     creepX += b0.dir * s.barrageSpeedMPerMin;
     if (b0.dir * (creepX - b0.creepStopX) > 0) creepX = null;
   }
@@ -57,7 +57,7 @@ export function step(bIn: Battle): Battle {
   // 2. The gap: a garrison still sheltering or climbing out when attackers reach it is trapped.
   for (const d of units) {
     if (!alive(d) || d.kind !== 'battalion' || d.shelteredUntil === undefined || minute >= d.shelteredUntil + s.emergeMin) continue;
-    const near = units.find(a => a.side === other(d.side) && a.kind === 'battalion' && alive(a) && a.status !== 'falling-back' && dist(a, d) <= 50);
+    const near = units.find(a => a.side === other(d.side) && a.kind === 'battalion' && alive(a) && a.status !== 'falling-back' && Math.abs(a.x - d.x) <= 50 && Math.abs(a.y - d.y) <= 400);   // a battalion holds ~400 m of front
     if (!near) continue;
     const taken = Math.min(d.men, Math.round(d.men * s.surrenderTrappedFrac));
     d.men -= taken; d.captured += taken; d.shelteredUntil = undefined;
@@ -121,13 +121,13 @@ export function step(bIn: Battle): Battle {
     else continue;
     const d = Math.hypot(tx - u.x, ty - u.y); if (d < 1) { if (u.status === 'advancing') u.status = 'holding'; continue; }
     const here = terrainAt(m, u.x, u.y);
-    let speed = base * (here.t === 'wood' ? 0.6 : here.t === 'village' ? 0.8 : 1);
+    let speed = base * (here.t === 'wood' ? 0.6 : here.t === 'village' ? 0.8 : here.t === 'river' ? 0.1 : 1);   // a river is crossed slowly (boats, bridging), a road at full speed
     for (const l of lines) if (l.kind === 'wire' && l.side !== u.side && segDist(u.x, u.y, l.points) < s.wireBeltM) speed *= s.wireSlow + (1 - s.wireSlow) * (l.cut ?? 0);
     let mv = Math.min(speed, d);
     let nx = u.x + ((tx - u.x) / d) * mv, ny = u.y + ((ty - u.y) / d) * mv;
     const ahead = terrainAt(m, nx, ny);
     if (ahead.h > here.h) { const f = Math.max(0.5, 1 - (ahead.h - here.h) / 20); nx = u.x + (nx - u.x) * f; ny = u.y + (ny - u.y) * f; }
-    if (ahead.t === 'river' || !inMap(m, nx, ny)) continue;
+    if (!inMap(m, nx, ny)) continue;
     if (u.side === 'attacker' && creepX !== null && u.status === 'advancing' && b0.dir * (u.x - creepX) <= -50) {
       const lim = creepX - b0.dir * 50; if (b0.dir * (nx - lim) > 0) nx = lim;
     }
