@@ -2,22 +2,13 @@ import type { SandboxMap, Side, Unit } from './types';
 import type { Battle } from './state';
 import { rngNext } from './rng';
 import { terrainAt, inMap } from './map';
+import { losClear } from './sight';
+import { applyDue, aiDecide, issue } from './orders';
+export { losClear };
 
 const other = (s: Side): Side => (s === 'attacker' ? 'defender' : 'attacker');
 const alive = (u: Unit) => u.status !== 'surrendered' && u.status !== 'destroyed';
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
-
-/** True when nothing higher than the sight line, and no wood or village, stands between two points (eyes 2 m up). */
-export function losClear(m: SandboxMap, a: { x: number; y: number }, b: { x: number; y: number }): boolean {
-  const d = dist(a, b); const n = Math.floor(d / 100);
-  const ha = terrainAt(m, a.x, a.y).h + 2, hb = terrainAt(m, b.x, b.y).h + 2;
-  for (let i = 1; i < n; i++) {
-    const t = i / n; const c = terrainAt(m, a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
-    if (c.h > ha + (hb - ha) * t + 2) return false;   // 2 m slack: rolling ground does not hide a battalion
-    if ((c.t === 'wood' || c.t === 'village') && i > 1 && i < n - 1) return false;
-  }
-  return true;
-}
 
 function segDist(px: number, py: number, pts: [number, number][]): number {
   let best = Infinity;
@@ -31,7 +22,9 @@ function segDist(px: number, py: number, pts: [number, number][]): number {
 }
 
 /** Advances the battle one minute. Pure: returns a new Battle. */
-export function step(b0: Battle): Battle {
+export function step(bIn: Battle): Battle {
+  let b0 = applyDue(bIn);
+  if (bIn.minute % 10 === 0) for (const side of ['attacker', 'defender'] as const) if (b0.controller[side] === 'computer') for (const o of aiDecide(b0, side)) b0 = issue(b0, o);
   const s = b0.settings, m = b0.map, minute = b0.minute;
   let rng = b0.rngState;
   const rand = () => { const [v, n] = rngNext(rng); rng = n; return v; };
