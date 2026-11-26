@@ -7,3 +7,4 @@ export { issue, aiDecide } from './orders';
 export { checkDeadlock, initDeadlock, gunLineX, type DeadlockState } from './deadlock';
 export { startBattle, runToEnd } from './run';
 export { defaultSetup } from './defaults';
+export { encodeSetup, decodeSetup, validateSetup } from './setup';
