@@ -26,21 +26,32 @@ export function startBattle(setup: Setup, seed: number): Battle {
   return b;
 }
 
-/** Runs a setup to its end: the deadlock broken, 120 quiet minutes, or maxMin. */
-export function runToEnd(setup: Setup, seed: number, maxMin = 2880): { battle: Battle; outcome: Outcome } {
-  let b = startBattle(setup, seed);
-  if (!b.units.some(u => u.side === 'attacker' && u.kind === 'battalion') || !b.units.some(u => u.side === 'defender')) {
-    return { battle: b, outcome: { broken: false, margins: initDeadlock(b).best, ended: 'nothing-to-fight' } };
-  }
-  let dl: DeadlockState = initDeadlock(b), outcome: Outcome = { broken: false, margins: dl.best };
-  let lastLoss = 0, lossTotal = 0;
-  while (b.minute < maxMin) {
-    b = step(b);
-    ({ outcome, state: dl } = checkDeadlock(b, dl));
-    if (outcome.broken) return { battle: b, outcome };
-    const t = b.units.reduce((n, u) => n + u.killed + u.wounded + u.captured, 0);
-    if (t !== lossTotal) { lossTotal = t; lastLoss = b.minute; }
-    if (b.minute - lastLoss >= 120 && b.creepX === null && !b.pending.length) return { battle: b, outcome: { ...outcome, ended: 'quiet' } };
-  }
-  return { battle: b, outcome: { ...outcome, ended: 'time-up' } };
+export type Live = { battle: Battle; dl: DeadlockState; outcome: Outcome; lossTotal: number; lastLoss: number };
+export const MAX_MIN = 2880;
+
+/** The live state at Zero; its outcome is already "nothing-to-fight" when one side has nobody. */
+export function startLive(setup: Setup, seed: number): Live {
+  const battle = startBattle(setup, seed); const dl = initDeadlock(battle);
+  const empty = !battle.units.some(u => u.side === 'attacker' && u.kind === 'battalion') || !battle.units.some(u => u.side === 'defender');
+  return { battle, dl, outcome: { broken: false, margins: dl.best, ...(empty ? { ended: 'nothing-to-fight' as const } : {}) }, lossTotal: 0, lastLoss: 0 };
+}
+
+/** One minute: step, check the deadlock, and decide whether the battle has ended (broken, 120 quiet minutes, or the time limit). */
+export function advance(l: Live, maxMin = MAX_MIN): Live {
+  if (l.outcome.ended) return l;
+  const battle = step(l.battle);
+  const { outcome, state: dl } = checkDeadlock(battle, l.dl);
+  const t = battle.units.reduce((n, u) => n + u.killed + u.wounded + u.captured, 0);
+  const lastLoss = t !== l.lossTotal ? battle.minute : l.lastLoss;
+  let ended = outcome.ended;
+  if (!ended && battle.minute - lastLoss >= 120 && battle.creepX === null && !battle.pending.length) ended = 'quiet';
+  if (!ended && battle.minute >= maxMin) ended = 'time-up';
+  return { battle, dl, outcome: ended ? { ...outcome, ended } : outcome, lossTotal: t, lastLoss };
+}
+
+/** Runs a setup to its end. */
+export function runToEnd(setup: Setup, seed: number, maxMin = MAX_MIN): { battle: Battle; outcome: Outcome } {
+  let l = startLive(setup, seed);
+  while (!l.outcome.ended) l = advance(l, maxMin);
+  return { battle: l.battle, outcome: l.outcome };
 }

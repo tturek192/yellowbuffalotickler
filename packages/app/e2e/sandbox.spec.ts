@@ -35,3 +35,21 @@ test('set up a battle on a phone: place, remove, refuse the river, paint, share'
   await page.goto(url.replace(/^https?:\/\/[^/]+/, ''));
   expect(await units()).toBe(count);
 });
+
+test('play the ridge: a barrage nudge shows its clock, the result arrives, and the same seed replays the same', async ({ page }) => {
+  await page.goto('/sandbox.html');
+  await page.getByLabel('Map').selectOption('ridge');
+  await page.getByRole('button', { name: 'Go' }).click();
+  await page.getByRole('group', { name: 'Speed' }).getByRole('button', { name: '16×' }).click();
+  await page.getByRole('group', { name: 'Orders' }).getByRole('button', { name: 'Barrage' }).click();
+  const map = page.getByTestId('sandbox-play');
+  const box = (await map.boundingBox())!;
+  await map.tap({ position: { x: box.width * 0.6, y: box.height / 2 } });
+  await expect(page.getByLabel('Orders on the way')).toContainText('⏱');
+  const result = page.getByLabel('Result');
+  await expect(result).toBeVisible({ timeout: 60_000 });
+  // Without nudges, the same seed must play out the same way twice.
+  const replay = async () => { await page.getByRole('button', { name: 'Replay same seed' }).click(); await expect(result).toBeVisible({ timeout: 60_000 }); return result.textContent(); };
+  expect(await replay()).toBe(await replay());
+  await page.screenshot({ path: 'e2e/out/sandbox-result.png' });
+});

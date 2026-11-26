@@ -5,6 +5,6 @@ export { newBattle, unit, totalOf, type Battle } from './state';
 export { step, losClear } from './step';
 export { issue, aiDecide } from './orders';
 export { checkDeadlock, initDeadlock, gunLineX, type DeadlockState } from './deadlock';
-export { startBattle, runToEnd } from './run';
+export { startBattle, runToEnd, startLive, advance, MAX_MIN, type Live } from './run';
 export { defaultSetup } from './defaults';
 export { encodeSetup, decodeSetup, validateSetup } from './setup';
