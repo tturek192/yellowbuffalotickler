@@ -3,5 +3,5 @@
   "compilerOptions": { "lib": ["ES2022", "DOM", "DOM.Iterable"], "jsx": "react-jsx", "types": [], "outDir": "dist", "rootDir": "src", "noEmit": false, "emitDeclarationOnly": true },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "../scenario" }, { "path": "../engine" }]
+  "references": [{ "path": "../scenario" }, { "path": "../engine" }, { "path": "../sandbox" }]
 }

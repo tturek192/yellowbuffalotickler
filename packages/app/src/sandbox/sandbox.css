@@ -1,0 +1,23 @@
+:root { --paper: #efe6cf; --ink: #3b3326; --accent: #8e2418; --panel: #e4d8b8; }
+@media (prefers-color-scheme: dark) { :root { --paper: #26231d; --ink: #efe6cf; --panel: #35302a; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: "EB Garamond", Georgia, serif; }
+.sb { max-width: 1200px; margin: 0 auto; padding: 12px 16px 32px; }
+.sb-head h1 { font-family: "IM Fell English", Georgia, serif; margin: 0; font-size: 2rem; }
+.sb-head p { margin: 2px 0 10px; }
+.sb-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.sb button, .sb select, .sb input { font: inherit; font-size: 15px; }
+.sb button { border: 1px solid var(--ink); background: var(--panel); color: var(--ink); border-radius: 4px; padding: 4px 10px; min-height: 34px; cursor: pointer; }
+.sb button.sb-on { background: var(--ink); color: var(--paper); }
+.sb button.sb-go { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; padding: 4px 22px; }
+.sb-side { display: inline-flex; gap: 0; margin-right: 8px; }
+.sb-map { position: relative; width: 100%; border: 2px solid var(--ink); background: #efe6cf; }
+.sb-map canvas { display: block; }
+.sb-msg { position: absolute; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 14px; pointer-events: none; }
+.sb-notice { background: #f6e2a8; color: #3b3326; padding: 6px 10px; border-radius: 4px; }
+.sb-share { width: 100%; font-size: 13px; }
+.sb-adv { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin-top: 6px; }
+.sb-adv label { display: flex; flex-direction: column; }
+.sb-result { border: 2px solid var(--ink); background: var(--panel); padding: 10px 12px; margin: 8px 0; }
+.sb-events { font-size: 14px; min-height: 5.5em; margin: 6px 0; }
+.sb-clock { font-variant-numeric: tabular-nums; font-weight: 600; }
