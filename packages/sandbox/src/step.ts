@@ -36,7 +36,7 @@ export function step(bIn: Battle): Battle {
   const hits = new Map<string, number>(); const sup = new Map<string, number>();
   const hit = (u: Unit, h: number, su: number) => { hits.set(u.id, (hits.get(u.id) ?? 0) + h); sup.set(u.id, (sup.get(u.id) ?? 0) + su); };
   const inTrench = (u: Unit) => lines.some(l => l.kind === 'trench' && l.side === u.side && segDist(u.x, u.y, l.points) < 50);
-  const cover = (u: Unit) => { if (inTrench(u)) return 0.7; const t = terrainAt(m, u.x, u.y).t; return t === 'village' ? 0.5 : t === 'wood' ? 0.4 : 0; };
+  const cover = (u: Unit) => { if (inTrench(u)) return s.coverTrench; const t = terrainAt(m, u.x, u.y).t; return t === 'village' ? s.coverVillage : t === 'wood' ? s.coverWood : 0; };
 
   // 1. Barrages: the attacker's creeping barrage and any called point barrages shell, shelter and cut wire.
   const shell = (u: Unit) => { hit(u, u.men * s.shellLethality * (1 - cover(u) * 0.8), 0.3); u.shelteredUntil = minute + 1; };
@@ -50,14 +50,14 @@ export function step(bIn: Battle): Battle {
   }
   const pointBarrages = b0.pointBarrages.filter(p => p.until > minute);
   for (const p of pointBarrages) {
-    for (const u of units) if (u.side !== p.side && alive(u) && dist(u, p) <= 150) shell(u);
-    for (const l of lines) if (l.kind === 'wire' && segDist(p.x, p.y, l.points) <= 150) l.cut = Math.min(1, (l.cut ?? 0) + 0.05);
+    for (const u of units) if (alive(u) && dist(u, p) <= s.pointBarrageRadiusM) shell(u);   // a called barrage hits whoever is under it
+    for (const l of lines) if (l.kind === 'wire' && segDist(p.x, p.y, l.points) <= s.pointBarrageRadiusM) l.cut = Math.min(1, (l.cut ?? 0) + 0.05);
   }
 
   // 2. The gap: a garrison still sheltering or climbing out when attackers reach it is trapped.
   for (const d of units) {
     if (!alive(d) || d.kind !== 'battalion' || d.shelteredUntil === undefined || minute >= d.shelteredUntil + s.emergeMin) continue;
-    const near = units.find(a => a.side === other(d.side) && a.kind === 'battalion' && alive(a) && a.status !== 'falling-back' && Math.abs(a.x - d.x) <= 50 && Math.abs(a.y - d.y) <= 400);   // a battalion holds ~400 m of front
+    const near = units.find(a => a.side === other(d.side) && a.kind === 'battalion' && alive(a) && a.status !== 'falling-back' && Math.abs(a.x - d.x) <= s.trapDistanceM && Math.abs(a.y - d.y) <= s.frontageM);
     if (!near) continue;
     const taken = Math.min(d.men, Math.round(d.men * s.surrenderTrappedFrac));
     d.men -= taken; d.captured += taken; d.shelteredUntil = undefined;
@@ -70,12 +70,12 @@ export function step(bIn: Battle): Battle {
   for (const f of units) {
     if (!alive(f) || f.status === 'falling-back' || f.status === 'waiting' || sheltering(f) || f.men <= 0) continue;
     let best: Unit | undefined, bd = Infinity;
-    const reach = f.kind === 'battery' ? 5000 : s.rangeM;
+    const reach = f.kind === 'battery' ? s.batteryRangeM : s.rangeM;
     for (const t of units) {
       if (t.side === f.side || !alive(t) || t.status === 'waiting') continue;
       const d = dist(f, t); if (d > reach || d >= bd) continue;
       const seen = f.kind === 'battery'
-        ? units.some(o => o.side === f.side && o.kind === 'battalion' && alive(o) && dist(o, t) <= 2000 && losClear(m, o, t))
+        ? units.some(o => o.side === f.side && o.kind === 'battalion' && alive(o) && dist(o, t) <= s.spotterRangeM && losClear(m, o, t))
         : losClear(m, f, t);
       if (seen) { best = t; bd = d; }
     }
@@ -104,9 +104,9 @@ export function step(bIn: Battle): Battle {
       u.wounded += u.men; u.men = 0; u.status = 'destroyed'; ev('destroyed', u, 'too few men left standing to fight'); continue;
     }
     if (u.kind !== 'battalion') continue;
-    if ((u.status === 'holding' || u.status === 'advancing' || u.status === 'pinned') && u.morale < s.breakAt) {
+    if ((u.status === 'holding' || (u.status === 'advancing' && !u.orderedBack) || u.status === 'pinned') && u.morale < s.breakAt) {
       u.status = 'falling-back'; ev('falling-back', u, 'losses broke its nerve; it falls back');
-    } else if (u.status === 'advancing' && u.morale < s.pinAt) {
+    } else if (u.status === 'advancing' && !u.orderedBack && u.morale < s.pinAt) {
       u.status = 'pinned'; u.pinnedAt = minute; ev('pinned', u, 'pinned down: heavy fire from enemies it could see');
     } else if (u.status === 'pinned' && u.morale > s.pinAt + 0.1 && u.suppression < 0.1 && minute - (u.pinnedAt ?? minute) >= 10) u.status = 'advancing';
     else if (u.status === 'falling-back' && u.morale > s.pinAt) u.status = 'holding';
@@ -119,7 +119,7 @@ export function step(bIn: Battle): Battle {
     if (u.status === 'advancing' && u.target) { tx = u.target.x; ty = u.target.y; base = u.reserve ? s.reserveMarchMPerMin : s.advanceMPerMin; }
     else if (u.status === 'falling-back') { const back = u.side === 'attacker' ? -b0.dir : b0.dir; tx = u.x + back * 1000; ty = u.y; base = s.advanceMPerMin * 0.8; }
     else continue;
-    const d = Math.hypot(tx - u.x, ty - u.y); if (d < 1) { if (u.status === 'advancing') u.status = 'holding'; continue; }
+    const d = Math.hypot(tx - u.x, ty - u.y); if (d < 1) { if (u.status === 'advancing') { u.status = 'holding'; u.orderedBack = undefined; } continue; }
     const here = terrainAt(m, u.x, u.y);
     let speed = base * (here.t === 'wood' ? 0.6 : here.t === 'village' ? 0.8 : here.t === 'river' ? 0.1 : 1);   // a river is crossed slowly (boats, bridging), a road at full speed
     for (const l of lines) if (l.kind === 'wire' && l.side !== u.side && segDist(u.x, u.y, l.points) < s.wireBeltM) speed *= s.wireSlow + (1 - s.wireSlow) * (l.cut ?? 0);
@@ -132,7 +132,7 @@ export function step(bIn: Battle): Battle {
       const lim = creepX - b0.dir * 50; if (b0.dir * (nx - lim) > 0) nx = lim;
     }
     u.x = nx; u.y = ny;
-    if (u.status === 'advancing' && Math.hypot(tx - u.x, ty - u.y) < 1) { u.status = 'holding'; u.reserve = false; }
+    if (u.status === 'advancing' && Math.hypot(tx - u.x, ty - u.y) < 1) { u.status = 'holding'; u.reserve = false; u.orderedBack = undefined; }
   }
 
   return { ...b0, units, lines, events, minute: minute + 1, rngState: rng, creepX, pointBarrages };

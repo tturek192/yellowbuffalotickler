@@ -37,20 +37,20 @@ export function startLive(setup: Setup, seed: number): Live {
 }
 
 /** One minute: step, check the deadlock, and decide whether the battle has ended (broken, 120 quiet minutes, or the time limit). */
-export function advance(l: Live, maxMin = MAX_MIN): Live {
+export function advance(l: Live, maxMin = l.battle.settings.battleMaxMin): Live {
   if (l.outcome.ended) return l;
   const battle = step(l.battle);
   const { outcome, state: dl } = checkDeadlock(battle, l.dl);
   const t = battle.units.reduce((n, u) => n + u.killed + u.wounded + u.captured, 0);
   const lastLoss = t !== l.lossTotal ? battle.minute : l.lastLoss;
   let ended = outcome.ended;
-  if (!ended && battle.minute - lastLoss >= 120 && battle.creepX === null && !battle.pending.length) ended = 'quiet';
+  if (!ended && battle.minute - lastLoss >= battle.settings.quietMin && battle.creepX === null && !battle.pending.length) ended = 'quiet';
   if (!ended && battle.minute >= maxMin) ended = 'time-up';
   return { battle, dl, outcome: ended ? { ...outcome, ended } : outcome, lossTotal: t, lastLoss };
 }
 
 /** Runs a setup to its end. */
-export function runToEnd(setup: Setup, seed: number, maxMin = MAX_MIN): { battle: Battle; outcome: Outcome } {
+export function runToEnd(setup: Setup, seed: number, maxMin?: number): { battle: Battle; outcome: Outcome } {
   let l = startLive(setup, seed);
   while (!l.outcome.ended) l = advance(l, maxMin);
   return { battle: l.battle, outcome: l.outcome };

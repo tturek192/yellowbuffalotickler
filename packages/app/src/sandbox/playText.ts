@@ -21,3 +21,5 @@ export function resultText(o: Outcome, holdMin = SETTINGS.strongholdHoldMin): { 
   if (o.broken && o.by) return { headline: `Deadlock broken: ${WHY[o.by]}, ${clockText(o.minute ?? 0)}`, detail };
   return { headline: 'Deadlock held', detail };
 }
+/** Game minutes for one animation frame; a gap longer than a quarter second (a hidden tab) is cut short, so nothing happens unseen. */
+export const minutesForFrame = (dtMs: number, speed: number) => (Math.min(dtMs, 250) / 1000) * minutesPerSecond(speed);

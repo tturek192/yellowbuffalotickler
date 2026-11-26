@@ -21,3 +21,10 @@ describe('play text', () => {
     expect(clockText(0)).toBe('day 1 · 00:00'); expect(clockText(1500)).toBe('day 2 · 01:00');
   });
 });
+import { minutesForFrame } from './playText';
+describe('frame clock', () => {
+  it('a long gap (a backgrounded tab) counts as at most a quarter second', () => {
+    expect(minutesForFrame(60_000, 16)).toBe(minutesForFrame(250, 16));
+    expect(minutesForFrame(100, 1)).toBeCloseTo(1.2);
+  });
+});

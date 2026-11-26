@@ -17,7 +17,7 @@ describe('orders', () => {
     expect(run(b, due + 2).units[0].x).toBeGreaterThan(1000);
   });
   it('a barrage order shells its point for 10 minutes', () => {
-    let b = newBattle(open, { controller: both, settings: { orderDelayMin: 0 }, units: [unit({ id: 'd', side: 'defender', x: 5000, y: 3000 })] });
+    let b = newBattle(open, { controller: both, settings: { orderDelayMin: 0 }, units: [unit({ id: 'd', side: 'defender', x: 5000, y: 3000 }), unit({ id: 'g', side: 'attacker', kind: 'battery', x: 500, y: 3000 })] });
     b = issue(b, { side: 'attacker', kind: 'barrage', at: { x: 5000, y: 3000 } });
     const after = run(b, 11);
     expect(after.units[0].killed + after.units[0].wounded).toBeGreaterThan(0);

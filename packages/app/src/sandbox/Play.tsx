@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { advance, issue, startLive, type Live, type Setup, type Side } from '@wwi/sandbox';
+import { advance, canBarrage, issue, startLive, type Live, type Setup, type Side } from '@wwi/sandbox';
 import { drawSandbox, drawTerrain, fitView, toMetres, type HitBox } from './drawSandbox';
 import { NudgeBar, type Nudge } from './NudgeBar';
-import { clockText, minutesPerSecond, resultText } from './playText';
+import { clockText, minutesForFrame, resultText } from './playText';
 import { editedMap } from './SetupEditor';
 
 const SPEEDS = [0.5, 1, 4, 16];
@@ -12,6 +12,7 @@ export function Play({ setup, onBack, onReplay }: { setup: Setup; onBack: () => 
   const [speed, setSpeed] = useState(1);
   const [paused, setPaused] = useState(false);
   const [nudge, setNudge] = useState<Nudge>(null);
+  const [nudgeSide, setNudgeSide] = useState<Side | null>(null);
   const [width, setWidth] = useState(800);
   const wrap = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null), boxes = useRef<HitBox[]>([]);
   const acc = useRef(0);
@@ -20,14 +21,14 @@ export function Play({ setup, onBack, onReplay }: { setup: Setup; onBack: () => 
   const map = useMemo(() => editedMap(setup), [setup]);
   const view = useMemo(() => fitView(map, width), [map, width]);
   const terrain = useMemo(() => { const c = document.createElement('canvas'); c.width = view.w; c.height = view.h; drawTerrain(c.getContext('2d')!, view, map); return c; }, [map, view]);
-  useEffect(() => { const el = wrap.current; if (!el) return; const ro = new ResizeObserver(() => setWidth(Math.max(300, Math.floor(el.clientWidth)))); ro.observe(el); return () => ro.disconnect(); }, []);
+  useEffect(() => { const el = wrap.current; if (!el) return; const ro = new ResizeObserver(() => setWidth(Math.max(300, Math.min(Math.floor(el.clientWidth), Math.round(window.innerHeight * 1.3))))); ro.observe(el); return () => ro.disconnect(); }, []);
 
   // The clock: whole game minutes each frame, by speed; nothing runs while paused or once the battle has ended.
   useEffect(() => {
     if (paused || live.outcome.ended) return;
     let raf = 0, last = performance.now();
     const tick = (now: number) => {
-      acc.current += ((now - last) / 1000) * minutesPerSecond(speed); last = now;
+      acc.current += minutesForFrame(now - last, speed); last = now;
       const n = Math.floor(acc.current); acc.current -= n;
       if (n > 0) setLive(l => { let x = l; for (let i = 0; i < n && !x.outcome.ended; i++) x = advance(x); return x; });
       raf = requestAnimationFrame(tick);
@@ -68,7 +69,7 @@ export function Play({ setup, onBack, onReplay }: { setup: Setup; onBack: () => 
         <span role="group" aria-label="Speed">{SPEEDS.map(s => <button key={s} type="button" className={speed === s ? 'sb-on' : ''} onClick={() => setSpeed(s)}>{s === 0.5 ? '½' : s}×</button>)}</span>
         <button type="button" onClick={onBack}>Back to setup</button>
       </div>
-      {!ended && <NudgeBar sides={humanSides} nudge={nudge} onNudge={setNudge} pending={b.pending} minute={b.minute} />}
+      {!ended && <NudgeBar sides={humanSides} side={nudgeSide ?? humanSides[0]} onSide={setNudgeSide} nudge={nudge} onNudge={setNudge} pending={b.pending} minute={b.minute} canBarrage={s => canBarrage(b, s)} />}
       {res && (
         <section className="sb-result" aria-label="Result">
           <h2 style={{ margin: '0 0 4px' }}>{res.headline}</h2><p style={{ margin: 0 }}>{res.detail}</p>

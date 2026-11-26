@@ -35,6 +35,8 @@ export type Unit = {
   pinnedAt?: number;
   /** Set at Zero for units that began the battle in reserve (a defender reserve seals its sector). */
   startedReserve?: boolean;
+  /** Moving back on an order: it does not go to ground on the way. */
+  orderedBack?: boolean;
 };
 export type Line = { kind: 'trench' | 'wire'; side: Side; points: [number, number][]; cut?: number };
 export type SandboxEvent = { minute: number; kind: string; unitId?: string; why: string };

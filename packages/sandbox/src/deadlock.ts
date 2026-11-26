@@ -38,11 +38,11 @@ export function checkDeadlock(b: Battle, s: DeadlockState): { outcome: Outcome; 
   const captured = def.reduce((n, u) => n + u.captured, 0);
   const fit = def.filter(u => alive(u) && u.status !== 'pinned' && u.status !== 'falling-back').reduce((n, u) => n + u.men, 0);
   const capturedFrac = s.zeroDefMen ? captured / s.zeroDefMen : 0, fitFrac = s.zeroDefMen ? fit / s.zeroDefMen : 1;
-  if (!broke && s.zeroDefMen && capturedFrac >= 0.5) broke = 'surrender';
-  if (!broke && s.zeroDefMen && fitFrac < 0.1) broke = 'collapse';
+  if (!broke && s.zeroDefMen && capturedFrac >= set.surrenderFrac) broke = 'surrender';
+  if (!broke && s.zeroDefMen && fitFrac < set.collapseFrac) broke = 'collapse';
   const held = m.strongholds.length > 0 && m.strongholds.every(h =>
-    b.units.some(u => u.side === 'attacker' && u.kind === 'battalion' && alive(u) && Math.hypot(u.x - h.x, u.y - h.y) <= 300) &&
-    !def.some(u => u.kind === 'battalion' && alive(u) && u.status !== 'falling-back' && Math.hypot(u.x - h.x, u.y - h.y) <= 300));
+    b.units.some(u => u.side === 'attacker' && u.kind === 'battalion' && alive(u) && Math.hypot(u.x - h.x, u.y - h.y) <= set.holdRadiusM) &&
+    !def.some(u => u.kind === 'battalion' && alive(u) && u.status !== 'falling-back' && Math.hypot(u.x - h.x, u.y - h.y) <= set.holdRadiusM));
   const holdSince = held ? (s.holdSince ?? b.minute) : null;
   const holdLen = holdSince === null ? 0 : b.minute - holdSince + 1;
   if (!broke && held && holdLen >= set.strongholdHoldMin) broke = 'stronghold';

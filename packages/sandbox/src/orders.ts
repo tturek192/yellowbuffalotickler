@@ -9,10 +9,16 @@ const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.
 
 /** Queues an order; it reaches its unit after 0.5–2 × orderDelayMin minutes (drawn from the battle's seed). */
 export function issue(b: Battle, o: NewOrder): Battle {
+  if (o.kind === 'barrage' && !canBarrage(b, o.side)) return b;
   // Runners get lost and lines get cut: an order takes between half and twice the usual delay.
   const [r, rngState] = rngNext(b.rngState);
   const delay = Math.round(b.settings.orderDelayMin * (0.5 + 1.5 * r));
   return { ...b, rngState, pending: [...b.pending, { ...o, issuedAt: b.minute, dueAt: b.minute + delay }] };
+}
+
+/** A side can call a barrage when it has a gun left, none already on call, and its guns are ready again. */
+export function canBarrage(b: Battle, side: Order['side']): boolean {
+  return b.units.some(u => u.side === side && u.kind === 'battery' && alive(u)) && !b.pending.some(o => o.side === side && o.kind === 'barrage') && b.minute >= (b.barrageReadyAt?.[side] ?? 0);
 }
 
 /** Carries out every order whose time has come. */
@@ -22,22 +28,23 @@ export function applyDue(b: Battle): Battle {
   const units = b.units.map(u => ({ ...u }));
   const pointBarrages = b.pointBarrages.slice();
   const events = b.events.slice();
+  const barrageReadyAt = { ...b.barrageReadyAt };
   for (const o of due) {
-    const u = o.unitId ? units.find(x => x.id === o.unitId && alive(x)) : undefined;
-    if (o.kind === 'barrage' && o.at) { pointBarrages.push({ side: o.side, x: o.at.x, y: o.at.y, until: b.minute + 10 }); events.push({ minute: b.minute, kind: 'barrage', why: 'the guns open on the spot they were given' }); continue; }
+    const u = o.unitId ? units.find(x => x.id === o.unitId && x.side === o.side && alive(x)) : undefined;
+    if (o.kind === 'barrage' && o.at) { pointBarrages.push({ side: o.side, x: o.at.x, y: o.at.y, until: b.minute + b.settings.pointBarrageMin }); barrageReadyAt[o.side] = b.minute + b.settings.pointBarrageMin + b.settings.barrageCooldownMin; events.push({ minute: b.minute, kind: 'barrage', why: 'the guns open on the spot they were given' }); continue; }
     if (!u) continue;
     if (o.kind === 'send-reserve' && o.at) { u.status = 'advancing'; u.target = { ...o.at }; events.push({ minute: b.minute, kind: 'reserve-sent', unitId: u.id, why: 'the reserve got its order and moves up' }); }
     else if (o.kind === 'hold') { u.status = 'holding'; u.target = undefined; }
-    else if (o.kind === 'pull-back') { const back = u.side === 'attacker' ? -b.dir : b.dir; u.status = 'advancing'; u.reserve = false; u.target = { x: u.x + back * 500, y: u.y }; }
+    else if (o.kind === 'pull-back') { const back = u.side === 'attacker' ? -b.dir : b.dir; u.status = 'advancing'; u.reserve = false; u.orderedBack = true; u.target = { x: u.x + back * 500, y: u.y }; }
   }
-  return { ...b, units, pointBarrages, events, pending: b.pending.filter(o => o.dueAt > b.minute) };
+  return { ...b, units, pointBarrages, events, barrageReadyAt, pending: b.pending.filter(o => o.dueAt > b.minute) };
 }
 
 /** What the computer orders for a side. It knows only what its own battalions can see (picture-only). */
 export function aiDecide(b: Battle, side: Side): NewOrder[] {
   const own = b.units.filter(u => u.side === side && alive(u));
   const eyes = own.filter(u => u.kind === 'battalion' && u.status !== 'waiting');
-  const seen = b.units.filter(e => e.side !== side && alive(e) && e.status !== 'waiting' && eyes.some(o => dist(o, e) <= 2000 && losClear(b.map, o, e)));
+  const seen = b.units.filter(e => e.side !== side && alive(e) && e.status !== 'waiting' && eyes.some(o => dist(o, e) <= b.settings.spotterRangeM && losClear(b.map, o, e)));
   const pendingIds = new Set(b.pending.filter(o => o.side === side).map(o => o.unitId));
   const reserves = own.filter(u => u.reserve && u.status === 'waiting' && !pendingIds.has(u.id));
   const out: NewOrder[] = [];

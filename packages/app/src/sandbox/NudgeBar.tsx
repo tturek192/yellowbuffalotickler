@@ -5,14 +5,14 @@ const LABEL: Record<OrderKind, string> = { 'send-reserve': 'Send reserve', barra
 const HINT: Record<OrderKind, string> = { 'send-reserve': 'tap one of your reserves, then where it should go', barrage: 'tap where the guns should fire', hold: 'tap the unit to hold', 'pull-back': 'tap the unit to pull back' };
 
 /** The four orders. They take effect after a delay, shown as a clock on each pending order. */
-export function NudgeBar({ sides, nudge, onNudge, pending, minute }: { sides: Side[]; nudge: Nudge; onNudge: (n: Nudge) => void; pending: Order[]; minute: number }) {
+export function NudgeBar({ sides, side, onSide, nudge, onNudge, pending, minute, canBarrage }: { sides: Side[]; side: Side; onSide: (s: Side) => void; nudge: Nudge; onNudge: (n: Nudge) => void; pending: Order[]; minute: number; canBarrage: (s: Side) => boolean }) {
   if (!sides.length) return <p className="sb-row">Both sides are on the computer: watch.</p>;
   return (
     <div>
       <div className="sb-row" role="group" aria-label="Orders">
-        {sides.length > 1 && sides.map(s => <button key={s} type="button" className={nudge?.side === s || (!nudge && s === sides[0]) ? 'sb-on' : ''} onClick={() => onNudge(nudge ? { ...nudge, side: s } : null)}>{s === 'attacker' ? 'Attacker' : 'Defender'}</button>)}
+        {sides.length > 1 && sides.map(s => <button key={s} type="button" className={side === s ? 'sb-on' : ''} onClick={() => { onSide(s); onNudge(nudge ? { kind: nudge.kind, side: s } : null); }}>{s === 'attacker' ? 'Attacker' : 'Defender'}</button>)}
         {(Object.keys(LABEL) as OrderKind[]).map(k => (
-          <button key={k} type="button" className={nudge?.kind === k ? 'sb-on' : ''} onClick={() => onNudge(nudge?.kind === k ? null : { kind: k, side: nudge?.side ?? sides[0] })}>{LABEL[k]}</button>
+          <button key={k} type="button" className={nudge?.kind === k ? 'sb-on' : ''} disabled={k === 'barrage' && !canBarrage(side)} title={k === 'barrage' && !canBarrage(side) ? 'The guns are busy or reloading' : undefined} onClick={() => onNudge(nudge?.kind === k ? null : { kind: k, side })}>{LABEL[k]}</button>
         ))}
         {nudge && <span>{nudge.unitId ? 'now tap where it should go' : HINT[nudge.kind]}</span>}
       </div>

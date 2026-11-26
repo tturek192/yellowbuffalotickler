@@ -34,6 +34,22 @@ export const SETTINGS = {
   sealDistanceM: 750,
   /** Minutes the attacker must hold every stronghold to break the deadlock. */
   strongholdHoldMin: 60,
+  /** Surrender: the deadlock breaks when this share of the defender's men at Zero are captured (owner's rule). */
+  surrenderFrac: 0.5,
+  /** Collapse: the deadlock breaks when the defender's fit men fall below this share of its men at Zero (owner's rule). */
+  collapseFrac: 0.1,
+  /** Share of fire a unit escapes in its own trench, in a village, in a wood. */
+  coverTrench: 0.7, coverVillage: 0.5, coverWood: 0.4,
+  /** How close (along the attack) an attacker must be to trap a garrison still sheltering, and the frontage a battalion holds (m). */
+  trapDistanceM: 50, frontageM: 400,
+  /** How far batteries reach, and how far a battalion can spot targets for them and for its commander (m). */
+  batteryRangeM: 5000, spotterRangeM: 2000,
+  /** A called barrage: its radius (m), how long it fires (min), and how long the guns need before the next (min). */
+  pointBarrageRadiusM: 150, pointBarrageMin: 10, barrageCooldownMin: 45,
+  /** How close an attacker must stand to a stronghold, with no defender as close, to hold it (m). */
+  holdRadiusM: 300,
+  /** The battle ends after this many quiet minutes, or at this length (min). */
+  quietMin: 120, battleMaxMin: 2880,
   /** Most units one side may field. */
   maxUnitsPerSide: 40,
   /** Rifle and machine-gun range (m). */

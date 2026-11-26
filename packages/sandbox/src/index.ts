@@ -3,7 +3,7 @@ export * from './settings';
 export { MAPS, mapById, parseMap, terrainAt, inMap } from './map';
 export { newBattle, unit, totalOf, type Battle } from './state';
 export { step, losClear } from './step';
-export { issue, aiDecide } from './orders';
+export { issue, aiDecide, canBarrage } from './orders';
 export { checkDeadlock, initDeadlock, gunLineX, type DeadlockState } from './deadlock';
 export { startBattle, runToEnd, startLive, advance, MAX_MIN, type Live } from './run';
 export { defaultSetup } from './defaults';

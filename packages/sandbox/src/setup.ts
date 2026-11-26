@@ -1,6 +1,6 @@
 import type { Cell, Line, SandboxMap, Setup, Terrain } from './types';
 import { RULES_VERSION, SETTINGS } from './settings';
-import { terrainAt, inMap } from './map';
+import { terrainAt, inMap, mapById } from './map';
 
 // A compact JSON form (positions in metres, rounded; short keys) as base64url: no compression needed under 2,000 characters.
 const T: Terrain[] = ['open', 'wood', 'village', 'river', 'road'];
@@ -23,7 +23,14 @@ export function encodeSetup(s: Setup): string {
 
 export function decodeSetup(str: string): { setup?: Setup; notice?: string } {
   let p: Packed;
-  try { p = JSON.parse(unb64(str)); if (typeof p !== 'object' || !p || typeof p.m !== 'string' || !Array.isArray(p.u)) throw 0; }
+  try {
+    p = JSON.parse(unb64(str));
+    const num = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
+    if (typeof p !== 'object' || !p || !mapById(p.m) || !Array.isArray(p.u) || !num(p.v) || !num(p.d)) throw 0;
+    if (!p.u.every(u => Array.isArray(u) && typeof u[0] === 'string' && num(u[3]) && num(u[4]) && num(u[5]))) throw 0;
+    if (!(p.l ?? []).every(l => Array.isArray(l) && Array.isArray(l[3]) && l[3].every(num))) throw 0;
+    if (!(p.e ?? []).every(e => Array.isArray(e) && num(e[0]) && num(e[1]))) throw 0;
+  }
   catch { return { notice: 'This link is damaged.' }; }
   const settings = Object.fromEntries(Object.entries(p.s ?? {}).filter(([k, v]) => k in SETTINGS && typeof v === 'number'));
   const setup: Setup = {

@@ -53,3 +53,13 @@ test('play the ridge: a barrage nudge shows its clock, the result arrives, and t
   expect(await replay()).toBe(await replay());
   await page.screenshot({ path: 'e2e/out/sandbox-result.png' });
 });
+
+test('a unit in the river stops Go, and a damaged link shows a notice', async ({ page }) => {
+  await page.goto('/sandbox.html');
+  await page.getByLabel('Map').selectOption('river');
+  await page.getByRole('button', { name: 'Swap attacker' }).click();
+  await page.getByRole('button', { name: 'Go' }).click();
+  await expect(page.getByRole('alert')).toContainText('Fix before starting');
+  await page.goto('/sandbox.html?s=eyJtIjoicmlkZ2YifQ');
+  await expect(page.getByText('This link is damaged.')).toBeVisible();
+});

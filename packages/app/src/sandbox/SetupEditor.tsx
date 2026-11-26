@@ -35,6 +35,7 @@ export function SetupEditor({ setup, onChange, onGo, notice }: { setup: Setup; o
   const [lineStart, setLineStart] = useState<[number, number] | null>(null);
   const [share, setShare] = useState('');
   const [showAdv, setShowAdv] = useState(false);
+  const [goProblems, setGoProblems] = useState<string[]>([]);
   const wrap = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null), boxes = useRef<HitBox[]>([]);
   const [width, setWidth] = useState(800);
   const map = useMemo(() => editedMap(setup), [setup]);
@@ -42,7 +43,7 @@ export function SetupEditor({ setup, onChange, onGo, notice }: { setup: Setup; o
   const preview = useMemo(() => startBattle(setup, setup.seed), [setup]);
   const terrain = useMemo(() => { if (typeof document === 'undefined') return null; const c = document.createElement('canvas'); c.width = view.w; c.height = view.h; drawTerrain(c.getContext('2d')!, view, map); return c; }, [map, view]);
 
-  useEffect(() => { const el = wrap.current; if (!el) return; const ro = new ResizeObserver(() => setWidth(Math.max(300, Math.floor(el.clientWidth)))); ro.observe(el); return () => ro.disconnect(); }, []);
+  useEffect(() => { const el = wrap.current; if (!el) return; const ro = new ResizeObserver(() => setWidth(Math.max(300, Math.min(Math.floor(el.clientWidth), Math.round(window.innerHeight * 1.3))))); ro.observe(el); return () => ro.disconnect(); }, []);
   useEffect(() => {
     const c = canvas.current; if (!c || !terrain) return; const dpr = window.devicePixelRatio || 1;
     c.width = view.w * dpr; c.height = view.h * dpr; c.style.width = `${view.w}px`; c.style.height = `${view.h}px`;
@@ -113,8 +114,9 @@ export function SetupEditor({ setup, onChange, onGo, notice }: { setup: Setup; o
         <label>Seed <input type="number" value={setup.seed} min={1} onChange={e => onChange({ ...setup, seed: Math.max(1, Number(e.target.value) || 1) })} style={{ width: '5em' }} /></label>
         <button type="button" onClick={() => setShowAdv(!showAdv)} aria-expanded={showAdv}>Advanced</button>
         <button type="button" onClick={doShare}>Share link</button>
-        <button type="button" className="sb-go" onClick={onGo}>Go</button>
+        <button type="button" className="sb-go" onClick={() => { const p = validateSetup(setup, map); setGoProblems(p); if (!p.length) onGo(); }}>Go</button>
       </div>
+      {goProblems.length > 0 && <p className="sb-notice" role="alert">Fix before starting: {goProblems.join('; ')}.</p>}
       {share && <input className="sb-share" readOnly value={share} aria-label="Share link" onFocus={e => e.currentTarget.select()} />}
       {showAdv && (
         <div className="sb-adv">
