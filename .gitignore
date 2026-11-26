@@ -9,3 +9,4 @@ playwright-report/
 .cache/
 packages/app/public/scenarios/
 packages/app/public/overlays/
+packages/app/dist-sandbox/
